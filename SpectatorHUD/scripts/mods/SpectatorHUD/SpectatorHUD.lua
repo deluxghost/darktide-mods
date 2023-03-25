@@ -73,7 +73,7 @@ local hud_data = {
 			"tactical_overlay"
 		}
 	},
-	{
+	HudElementWorldMarkers = {
 		package = "packages/ui/hud/world_markers/world_markers",
 		use_hud_scale = false,
 		class_name = "HudElementWorldMarkers",
