@@ -17,6 +17,13 @@ return {
 				default_value = 10,
 				range = {5, 50},
 			},
+			{
+				setting_id = "chat_scroll_multiplier",
+				type = "numeric",
+				default_value = 1,
+				range = {0.5, 3},
+				decimals_number = 1,
+			},
 		}
 	}
 }

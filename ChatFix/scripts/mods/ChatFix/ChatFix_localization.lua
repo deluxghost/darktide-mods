@@ -23,4 +23,8 @@ return {
 		en = "Hide chat messages after these seconds,\ndefault value of DarkTide is 5 seconds.",
 		["zh-cn"] = "经过多少秒后隐藏最近的聊天消息，\n暗潮的默认值是 5 秒。",
 	},
+	chat_scroll_multiplier = {
+		en = "Scroll speed multiplier",
+		["zh-cn"] = "滚动速度倍数",
+	},
 }
