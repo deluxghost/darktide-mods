@@ -38,6 +38,16 @@ local hud_data = {
 			"communication_wheel"
 		}
 	},
+	HudElementCrosshair = {
+		package = "packages/ui/hud/crosshair/crosshair",
+		use_hud_scale = true,
+		class_name = "HudElementCrosshair",
+		filename = "scripts/ui/hud/elements/crosshair/hud_element_crosshair",
+		visibility_groups = {
+			"alive",
+			"dead"
+		}
+	},
 	HudElementMissionObjectiveFeed = {
 		package = "packages/ui/hud/mission_objective_feed/mission_objective_feed",
 		use_hud_scale = true,
