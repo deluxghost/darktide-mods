@@ -60,6 +60,10 @@ local function is_cosmetics_store(object)
 end
 
 local function set_extra_sort(self)
+	local options = self._sort_options
+	if not options then
+		return
+	end
 	if not self._item_sorting_modded then
 		for _, sort_def in ipairs(custom_sorts) do
 			table.insert(self._sort_options, sort_def)
@@ -71,14 +75,14 @@ local function set_extra_sort(self)
 end
 
 mod:hook_safe(ItemGridViewBase, "on_enter", function(self)
+	if is_cosmetics_store(self) then
+		return
+	end
 	if mod:get("add_extra_sort") then
 		set_extra_sort(self)
 	end
 
 	if mod:get("remember_sort_index") then
-		if is_cosmetics_store(self) then
-			return
-		end
 		local options = self._sort_options
 		if not options then
 			return
