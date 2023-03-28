@@ -18,9 +18,20 @@ local function is_force_sword(template)
 	return false
 end
 
+mod:hook(ForceWeaponBlockEffects, "_update_sound_effects", function(func, self)
+	if not mod:get("remove_blocking_sound") then
+		return func(self)
+	end
+	local looping_sound_component = self._looping_sound_component
+	local fx_extension = self._fx_extension
+
+	if looping_sound_component.is_playing then
+		fx_extension:stop_looping_wwise_event("block_loop")
+	end
+end)
+
 mod:hook(ForceWeaponBlockEffects, "_update_block_effects", function(func, self, dt)
 	self:_destroy_effects()
-	return
 end)
 
 mod:hook(ActionDamageTarget, "_play_particles", function(func, self)
