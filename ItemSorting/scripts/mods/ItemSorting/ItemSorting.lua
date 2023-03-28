@@ -2,6 +2,18 @@ local mod = get_mod("ItemSorting")
 local ItemUtils = require("scripts/utilities/items")
 local ItemGridViewBase = require("scripts/ui/views/item_grid_view_base/item_grid_view_base")
 
+local function compare_item_category(a, b)
+	local a_category = a.trait_category or ""
+	local b_category = b.trait_category or ""
+
+	if a_category < b_category then
+		return true
+	elseif b_category < a_category then
+		return false
+	end
+	return nil
+end
+
 local function compare_item_base_level(a, b)
 	local a_level = a.baseItemLevel or 0
 	local b_level = b.baseItemLevel or 0
@@ -15,8 +27,23 @@ local function compare_item_base_level(a, b)
 end
 
 local custom_sorts = {
-	{
-		display_name = Localize("loc_inventory_item_grid_sort_title_rarity"),
+	custom_sort_category = {
+		display_name = mod:localize("custom_sort_category"),
+		sort_function = ItemUtils.sort_comparator({
+			">",
+			compare_item_category,
+			">",
+			ItemUtils.compare_item_rarity,
+			">",
+			ItemUtils.compare_item_level,
+			">",
+			ItemUtils.compare_item_type,
+			"<",
+			ItemUtils.compare_item_name,
+		})
+	},
+	custom_sort_rarity = {
+		display_name = mod:localize("custom_sort_rarity"),
 		sort_function = ItemUtils.sort_comparator({
 			">",
 			ItemUtils.compare_item_rarity,
@@ -28,8 +55,8 @@ local custom_sorts = {
 			ItemUtils.compare_item_name,
 		})
 	},
-	{
-		display_name = Localize("loc_weapon_stats_display_base_rating"),
+	custom_sort_base_level = {
+		display_name = mod:localize("custom_sort_base_level"),
 		sort_function = ItemUtils.sort_comparator({
 			">",
 			compare_item_base_level,
@@ -65,8 +92,10 @@ local function set_extra_sort(self)
 		return
 	end
 	if not self._item_sorting_modded then
-		for _, sort_def in ipairs(custom_sorts) do
-			table.insert(self._sort_options, sort_def)
+		for name, sort_def in pairs(custom_sorts) do
+			if mod:get(name) then
+				table.insert(self._sort_options, sort_def)
+			end
 		end
 		local sort_callback = callback(self, "cb_on_sort_button_pressed")
 		self._item_grid:setup_sort_button(self._sort_options, sort_callback, 1)

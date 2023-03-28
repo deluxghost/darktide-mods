@@ -7,14 +7,30 @@ return {
 	options = {
 		widgets = {
 			{
-				setting_id = "add_extra_sort",
+				setting_id = "remember_sort_index",
 				type = "checkbox",
 				default_value = true,
 			},
 			{
-				setting_id = "remember_sort_index",
-				type = "checkbox",
-				default_value = true,
+				setting_id = "group_custom_sort",
+				type = "group",
+				sub_widgets = {
+					{
+						setting_id = "custom_sort_category",
+						type = "checkbox",
+						default_value = true,
+					},
+					{
+						setting_id = "custom_sort_rarity",
+						type = "checkbox",
+						default_value = true,
+					},
+					{
+						setting_id = "custom_sort_base_level",
+						type = "checkbox",
+						default_value = true,
+					},
+				},
 			},
 		}
 	}
