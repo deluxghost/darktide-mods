@@ -107,9 +107,7 @@ mod:hook_safe(ItemGridViewBase, "on_enter", function(self)
 	if is_cosmetics_store(self) then
 		return
 	end
-	if mod:get("add_extra_sort") then
-		set_extra_sort(self)
-	end
+	set_extra_sort(self)
 
 	if mod:get("remember_sort_index") then
 		local options = self._sort_options
