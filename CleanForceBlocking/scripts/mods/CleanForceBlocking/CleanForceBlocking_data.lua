@@ -7,6 +7,21 @@ return {
 	options = {
 		widgets = {
 			{
+				setting_id = "remove_blocking_effect",
+				type = "checkbox",
+				default_value = true,
+			},
+			{
+				setting_id = "remove_pushing_effect",
+				type = "checkbox",
+				default_value = true,
+			},
+			{
+				setting_id = "remove_push_attack_effect",
+				type = "checkbox",
+				default_value = true,
+			},
+			{
 				setting_id = "remove_blocking_sound",
 				type = "checkbox",
 				default_value = false,

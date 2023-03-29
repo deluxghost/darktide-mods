@@ -31,10 +31,16 @@ mod:hook(ForceWeaponBlockEffects, "_update_sound_effects", function(func, self)
 end)
 
 mod:hook(ForceWeaponBlockEffects, "_update_block_effects", function(func, self, dt)
+	if not mod:get("remove_blocking_effect") then
+		return func(self, dt)
+	end
 	self:_destroy_effects()
 end)
 
 mod:hook(ActionDamageTarget, "_play_particles", function(func, self)
+	if not mod:get("remove_push_attack_effect") then
+		return func(self)
+	end
 	if is_force_sword(self._weapon_template) then
 		return
 	end
@@ -42,6 +48,9 @@ mod:hook(ActionDamageTarget, "_play_particles", function(func, self)
 end)
 
 mod:hook(ActionPush, "_play_push_particles", function(func, self)
+	if not mod:get("remove_pushing_effect") then
+		return func(self)
+	end
 	if is_force_sword(self._weapon_template) then
 		return
 	end
