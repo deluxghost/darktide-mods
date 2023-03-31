@@ -15,7 +15,7 @@ return {
 		ru = "Дополнительные методы сортировки предметов",
 	},
 	custom_sort_category = {
-		en = "Blessing category",
+		en = "Blessing Category",
 		["zh-cn"] = "祝福分类",
 	},
 	custom_sort_category_description = {
@@ -29,4 +29,3 @@ return {
 		en = Localize("loc_weapon_stats_display_base_rating"),
 	},
 }
-
