@@ -17,10 +17,12 @@ return {
 	custom_sort_category = {
 		en = "Blessing Category",
 		["zh-cn"] = "祝福分类",
+		ru = "Категория Благословения",
 	},
 	custom_sort_category_description = {
 		en = "Weapons fall into same category share same blessing pool.",
 		["zh-cn"] = "相同祝福分类下的武器共享同一个祝福池。",
+		ru = "Оружие попадает в одну категорию, если имеет одинаковые благословения.",
 	},
 	custom_sort_rarity = {
 		en = Localize("loc_inventory_item_grid_sort_title_rarity"),
