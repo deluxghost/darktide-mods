@@ -7,14 +7,17 @@ return {
 	remove_blocking_effect = {
 		en = "Remove blocking visual effect",
 		["zh-cn"] = "移除格挡视觉效果",
+		ru = "Удалить визуальный эффект при блокировке",
 	},
 	remove_pushing_effect = {
 		en = "Remove pushing visual effect",
 		["zh-cn"] = "移除推动视觉效果",
+		ru = "Удалить визуальный эффект при толчке",
 	},
 	remove_push_attack_effect = {
 		en = "Remove push attack visual effect",
 		["zh-cn"] = "移除推反视觉效果",
+		ru = "Удалить визуальный эффект при атаке после толчка",
 	},
 	remove_blocking_sound = {
 		en = "Remove blocking sound effect",
