@@ -1,7 +1,7 @@
 return {
 	mod_description = {
 		en = "Add extra item sorting methods and remember your sorting method.",
-		["zh-cn"] = "添加额外的物品排序方式，并且记住上次使用的排序方式。",
+		["zh-cn"] = "添加额外的物品排序方式，并记住上次使用的排序方式。",
 		ru = "Добавляет дополнительные методы сортировки предметов и запомиает ваш метод сортировки.",
 	},
 	remember_sort_index = {
