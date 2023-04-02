@@ -17,7 +17,7 @@ return {
 	custom_sort_category = {
 		en = "Blessing Category",
 		["zh-cn"] = "祝福分类",
-		ru = "Категория Благословения",
+		ru = "Благословениям,
 	},
 	custom_sort_category_description = {
 		en = "Weapons fall into same category share same blessing pool.",
