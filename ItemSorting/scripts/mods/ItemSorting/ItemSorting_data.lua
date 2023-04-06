@@ -12,6 +12,22 @@ return {
 				default_value = true,
 			},
 			{
+				setting_id = "group_always_on_top",
+				type = "group",
+				sub_widgets = {
+					{
+						setting_id = "always_on_top_new",
+						type = "checkbox",
+						default_value = false,
+					},
+					{
+						setting_id = "always_on_top_equipped",
+						type = "checkbox",
+						default_value = false,
+					},
+				},
+			},
+			{
 				setting_id = "group_custom_sort",
 				type = "group",
 				sub_widgets = {
@@ -19,6 +35,11 @@ return {
 						setting_id = "custom_sort_category",
 						type = "checkbox",
 						default_value = true,
+					},
+					{
+						setting_id = "custom_sort_category_mark",
+						type = "checkbox",
+						default_value = false,
 					},
 					{
 						setting_id = "custom_sort_rarity",
