@@ -1,8 +1,12 @@
 return {
+	mod_name = {
+		en = "ItemSorting",
+		ru = "Сортировка предметов",
+	},
 	mod_description = {
 		en = "Add extra item sorting methods and remember your sorting method.",
 		["zh-cn"] = "添加额外的物品排序方式，并记住上次使用的排序方式。",
-		ru = "Добавляет дополнительные методы сортировки предметов и запомиает ваш метод сортировки.",
+		ru = "Добавляет дополнительные методы сортировки предметов и запоминает ваш метод сортировки.",
 	},
 	remember_sort_index = {
 		en = "Remember item sorting method",
@@ -17,7 +21,7 @@ return {
 	custom_sort_category = {
 		en = "Blessing Category",
 		["zh-cn"] = "祝福分类",
-		ru = "Благословениям",
+		ru = "Благословения",
 	},
 	custom_sort_category_description = {
 		en = "Weapons fall into same category share same blessing pool.",
