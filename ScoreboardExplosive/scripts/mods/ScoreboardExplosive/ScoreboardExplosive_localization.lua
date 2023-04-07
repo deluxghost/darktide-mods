@@ -1,4 +1,8 @@
 return {
+	mod_name = {
+		en = "Scoreboard Explosive",
+		["zh-cn"] = "记分板爆炸物统计",
+	},
 	mod_description = {
 		en = "Add explosive stats to scoreboard mod.",
 		["zh-cn"] = "为记分板模组添加爆炸物数据。",

@@ -1,6 +1,7 @@
 return {
 	mod_name = {
-		en = "ItemSorting",
+		en = "Item Sorting",
+		["zh-cn"] = "物品排序",
 		ru = "Сортировка предметов",
 	},
 	mod_description = {

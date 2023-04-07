@@ -1,6 +1,7 @@
 return {
 	mod_name = {
-		en = "CleanForceBlocking",
+		en = "Clean Force Blocking",
+		["zh-cn"] = "移除力场剑格挡特效",
 		ru = "Чистый силовой блок",
 	},
 	mod_description = {

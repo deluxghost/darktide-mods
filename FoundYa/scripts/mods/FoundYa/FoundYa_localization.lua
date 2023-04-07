@@ -1,4 +1,8 @@
 return {
+	mod_name = {
+		en = "Found Ya",
+		["zh-cn"] = "发现物品",
+	},
 	mod_description = {
 		en = "Adjust the view/tag distance of item interaction icons.",
 		["zh-cn"] = "调整物品交互图标的可视与标记距离。",

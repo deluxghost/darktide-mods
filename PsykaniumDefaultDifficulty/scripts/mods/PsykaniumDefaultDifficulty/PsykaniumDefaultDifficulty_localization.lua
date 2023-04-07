@@ -1,6 +1,7 @@
 return {
 	mod_name = {
 		en = "Psykanium Default Difficulty",
+		["zh-cn"] = "灵能室默认难度",
 		ru = "Стандартная сложность Псайканиума",
 	},
 	mod_description = {

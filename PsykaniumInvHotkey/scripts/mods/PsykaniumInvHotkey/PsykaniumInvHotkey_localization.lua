@@ -1,6 +1,7 @@
 return {
 	mod_name = {
-		en = "PsykaniumInvHotkey",
+		en = "Psykanium Inv Hotkey",
+		["zh-cn"] = "灵能室背包快捷键",
 		ru = "Клавиша инвентаря для Псайканиума",
 	},
 	mod_description = {

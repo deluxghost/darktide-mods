@@ -1,6 +1,7 @@
 return {
 	mod_name = {
-		en = "SpectatorHUD",
+		en = "Spectator HUD",
+		["zh-cn"] = "旁观者 HUD",
 		ru = "Зрительский интерфейс",
 	},
 	mod_description = {
