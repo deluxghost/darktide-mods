@@ -51,7 +51,6 @@ local function compare_item_type_new(view)
 			return nil
 		end
 		local new_items = character_data.new_items
-		local new_item_types = {}
 
 		local a_new = false
 		local b_new = false
@@ -78,9 +77,16 @@ local function item_equipped_in_loadout(loadout, item)
 	if not loadout then
 		return false
 	end
-	for _, slot_name in ipairs(item.slots) do
-		if loadout[slot_name] == item.__gear_id then
-			return true
+    for _, slot_name in ipairs(item.slots) do
+        local slot_item = loadout[slot_name]
+		if type(slot_item) == "string" then
+			if slot_item == item.__gear_id then
+				return true
+			end
+		else
+			if slot_item.__gear_id == item.__gear_id then
+				return true
+			end
 		end
 	end
 	return false
@@ -101,11 +107,26 @@ local function compare_item_equipped(view)
 
 		local a_equipped = false
 		local b_equipped = false
-		for _, preset in ipairs(presets) do
-			if item_equipped_in_loadout(preset.loadout, a) then
+		if #presets > 0 then
+			for _, preset in ipairs(presets) do
+				if item_equipped_in_loadout(preset.loadout, a) then
+					a_equipped = true
+				end
+				if item_equipped_in_loadout(preset.loadout, b) then
+					b_equipped = true
+				end
+			end
+		else
+			local player = Managers.player:local_player(1)
+			local profile = player:profile()
+			local loadout = profile.loadout
+			if not loadout then
+				return nil
+			end
+			if item_equipped_in_loadout(loadout, a) then
 				a_equipped = true
 			end
-			if item_equipped_in_loadout(preset.loadout, b) then
+			if item_equipped_in_loadout(loadout, b) then
 				b_equipped = true
 			end
 		end
@@ -144,6 +165,21 @@ local function compare_item_type_equipped(view)
 			for _, slot in ipairs(b.slots) do
 				if preset.loadout[slot] then
 					b_slot_item_ids[preset.loadout[slot]] = true
+				end
+			end
+		end
+		local player = Managers.player:local_player(1)
+		local profile = player:profile()
+		local loadout = profile.loadout
+		if loadout then
+			for _, slot in ipairs(a.slots) do
+				if loadout[slot] then
+					a_slot_item_ids[loadout[slot].__gear_id] = true
+				end
+			end
+			for _, slot in ipairs(b.slots) do
+				if loadout[slot] then
+					b_slot_item_ids[loadout[slot].__gear_id] = true
 				end
 			end
 		end
