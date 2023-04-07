@@ -1,7 +1,7 @@
 local mod = get_mod("EarlyAccess")
 
 return {
-	name = "EarlyAccess",
+	name = mod:localize("mod_name"),
 	description = mod:localize("mod_description"),
 	is_togglable = true,
 }
