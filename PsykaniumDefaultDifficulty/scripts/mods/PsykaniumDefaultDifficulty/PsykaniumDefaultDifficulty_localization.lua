@@ -1,4 +1,8 @@
 return {
+	mod_name = {
+		en = "Psykanium Default Difficulty",
+		ru = "Стандартная сложность Псайканиума",
+	},
 	mod_description = {
 		en = "Let you set the default difficulty of the Psykanium, and enter Psykanium quickly.",
 		["zh-cn"] = "允许你设置灵能室默认难度，以及快速进入灵能室。",
