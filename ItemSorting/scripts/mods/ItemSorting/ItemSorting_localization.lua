@@ -17,22 +17,27 @@ return {
 	group_always_on_top = {
 		en = "Always on top",
 		["zh-cn"] = "总在最上",
+		ru = "Всегда сверху",
 	},
 	always_on_top_new = {
 		en = "New item",
 		["zh-cn"] = "新物品",
+		ru = "Новый предмет",
 	},
 	always_on_top_new_description = {
 		en = "Items with the \"New Item\" dot are always at the top of the item list.\nWhen sorting by Blessing Category, the categories of new items are always at the top of the list.",
 		["zh-cn"] = "有“新物品”圆点的物品总会显示在物品列表的顶部。\n当使用祝福分类排序时，新物品所属的分类总会显示在列表顶部。",
+		ru = "Предметы с точкой \"Новый предмет\" всегда находятся вверху списка предметов.\nПри сортировке по категории Благословения, новые предметы всегда находятся вверху списка.",
 	},
 	always_on_top_equipped = {
 		en = "Equipped item",
 		["zh-cn"] = "已装备的物品",
+		ru = "Экипированнный предмет",
 	},
 	always_on_top_equipped_description = {
 		en = "Items equipped in any Wargear Set are always at the top of the item list.\nWhen sorting by Blessing Category, the categories of equipped items are always at the top of the list.",
 		["zh-cn"] = "在任何战具套组中已装备的物品总会显示在物品列表的顶部。\n当使用祝福分类排序时，已装备物品所属的分类总会显示在列表顶部。",
+		ru = "Предметы, экипированные в любом Наборе снаряжения, всегда находятся вверху списка предметов.\nПри сортировке по категории Благословения, экипированные предметы всегда находятся вверху списка.",
 	},
 	group_custom_sort = {
 		en = "Extra item sorting methods",
@@ -47,6 +52,7 @@ return {
 	custom_sort_category_mark = {
 		en = "Blessing Category (Group by Mark)",
 		["zh-cn"] = "祝福分类（按型号分组）",
+		ru = "Благословения (группировка по Модели)",
 	},
 	custom_sort_category_description = {
 		en = "Weapons fall into same category share same blessing pool.",
