@@ -1,0 +1,279 @@
+local mod = get_mod("MyFavorites")
+local Promise = require("scripts/foundation/utilities/promise")
+local ColorUtilities = require("scripts/utilities/ui/colors")
+local UISoundEvents = require("scripts/settings/ui/ui_sound_events")
+local CraftingSettings = require("scripts/settings/item/crafting_settings")
+local RaritySettings = require("scripts/settings/item/rarity_settings")
+
+local fav_icon = "content/ui/materials/icons/presets/preset_15"
+
+local function is_valid_crafting_item(item)
+	return item and not item.no_crafting and RaritySettings[item.rarity]
+end
+
+local function is_item_fav(id)
+	local favorite_item_list = mod:get("favorite_item_list") or {}
+	if favorite_item_list[id] then
+		return true
+	end
+	return false
+end
+
+local function fav_item(id)
+	local favorite_item_list = mod:get("favorite_item_list") or {}
+	favorite_item_list[id] = true
+	mod:set("favorite_item_list", favorite_item_list)
+end
+
+local function unfav_item(id)
+	local favorite_item_list = mod:get("favorite_item_list") or {}
+	favorite_item_list[id] = nil
+	mod:set("favorite_item_list", favorite_item_list)
+end
+
+local function content_to_item(content)
+	if (not content.element) or (not content.element.item) then
+		return nil
+	end
+	return content.element.item
+end
+
+mod.load_package = function(self, package_name)
+	if not Managers.package:is_loading(package_name) and not Managers.package:has_loaded(package_name) then
+		Managers.package:load(package_name, "my_favorites", nil, true)
+	end
+end
+
+mod.on_enabled = function(initial_call)
+	local favorite_item_list = mod:get("favorite_item_list") or {}
+	mod:set("favorite_item_list", favorite_item_list)
+	CraftingSettings.recipes.extract_trait.is_valid_item = function(item)
+		if not is_valid_crafting_item(item) then
+			return false
+		end
+		if is_item_fav(item.__gear_id) then
+			return false
+		end
+		return (item.item_type == "WEAPON_MELEE" or item.item_type == "WEAPON_RANGED") and item.traits and #item.traits > 0
+	end
+end
+
+mod.on_disabled = function(initial_call)
+	CraftingSettings.recipes.extract_trait.is_valid_item = function (item)
+		return is_valid_crafting_item(item) and (item.item_type == "WEAPON_MELEE" or item.item_type == "WEAPON_RANGED") and item.traits and #item.traits > 0
+	end
+end
+
+mod.on_all_mods_loaded = function()
+	mod:load_package("packages/ui/views/inventory_background_view/inventory_background_view")
+end
+
+local item_definitions = {
+	{
+		pass_type = "hotspot",
+		style_id = "myfav_hotspot",
+		style = {
+			vertical_alignment = "center",
+			horizontal_alignment = "right",
+			offset = {0, 0, 1},
+			size = {32, 32},
+		},
+		content_id = "myfav_hotspot",
+		content = {
+			on_hover_sound = UISoundEvents.default_mouse_hover,
+			on_pressed_sound = UISoundEvents.default_click
+		},
+	},
+	{
+		pass_type = "texture",
+		value = fav_icon,
+		style_id = "myfav_item_icon",
+		style = {
+			vertical_alignment = "center",
+			horizontal_alignment = "right",
+			offset = {0, 0, 1},
+			color = Color.white(255, true),
+			default_color = Color.white(255, true),
+			hover_color = Color.spring_green(255, true),
+			size = {32, 32},
+		},
+		change_function = function(content, style)
+			local item = content_to_item(content)
+			if not item then
+				return
+			end
+			if is_item_fav(item.__gear_id) then
+				style.hover_color = Color.red(255, true)
+			else
+				style.hover_color = Color.spring_green(255, true)
+			end
+			local hotspot = content.myfav_hotspot
+			local color = style.color
+			local default_color = hotspot.disabled and style.disabled_color or style.default_color
+			local hover_color = style.hover_color
+			local hover_progress = hotspot.anim_hover_progress or 0
+			local ignore_alpha = true
+			ColorUtilities.color_lerp(default_color, hover_color, hover_progress, color, ignore_alpha)
+		end,
+		visibility_function = function(content, style)
+			if not mod:is_enabled() then
+				return false
+			end
+			if content.store_item then
+				return false
+			end
+			local item = content_to_item(content)
+			if not item then
+				return
+			end
+			local is_fav = is_item_fav(item.__gear_id)
+			if is_fav then
+				style.color = Color.orange(255, true)
+				style.default_color = Color.orange(255, true)
+			else
+				style.color = Color.white(255, true)
+				style.default_color = Color.white(255, true)
+			end
+			local hotspot = content.hotspot
+			return is_fav or hotspot.is_hover
+		end,
+	},
+}
+
+mod:hook_require("scripts/ui/pass_templates/item_pass_templates", function(instance)
+	for _, def in ipairs(item_definitions) do
+		local idx = nil
+		for i, v in ipairs(instance.item) do
+			if v.style_id == def.style_id then
+				idx = i
+				break
+			end
+		end
+		if idx then
+			table.remove(instance.item, idx)
+		end
+		table.insert(instance.item, def)
+	end
+	return instance
+end)
+
+mod:hook_safe("ViewElementGrid", "init", function(self)
+	self.__myfav_cb_main_pressed = function(self, widget)
+		local content = widget.content
+		if not content then
+			return
+		end
+		local item = content_to_item(content)
+		if not item then
+			return
+		end
+
+		local item_id = item.__gear_id
+		if is_item_fav(item_id) then
+			unfav_item(item_id)
+		else
+			fav_item(item_id)
+		end
+	end
+end)
+
+mod:hook("ViewElementGrid", "_create_entry_widget_from_config", function(func, self, config, suffix, callback_name, secondary_callback_name, double_click_callback_name)
+	local widget, alignment_widget = func(
+		self, config, suffix, callback_name, secondary_callback_name, double_click_callback_name
+	)
+	if (not widget) or (widget.type ~= "item") then
+		return widget, alignment_widget
+	end
+	local content = widget.content
+	if (not content) or (not content.myfav_hotspot) then
+		return widget, alignment_widget
+	end
+	content.myfav_hotspot.pressed_callback = callback(self, "__myfav_cb_main_pressed", widget)
+	return widget, alignment_widget
+end)
+
+-- last checks
+mod:hook("GearService", "delete_gear", function(func, self, gear_id)
+	if is_item_fav(gear_id) then
+		mod:notify(mod:localize("unexpected_delete_message"))
+		local promise = Promise.new()
+		promise:reject("gear deleting is stopped by MyFavorites mod")
+		return promise
+	end
+	return func(self, gear_id)
+end)
+
+mod:hook("CraftingService", "extract_trait_from_weapon", function(func, self, gear_id, trait_index, costs)
+	if is_item_fav(gear_id) then
+		mod:notify(mod:localize("unexpected_extract_message"))
+		local promise = Promise.new()
+		promise:reject("gear extracting is stopped by MyFavorites mod")
+		return promise
+	end
+	return func(self, gear_id, trait_index, costs)
+end)
+
+-- Inventory: hide legend
+mod:hook_safe("InventoryWeaponsView", "_setup_input_legend", function(self)
+	for _, entry in ipairs(self._input_legend_element._entries) do
+		if entry.input_action == "hotkey_item_discard" then
+			entry.visibility_function = function(parent)
+				local selected_grid_widget = parent:selected_grid_widget()
+				if not selected_grid_widget then
+					return false
+				end
+				local is_item_equipped = parent:is_selected_item_equipped()
+				local content = selected_grid_widget.content
+				if not content then
+					return false
+				end
+				local item = content_to_item(content)
+				if not item then
+					return false
+				end
+				local is_fav = is_item_fav(item.__gear_id)
+				return (not is_item_equipped) and (not is_fav)
+			end
+		end
+	end
+end)
+
+-- Crafting: hide legend
+mod:hook("CraftingView", "_setup_tab_bar", function(func, self, tab_bar_params, additional_context)
+	if tab_bar_params and tab_bar_params.tabs_params then
+		local params = tab_bar_params.tabs_params
+		for _, param in ipairs(params) do
+			if param.view == "crafting_modify_view" then
+				local legends = param.input_legend_buttons
+				if legends then
+					for _, legend in ipairs(legends) do
+						if legend.input_action == "hotkey_item_discard" then
+							legend.visibility_function = function(parent)
+								local view = Managers.ui:view_instance("crafting_modify_view")
+								if (not view) or (not view._item_grid) then
+									return false
+								end
+								local selected_grid_widget = view:selected_grid_widget()
+								if not selected_grid_widget then
+									return false
+								end
+								local content = selected_grid_widget.content
+								if not content then
+									return false
+								end
+								local equipped = content.equipped
+								local item = content_to_item(content)
+								if not item then
+									return false
+								end
+								local is_fav = is_item_fav(item.__gear_id)
+								return (not equipped) and (not is_fav)
+							end
+						end
+					end
+				end
+			end
+		end
+	end
+	return func(self, tab_bar_params, additional_context)
+end)
