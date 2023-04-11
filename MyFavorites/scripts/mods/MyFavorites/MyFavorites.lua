@@ -6,28 +6,47 @@ local CraftingSettings = require("scripts/settings/item/crafting_settings")
 local RaritySettings = require("scripts/settings/item/rarity_settings")
 
 local fav_icon = "content/ui/materials/icons/presets/preset_15"
+local remove_icon = "content/ui/materials/icons/system/settings/category_interface"
+
+local function max_color_group()
+	return mod:get("favorite_preset_count") or 5
+end
+
+local function next_color_group(current)
+	local max_group = max_color_group()
+	if current >= max_group then
+		return 0
+	end
+	return current + 1
+end
 
 local function is_valid_crafting_item(item)
 	return item and not item.no_crafting and RaritySettings[item.rarity]
 end
 
-local function is_item_fav(id)
+local function get_item_group(id)
 	local favorite_item_list = mod:get("favorite_item_list") or {}
-	if favorite_item_list[id] then
-		return true
+	local group = favorite_item_list[id] or 0
+	if group > max_color_group() then
+		group = max_color_group()
 	end
-	return false
+	return group
 end
 
-local function fav_item(id)
-	local favorite_item_list = mod:get("favorite_item_list") or {}
-	favorite_item_list[id] = true
-	mod:set("favorite_item_list", favorite_item_list)
+local function is_item_fav(id)
+	local group = get_item_group(id)
+	return group > 0
 end
 
-local function unfav_item(id)
+local function switch_item_group(id)
+	local current = get_item_group(id)
+	local next = next_color_group(current)
 	local favorite_item_list = mod:get("favorite_item_list") or {}
-	favorite_item_list[id] = nil
+	if next > 0 then
+		favorite_item_list[id] = next
+	else
+		favorite_item_list[id] = nil
+	end
 	mod:set("favorite_item_list", favorite_item_list)
 end
 
@@ -46,6 +65,11 @@ end
 
 mod.on_enabled = function(initial_call)
 	local favorite_item_list = mod:get("favorite_item_list") or {}
+	for id, value in pairs(favorite_item_list) do
+		if type(value) == "boolean" and value then
+			favorite_item_list[id] = 1
+		end
+	end
 	mod:set("favorite_item_list", favorite_item_list)
 	CraftingSettings.recipes.extract_trait.is_valid_item = function(item)
 		if not is_valid_crafting_item(item) then
@@ -75,8 +99,8 @@ local item_definitions = {
 		style = {
 			vertical_alignment = "center",
 			horizontal_alignment = "right",
-			offset = {0, 0, 1},
-			size = {32, 32},
+			offset = { 0, 0, 1 },
+			size = { 32, 32 },
 		},
 		content_id = "myfav_hotspot",
 		content = {
@@ -87,25 +111,30 @@ local item_definitions = {
 	{
 		pass_type = "texture",
 		value = fav_icon,
+		value_id = "myfav_item_icon",
 		style_id = "myfav_item_icon",
 		style = {
 			vertical_alignment = "center",
 			horizontal_alignment = "right",
-			offset = {0, 0, 1},
+			offset = { 0, 0, 1 },
 			color = Color.white(255, true),
 			default_color = Color.white(255, true),
 			hover_color = Color.spring_green(255, true),
-			size = {32, 32},
+			size = { 32, 32 },
 		},
 		change_function = function(content, style)
 			local item = content_to_item(content)
 			if not item then
 				return
 			end
-			if is_item_fav(item.__gear_id) then
+
+			local current = get_item_group(item.__gear_id)
+			local next = next_color_group(current)
+			if next == 0 then
 				style.hover_color = Color.red(255, true)
 			else
-				style.hover_color = Color.spring_green(255, true)
+				local color_name = mod:get("color_definition_" .. tostring(next))
+				style.hover_color = Color[color_name](255, true)
 			end
 			local hotspot = content.myfav_hotspot
 			local color = style.color
@@ -126,16 +155,25 @@ local item_definitions = {
 			if not item then
 				return
 			end
-			local is_fav = is_item_fav(item.__gear_id)
-			if is_fav then
-				style.color = Color.orange(255, true)
-				style.default_color = Color.orange(255, true)
-			else
-				style.color = Color.white(255, true)
-				style.default_color = Color.white(255, true)
+
+			local hotspot = content.myfav_hotspot
+			local item_hotspot = content.hotspot
+			local current = get_item_group(item.__gear_id)
+			local next = next_color_group(current)
+			local color_name = mod:get("color_definition_" .. tostring(current))
+			local next_color_name = mod:get("color_definition_" .. tostring(next))
+			content.myfav_item_icon = fav_icon
+			if current > 0 and next == 0 and hotspot.is_hover then
+				content.myfav_item_icon = remove_icon
 			end
-			local hotspot = content.hotspot
-			return is_fav or hotspot.is_hover
+			if current > 0 then
+				style.color = Color[color_name](255, true)
+				style.default_color = Color[color_name](255, true)
+			else
+				style.color = Color[next_color_name](255, true)
+				style.default_color = Color[next_color_name](255, true)
+			end
+			return current > 0 or item_hotspot.is_hover
 		end,
 	},
 }
@@ -169,11 +207,7 @@ mod:hook_safe("ViewElementGrid", "init", function(self)
 		end
 
 		local item_id = item.__gear_id
-		if is_item_fav(item_id) then
-			unfav_item(item_id)
-		else
-			fav_item(item_id)
-		end
+		switch_item_group(item_id)
 	end
 end)
 
