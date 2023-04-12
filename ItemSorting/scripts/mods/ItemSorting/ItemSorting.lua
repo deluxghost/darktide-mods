@@ -17,6 +17,12 @@ local function character_save_data()
 end
 
 local function compare_item_new(view)
+	local class = view.__class_name
+	if not class or (class ~= "InventoryWeaponsView" and class ~= "CraftingModifyView") then
+		return function(a, b)
+			return nil
+		end
+	end
 	return function(a, b)
 		if not mod:get("always_on_top_new") then
 			return nil
@@ -39,6 +45,12 @@ local function compare_item_new(view)
 end
 
 local function compare_item_type_new(view)
+	local class = view.__class_name
+	if not class or (class ~= "InventoryWeaponsView" and class ~= "CraftingModifyView") then
+		return function(a, b)
+			return nil
+		end
+	end
 	return function(a, b)
 		if not mod:get("always_on_top_new") then
 			return nil
@@ -77,8 +89,8 @@ local function item_equipped_in_loadout(loadout, item)
 	if not loadout then
 		return false
 	end
-    for _, slot_name in ipairs(item.slots) do
-        local slot_item = loadout[slot_name]
+	for _, slot_name in ipairs(item.slots) do
+		local slot_item = loadout[slot_name]
 		if type(slot_item) == "string" then
 			if slot_item == item.__gear_id then
 				return true
@@ -93,6 +105,12 @@ local function item_equipped_in_loadout(loadout, item)
 end
 
 local function compare_item_equipped(view)
+	local class = view.__class_name
+	if not class or (class ~= "InventoryWeaponsView" and class ~= "CraftingModifyView") then
+		return function(a, b)
+			return nil
+		end
+	end
 	return function(a, b)
 		if not mod:get("always_on_top_equipped") then
 			return nil
@@ -140,6 +158,12 @@ local function compare_item_equipped(view)
 end
 
 local function compare_item_type_equipped(view)
+	local class = view.__class_name
+	if not class or (class ~= "InventoryWeaponsView" and class ~= "CraftingModifyView") then
+		return function(a, b)
+			return nil
+		end
+	end
 	return function(a, b)
 		if not mod:get("always_on_top_equipped") then
 			return nil
