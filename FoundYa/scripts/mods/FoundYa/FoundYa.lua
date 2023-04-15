@@ -140,10 +140,7 @@ end)
 
 mod:hook(HUDElementSmartTagging, "_is_marker_valid_for_tagging", function(func, self, player_unit, marker, distance)
 	local template = marker.template
-	if not template then
-		return func(self, player_unit, marker, distance)
-	end
-	if template.name == "interaction" then
+	if template and template.name == "interaction" then
 		local max_tag_distance = mod:get("max_tag_distance") or 15
 		if distance and distance >= max_tag_distance then
 			return false
