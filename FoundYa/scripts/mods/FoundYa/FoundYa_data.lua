@@ -17,6 +17,18 @@ return {
 				type = "group",
 				sub_widgets = {
 					{
+						setting_id = "max_distance_material",
+						type = "numeric",
+						default_value = 15,
+						range = {10, 80},
+					},
+					{
+						setting_id = "max_distance_book",
+						type = "numeric",
+						default_value = 15,
+						range = {10, 80},
+					},
+					{
 						setting_id = "max_distance_supply",
 						type = "numeric",
 						default_value = 15,
@@ -24,6 +36,12 @@ return {
 					},
 					{
 						setting_id = "max_distance_chest",
+						type = "numeric",
+						default_value = 15,
+						range = {10, 80},
+					},
+					{
+						setting_id = "max_distance_luggable",
 						type = "numeric",
 						default_value = 15,
 						range = {10, 80},
@@ -41,25 +59,13 @@ return {
 						range = {10, 80},
 					},
 					{
-						setting_id = "max_distance_luggable",
-						type = "numeric",
-						default_value = 15,
-						range = {10, 80},
-					},
-					{
 						setting_id = "max_distance_vendor",
 						type = "numeric",
 						default_value = 15,
 						range = {10, 80},
 					},
 					{
-						setting_id = "max_distance_book",
-						type = "numeric",
-						default_value = 15,
-						range = {10, 80},
-					},
-					{
-						setting_id = "max_distance_material",
+						setting_id = "max_distance_unknown",
 						type = "numeric",
 						default_value = 15,
 						range = {10, 80},

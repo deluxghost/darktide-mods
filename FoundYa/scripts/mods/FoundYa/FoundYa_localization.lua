@@ -9,14 +9,44 @@ return {
 		ru = "Регулирует расстояние видимости/пометки значков взаимодействия с предметами.",
 	},
 	max_distance = {
-		en = "Max view distance",
-		["zh-cn"] = "最大可视距离",
-		ru = "Максимальное расстояние видимости",
+		en = "Max view distance (default: 15m)",
+		["zh-cn"] = "最大可视距离（默认：15 米）",
 	},
-	max_distance_description = {
-		en = "Default value is 15m.",
-		["zh-cn"] = "默认值为 15m。",
-		ru = "Значение по умолчанию — 15 м.",
+	max_distance_material = {
+		en = "Forge materials",
+		["zh-cn"] = "锻造材料",
+	},
+	max_distance_book = {
+		en = "Scriptures and grimoires",
+		["zh-cn"] = "圣经和魔法书",
+	},
+	max_distance_supply = {
+		en = "Supplies",
+		["zh-cn"] = "补给品",
+	},
+	max_distance_chest = {
+		en = "Chests",
+		["zh-cn"] = "箱子",
+	},
+	max_distance_luggable = {
+		en = "Luggables",
+		["zh-cn"] = "搬运物",
+	},
+	max_distance_button = {
+		en = "Buttons",
+		["zh-cn"] = "按钮",
+	},
+	max_distance_station = {
+		en = "Healing stations",
+		["zh-cn"] = "医疗站",
+	},
+	max_distance_vendor = {
+		en = "Vendors",
+		["zh-cn"] = "商店图标",
+	},
+	max_distance_unknown = {
+		en = "Other supported interactables",
+		["zh-cn"] = "其他支持的交互项",
 	},
 	max_tag_distance = {
 		en = "Max tag distance",
