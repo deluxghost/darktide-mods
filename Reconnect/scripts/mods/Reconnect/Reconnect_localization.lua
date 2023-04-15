@@ -19,4 +19,8 @@ return {
 		en = "Error: you are the only human player",
 		["zh-cn"] = "错误：你是唯一的真人玩家",
 	},
+	retry_keybind = {
+		en = "Keybind for /retry command",
+		["zh-cn"] = "命令 /retry 的快捷键",
+	},
 }

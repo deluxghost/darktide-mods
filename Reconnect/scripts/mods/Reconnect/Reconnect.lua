@@ -13,7 +13,7 @@ function mod.on_game_state_changed(status, state_name)
 	end
 end
 
-mod:command("retry", mod:localize("retry_description"), function()
+mod.retry_func = function()
 	if not memory.in_game then
 		mod:echo(mod:localize("err_not_in_game"))
 		return
@@ -38,4 +38,8 @@ mod:command("retry", mod:localize("retry_description"), function()
 		return
 	end
 	Managers.multiplayer_session:_leave("")
+end
+
+mod:command("retry", mod:localize("retry_description"), function()
+	mod:retry_func()
 end)
