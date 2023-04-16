@@ -91,13 +91,15 @@ local function item_equipped_in_loadout(loadout, item)
 	end
 	for _, slot_name in ipairs(item.slots) do
 		local slot_item = loadout[slot_name]
-		if type(slot_item) == "string" then
-			if slot_item == item.__gear_id then
-				return true
-			end
-		else
-			if slot_item.__gear_id == item.__gear_id then
-				return true
+		if slot_item then
+			if type(slot_item) == "string" then
+				if slot_item == item.__gear_id then
+					return true
+				end
+			else
+				if slot_item.__gear_id == item.__gear_id then
+					return true
+				end
 			end
 		end
 	end
