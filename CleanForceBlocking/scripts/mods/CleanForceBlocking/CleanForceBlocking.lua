@@ -55,3 +55,19 @@ mod:hook(PlayerUnitFxExtension, "_trigger_looping_wwise_event", function(func, s
 	end
 	return func(self, sound_alias, optional_source_name)
 end)
+
+mod:hook(PlayerUnitFxExtension, "rpc_stop_looping_player_sound", function(func, self, channel_id, game_object_id, sound_alias_id)
+	if not mod:get("remove_blocking_sound") then
+		return func(self, channel_id, game_object_id, sound_alias_id)
+	end
+	local sound_alias = NetworkLookup.player_character_looping_sound_aliases[sound_alias_id]
+	local data = self._looping_sounds[sound_alias]
+	if not data then
+		return func(self, channel_id, game_object_id, sound_alias_id)
+	end
+
+	if sound_alias == "block_loop" and (not data.is_playing) then
+		return
+	end
+	return func(self, channel_id, game_object_id, sound_alias_id)
+end)
