@@ -1,7 +1,6 @@
 local mod = get_mod("QuickLookCard")
 local WeaponTemplates = require("scripts/settings/equipment/weapon_templates/weapon_templates")
 local WeaponStats = require("scripts/utilities/weapon_stats")
-local ItemUtils = require("scripts/utilities/items")
 local BuffTemplates = require("scripts/settings/buff/buff_templates")
 
 local QLColor = {
