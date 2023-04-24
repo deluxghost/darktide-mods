@@ -584,7 +584,7 @@ local item_definitions = {
 			font_type = "machine_medium",
 			font_size = 18,
 		},
-		value = "生命",
+		value = "",
 		visibility_function = visibility_function_gadget,
 	},
 	{
@@ -601,7 +601,7 @@ local item_definitions = {
 			font_type = "machine_medium",
 			font_size = 18,
 		},
-		value = "21",
+		value = "",
 		visibility_function = visibility_function_gadget,
 	},
 }
