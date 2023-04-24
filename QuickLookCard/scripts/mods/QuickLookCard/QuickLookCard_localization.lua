@@ -9,8 +9,12 @@ return {
 		ja = "アイテム一覧で素早く武器のステータスを確認できるようになります。",
 	},
 
-	-- To translators: these stat translations must be abbreviations
-	-- and must not be longer than 4 Latin characters (or 2 CJK characters)
+	-- To translators: due to the limited screen space,
+	-- these following stat translations should be abbreviations form
+	-- and should not be longer than 4 Latin characters (or 2 CJK characters).
+	-- The original localization was added for reference, which might be outdated.
+
+	-- Weapon modifiers
 	stat_loc_glossary_term_melee_damage = {
 		en = "MELE", -- Melee Damage
 		["zh-cn"] = "近战", -- 近战伤害
@@ -150,5 +154,23 @@ return {
 		en = "WRES", -- Warp Resistance
 		["zh-cn"] = "亚抗", -- 亚空间抗性
 		ja = "歪耐", -- ワープ耐性
+	},
+
+	-- Curio blessings
+	gadget_trait_max_health = {
+		en = "HP", -- Max Health
+		["zh-cn"] = "生命", -- 最大生命值
+	},
+	gadget_trait_toughness = {
+		en = "TN", -- Toughness
+		["zh-cn"] = "韧性", -- 韧性
+	},
+	gadget_trait_max_stamina = {
+		en = "STAM", -- Max Stamina
+		["zh-cn"] = "体力", -- 最大体力
+	},
+	gadget_trait_wounds = {
+		en = "WND", -- Wound(s)
+		["zh-cn"] = "伤口", -- 生命格
 	},
 }
