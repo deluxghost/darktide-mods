@@ -160,17 +160,21 @@ return {
 	gadget_trait_max_health = {
 		en = "HP", -- Max Health
 		["zh-cn"] = "生命", -- 最大生命值
+		ja = "体力", -- 最大ヘルス
 	},
 	gadget_trait_toughness = {
 		en = "TN", -- Toughness
 		["zh-cn"] = "韧性", -- 韧性
+		ja = "靭性", -- 最大タフネス
 	},
 	gadget_trait_max_stamina = {
 		en = "STAM", -- Max Stamina
 		["zh-cn"] = "体力", -- 最大体力
+		ja = "活力", -- 最大スタミナ
 	},
 	gadget_trait_wounds = {
 		en = "WND", -- Wound(s)
 		["zh-cn"] = "伤口", -- 生命格
+		ja = "傷口", -- 傷口
 	},
 }
