@@ -29,4 +29,22 @@ return {
 		["zh-cn"] = "命令 /retry 的快捷键",
 		ru = "Клавиша для команды /retry",
 	},
+	handle_rejoin_popup = {
+		en = "Rejoin popup auto action",
+		["zh-cn"] = "重连弹框自动操作",
+	},
+	handle_rejoin_popup_description = {
+		en = "If you have kept auto joining an invalid session, try to open Mod Options and disable this option temporarily.",
+		["zh-cn"] = "如果你遇到连续重连已失效的会话，请尝试打开模组选项再临时禁用此选项。",
+	},
+	opt_do_nothing = {
+		en = "Do Nothing",
+		["zh-cn"] = "什么都不做",
+	},
+	opt_auto_rejoin = {
+		en = Localize("loc_popup_reconnect_to_session_reconnect_button"),
+	},
+	opt_auto_leave = {
+		en = Localize("loc_popup_reconnect_to_session_leave_button"),
+	},
 }

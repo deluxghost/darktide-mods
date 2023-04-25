@@ -1,5 +1,6 @@
 local mod = get_mod("Reconnect")
-
+local StateMainMenu = require("scripts/game_states/game/state_main_menu")
+local MechanismHub = require("scripts/managers/mechanism/mechanisms/mechanism_hub")
 local memory = mod:persistent_table("memory")
 
 function mod.on_game_state_changed(status, state_name)
@@ -37,9 +38,34 @@ mod.retry_func = function()
 		mod:echo(mod:localize("err_only_one_human"))
 		return
 	end
-	Managers.multiplayer_session:_leave("")
+	Managers.multiplayer_session:leave("pong_timeout")
 end
 
 mod:command("retry", mod:localize("retry_description"), function()
 	mod:retry_func()
+end)
+
+mod:hook(StateMainMenu, "_show_reconnect_popup", function(func, self)
+	local handle_rejoin_popup = mod:get("handle_rejoin_popup")
+	if handle_rejoin_popup == "rejoin" then
+		self._reconnect_pressed = true
+		self:_rejoin_game()
+		return
+	elseif handle_rejoin_popup == "leave" then
+		Managers.party_immaterium:leave_party()
+		return
+	end
+	return func(self)
+end)
+
+mod:hook(MechanismHub, "_show_retry_popup", function(func, self)
+	local handle_rejoin_popup = mod:get("handle_rejoin_popup")
+	if handle_rejoin_popup == "rejoin" then
+		self:_retry_join()
+		return
+	elseif handle_rejoin_popup == "leave" then
+		Managers.party_immaterium:leave_party()
+		return
+	end
+	return func(self)
 end)
