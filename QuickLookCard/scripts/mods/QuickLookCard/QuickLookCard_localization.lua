@@ -12,6 +12,7 @@ return {
 	opt_group_toggles = {
 		en = "Toggles",
 		["zh-cn"] = "开关",
+		ja = "切り替え",
 	},
 	opt_base_level = {
 		en = Localize("loc_weapon_stats_display_base_rating"),
@@ -19,14 +20,17 @@ return {
 	opt_base_level_description = {
 		en = "{#color(85,235,50)}Redeemed+{#reset()} weapons only",
 		["zh-cn"] = "仅限{#color(85,235,50)}救赎{#reset()}及以上武器",
+		ja = "{#color(85,235,50)}救罪{#reset()}以上の武器のみ",
 	},
 	opt_modifier = {
 		en = "Modifier Stats",
 		["zh-cn"] = "五维数据",
+		ja = "ステータス補正",
 	},
 	opt_modifier_description = {
 		en = "Weapons only",
 		["zh-cn"] = "仅限武器",
+		ja = "武器のみ",
 	},
 	opt_blessing = {
 		en = Localize("loc_weapon_inventory_traits_title_text"),
@@ -34,6 +38,7 @@ return {
 	opt_blessing_description = {
 		en = "Weapons only\nIncludes: lock indicator, rarity indicator with ownership color",
 		["zh-cn"] = "仅限武器\n包括：锁定指示、带拥有状态颜色的稀有度指示",
+		ja = "武器のみ\n内容：ロック表示、色による未獲得通知付きのレア度表示",
 	},
 	opt_perk = {
 		en = Localize("loc_item_type_perk"),
@@ -41,14 +46,17 @@ return {
 	opt_perk_description = {
 		en = "Includes: rarity indicator with lock color",
 		["zh-cn"] = "包括：带锁定状态颜色的稀有度指示",
+		ja = "内容：色によるロック表示付きのレア度表示",
 	},
 	opt_curio_blessing = {
 		en = "Curio Blessings",
 		["zh-cn"] = "珍品祝福",
+		ja = "収集品の祝福",
 	},
 	opt_curio_blessing_description = {
 		en = "Curios only",
 		["zh-cn"] = "仅限珍品",
+		ja = "収集品のみ",
 	},
 
 	-- To translators: due to the limited screen space,
