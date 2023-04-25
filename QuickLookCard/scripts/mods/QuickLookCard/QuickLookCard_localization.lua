@@ -9,6 +9,48 @@ return {
 		ja = "アイテム一覧で素早く武器のステータスを確認できるようになります。",
 	},
 
+	opt_group_toggles = {
+		en = "Toggles",
+		["zh-cn"] = "开关",
+	},
+	opt_base_level = {
+		en = Localize("loc_weapon_stats_display_base_rating"),
+	},
+	opt_base_level_description = {
+		en = "{#color(85,235,50)}Redeemed+{#reset()} weapons only",
+		["zh-cn"] = "仅限{#color(85,235,50)}救赎{#reset()}及以上武器",
+	},
+	opt_modifier = {
+		en = "Modifier Stats",
+		["zh-cn"] = "五维数据",
+	},
+	opt_modifier_description = {
+		en = "Weapons only",
+		["zh-cn"] = "仅限武器",
+	},
+	opt_blessing = {
+		en = Localize("loc_weapon_inventory_traits_title_text"),
+	},
+	opt_blessing_description = {
+		en = "Weapons only\nIncludes: lock indicator, rarity indicator with ownership color",
+		["zh-cn"] = "仅限武器\n包括：锁定指示、带拥有状态颜色的稀有度指示",
+	},
+	opt_perk = {
+		en = Localize("loc_item_type_perk"),
+	},
+	opt_perk_description = {
+		en = "Includes: rarity indicator with lock color",
+		["zh-cn"] = "包括：带锁定状态颜色的稀有度指示",
+	},
+	opt_curio_blessing = {
+		en = "Curio Blessings",
+		["zh-cn"] = "珍品祝福",
+	},
+	opt_curio_blessing_description = {
+		en = "Curios only",
+		["zh-cn"] = "仅限珍品",
+	},
+
 	-- To translators: due to the limited screen space,
 	-- these following stat translations should be abbreviations form
 	-- and should not be longer than 4 Latin characters (or 2 CJK characters).
