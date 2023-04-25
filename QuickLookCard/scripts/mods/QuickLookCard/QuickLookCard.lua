@@ -123,6 +123,9 @@ local function perk_trait_lock(data, index)
 end
 
 local function visibility_function_perk(content, style, index)
+	if not mod:get("opt_perk") then
+		return nil
+	end
 	if not visibility_function_item(content, style) then
 		return false
 	end
@@ -134,8 +137,11 @@ local function visibility_function_perk(content, style, index)
 end
 
 local function visibility_function_trait(content, style, index)
+	if not mod:get("opt_blessing") then
+		return nil
+	end
 	if not visibility_function_weapon(content, style) then
-		return false
+		return nil
 	end
 	local item = content.element.item
 	if (not item.traits) or #item.traits < index then
@@ -170,6 +176,20 @@ local function visibility_function_trait(content, style, index)
 	return "new"
 end
 
+local function visibility_function_modifier(content, style)
+	if not mod:get("opt_modifier") then
+		return false
+	end
+	return visibility_function_weapon(content, style)
+end
+
+local function visibility_function_gadget_trait(content, style)
+	if not mod:get("opt_curio_blessing") then
+		return false
+	end
+	return visibility_function_weapon(content, style)
+end
+
 local item_definitions = {
 	{
 		pass_type = "text",
@@ -189,6 +209,9 @@ local item_definitions = {
 		},
 		value = "",
 		visibility_function = function (content, style)
+			if not mod:get("opt_base_level") then
+				return false
+			end
 			if not visibility_function_weapon(content, style) then
 				return false
 			end
@@ -415,7 +438,7 @@ local item_definitions = {
 			font_size = 18,
 		},
 		value = "",
-		visibility_function = visibility_function_weapon,
+		visibility_function = visibility_function_modifier,
 	},
 	{
 		pass_type = "text",
@@ -432,7 +455,7 @@ local item_definitions = {
 			font_size = 18,
 		},
 		value = "",
-		visibility_function = visibility_function_weapon,
+		visibility_function = visibility_function_modifier,
 	},
 	{
 		pass_type = "text",
@@ -449,7 +472,7 @@ local item_definitions = {
 			font_size = 18,
 		},
 		value = "",
-		visibility_function = visibility_function_weapon,
+		visibility_function = visibility_function_modifier,
 	},
 	{
 		pass_type = "text",
@@ -466,7 +489,7 @@ local item_definitions = {
 			font_size = 18,
 		},
 		value = "",
-		visibility_function = visibility_function_weapon,
+		visibility_function = visibility_function_modifier,
 	},
 	{
 		pass_type = "text",
@@ -483,7 +506,7 @@ local item_definitions = {
 			font_size = 18,
 		},
 		value = "",
-		visibility_function = visibility_function_weapon,
+		visibility_function = visibility_function_modifier,
 	},
 	{
 		pass_type = "text",
@@ -500,7 +523,7 @@ local item_definitions = {
 			font_size = 18,
 		},
 		value = "",
-		visibility_function = visibility_function_weapon,
+		visibility_function = visibility_function_modifier,
 	},
 	{
 		pass_type = "text",
@@ -517,7 +540,7 @@ local item_definitions = {
 			font_size = 18,
 		},
 		value = "",
-		visibility_function = visibility_function_weapon,
+		visibility_function = visibility_function_modifier,
 	},
 	{
 		pass_type = "text",
@@ -534,7 +557,7 @@ local item_definitions = {
 			font_size = 18,
 		},
 		value = "",
-		visibility_function = visibility_function_weapon,
+		visibility_function = visibility_function_modifier,
 	},
 	{
 		pass_type = "text",
@@ -551,7 +574,7 @@ local item_definitions = {
 			font_size = 18,
 		},
 		value = "",
-		visibility_function = visibility_function_weapon,
+		visibility_function = visibility_function_modifier,
 	},
 	{
 		pass_type = "text",
@@ -568,7 +591,7 @@ local item_definitions = {
 			font_size = 18,
 		},
 		value = "",
-		visibility_function = visibility_function_weapon,
+		visibility_function = visibility_function_modifier,
 	},
 	{
 		pass_type = "text",
@@ -585,7 +608,7 @@ local item_definitions = {
 			font_size = 18,
 		},
 		value = "",
-		visibility_function = visibility_function_gadget,
+		visibility_function = visibility_function_gadget_trait,
 	},
 	{
 		pass_type = "text",
@@ -602,7 +625,7 @@ local item_definitions = {
 			font_size = 18,
 		},
 		value = "",
-		visibility_function = visibility_function_gadget,
+		visibility_function = visibility_function_gadget_trait,
 	},
 }
 
