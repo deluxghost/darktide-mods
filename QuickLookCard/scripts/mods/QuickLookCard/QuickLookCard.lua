@@ -187,7 +187,7 @@ local function visibility_function_gadget_trait(content, style)
 	if not mod:get("opt_curio_blessing") then
 		return false
 	end
-	return visibility_function_weapon(content, style)
+	return visibility_function_gadget(content, style)
 end
 
 local item_definitions = {
