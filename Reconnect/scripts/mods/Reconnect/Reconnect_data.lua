@@ -22,7 +22,7 @@ return {
 				default_value   = {},
 				keybind_trigger = "pressed",
 				keybind_type    = "function_call",
-				function_name   = "retry_func",
+				function_name   = "retry_keybind_func",
 			},
 		}
 	}

@@ -41,6 +41,12 @@ mod.retry_func = function()
 	Managers.multiplayer_session:leave("pong_timeout")
 end
 
+mod.retry_keybind_func = function()
+	if not Managers.ui:chat_using_input() then
+		mod:retry_func()
+	end
+end
+
 mod:command("retry", mod:localize("retry_description"), function()
 	mod:retry_func()
 end)
