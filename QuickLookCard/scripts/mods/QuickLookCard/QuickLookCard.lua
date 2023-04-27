@@ -2,6 +2,7 @@ local mod = get_mod("QuickLookCard")
 local WeaponTemplates = require("scripts/settings/equipment/weapon_templates/weapon_templates")
 local WeaponStats = require("scripts/utilities/weapon_stats")
 local BuffTemplates = require("scripts/settings/buff/buff_templates")
+local MasterItems = require("scripts/backend/master_items")
 
 local QLColor = {
 	default = { 255, 250, 250, 250 },
@@ -11,27 +12,11 @@ local QLColor = {
 	low_trait = { 255, 255, 180, 0 },
 }
 
-local GadgetTraitMapping = {
-	["content/items/traits/gadget_inate_trait/trait_inate_gadget_health"] = {
-		name = "max_health",
-		template = "gadget_inate_health_increase",
-		buff_name = "max_health_modifier",
-	},
-	["content/items/traits/gadget_inate_trait/trait_inate_gadget_toughness"] = {
-		name = "toughness",
-		template = "gadget_inate_toughness_increase",
-		buff_name = "toughness_bonus",
-	},
-	["content/items/traits/gadget_inate_trait/trait_inate_gadget_stamina"] = {
-		name = "max_stamina",
-		template = "gadget_stamina_increase",
-		buff_name = "stamina_modifier",
-	},
-	["content/items/traits/gadget_inate_trait/trait_inate_gadget_health_segment"] = {
-		name = "wounds",
-		template = "gadget_inate_max_wounds_increase",
-		buff_name = "extra_max_amount_of_wounds",
-	},
+local GadgetTraitBuffNames = {
+	gadget_inate_health_increase = "max_health_modifier",
+	gadget_inate_toughness_increase = "toughness_bonus",
+	gadget_stamina_increase = "stamina_modifier",
+	gadget_inate_max_wounds_increase = "extra_max_amount_of_wounds",
 }
 
 local function _get_lerp_stepped_value(range, lerp_value)
@@ -44,14 +29,14 @@ local function _get_lerp_stepped_value(range, lerp_value)
 end
 
 local function get_gadget_trait_data(id, value)
-	local trait_mapping = GadgetTraitMapping[id]
-	local name = trait_mapping.name
-	local display_name = mod:localize("gadget_trait_" .. name)
-	if display_name == "<gadget_trait_" .. name .. ">" then
+	local master = MasterItems.get_item(id)
+	local trait = master.trait
+	local display_name = mod:localize("trait_" .. trait)
+	if display_name == "<trait_" .. trait .. ">" then
 		display_name = "???"
 	end
 	local output = "??"
-	local template = BuffTemplates[trait_mapping.template]
+	local template = BuffTemplates[trait]
 	if not template then
 		return display_name, output
 	end
@@ -61,9 +46,10 @@ local function get_gadget_trait_data(id, value)
 		return display_name, output
 	end
 
+	local buff_name = GadgetTraitBuffNames[trait]
 	local template_stat_buffs = template.stat_buffs or template.lerped_stat_buffs
 	if template_stat_buffs then
-		local buff = template_stat_buffs[trait_mapping.buff_name]
+		local buff = template_stat_buffs[buff_name]
 		if template.lerped_stat_buffs then
 			local lerp_value_func = buff.lerp_value_func or math.lerp
 			output = lerp_value_func(buff.min, buff.max, value)
@@ -72,7 +58,7 @@ local function get_gadget_trait_data(id, value)
 		else
 			output = buff
 		end
-		local show_as = localization_info[trait_mapping.buff_name]
+		local show_as = localization_info[buff_name]
 		if show_as and show_as == "percentage" then
 			output = math.round(output * 100)
 		end
@@ -191,6 +177,9 @@ local function visibility_function_gadget_trait(content, style)
 end
 
 local item_definitions = {
+	-- ########################
+	-- ###### Base Level ######
+	-- ########################
 	{
 		pass_type = "text",
 		style_id = "qlc_baseLevel",
@@ -222,6 +211,9 @@ local item_definitions = {
 			return true
 		end,
 	},
+	-- #######################
+	-- ###### Blessings ######
+	-- #######################
 	{
 		pass_type = "text",
 		style_id = "qlc_trait_level_1",
@@ -342,87 +334,9 @@ local item_definitions = {
 			return true
 		end,
 	},
-	{
-		pass_type = "texture",
-		style_id = "qlc_perk_icon_1",
-		value_id = "qlc_perk_icon_1",
-		value = "content/ui/materials/icons/perks/perk_level_05",
-		style = {
-			vertical_alignment = "top",
-			horizontal_alignment = "left",
-			offset = { 249, 70, 10 },
-			size = { 16, 16 },
-		},
-		visibility_function = function (content, style)
-			if not visibility_function_perk(content, style, 1) then
-				return false
-			end
-			local item = content.element.item
-			local locked = perk_trait_lock(item.perks, 1)
-			if locked == "locked" then
-				style.color = QLColor.locked
-			else
-				style.color = QLColor.default
-			end
-			local mat = "content/ui/materials/icons/perks/perk_level_" .. string.format("%02d", item.perks[1].rarity)
-			content.qlc_perk_icon_1 = mat
-			return true
-		end,
-	},
-	{
-		pass_type = "texture",
-		style_id = "qlc_perk_icon_2",
-		value_id = "qlc_perk_icon_2",
-		value = "content/ui/materials/icons/perks/perk_level_03",
-		style = {
-			vertical_alignment = "top",
-			horizontal_alignment = "left",
-			offset = { 268, 70, 10 },
-			size = { 16, 16 },
-		},
-		visibility_function = function (content, style)
-			if not visibility_function_perk(content, style, 2) then
-				return false
-			end
-			local item = content.element.item
-			local locked = perk_trait_lock(item.perks, 2)
-			if locked == "locked" then
-				style.color = QLColor.locked
-			else
-				style.color = QLColor.default
-			end
-			local mat = "content/ui/materials/icons/perks/perk_level_" .. string.format("%02d", item.perks[2].rarity)
-			content.qlc_perk_icon_2 = mat
-			return true
-		end,
-	},
-	{
-		pass_type = "texture",
-		style_id = "qlc_perk_icon_3",
-		value_id = "qlc_perk_icon_3",
-		value = "content/ui/materials/icons/perks/perk_level_02",
-		style = {
-			vertical_alignment = "top",
-			horizontal_alignment = "left",
-			offset = { 287, 70, 10 },
-			size = { 16, 16 },
-		},
-		visibility_function = function (content, style)
-			if not visibility_function_perk(content, style, 3) then
-				return false
-			end
-			local item = content.element.item
-			local locked = perk_trait_lock(item.perks, 3)
-			if locked == "locked" then
-				style.color = QLColor.locked
-			else
-				style.color = QLColor.default
-			end
-			local mat = "content/ui/materials/icons/perks/perk_level_" .. string.format("%02d", item.perks[3].rarity)
-			content.qlc_perk_icon_3 = mat
-			return true
-		end,
-	},
+	-- ############################
+	-- ###### Modifier Stats ######
+	-- ############################
 	{
 		pass_type = "text",
 		style_id = "qlc_stats_title_1",
@@ -593,6 +507,290 @@ local item_definitions = {
 		value = "",
 		visibility_function = visibility_function_modifier,
 	},
+	-- ##########################
+	-- ###### Weapon Perks ######
+	-- ##########################
+	{
+		pass_type = "text",
+		style_id = "qlc_weapon_perk_title_1",
+		value_id = "qlc_weapon_perk_title_1",
+		style = {
+			vertical_alignment = "top",
+			horizontal_alignment = "left",
+			text_vertical_alignment = "center",
+			offset = { 328, 60, 5 },
+			size = { 120, 36 },
+			text_color = QLColor.default,
+			font_type = "machine_medium",
+			font_size = 18,
+		},
+		value = "",
+		visibility_function = function (content, style)
+			if not visibility_function_perk(content, style, 1) then
+				return false
+			end
+			if not visibility_function_weapon(content, style) then
+				return false
+			end
+			return true
+		end,
+	},
+	{
+		pass_type = "texture",
+		style_id = "qlc_weapon_perk_icon_1",
+		value_id = "qlc_weapon_perk_icon_1",
+		value = "content/ui/materials/icons/perks/perk_level_05",
+		style = {
+			vertical_alignment = "top",
+			horizontal_alignment = "left",
+			offset = { 368, 70, 10 },
+			size = { 16, 16 },
+		},
+		visibility_function = function (content, style)
+			if not visibility_function_perk(content, style, 1) then
+				return false
+			end
+			if not visibility_function_weapon(content, style) then
+				return false
+			end
+			local item = content.element.item
+			local locked = perk_trait_lock(item.perks, 1)
+			if locked == "locked" then
+				style.color = QLColor.locked
+			else
+				style.color = QLColor.default
+			end
+			local mat = "content/ui/materials/icons/perks/perk_level_" .. string.format("%02d", item.perks[1].rarity)
+			content.qlc_weapon_perk_icon_1 = mat
+			return true
+		end,
+	},
+	{
+		pass_type = "text",
+		style_id = "qlc_weapon_perk_title_2",
+		value_id = "qlc_weapon_perk_title_2",
+		style = {
+			vertical_alignment = "top",
+			horizontal_alignment = "left",
+			text_vertical_alignment = "center",
+			offset = { 328, 80, 5 },
+			size = { 120, 36 },
+			text_color = QLColor.default,
+			font_type = "machine_medium",
+			font_size = 18,
+		},
+		value = "",
+		visibility_function = function (content, style)
+			if not visibility_function_perk(content, style, 1) then
+				return false
+			end
+			if not visibility_function_weapon(content, style) then
+				return false
+			end
+			return true
+		end,
+	},
+	{
+		pass_type = "texture",
+		style_id = "qlc_weapon_perk_icon_2",
+		value_id = "qlc_weapon_perk_icon_2",
+		value = "content/ui/materials/icons/perks/perk_level_05",
+		style = {
+			vertical_alignment = "top",
+			horizontal_alignment = "left",
+			offset = { 368, 90, 10 },
+			size = { 16, 16 },
+		},
+		visibility_function = function (content, style)
+			if not visibility_function_perk(content, style, 2) then
+				return false
+			end
+			if not visibility_function_weapon(content, style) then
+				return false
+			end
+			local item = content.element.item
+			local locked = perk_trait_lock(item.perks, 2)
+			if locked == "locked" then
+				style.color = QLColor.locked
+			else
+				style.color = QLColor.default
+			end
+			local mat = "content/ui/materials/icons/perks/perk_level_" .. string.format("%02d", item.perks[2].rarity)
+			content.qlc_weapon_perk_icon_2 = mat
+			return true
+		end,
+	},
+	-- #########################
+	-- ###### Curio Perks ######
+	-- #########################
+	{
+		pass_type = "text",
+		style_id = "qlc_gadget_perk_title_1",
+		value_id = "qlc_gadget_perk_title_1",
+		style = {
+			vertical_alignment = "top",
+			horizontal_alignment = "left",
+			text_vertical_alignment = "center",
+			offset = { 108, 80, 5 },
+			size = { 120, 36 },
+			text_color = QLColor.default,
+			font_type = "machine_medium",
+			font_size = 18,
+		},
+		value = "",
+		visibility_function = function (content, style)
+			if not visibility_function_perk(content, style, 1) then
+				return false
+			end
+			if not visibility_function_gadget(content, style) then
+				return false
+			end
+			return true
+		end,
+	},
+	{
+		pass_type = "texture",
+		style_id = "qlc_gadget_perk_icon_1",
+		value_id = "qlc_gadget_perk_icon_1",
+		value = "content/ui/materials/icons/perks/perk_level_05",
+		style = {
+			vertical_alignment = "top",
+			horizontal_alignment = "left",
+			offset = { 148, 90, 5 },
+			size = { 16, 16 },
+		},
+		visibility_function = function (content, style)
+			if not visibility_function_perk(content, style, 1) then
+				return false
+			end
+			if not visibility_function_gadget(content, style) then
+				return false
+			end
+			local item = content.element.item
+			local locked = perk_trait_lock(item.perks, 1)
+			if locked == "locked" then
+				style.color = QLColor.locked
+			else
+				style.color = QLColor.default
+			end
+			local mat = "content/ui/materials/icons/perks/perk_level_" .. string.format("%02d", item.perks[1].rarity)
+			content.qlc_gadget_perk_icon_1 = mat
+			return true
+		end,
+	},
+	{
+		pass_type = "text",
+		style_id = "qlc_gadget_perk_title_2",
+		value_id = "qlc_gadget_perk_title_2",
+		style = {
+			vertical_alignment = "top",
+			horizontal_alignment = "left",
+			text_vertical_alignment = "center",
+			offset = { 178, 80, 5 },
+			size = { 120, 36 },
+			text_color = QLColor.default,
+			font_type = "machine_medium",
+			font_size = 18,
+		},
+		value = "",
+		visibility_function = function (content, style)
+			if not visibility_function_perk(content, style, 1) then
+				return false
+			end
+			if not visibility_function_gadget(content, style) then
+				return false
+			end
+			return true
+		end,
+	},
+	{
+		pass_type = "texture",
+		style_id = "qlc_gadget_perk_icon_2",
+		value_id = "qlc_gadget_perk_icon_2",
+		value = "content/ui/materials/icons/perks/perk_level_05",
+		style = {
+			vertical_alignment = "top",
+			horizontal_alignment = "left",
+			offset = { 218, 90, 10 },
+			size = { 16, 16 },
+		},
+		visibility_function = function (content, style)
+			if not visibility_function_perk(content, style, 2) then
+				return false
+			end
+			if not visibility_function_gadget(content, style) then
+				return false
+			end
+			local item = content.element.item
+			local locked = perk_trait_lock(item.perks, 2)
+			if locked == "locked" then
+				style.color = QLColor.locked
+			else
+				style.color = QLColor.default
+			end
+			local mat = "content/ui/materials/icons/perks/perk_level_" .. string.format("%02d", item.perks[2].rarity)
+			content.qlc_gadget_perk_icon_2 = mat
+			return true
+		end,
+	},
+	{
+		pass_type = "text",
+		style_id = "qlc_gadget_perk_title_3",
+		value_id = "qlc_gadget_perk_title_3",
+		style = {
+			vertical_alignment = "top",
+			horizontal_alignment = "left",
+			text_vertical_alignment = "center",
+			offset = { 248, 80, 5 },
+			size = { 120, 36 },
+			text_color = QLColor.default,
+			font_type = "machine_medium",
+			font_size = 18,
+		},
+		value = "",
+		visibility_function = function (content, style)
+			if not visibility_function_perk(content, style, 3) then
+				return false
+			end
+			if not visibility_function_gadget(content, style) then
+				return false
+			end
+			return true
+		end,
+	},
+	{
+		pass_type = "texture",
+		style_id = "qlc_gadget_perk_icon_3",
+		value_id = "qlc_gadget_perk_icon_3",
+		value = "content/ui/materials/icons/perks/perk_level_05",
+		style = {
+			vertical_alignment = "top",
+			horizontal_alignment = "left",
+			offset = { 288, 90, 10 },
+			size = { 16, 16 },
+		},
+		visibility_function = function (content, style)
+			if not visibility_function_perk(content, style, 3) then
+				return false
+			end
+			if not visibility_function_gadget(content, style) then
+				return false
+			end
+			local item = content.element.item
+			local locked = perk_trait_lock(item.perks, 3)
+			if locked == "locked" then
+				style.color = QLColor.locked
+			else
+				style.color = QLColor.default
+			end
+			local mat = "content/ui/materials/icons/perks/perk_level_" .. string.format("%02d", item.perks[3].rarity)
+			content.qlc_gadget_perk_icon_3 = mat
+			return true
+		end,
+	},
+	-- ############################
+	-- ###### Curio Blessing ######
+	-- ############################
 	{
 		pass_type = "text",
 		style_id = "qlc_gadget_blessing_title",
@@ -704,6 +902,30 @@ local function fill_gadget_trait(content, item)
 	content["qlc_gadget_blessing_value"] = output
 end
 
+local function fill_perk(content, item)
+	if (not item.perks) or #item.perks < 1 then
+		return
+	end
+	for i, perk in ipairs(item.perks) do
+		if item.item_type == "GADGET" and i > 3 then
+			break
+		elseif (item.item_type == "WEAPON_MELEE" or item.item_type == "WEAPON_RANGED") and i > 2 then
+			break
+		end
+		local master = MasterItems.get_item(perk.id)
+		local trait = master.trait
+		local display_name = mod:localize("trait_" .. trait)
+		if display_name == "<trait_" .. trait .. ">" then
+			display_name = "???"
+		end
+		if item.item_type == "GADGET" then
+			content["qlc_gadget_perk_title_" .. tostring(i)] = display_name
+		else
+			content["qlc_weapon_perk_title_" .. tostring(i)] = display_name
+		end
+	end
+end
+
 mod:hook("ViewElementGrid", "_create_entry_widget_from_config", function(func, self, config, suffix, callback_name, secondary_callback_name, double_click_callback_name)
 	local widget, alignment_widget = func(
 		self, config, suffix, callback_name, secondary_callback_name, double_click_callback_name
@@ -733,5 +955,6 @@ mod:hook("ViewElementGrid", "_create_entry_widget_from_config", function(func, s
 	elseif item.item_type == "GADGET" then
 		fill_gadget_trait(content, item)
 	end
+	fill_perk(content, item)
 	return widget, alignment_widget
 end)
