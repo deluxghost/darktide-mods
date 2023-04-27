@@ -1,11 +1,11 @@
 return {
 	mod_name = {
-		en = "Psykanium Default Difficulty",
+		en = "Psykhanium Default Difficulty",
 		["zh-cn"] = "灵能室默认难度",
 		ru = "Стандартная сложность Псайканиума",
 	},
 	mod_description = {
-		en = "Let you set the default difficulty of the Psykanium, and enter Psykanium quickly.",
+		en = "Let you set the default difficulty of the Psykhanium, and enter Psykhanium quickly.",
 		["zh-cn"] = "允许你设置灵能室默认难度，以及快速进入灵能室。",
 		ru = "Позволяет вам установить сложность Псайканиума по умолчанию и быстро войти в него.",
 	},
@@ -15,7 +15,7 @@ return {
 		ru = "Сложность по умолчанию",
 	},
 	interact_psykanium_option = {
-		en = "When interacting with Psykanium...",
+		en = "When interacting with Psykhanium...",
 		["zh-cn"] = "与灵能室交互时...",
 		ru = "При взаимодействии с Псайканиумом…",
 	},
