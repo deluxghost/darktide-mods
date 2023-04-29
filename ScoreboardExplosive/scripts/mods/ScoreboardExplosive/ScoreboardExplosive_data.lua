@@ -7,7 +7,17 @@ return {
 	options = {
 		widgets = {
 			{
-				setting_id = "explosive_ignited",
+				setting_id = "option_explosive_detonated",
+				type = "checkbox",
+				default_value = true,
+			},
+			{
+				setting_id = "option_message_explosive_ignited",
+				type = "checkbox",
+				default_value = true,
+			},
+			{
+				setting_id = "option_message_explosive_detonated",
 				type = "checkbox",
 				default_value = true,
 			},
