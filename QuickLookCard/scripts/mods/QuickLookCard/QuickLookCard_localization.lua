@@ -364,7 +364,7 @@ return {
 	trait_weapon_trait_increase_impact = {
 		en = "IMPC", -- Impact (Melee)
 		["zh-cn"] = "冲击", -- 冲击（近战）
-		ja = "衝撃" -- 衝撃
+		ja = "衝撃", -- 衝撃 (近接)
 	},
 	trait_gadget_revive_speed_increase = {
 		en = "RVIV", -- Revive Speed (Ally)
@@ -452,7 +452,7 @@ return {
 	trait_weapon_trait_increase_damage = {
 		en = "DMG", -- Melee Damage
 		["zh-cn"] = "伤害", -- 近战伤害
-		ja = "近接", -- 近接ダメージ
+		ja = "威力", -- 近接ダメージ
 	},
 	trait_weapon_trait_increase_damage_specials = {
 		en = "SPEC", -- Increased Melee Damage (Specialists)
