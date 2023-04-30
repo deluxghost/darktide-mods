@@ -388,18 +388,18 @@ return {
 		en = "IMPC", -- Impact (Melee)
 		["zh-cn"] = "冲击", -- 冲击（近战）
 		ja = "衝撃", -- 衝撃 (近接)
-		ru = "МОЩЬ", -- Мощь (Ближний бой) 
+		ru = "МОЩЬ", -- Мощь (Ближний бой)
 	},
 	trait_gadget_revive_speed_increase = {
 		en = "RVIV", -- Revive Speed (Ally)
 		["zh-cn"] = "友活", -- 复活速度（盟友）
-		ja = "蘇生", --蘇生速度 (味方)
+		ja = "蘇生", -- 蘇生速度 (味方)
 		ru = "СВСО", -- Скорость воскрешения (союзник)
 	},
 	trait_gadget_mission_credits_increase = {
 		en = "ODKT", -- Ordo Dockets (Mission Rewards)
 		["zh-cn"] = "金币", -- 审判庭双子币（任务奖励）
-		ja = "貨幣", --オルドドケット (ミッション報酬)
+		ja = "貨幣", -- オルドドケット (ミッション報酬)
 		ru = "ЯОНЗ", -- Ярлыки Ордо (награды за задание)
 	},
 	trait_gadget_mission_reward_gear_instead_of_weapon_increase = {
