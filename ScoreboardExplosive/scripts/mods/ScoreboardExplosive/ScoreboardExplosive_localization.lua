@@ -41,10 +41,10 @@ return {
 	},
 	message_explosive_ignited = {
 		en = " ignited :explosive:",
-		["zh-cn"] = " 点燃了:explosive:",
+		["zh-cn"] = "点燃了:explosive:",
 	},
 	message_explosive_detonated = {
 		en = " detonated :explosive:",
-		["zh-cn"] = " 引爆了:explosive:",
+		["zh-cn"] = "引爆了:explosive:",
 	},
 }
