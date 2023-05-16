@@ -3,6 +3,7 @@ local WorldMarkerTemplateInteraction = require("scripts/ui/hud/elements/world_ma
 local HudElementWorldMarkers = require("scripts/ui/hud/elements/world_markers/hud_element_world_markers")
 local HUDElementInteractionSettings = require("scripts/ui/hud/elements/interaction/hud_element_interaction_settings")
 local HUDElementSmartTagging = require("scripts/ui/hud/elements/smart_tagging/hud_element_smart_tagging")
+local BaseInteraction = require("scripts/extension_systems/interaction/interactions/base_interaction")
 
 local memory = mod:persistent_table("memory")
 
@@ -147,4 +148,12 @@ mod:hook(HUDElementSmartTagging, "_is_marker_valid_for_tagging", function(func, 
 		end
 	end
 	return func(self, player_unit, marker, distance)
+end)
+
+mod:hook(BaseInteraction, "_interactor_disabled", function(func, self, interactor_unit)
+	local unit_data_extension = ScriptUnit.extension(interactor_unit, "unit_data_system")
+	if not unit_data_extension then
+		return false, false
+	end
+	return func(self, interactor_unit)
 end)
