@@ -45,14 +45,14 @@ return {
 	},
 	loc_command_output_visualize_description = {
 		en = "Some whitespace characters in the output of /loc command will display as visible icons.\n\n" ..
-			"\" \" -> \n" ..
-			"\"\\t\" -> \n" ..
-			"\"\\n\" -> \n" ..
-			"\"\\r\" -> ",
+			"\" \" >> \n" ..
+			"\"\\t\" >> \n" ..
+			"\"\\n\" >> \n" ..
+			"\"\\r\" >> ",
 		["zh-cn"] = "以可见图标显示 /loc 命令输出中的一些空白字符。\n\n" ..
-			"\" \" -> \n" ..
-			"\"\\t\" -> \n" ..
-			"\"\\n\" -> \n" ..
-			"\"\\r\" -> ",
+			"\" \" >> \n" ..
+			"\"\\t\" >> \n" ..
+			"\"\\n\" >> \n" ..
+			"\"\\r\" >> ",
 	},
 }
