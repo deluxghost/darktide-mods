@@ -42,7 +42,7 @@ mod:hook(LocalizationManager, "_lookup", function(func, self, key)
 		return ret
 	end
 	for _, handle_func in ipairs(fixes) do
-		ret = handle_func(ret)
+		ret = handle_func(Managers.localization._language, ret)
 	end
 	return ret
 end)

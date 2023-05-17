@@ -1,3 +1,5 @@
+local mod = get_mod("WhatTheLocalization")
+
 local fix_templates = {
 	{
 		id = "thunder_hammer_name_remove_newline",
@@ -5,7 +7,7 @@ local fix_templates = {
 			"loc_thunderhammer_2h_p1_m1",
 			"loc_thunderhammer_2h_p1_m2",
 		},
-		handle_func = function(value)
+		handle_func = function(locale, value)
 			return string.trim(value)
 		end,
 	},
@@ -17,7 +19,7 @@ local fix_templates = {
 		locales = {
 			"zh-cn",
 		},
-		handle_func = function(value)
+		handle_func = function(locale, value)
 			return string.gsub(value, ": ", ":")
 		end,
 	},
@@ -29,7 +31,7 @@ local fix_templates = {
 		locales = {
 			"zh-cn",
 		},
-		handle_func = function(value)
+		handle_func = function(locale, value)
 			return "武器特殊攻击命中时，目标受到{stacks:%s}层{rending:%s}的脆弱。持续{time:%s}秒。"
 		end,
 	},
