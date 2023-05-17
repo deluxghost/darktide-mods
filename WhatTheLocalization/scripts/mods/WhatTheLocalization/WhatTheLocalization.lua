@@ -47,13 +47,45 @@ mod:hook(LocalizationManager, "_lookup", function(func, self, key)
 	return ret
 end)
 
-mod.in_debug_mode = false
-
 mod.toggle_debug_mode = function()
-	mod.in_debug_mode = not mod.in_debug_mode
+	if not Managers.ui:chat_using_input() then
+		local debug_mode = not mod:get("enable_debug_mode")
+		mod:set("enable_debug_mode", debug_mode, false)
+		if debug_mode then
+			mod:notify(mod:localize("message_debug_mode_on"))
+		else
+			mod:notify(mod:localize("message_debug_mode_off"))
+		end
+	end
 end
 
 mod:hook(LocalizationManager, "localize", function(func, self, key, no_cache, context)
 	local ret = func(self, key, no_cache, context)
-	return mod.in_debug_mode and key or ret
+	return mod:get("enable_debug_mode") and key or ret
+end)
+
+local visualize_mapping = {
+	[" "] = "",
+	["\t"] = "",
+	["\n"] = "\n",
+	["\r"] = "",
+}
+
+mod:command("loc", mod:localize("loc_command_description"), function(key)
+	if not key then
+		mod:echo(mod:localize("loc_command_missing_key"))
+		return
+	end
+	local message = Managers.localization:_lookup(key)
+	if message then
+		message = message:gsub("%%", "%%%%")
+		if mod:get("loc_command_output_visualize") then
+			for pat, repl in pairs(visualize_mapping) do
+				message = message:gsub(pat, repl)
+			end
+		end
+		mod:echo(message)
+		return
+	end
+	mod:echo(mod:localize("loc_command_not_found"))
 end)
