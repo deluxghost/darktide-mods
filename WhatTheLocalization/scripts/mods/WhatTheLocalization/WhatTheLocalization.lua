@@ -46,3 +46,14 @@ mod:hook(LocalizationManager, "_lookup", function(func, self, key)
 	end
 	return ret
 end)
+
+mod.in_debug_mode = false
+
+mod.toggle_debug_mode = function()
+	mod.in_debug_mode = not mod.in_debug_mode
+end
+
+mod:hook(LocalizationManager, "localize", function(func, self, key, no_cache, context)
+	local ret = func(self, key, no_cache, context)
+	return mod.in_debug_mode and key or ret
+end)
