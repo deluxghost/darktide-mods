@@ -7,9 +7,9 @@ return {
 		en = "Add explosive stats to scoreboard mod.",
 		["zh-cn"] = "为记分板模组添加爆炸物数据。",
 	},
-	option_explosive_detonated = {
-		en = "Enable explosive detonated stats",
-		["zh-cn"] = "启用引爆爆炸物统计",
+	option_explosive_ignited = {
+		en = "Enable explosive ignited stats",
+		["zh-cn"] = "启用点燃爆炸物统计",
 	},
 	option_message_explosive_ignited = {
 		en = "Show explosive ignited message",
@@ -19,9 +19,9 @@ return {
 		en = "Show explosive detonated message",
 		["zh-cn"] = "显示引爆爆炸物消息",
 	},
-	explosive_detonated = {
-		en = "Explosive detonated",
-		["zh-cn"] = "引爆爆炸物",
+	explosive_ignited = {
+		en = "Explosive ignited",
+		["zh-cn"] = "点燃爆炸物",
 	},
 	explosive_common = {
 		en = "Explosive",
