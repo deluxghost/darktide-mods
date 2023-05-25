@@ -1,7 +1,6 @@
 local mod = get_mod("ScoreboardExplosive")
 local scoreboard = get_mod("scoreboard")
 local TextUtilities = require("scripts/utilities/ui/text")
--- local Breed = require("scripts/utilities/breed")
 
 local explosive_cache = mod:persistent_table("explosive_cache")
 
