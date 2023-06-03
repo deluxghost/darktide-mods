@@ -58,7 +58,7 @@ for name, circumstance in pairs(CircumstanceTemplates) do
 				end
 			end
 			local display = Localize(circumstance.ui.display_name)
-			if use_name or string.startswith(display, "<") then
+			if use_name or string.starts_with(display, "<") then
 				display = name
 			end
 			table.insert(circumstance_array, {

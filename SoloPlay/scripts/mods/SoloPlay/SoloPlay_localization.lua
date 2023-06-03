@@ -50,7 +50,7 @@ local loc = {
 
 for name, mission in pairs(MissionTemplates) do
 	local display = Localize(mission.mission_name)
-	if string.startswith(display, "<") then
+	if string.starts_with(display, "<") then
 		display = name
 	end
 	loc["loc_mission_" .. name] = {
@@ -95,7 +95,7 @@ for name, circumstance in pairs(CircumstanceTemplates) do
 				end
 			end
 			local display = Localize(circumstance.ui.display_name)
-			if use_name or string.startswith(display, "<") then
+			if use_name or string.starts_with(display, "<") then
 				display = name
 			end
 			loc["loc_circumstance_" .. name] = {
