@@ -37,7 +37,7 @@ local loc = {
 		["zh-cn"] = "选择次要目标",
 	},
 	choose_circumstance = {
-		en = "Choose circumstance",
+		en = "Choose special condition",
 		["zh-cn"] = "选择特殊状况",
 	},
 	default_text = {
@@ -66,6 +66,7 @@ local circumstance_prefer_list = {
 	loc_circumstance_hunting_grounds_title = "hunting_grounds_01",
 	loc_circumstance_dummy_more_resistance_title = "more_resistance_01",
 	loc_circumstance_dummy_less_resistance_title = "less_resistance_01",
+	loc_circumstance_nurgle_manifestation_title = "heretical_disruption_01",
 }
 local circumstance_reverse_map = {}
 for name, circumstance in pairs(CircumstanceTemplates) do
