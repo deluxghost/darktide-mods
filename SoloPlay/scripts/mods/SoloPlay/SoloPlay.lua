@@ -67,8 +67,8 @@ local function in_hub_or_psykhanium()
 end
 
 mod:command("solo", mod:localize("solo_command_desc"), function()
-	if not in_hub_or_psykhanium() then
-		mod:echo(mod:localize("msg_not_in_hub"))
+	if not in_hub_or_psykhanium() and not mod.is_soloplay() then
+		mod:echo(mod:localize("msg_not_in_hub_or_mission"))
 		return
 	end
 

@@ -16,9 +16,9 @@ local loc = {
 		en = "Play offline solo mission",
 		["zh-cn"] = "玩离线单人任务",
 	},
-	msg_not_in_hub = {
-		en = "Error: not in Mourningstar or Psykhanium",
-		["zh-cn"] = "错误：不在哀星号上或灵能室内",
+	msg_not_in_hub_or_mission = {
+		en = "Error: not in Mourningstar, Psykhanium or SoloPlay",
+		["zh-cn"] = "错误：不在哀星号上、灵能室内或单人任务中",
 	},
 	msg_starting_soloplay = {
 		en = "Starting solo mission...",
