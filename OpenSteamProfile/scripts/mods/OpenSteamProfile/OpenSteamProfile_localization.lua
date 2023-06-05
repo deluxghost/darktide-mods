@@ -14,4 +14,8 @@ return {
 		["zh-cn"] = "打开 Steam 个人资料",
 		ru = "Открыть профиль Steam",
 	},
+	use_steam_overlay = {
+		en = "Open in Steam Overlay",
+		["zh-cn"] = "在 Steam 游戏内界面打开",
+	},
 }
