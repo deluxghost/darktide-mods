@@ -20,6 +20,9 @@ mod.is_soloplay = function ()
 end
 
 mod:hook_require("scripts/ui/views/system_view/system_view_content_list", function(instance)
+	if not mod:is_enabled() then
+		return
+	end
 	for _, item in ipairs(instance.default) do
 		if item.text == "loc_exit_to_main_menu_display_name" then
 			item.validation_function = function ()
@@ -41,10 +44,6 @@ mod:hook_require("scripts/ui/views/system_view/system_view_content_list", functi
 		elseif item.text == "loc_leave_mission_display_name" then
 			item.validation_function = function ()
 				local game_mode_manager = Managers.state.game_mode
-				if not game_mode_manager then
-					return false
-				end
-
 				local is_training_grounds = false
 				if game_mode_manager then
 					local game_mode_name = game_mode_manager:game_mode_name()
