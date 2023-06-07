@@ -107,6 +107,20 @@ return {
 				default_value = "default",
 				options = circumstance_options,
 			},
+			{
+				setting_id = "group_options",
+				type = "group",
+				sub_widgets = {
+					{
+						setting_id = "inventory_keybind",
+						type = "keybind",
+						default_value = { "i" },
+						keybind_trigger = "pressed",
+						keybind_type = "function_call",
+						function_name = "open_inventory",
+					},
+				},
+			},
 		}
 	}
 }

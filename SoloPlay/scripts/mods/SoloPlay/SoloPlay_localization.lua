@@ -45,6 +45,14 @@ local loc = {
 		en = "None",
 		["zh-cn"] = "无",
 	},
+	group_options = {
+		en = "Options",
+		["zh-cn"] = "选项",
+	},
+	inventory_keybind = {
+		en = "Inventory keybind",
+		["zh-cn"] = "库存快捷键",
+	},
 }
 
 -- No more translations below

@@ -19,6 +19,26 @@ mod.is_soloplay = function()
 	return host_type == HOST_TYPES.singleplay
 end
 
+mod.open_inventory = function()
+	if Managers.ui:chat_using_input() then
+		return
+	end
+	if not mod.is_soloplay() then
+		return
+	end
+	local active = false
+	local active_views = Managers.ui:active_views()
+	for _, active_view in pairs(active_views) do
+		if active_view == "inventory_background_view" then
+			active = true
+		end
+	end
+	if active then
+		return
+	end
+	Managers.ui:open_view("inventory_background_view", nil, nil, nil, nil, nil)
+end
+
 mod:hook_require("scripts/ui/views/system_view/system_view_content_list", function(instance)
 	if not mod:is_enabled() then
 		return
