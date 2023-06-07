@@ -192,7 +192,6 @@ mod:hook_require("scripts/ui/pass_templates/item_pass_templates", function(insta
 		end
 		table.insert(instance.item, def)
 	end
-	return instance
 end)
 
 mod:hook_safe("ViewElementGrid", "init", function(self)
