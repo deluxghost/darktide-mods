@@ -1,4 +1,5 @@
 local mod = get_mod("SoloPlay")
+local SoloPlaySettings = mod:io_dofile("SoloPlay/scripts/mods/SoloPlay/SoloPlaySettings")
 local MissionTemplates = require("scripts/settings/mission/mission_templates")
 local CircumstanceTemplates = require("scripts/settings/circumstance/circumstance_templates")
 local MissionObjectiveTemplates = require("scripts/settings/mission_objective/mission_objective_templates")
@@ -58,16 +59,6 @@ for name, mission in pairs(MissionTemplates) do
 	}
 end
 
-local circumstance_denylist = {
-	"ember",
-	"dummy",
-}
-local circumstance_prefer_list = {
-	loc_circumstance_hunting_grounds_title = "hunting_grounds_01",
-	loc_circumstance_dummy_more_resistance_title = "more_resistance_01",
-	loc_circumstance_dummy_less_resistance_title = "less_resistance_01",
-	loc_circumstance_nurgle_manifestation_title = "heretical_disruption_01",
-}
 local circumstance_reverse_map = {}
 for name, circumstance in pairs(CircumstanceTemplates) do
 	if circumstance.ui then
@@ -80,7 +71,7 @@ end
 for name, circumstance in pairs(CircumstanceTemplates) do
 	if circumstance.ui then
 		local deny = false
-		for _, deny_entry in ipairs(circumstance_denylist) do
+		for _, deny_entry in ipairs(SoloPlaySettings.circumstance_denylist) do
 			if string.find(name, deny_entry, 1, true) ~= nil then
 				deny = true
 				break
@@ -91,7 +82,7 @@ for name, circumstance in pairs(CircumstanceTemplates) do
 			local use_name = false
 			local names = circumstance_reverse_map[display_name] or {}
 			if #names > 1 then
-				if circumstance_prefer_list[display_name] ~= name then
+				if SoloPlaySettings.circumstance_prefer_list[display_name] ~= name then
 					use_name = true
 				end
 			end

@@ -4,7 +4,7 @@ local DangerSettings = require("scripts/settings/difficulty/danger_settings")
 local MatchmakingConstants = require("scripts/settings/network/matchmaking_constants")
 local HOST_TYPES = MatchmakingConstants.HOST_TYPES
 
-mod.is_soloplay = function ()
+mod.is_soloplay = function()
 	if not Managers.state.game_mode then
 		return false
 	end
