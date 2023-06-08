@@ -25,6 +25,10 @@ local loc = {
 		en = "Starting solo mission...",
 		["zh-cn"] = "正在开始单人任务...",
 	},
+	group_mission_settings = {
+		en = "Mission settings",
+		["zh-cn"] = "任务设置",
+	},
 	choose_mission = {
 		en = "Choose mission",
 		["zh-cn"] = "选择任务",
@@ -45,9 +49,17 @@ local loc = {
 		en = "None",
 		["zh-cn"] = "无",
 	},
-	group_options = {
-		en = "Options",
-		["zh-cn"] = "选项",
+	group_modifiers = {
+		en = "Modifiers",
+		["zh-cn"] = "修改项",
+	},
+	friendly_fire_enabled = {
+		en = "Friendly fire",
+		["zh-cn"] = "友军伤害",
+	},
+	group_global_options = {
+		en = "Global options",
+		["zh-cn"] = "全局选项",
 	},
 	inventory_keybind = {
 		en = "Inventory keybind",

@@ -2,6 +2,7 @@ local mod = get_mod("SoloPlay")
 local MissionTemplates = require("scripts/settings/mission/mission_templates")
 local DangerSettings = require("scripts/settings/difficulty/danger_settings")
 local MatchmakingConstants = require("scripts/settings/network/matchmaking_constants")
+local DifficultyManager = require("scripts/managers/difficulty/difficulty_manager")
 local HOST_TYPES = MatchmakingConstants.HOST_TYPES
 
 mod.is_soloplay = function()
@@ -75,6 +76,14 @@ mod:hook_require("scripts/ui/views/system_view/system_view_content_list", functi
 			end
 		end
 	end
+end)
+
+mod:hook(DifficultyManager, "friendly_fire_enabled", function(func, self, target_is_player, target_is_minion)
+    local ret = func(self, target_is_player, target_is_minion)
+	if mod.is_soloplay() and mod:get("friendly_fire_enabled") then
+		return true
+	end
+	return ret
 end)
 
 local function in_hub_or_psykhanium()

@@ -84,31 +84,48 @@ return {
 	options = {
 		widgets = {
 			{
-				setting_id = "choose_mission",
-				type = "dropdown",
-				default_value = "prologue",
-				options = mission_options,
+				setting_id = "group_mission_settings",
+				type = "group",
+				sub_widgets = {
+					{
+						setting_id = "choose_mission",
+						type = "dropdown",
+						default_value = "prologue",
+						options = mission_options,
+					},
+					{
+						setting_id = "choose_difficulty",
+						type = "numeric",
+						default_value = 3,
+						range = { 1, 5 },
+					},
+					{
+						setting_id = "choose_side_mission",
+						type = "dropdown",
+						default_value = "default",
+						options = side_mission_options,
+					},
+					{
+						setting_id = "choose_circumstance",
+						type = "dropdown",
+						default_value = "default",
+						options = circumstance_options,
+					},
+				},
 			},
 			{
-				setting_id = "choose_difficulty",
-				type = "numeric",
-				default_value = 3,
-				range = { 1, 5 },
+				setting_id = "group_modifiers",
+				type = "group",
+				sub_widgets = {
+					{
+						setting_id = "friendly_fire_enabled",
+						type = "checkbox",
+						default_value = false,
+					},
+				},
 			},
 			{
-				setting_id = "choose_side_mission",
-				type = "dropdown",
-				default_value = "default",
-				options = side_mission_options,
-			},
-			{
-				setting_id = "choose_circumstance",
-				type = "dropdown",
-				default_value = "default",
-				options = circumstance_options,
-			},
-			{
-				setting_id = "group_options",
+				setting_id = "group_global_options",
 				type = "group",
 				sub_widgets = {
 					{
