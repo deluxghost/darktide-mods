@@ -355,6 +355,9 @@ local function is_cosmetics_store(object)
 	if object._optional_store_service ~= nil then
 		return true
 	end
+	if object.view_name and object.view_name == "inventory_cosmetics_view" then
+		return true
+	end
 	return false
 end
 
