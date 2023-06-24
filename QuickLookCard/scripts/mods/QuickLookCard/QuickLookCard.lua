@@ -1035,8 +1035,8 @@ mod:hook("ViewElementGrid", "_create_entry_widget_from_config", function(func, s
 		if offer.description and offer.description.type ~= "weapon" and offer.description.type ~= "gadget" then
 			return widget, alignment_widget
 		end
-	update_compatibility_fields(widget, item)
 	end
+	update_compatibility_fields(widget, item)
 
 	if item.item_type == "WEAPON_MELEE" or item.item_type == "WEAPON_RANGED" then
 		fill_weapon_base_stats(content, item)
