@@ -71,6 +71,7 @@ return {
 	opt_curio_perk = {
 		en = "Curio Perk",
 		["zh-cn"] = "珍品专长",
+		ja = "収集品のパーク",
 	},
 	opt_curio_perk_description = {
 		en = "Curios only\nIncludes: rarity indicator with lock color",
