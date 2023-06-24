@@ -35,6 +35,11 @@ return {
 						type = "checkbox",
 						default_value = true,
 					},
+					{
+						setting_id = "opt_curio_perk",
+						type = "checkbox",
+						default_value = true,
+					},
 				},
 			},
 		}

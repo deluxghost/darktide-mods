@@ -51,10 +51,10 @@ return {
 		en = Localize("loc_item_type_perk"),
 	},
 	opt_perk_description = {
-		en = "Includes: rarity indicator with lock color",
-		["zh-cn"] = "包括：带锁定状态颜色的稀有度指示",
-		ja = "内容：色によるロック表示付きのレア度表示",
-		ru = "Включает для Улучшений: индикатор редкости, с выделением заблокированных улучшений красным цветом",
+		en = "Weapons only\nIncludes: rarity indicator with lock color",
+		["zh-cn"] = "仅限武器\n包括：带锁定状态颜色的稀有度指示",
+		ja = "武器のみ\n内容：色によるロック表示付きのレア度表示",
+		ru = "Только для оружия\nВключает для Улучшений: индикатор редкости, с выделением заблокированных улучшений красным цветом",
 	},
 	opt_curio_blessing = {
 		en = "Curio Blessings",
@@ -67,6 +67,16 @@ return {
 		["zh-cn"] = "仅限珍品",
 		ja = "収集品のみ",
 		ru = "Только для устройств",
+	},
+	opt_curio_perk = {
+		en = "Curio Perk",
+		["zh-cn"] = "珍品专长",
+	},
+	opt_curio_perk_description = {
+		en = "Curios only\nIncludes: rarity indicator with lock color",
+		["zh-cn"] = "仅限珍品\n包括：带锁定状态颜色的稀有度指示",
+		ja = "収集品のみ\n内容：色によるロック表示付きのレア度表示",
+		ru = "Только для устройств\nВключает для Улучшений: индикатор редкости, с выделением заблокированных улучшений красным цветом",
 	},
 
 	-- To translators: due to the limited screen space,

@@ -19,6 +19,16 @@ local GadgetTraitBuffNames = {
 	gadget_inate_max_wounds_increase = "extra_max_amount_of_wounds",
 }
 
+local compatibility_field_names = {
+	"offset",
+	"size",
+	"font_size",
+	"vertical_alignment",
+	"horizontal_alignment",
+	"text_vertical_alignment",
+	"text_horizontal_alignment",
+}
+
 local function _get_lerp_stepped_value(range, lerp_value)
 	local min = 1
 	local max = #range
@@ -109,7 +119,8 @@ local function perk_trait_lock(data, index)
 end
 
 local function visibility_function_perk(content, style, index)
-	if not mod:get("opt_perk") then
+	local gadget = visibility_function_gadget(content, style)
+	if (not mod:get("opt_perk") and not gadget) or (not mod:get("opt_curio_perk") and gadget) then
 		return nil
 	end
 	if not visibility_function_item(content, style) then
@@ -191,10 +202,12 @@ local item_definitions = {
 			text_vertical_alignment = "top",
 			text_horizontal_alignment = "right",
 			offset = { -20, 92, 5 },
+			offset_i2d = { -10, 97, 5 },
 			size = { 120, 36 },
 			text_color = QLColor.default,
 			font_type = "proxima_nova_bold",
 			font_size = 16,
+			font_size_i2d = 12,
 		},
 		value = "",
 		visibility_function = function (content, style)
@@ -223,10 +236,12 @@ local item_definitions = {
 			horizontal_alignment = "left",
 			text_vertical_alignment = "center",
 			offset = { 18, 80, 10 },
+			offset_i2d = { 14, 84, 10 },
 			size = { 36, 36 },
 			text_color = QLColor.default,
 			font_type = "proxima_nova_bold",
 			font_size = 17,
+			font_size_i2d = 15,
 		},
 		value = "",
 		visibility_function = function (content, style)
@@ -257,10 +272,12 @@ local item_definitions = {
 			text_vertical_alignment = "center",
 			text_horizontal_alignment = "center",
 			offset = { 42, 60, 10 },
+			offset_i2d = { 34, 68, 10 },
 			size = { 18, 18 },
 			text_color = QLColor.locked,
 			font_type = "proxima_nova_bold",
 			font_size = 17,
+			font_size_i2d = 15,
 		},
 		visibility_function = function (content, style)
 			if not visibility_function_trait(content, style, 1) then
@@ -283,10 +300,12 @@ local item_definitions = {
 			horizontal_alignment = "left",
 			text_vertical_alignment = "center",
 			offset = { 60, 80, 10 },
+			offset_i2d = { 52, 84, 10 },
 			size = { 36, 36 },
 			text_color = QLColor.default,
 			font_type = "proxima_nova_bold",
 			font_size = 17,
+			font_size_i2d = 15,
 		},
 		value = "",
 		visibility_function = function (content, style)
@@ -317,10 +336,12 @@ local item_definitions = {
 			text_vertical_alignment = "center",
 			text_horizontal_alignment = "center",
 			offset = { 84, 60, 10 },
+			offset_i2d = { 70, 68, 10 },
 			size = { 18, 18 },
 			text_color = QLColor.locked,
 			font_type = "proxima_nova_bold",
 			font_size = 17,
+			font_size_i2d = 15,
 		},
 		visibility_function = function (content, style)
 			if not visibility_function_trait(content, style, 2) then
@@ -346,10 +367,12 @@ local item_definitions = {
 			horizontal_alignment = "left",
 			text_vertical_alignment = "center",
 			offset = { 108, 60, 5 },
+			offset_i2d = { 15, 34, 5 },
 			size = { 120, 36 },
 			text_color = QLColor.default,
 			font_type = "machine_medium",
 			font_size = 18,
+			font_size_i2d = 12,
 		},
 		value = "",
 		visibility_function = visibility_function_modifier,
@@ -363,10 +386,12 @@ local item_definitions = {
 			horizontal_alignment = "left",
 			text_vertical_alignment = "center",
 			offset = { 148, 60, 5 },
+			offset_i2d = { 42, 34, 5 },
 			size = { 120, 36 },
 			text_color = QLColor.modifier,
 			font_type = "machine_medium",
 			font_size = 18,
+			font_size_i2d = 12,
 		},
 		value = "",
 		visibility_function = visibility_function_modifier,
@@ -380,10 +405,12 @@ local item_definitions = {
 			horizontal_alignment = "left",
 			text_vertical_alignment = "center",
 			offset = { 178, 60, 5 },
+			offset_i2d = { 60, 34, 5 },
 			size = { 120, 36 },
 			text_color = QLColor.default,
 			font_type = "machine_medium",
 			font_size = 18,
+			font_size_i2d = 12,
 		},
 		value = "",
 		visibility_function = visibility_function_modifier,
@@ -397,10 +424,12 @@ local item_definitions = {
 			horizontal_alignment = "left",
 			text_vertical_alignment = "center",
 			offset = { 218, 60, 5 },
+			offset_i2d = { 87, 34, 5 },
 			size = { 120, 36 },
 			text_color = QLColor.modifier,
 			font_type = "machine_medium",
 			font_size = 18,
+			font_size_i2d = 12,
 		},
 		value = "",
 		visibility_function = visibility_function_modifier,
@@ -414,10 +443,12 @@ local item_definitions = {
 			horizontal_alignment = "left",
 			text_vertical_alignment = "center",
 			offset = { 248, 80, 5 },
+			offset_i2d = { 105, 47, 5 },
 			size = { 120, 36 },
 			text_color = QLColor.default,
 			font_type = "machine_medium",
 			font_size = 18,
+			font_size_i2d = 12,
 		},
 		value = "",
 		visibility_function = visibility_function_modifier,
@@ -431,10 +462,12 @@ local item_definitions = {
 			horizontal_alignment = "left",
 			text_vertical_alignment = "center",
 			offset = { 288, 80, 5 },
+			offset_i2d = { 132, 47, 5 },
 			size = { 120, 36 },
 			text_color = QLColor.modifier,
 			font_type = "machine_medium",
 			font_size = 18,
+			font_size_i2d = 12,
 		},
 		value = "",
 		visibility_function = visibility_function_modifier,
@@ -448,10 +481,12 @@ local item_definitions = {
 			horizontal_alignment = "left",
 			text_vertical_alignment = "center",
 			offset = { 108, 80, 5 },
+			offset_i2d = { 15, 47, 5 },
 			size = { 120, 36 },
 			text_color = QLColor.default,
 			font_type = "machine_medium",
 			font_size = 18,
+			font_size_i2d = 12,
 		},
 		value = "",
 		visibility_function = visibility_function_modifier,
@@ -465,10 +500,12 @@ local item_definitions = {
 			horizontal_alignment = "left",
 			text_vertical_alignment = "center",
 			offset = { 148, 80, 5 },
+			offset_i2d = { 42, 47, 5 },
 			size = { 120, 36 },
 			text_color = QLColor.modifier,
 			font_type = "machine_medium",
 			font_size = 18,
+			font_size_i2d = 12,
 		},
 		value = "",
 		visibility_function = visibility_function_modifier,
@@ -482,10 +519,12 @@ local item_definitions = {
 			horizontal_alignment = "left",
 			text_vertical_alignment = "center",
 			offset = { 178, 80, 5 },
+			offset_i2d = { 60, 47, 5 },
 			size = { 120, 36 },
 			text_color = QLColor.default,
 			font_type = "machine_medium",
 			font_size = 18,
+			font_size_i2d = 12,
 		},
 		value = "",
 		visibility_function = visibility_function_modifier,
@@ -499,10 +538,12 @@ local item_definitions = {
 			horizontal_alignment = "left",
 			text_vertical_alignment = "center",
 			offset = { 218, 80, 5 },
+			offset_i2d = { 87, 47, 5 },
 			size = { 120, 36 },
 			text_color = QLColor.modifier,
 			font_type = "machine_medium",
 			font_size = 18,
+			font_size_i2d = 12,
 		},
 		value = "",
 		visibility_function = visibility_function_modifier,
@@ -519,10 +560,12 @@ local item_definitions = {
 			horizontal_alignment = "left",
 			text_vertical_alignment = "center",
 			offset = { 328, 60, 5 },
+			offset_i2d = { 290, 65, 5 },
 			size = { 120, 36 },
 			text_color = QLColor.default,
 			font_type = "machine_medium",
 			font_size = 18,
+			font_size_i2d = 13,
 		},
 		value = "",
 		visibility_function = function (content, style)
@@ -544,7 +587,9 @@ local item_definitions = {
 			vertical_alignment = "top",
 			horizontal_alignment = "left",
 			offset = { 368, 70, 10 },
+			offset_i2d = { 320, 77, 5 },
 			size = { 16, 16 },
+			size_i2d = { 13, 13 },
 		},
 		visibility_function = function (content, style)
 			if not visibility_function_perk(content, style, 1) then
@@ -574,10 +619,12 @@ local item_definitions = {
 			horizontal_alignment = "left",
 			text_vertical_alignment = "center",
 			offset = { 328, 80, 5 },
+			offset_i2d = { 290, 80, 5 },
 			size = { 120, 36 },
 			text_color = QLColor.default,
 			font_type = "machine_medium",
 			font_size = 18,
+			font_size_i2d = 13,
 		},
 		value = "",
 		visibility_function = function (content, style)
@@ -599,7 +646,9 @@ local item_definitions = {
 			vertical_alignment = "top",
 			horizontal_alignment = "left",
 			offset = { 368, 90, 10 },
+			offset_i2d = { 320, 92, 5 },
 			size = { 16, 16 },
+			size_i2d = { 13, 13 },
 		},
 		visibility_function = function (content, style)
 			if not visibility_function_perk(content, style, 2) then
@@ -632,10 +681,12 @@ local item_definitions = {
 			horizontal_alignment = "left",
 			text_vertical_alignment = "center",
 			offset = { 108, 80, 5 },
+			offset_i2d = { 15, 47, 5 },
 			size = { 120, 36 },
 			text_color = QLColor.default,
 			font_type = "machine_medium",
 			font_size = 18,
+			font_size_i2d = 12,
 		},
 		value = "",
 		visibility_function = function (content, style)
@@ -657,7 +708,9 @@ local item_definitions = {
 			vertical_alignment = "top",
 			horizontal_alignment = "left",
 			offset = { 148, 90, 5 },
+			offset_i2d = { 42, 59, 5 },
 			size = { 16, 16 },
+			size_i2d = { 12, 12 },
 		},
 		visibility_function = function (content, style)
 			if not visibility_function_perk(content, style, 1) then
@@ -687,10 +740,12 @@ local item_definitions = {
 			horizontal_alignment = "left",
 			text_vertical_alignment = "center",
 			offset = { 178, 80, 5 },
+			offset_i2d = { 60, 47, 5 },
 			size = { 120, 36 },
 			text_color = QLColor.default,
 			font_type = "machine_medium",
 			font_size = 18,
+			font_size_i2d = 12,
 		},
 		value = "",
 		visibility_function = function (content, style)
@@ -712,7 +767,9 @@ local item_definitions = {
 			vertical_alignment = "top",
 			horizontal_alignment = "left",
 			offset = { 218, 90, 10 },
+			offset_i2d = { 87, 59, 5 },
 			size = { 16, 16 },
+			size_i2d = { 12, 12 },
 		},
 		visibility_function = function (content, style)
 			if not visibility_function_perk(content, style, 2) then
@@ -742,10 +799,12 @@ local item_definitions = {
 			horizontal_alignment = "left",
 			text_vertical_alignment = "center",
 			offset = { 248, 80, 5 },
+			offset_i2d = { 105, 47, 5 },
 			size = { 120, 36 },
 			text_color = QLColor.default,
 			font_type = "machine_medium",
 			font_size = 18,
+			font_size_i2d = 12,
 		},
 		value = "",
 		visibility_function = function (content, style)
@@ -767,7 +826,9 @@ local item_definitions = {
 			vertical_alignment = "top",
 			horizontal_alignment = "left",
 			offset = { 288, 90, 10 },
+			offset_i2d = { 132, 59, 5 },
 			size = { 16, 16 },
+			size_i2d = { 12, 12 },
 		},
 		visibility_function = function (content, style)
 			if not visibility_function_perk(content, style, 3) then
@@ -800,10 +861,12 @@ local item_definitions = {
 			horizontal_alignment = "left",
 			text_vertical_alignment = "center",
 			offset = { 108, 60, 5 },
+			offset_i2d = { 15, 34, 5 },
 			size = { 120, 36 },
 			text_color = QLColor.default,
 			font_type = "machine_medium",
 			font_size = 18,
+			font_size_i2d = 12,
 		},
 		value = "",
 		visibility_function = visibility_function_gadget_trait,
@@ -817,10 +880,12 @@ local item_definitions = {
 			horizontal_alignment = "left",
 			text_vertical_alignment = "center",
 			offset = { 148, 60, 5 },
+			offset_i2d = { 42, 34, 5 },
 			size = { 120, 36 },
 			text_color = QLColor.modifier,
 			font_type = "machine_medium",
 			font_size = 18,
+			font_size_i2d = 12,
 		},
 		value = "",
 		visibility_function = visibility_function_gadget_trait,
@@ -839,7 +904,8 @@ mod:hook_require("scripts/ui/pass_templates/item_pass_templates", function(insta
 		if idx then
 			table.remove(instance.item, idx)
 		end
-		table.insert(instance.item, def)
+		local item = table.clone(def)
+		table.insert(instance.item, item)
 	end
 end)
 
@@ -925,6 +991,28 @@ local function fill_perk(content, item)
 	end
 end
 
+local function update_compatibility_fields(widget, item)
+	if widget.type == "store_item" then
+		return
+	end
+	local i2d = get_mod("Inventory2D")
+	local styles = widget.style
+	if not styles or not i2d or not i2d:is_enabled() then
+		return
+	end
+
+	for _, pass in ipairs(item_definitions) do
+		if pass.style_id then
+			local style = styles[pass.style_id]
+			for _, field in ipairs(compatibility_field_names) do
+				if style[field .. "_i2d"] then
+					style[field] = style[field .. "_i2d"]
+				end
+			end
+		end
+	end
+end
+
 mod:hook("ViewElementGrid", "_create_entry_widget_from_config", function(func, self, config, suffix, callback_name, secondary_callback_name, double_click_callback_name)
 	local widget, alignment_widget = func(
 		self, config, suffix, callback_name, secondary_callback_name, double_click_callback_name
@@ -947,6 +1035,7 @@ mod:hook("ViewElementGrid", "_create_entry_widget_from_config", function(func, s
 		if offer.description and offer.description.type ~= "weapon" and offer.description.type ~= "gadget" then
 			return widget, alignment_widget
 		end
+	update_compatibility_fields(widget, item)
 	end
 
 	if item.item_type == "WEAPON_MELEE" or item.item_type == "WEAPON_RANGED" then
