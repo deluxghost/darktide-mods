@@ -1000,6 +1000,9 @@ local function update_compatibility_fields(widget, item)
 	if not styles or not i2d or not i2d:is_enabled() then
 		return
 	end
+	if widget.content and widget.content.size and widget.content.size[1] > 300 then
+		return
+	end
 
 	for _, pass in ipairs(item_definitions) do
 		if pass.style_id then
