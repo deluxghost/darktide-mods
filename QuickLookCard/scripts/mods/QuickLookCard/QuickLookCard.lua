@@ -77,6 +77,13 @@ local function get_gadget_trait_data(id, value)
 	return display_name, output
 end
 
+local function visibility_function_min_width(content, style, width)
+	if content and content.size and content.size[1] < width then
+		return false
+	end
+	return true
+end
+
 local function visibility_function_item(content, style)
 	if not mod:is_enabled() then
 		return false
@@ -175,6 +182,9 @@ end
 
 local function visibility_function_modifier(content, style)
 	if not mod:get("opt_modifier") then
+		return false
+	end
+	if not visibility_function_min_width(content, style, 120) then
 		return false
 	end
 	return visibility_function_weapon(content, style)
@@ -560,7 +570,7 @@ local item_definitions = {
 			horizontal_alignment = "left",
 			text_vertical_alignment = "center",
 			offset = { 328, 60, 5 },
-			offset_i2d = { 90, 65, 5 },
+			offset_i2d = { 86, 65, 5 },
 			size = { 120, 36 },
 			text_color = QLColor.default,
 			font_type = "machine_medium",
@@ -575,6 +585,9 @@ local item_definitions = {
 			if not visibility_function_weapon(content, style) then
 				return false
 			end
+			if not visibility_function_min_width(content, style, 170) then
+				return false
+			end
 			return true
 		end,
 	},
@@ -587,7 +600,7 @@ local item_definitions = {
 			vertical_alignment = "top",
 			horizontal_alignment = "left",
 			offset = { 368, 70, 10 },
-			offset_i2d = { 120, 77, 5 },
+			offset_i2d = { 113, 77, 5 },
 			size = { 16, 16 },
 			size_i2d = { 13, 13 },
 		},
@@ -596,6 +609,9 @@ local item_definitions = {
 				return false
 			end
 			if not visibility_function_weapon(content, style) then
+				return false
+			end
+			if not visibility_function_min_width(content, style, 170) then
 				return false
 			end
 			local item = content.element.item
@@ -619,7 +635,7 @@ local item_definitions = {
 			horizontal_alignment = "left",
 			text_vertical_alignment = "center",
 			offset = { 328, 80, 5 },
-			offset_i2d = { 90, 80, 5 },
+			offset_i2d = { 86, 80, 5 },
 			size = { 120, 36 },
 			text_color = QLColor.default,
 			font_type = "machine_medium",
@@ -634,6 +650,9 @@ local item_definitions = {
 			if not visibility_function_weapon(content, style) then
 				return false
 			end
+			if not visibility_function_min_width(content, style, 170) then
+				return false
+			end
 			return true
 		end,
 	},
@@ -646,7 +665,7 @@ local item_definitions = {
 			vertical_alignment = "top",
 			horizontal_alignment = "left",
 			offset = { 368, 90, 10 },
-			offset_i2d = { 120, 92, 5 },
+			offset_i2d = { 113, 92, 5 },
 			size = { 16, 16 },
 			size_i2d = { 13, 13 },
 		},
@@ -655,6 +674,9 @@ local item_definitions = {
 				return false
 			end
 			if not visibility_function_weapon(content, style) then
+				return false
+			end
+			if not visibility_function_min_width(content, style, 170) then
 				return false
 			end
 			local item = content.element.item
