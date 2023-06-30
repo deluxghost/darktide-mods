@@ -1,5 +1,6 @@
 local mod = get_mod("OpenPlayerProfile")
 local dmf = get_mod("DMF")
+local SocialConstants = require("scripts/managers/data_service/services/social/social_constants")
 local UISoundEvents = require("scripts/settings/ui/ui_sound_events")
 local bigint = mod:io_dofile("OpenPlayerProfile/scripts/mods/OpenPlayerProfile/bigint")
 
@@ -83,6 +84,8 @@ end)
 mod:hook_require("scripts/ui/view_elements/view_element_player_social_popup/view_element_player_social_popup_content_list", function(instance)
 	mod:hook(instance, "from_player_info", function(func, parent, player_info)
 		local menu_items, num_menu_items = func(parent, player_info)
+		local social_service = Managers.data_service.social
+		local is_xbox = social_service:platform() == SocialConstants.Platforms.xbox
 		if player_info:is_own_player() then
 			return menu_items, num_menu_items
 		end
@@ -90,7 +93,7 @@ mod:hook_require("scripts/ui/view_elements/view_element_player_social_popup/view
 		if not button_templates[player_platform] then
 			return menu_items, num_menu_items
 		end
-		if player_platform ~= "steam" and not player_info:_get_presence() then
+		if is_xbox and player_platform == "xbox" then
 			return menu_items, num_menu_items
 		end
 
