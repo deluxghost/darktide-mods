@@ -72,6 +72,10 @@ return {
 		en = "Removed mission: ",
 		["zh-cn"] = "删除了任务：",
 	},
+	msg_cleared = {
+		en = "Cleared # mission(s)",
+		["zh-cn"] = "清理了 # 个任务",
+	},
 	msg_help_queue = {
 		en = "Type {#color(0,192,255)}/mmt mission_number{#reset()} to queue (e.g. {#color(0,192,255)}/mmt 1{#reset()})",
 		["zh-cn"] = "输入 {#color(0,192,255)}/mmt 任务编号{#reset()} 开始匹配（例：{#color(0,192,255)}/mmt 1{#reset()}）",
@@ -79,6 +83,10 @@ return {
 	msg_help_del = {
 		en = "Type {#color(0,192,255)}/mmtdel mission_number{#reset()} to remove",
 		["zh-cn"] = "输入 {#color(0,192,255)}/mmtdel 任务编号{#reset()} 删除",
+	},
+	msg_help_clear = {
+		en = "Type {#color(0,192,255)}/mmtclear hours_ago{#reset()} to clear missions started longer than 'hours_ago' hrs ago",
+		["zh-cn"] = "输入 {#color(0,192,255)}/mmtclear 小时数{#reset()} 清理开始时间超过相应小时的任务",
 	},
 	msg_nothing_to_export = {
 		en = "Error: no mission to export",
@@ -119,6 +127,10 @@ return {
 	cmd_import = {
 		en = "Import a mission ID",
 		["zh-cn"] = "导入一个任务 ID",
+	},
+	cmd_clear = {
+		en = "Clear missions started X hours ago",
+		["zh-cn"] = "清理已开始了 X 小时的任务",
 	},
 	private_game = {
 		en = "Private game",

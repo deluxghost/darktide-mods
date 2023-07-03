@@ -5,6 +5,7 @@ local MissionTemplates = require("scripts/settings/mission/mission_templates")
 local CircumstanceTemplates = require("scripts/settings/circumstance/circumstance_templates")
 local MissionObjectiveTemplates = require("scripts/settings/mission_objective/mission_objective_templates")
 local DangerSettings = require("scripts/settings/difficulty/danger_settings")
+local MissionTypes = require("scripts/settings/mission/mission_types")
 
 local locks = mod:persistent_table("locks")
 
@@ -71,6 +72,10 @@ local function get_mission_name(mission, name_key, circumstance_key)
 		if mission_settings then
 			local localized_name = Localize(mission_settings.mission_name)
 			table.insert(name_parts, localized_name)
+			if mission_settings.mission_type and MissionTypes[mission_settings.mission_type] and MissionTypes[mission_settings.mission_type].name then
+				local localized_type = Localize(MissionTypes[mission_settings.mission_type].name)
+				table.insert(name_parts, localized_type)
+			end
 		end
 	end
 
@@ -319,4 +324,30 @@ mod:command("mmtimport", mod:localize("cmd_import"), function(id)
 		mod:echo(mod:localize("msg_import_invalid_mission"))
 		locks.import = nil
 	end)
+end)
+
+mod:command("mmtclear", mod:localize("cmd_clear"), function(hour_str)
+	local hour = tonumber(hour_str)
+	if not hour then
+		mod:echo(mod:localize("msg_help_clear"))
+		return
+	end
+	local now = tonumber(os.time())
+	local saved_mission = mod:get("_saved_mission") or {}
+	local saved_mission_new = {}
+	for _, mission in ipairs(saved_mission) do
+		if mission.start then
+			local start = mission.start
+			if start > now then
+				start = now
+			end
+			local delta = (now - start) / 60 / 60
+			if delta <= hour then
+				table.insert(saved_mission_new, mission)
+			end
+		end
+	end
+	local num = #saved_mission - #saved_mission_new
+	mod:echo(string.gsub(mod:localize("msg_cleared"), "#", num))
+	mod:set("_saved_mission", saved_mission_new, false)
 end)
