@@ -3,7 +3,10 @@ local MissionTemplates = require("scripts/settings/mission/mission_templates")
 local DangerSettings = require("scripts/settings/difficulty/danger_settings")
 local MatchmakingConstants = require("scripts/settings/network/matchmaking_constants")
 local DifficultyManager = require("scripts/managers/difficulty/difficulty_manager")
+local PickupSystem = require("scripts/extension_systems/pickups/pickup_system")
+local PickupSettings = require("scripts/settings/pickup/pickup_settings")
 local HOST_TYPES = MatchmakingConstants.HOST_TYPES
+local DISTRIBUTION_TYPES = PickupSettings.distribution_types
 
 mod.is_soloplay = function()
 	if not Managers.state.game_mode then
@@ -79,11 +82,19 @@ mod:hook_require("scripts/ui/views/system_view/system_view_content_list", functi
 end)
 
 mod:hook(DifficultyManager, "friendly_fire_enabled", function(func, self, target_is_player, target_is_minion)
-    local ret = func(self, target_is_player, target_is_minion)
+	local ret = func(self, target_is_player, target_is_minion)
 	if mod.is_soloplay() and mod:get("friendly_fire_enabled") then
 		return true
 	end
 	return ret
+end)
+
+mod:hook(PickupSystem, "_spawn_spread_pickups", function(func, self, distribution_type, pickup_pool, seed)
+	if distribution_type == DISTRIBUTION_TYPES.side_mission and mod:get("random_side_mission_seed") then
+		self._seed = func(self, distribution_type, pickup_pool, self._seed)
+		return self._seed
+	end
+	return func(self, distribution_type, pickup_pool, seed)
 end)
 
 local function in_hub_or_psykhanium()

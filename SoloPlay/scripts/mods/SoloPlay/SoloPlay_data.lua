@@ -122,6 +122,11 @@ return {
 						type = "checkbox",
 						default_value = false,
 					},
+					{
+						setting_id = "random_side_mission_seed",
+						type = "checkbox",
+						default_value = true,
+					},
 				},
 			},
 			{
