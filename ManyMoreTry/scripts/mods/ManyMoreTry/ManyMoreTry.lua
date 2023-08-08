@@ -6,6 +6,7 @@ local CircumstanceTemplates = require("scripts/settings/circumstance/circumstanc
 local MissionObjectiveTemplates = require("scripts/settings/mission_objective/mission_objective_templates")
 local DangerSettings = require("scripts/settings/difficulty/danger_settings")
 local MissionTypes = require("scripts/settings/mission/mission_types")
+local BackendUtilities = require("scripts/foundation/managers/backend/utilities/backend_utilities")
 
 local locks = mod:persistent_table("locks")
 
@@ -173,7 +174,7 @@ local function go_match(mission)
 		private = false
 	end
 	mod:echo(mod:localize("msg_on_your_way_to") .. mission.display_name)
-	Managers.party_immaterium:wanted_mission_selected(mission.id, private)
+	Managers.party_immaterium:wanted_mission_selected(mission.id, private, BackendUtilities.prefered_mission_region)
 end
 
 mod:command("mmt", mod:localize("cmd_main"), function(idx_str)
