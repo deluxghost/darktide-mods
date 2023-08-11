@@ -3,11 +3,14 @@ local WeaponTemplates = require("scripts/settings/equipment/weapon_templates/wea
 local WeaponStats = require("scripts/utilities/weapon_stats")
 local BuffTemplates = require("scripts/settings/buff/buff_templates")
 local MasterItems = require("scripts/backend/master_items")
+local ItemUtils = require("scripts/utilities/items")
+
 
 local QLColor = {
 	default = { 255, 250, 250, 250 },
 	modifier = {255, 250, 189, 73},
 	locked = { 255, 255, 66, 50 },
+	modified = { 255, 48, 229, 207 },
 	new_trait = { 255, 90, 255, 0 },
 	low_trait = { 255, 255, 180, 0 },
 }
@@ -111,16 +114,17 @@ local function visibility_function_gadget(content, style)
 	return item.item_type == "GADGET"
 end
 
-local function perk_trait_lock(data, index)
-	local modified = nil
-	for i, entry in ipairs(data) do
+local function perk_trait_lock(item, data, index)
+	local num_modifications, max_modifications = ItemUtils.modifications_by_rarity(item)
+	local item_locked = num_modifications == max_modifications
+
+	local entry = data[index]
+	if entry then
 		if entry.modified then
-			modified = i
-			break
+			return "modified"
+		elseif item_locked then
+			return "locked"
 		end
-	end
-	if modified and index ~= modified then
-		return "locked"
 	end
 	return "open"
 end
@@ -294,9 +298,15 @@ local item_definitions = {
 				return false
 			end
 			local item = content.element.item
-			local locked = perk_trait_lock(item.traits, 1)
-			if locked ~= "locked" then
+			local locked = perk_trait_lock(item, item.traits, 1)
+			if locked == "open" then
 				return false
+			elseif locked == "locked" then
+				content.qlc_trait_lock_1 = ""
+				style.text_color = QLColor.locked
+			elseif locked == "modified" then
+				content.qlc_trait_lock_1 = ""
+				style.text_color = QLColor.modified
 			end
 			return true
 		end,
@@ -358,9 +368,15 @@ local item_definitions = {
 				return false
 			end
 			local item = content.element.item
-			local locked = perk_trait_lock(item.traits, 2)
-			if locked ~= "locked" then
+			local locked = perk_trait_lock(item, item.traits, 2)
+			if locked == "open" then
 				return false
+			elseif locked == "locked" then
+				content.qlc_trait_lock_2 = ""
+				style.text_color = QLColor.locked
+			elseif locked == "modified" then
+				content.qlc_trait_lock_2 = ""
+				style.text_color = QLColor.modified
 			end
 			return true
 		end,
@@ -615,9 +631,11 @@ local item_definitions = {
 				return false
 			end
 			local item = content.element.item
-			local locked = perk_trait_lock(item.perks, 1)
+			local locked = perk_trait_lock(item, item.perks, 1)
 			if locked == "locked" then
 				style.color = QLColor.locked
+			elseif locked == "modified" then
+				style.color = QLColor.modified
 			else
 				style.color = QLColor.default
 			end
@@ -680,9 +698,11 @@ local item_definitions = {
 				return false
 			end
 			local item = content.element.item
-			local locked = perk_trait_lock(item.perks, 2)
+			local locked = perk_trait_lock(item, item.perks, 2)
 			if locked == "locked" then
 				style.color = QLColor.locked
+			elseif locked == "modified" then
+				style.color = QLColor.modified
 			else
 				style.color = QLColor.default
 			end
@@ -742,9 +762,11 @@ local item_definitions = {
 				return false
 			end
 			local item = content.element.item
-			local locked = perk_trait_lock(item.perks, 1)
+			local locked = perk_trait_lock(item, item.perks, 1)
 			if locked == "locked" then
 				style.color = QLColor.locked
+			elseif locked == "modified" then
+				style.color = QLColor.modified
 			else
 				style.color = QLColor.default
 			end
@@ -801,9 +823,11 @@ local item_definitions = {
 				return false
 			end
 			local item = content.element.item
-			local locked = perk_trait_lock(item.perks, 2)
+			local locked = perk_trait_lock(item, item.perks, 2)
 			if locked == "locked" then
 				style.color = QLColor.locked
+			elseif locked == "modified" then
+				style.color = QLColor.modified
 			else
 				style.color = QLColor.default
 			end
@@ -860,9 +884,11 @@ local item_definitions = {
 				return false
 			end
 			local item = content.element.item
-			local locked = perk_trait_lock(item.perks, 3)
+			local locked = perk_trait_lock(item, item.perks, 3)
 			if locked == "locked" then
 				style.color = QLColor.locked
+			elseif locked == "modified" then
+				style.color = QLColor.modified
 			else
 				style.color = QLColor.default
 			end
