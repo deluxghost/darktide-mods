@@ -3,6 +3,7 @@ local MissionTemplates = require("scripts/settings/mission/mission_templates")
 local CircumstanceTemplates = require("scripts/settings/circumstance/circumstance_templates")
 local MissionObjectiveTemplates = require("scripts/settings/mission_objective/mission_objective_templates")
 local DangerSettings = require("scripts/settings/difficulty/danger_settings")
+local BackendUtilities = require("scripts/foundation/managers/backend/utilities/backend_utilities")
 
 local locks = mod:persistent_table("locks")
 
@@ -26,7 +27,7 @@ local function in_hub()
 		return false
 	end
 	local game_mode_name = Managers.state.game_mode:game_mode_name()
-	return (game_mode_name == "hub" or game_mode_name == "prologue_hub")
+	return game_mode_name == "hub"
 end
 
 local function clear_mission()
@@ -110,7 +111,7 @@ mod:command("lm", mod:localize("lm_command_desc"), function()
 
 		mod:dump(data,"mission",3)
 		mod:echo(mod:localize("msg_on_your_way_to") .. get_mission_name(data.mission))
-		Managers.party_immaterium:wanted_mission_selected(mission_id, true)
+		Managers.party_immaterium:wanted_mission_selected(mission_id, true, BackendUtilities.prefered_mission_region)
 		locks.match = nil
 	end):catch(function(e)
 		mod:dump(e, "omt_fetch_error", 3)
