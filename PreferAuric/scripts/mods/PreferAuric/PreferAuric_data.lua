@@ -9,11 +9,11 @@ return {
 			{
 				setting_id = "mission_board_preference",
 				type = "dropdown",
-				default_value = "normal",
+				default_value = "_last_selection",
 				options = {
+					{ text = "mission_board__last_selection", value = "_last_selection", show_widgets = {} },
 					{ text = "mission_board_normal", value = "normal", show_widgets = {} },
 					{ text = "mission_board_auric", value = "auric", show_widgets = {} },
-					{ text = "mission_board__last_selection", value = "_last_selection", show_widgets = {} },
 				},
 			},
 		}
