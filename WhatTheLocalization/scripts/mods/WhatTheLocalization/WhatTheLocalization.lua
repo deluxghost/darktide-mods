@@ -1,14 +1,14 @@
 local mod = get_mod("WhatTheLocalization")
+local DMF = get_mod("DMF")
 local LocalizationManager = require("scripts/managers/localization/localization_manager")
 
 local registered_fixes = mod:persistent_table("registered_fixes")
 
-mod.on_enabled = function(initial_call)
-	table.clear(Managers.localization._string_cache)
-	table.clear(registered_fixes)
-	local lang = Managers.localization._language
-	local fix_templates = mod:io_dofile("WhatTheLocalization/scripts/mods/WhatTheLocalization/WTL_fix_templates")
-	for _, fix in ipairs(fix_templates) do
+local function load_templates(templates, lang)
+	if templates == nil then
+		return
+	end
+	for _, fix in ipairs(templates) do
 		local lang_match = false
 		if fix.locales then
 			for _, locale in ipairs(fix.locales) do
@@ -31,8 +31,33 @@ mod.on_enabled = function(initial_call)
 	end
 end
 
+mod.reload_templates = function()
+	if not mod:is_enabled() then
+		return
+	end
+	table.clear(Managers.localization._string_cache)
+	table.clear(registered_fixes)
+	local lang = Managers.localization._language
+	local builtin_templates = mod:io_dofile("WhatTheLocalization/scripts/mods/WhatTheLocalization/builtin_templates")
+	load_templates(builtin_templates, lang)
+	for _, other_mod in pairs(DMF.mods) do
+		if type(other_mod) == "table" and other_mod:is_enabled() and other_mod.localization_templates then
+			load_templates(other_mod.localization_templates, lang)
+		end
+	end
+end
+
+mod.on_enabled = function(initial_call)
+	mod.reload_templates()
+end
+
+mod.on_all_mods_loaded = function()
+	mod.reload_templates()
+end
+
 mod.on_disabled = function(initial_call)
 	table.clear(Managers.localization._string_cache)
+	table.clear(registered_fixes)
 end
 
 mod:hook(LocalizationManager, "_lookup", function(func, self, key)
