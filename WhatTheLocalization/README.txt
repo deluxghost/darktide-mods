@@ -1,2 +1,3 @@
-Refer to "WTL_fix_templates.lua" to add more localization fixes.
-We do not recommend returning string literals in handle functions directly.
+Make your own localization fix mod:
+
+https://github.com/deluxghost/darktide-mods/tree/main/ExampleLocalizationBundle
