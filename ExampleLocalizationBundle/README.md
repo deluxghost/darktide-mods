@@ -1,23 +1,29 @@
 # How to make a localization bundle
 
+Read Web version of this guide at: https://github.com/deluxghost/darktide-mods/blob/main/ExampleLocalizationBundle/README.md
+
 ## 1. Setup mod file structure
 
 If you are a modder already, you may want to skip this step. Otherwise, you can do this manually for now:
 
-1. Choose a mod name, we use `LocalizationFixForZH` as an example
-2. Rename every files and folders of this example mod by changing all `ExampleLocalizationBundle` to your mod name. You will get structure like this:
+1. Choose a mod name, we use `LocalizationFixForZH` as an example here, but you need your own mod name
+2. Rename every files and folders of this example mod by changing all `ExampleLocalizationBundle` to your mod name (e.g. `LocalizationFixForZH`). You will get structure like this:
   ```
   LocalizationFixForZH
    |- LocalizationFixForZH.mod
    `- scripts
        `- mods
            `- LocalizationFixForZH
-               |- LocalizationFixForZH
                |- LocalizationFixForZH.lua
                |- LocalizationFixForZH_data.lua
                `- LocalizationFixForZH_localization.lua
   ```
-3. Edit every file above, change all `ExampleLocalizationBundle` in these files to your mod name
+3. Edit following files with any text editor, find text `ExampleLocalizationBundle` and replace them all with your mod name (e.g. `LocalizationFixForZH`). You can use "Find & Replace All" feature of your text editor (in most cases the hotkey is Ctrl+H), enter `ExampleLocalizationBundle` in the "Find" or "Search" textbox and enter `LocalizationFixForZH` in the "Replace" textbox, then press "Replace All".
+   - LocalizationFixForZH.mod
+   - LocalizationFixForZH.lua
+   - LocalizationFixForZH_data.lua
+   - LocalizationFixForZH_localization.lua
+4. You can now edit your mod description in file e.g. `LocalizationFixForZH_localization.lua`
 
 ## 2. Prepare localization fixes
 
@@ -31,7 +37,7 @@ You need these info for every fix:
 
 ## 3. Write localization templates in your mod
 
-You need to add templates to the `mod.localization_templates` table in `ExampleLocalizationBundle.lua` file
+You need to add templates to the `mod.localization_templates` table in `LocalizationFixForZH.lua` file
 
 A template looks like this:
 
