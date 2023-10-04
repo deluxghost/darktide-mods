@@ -1,8 +1,6 @@
 local mod = get_mod("CleanForceBlocking")
 local PlayerUnitFxExtension = require("scripts/extension_systems/fx/player_unit_fx_extension")
 local ForceWeaponBlockEffects = require("scripts/extension_systems/visual_loadout/wieldable_slot_scripts/force_weapon_block_effects")
-local ActionDamageTarget = require("scripts/extension_systems/weapon/actions/action_damage_target")
-local ActionPush = require("scripts/extension_systems/weapon/actions/action_push")
 
 local function is_force_sword(template)
 	if not template then
@@ -26,24 +24,28 @@ mod:hook(ForceWeaponBlockEffects, "_update_block_effects", function(func, self, 
 	self:_destroy_effects()
 end)
 
-mod:hook(ActionDamageTarget, "_play_particles", function(func, self)
-	if not mod:get("remove_push_attack_effect") then
+mod:hook_require("scripts/extension_systems/weapon/actions/action_damage_target", function(ActionDamageTarget)
+	mod:hook(ActionDamageTarget, "_play_particles", function(func, self)
+		if not mod:get("remove_push_attack_effect") then
+			return func(self)
+		end
+		if is_force_sword(self._weapon_template) then
+			return
+		end
 		return func(self)
-	end
-	if is_force_sword(self._weapon_template) then
-		return
-	end
-	return func(self)
+	end)
 end)
 
-mod:hook(ActionPush, "_play_push_particles", function(func, self)
-	if not mod:get("remove_pushing_effect") then
+mod:hook_require("scripts/extension_systems/weapon/actions/action_push", function(ActionPush)
+	mod:hook(ActionPush, "_play_push_particles", function(func, self)
+		if not mod:get("remove_pushing_effect") then
+			return func(self)
+		end
+		if is_force_sword(self._weapon_template) then
+			return
+		end
 		return func(self)
-	end
-	if is_force_sword(self._weapon_template) then
-		return
-	end
-	return func(self)
+	end)
 end)
 
 mod:hook(PlayerUnitFxExtension, "_trigger_looping_wwise_event", function(func, self, sound_alias, optional_source_name)
