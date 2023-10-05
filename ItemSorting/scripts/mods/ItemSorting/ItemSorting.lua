@@ -6,14 +6,29 @@ local ProfileUtils = require("scripts/utilities/profile_utils")
 local rem_sort_index_key = "rem_sort_index"
 local memory = mod:persistent_table("memory")
 
-local function character_save_data()
+local function get_valid_new_items()
 	local local_player_id = 1
 	local player_manager = Managers.player
 	local player = player_manager and player_manager:local_player(local_player_id)
 	local character_id = player and player:character_id()
+	local archetype = player and player:archetype_name()
 	local save_manager = Managers.save
 	local character_data = character_id and save_manager and save_manager:character_data(character_id)
-	return character_data
+	local account_data = save_manager and save_manager:account_data()
+
+	local new_items = {}
+	if character_data and character_data.new_items then
+		for item_id, _ in pairs(character_data.new_items) do
+			new_items[item_id] = true
+		end
+	end
+	if archetype and account_data and account_data.new_account_items_by_archetype and account_data.new_account_items_by_archetype[archetype] then
+		local new_archetype_items = account_data.new_account_items_by_archetype[archetype]
+		for item_id, _ in pairs(new_archetype_items) do
+			new_items[item_id] = true
+		end
+	end
+	return new_items
 end
 
 local function compare_item_new(view)
@@ -27,11 +42,7 @@ local function compare_item_new(view)
 		if not mod:get("always_on_top_new") then
 			return nil
 		end
-		local character_data = character_save_data()
-		if not character_data then
-			return nil
-		end
-		local new_items = character_data.new_items
+		local new_items = get_valid_new_items() or {}
 		local a_new = new_items[a.__gear_id]
 		local b_new = new_items[b.__gear_id]
 
@@ -58,11 +69,7 @@ local function compare_item_type_new(view)
 		if not view._inventory_items then
 			return nil
 		end
-		local character_data = character_save_data()
-		if not character_data then
-			return nil
-		end
-		local new_items = character_data.new_items
+		local new_items = get_valid_new_items() or {}
 
 		local a_new = false
 		local b_new = false
