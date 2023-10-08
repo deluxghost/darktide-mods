@@ -1,6 +1,5 @@
 local mod = get_mod("ManyMoreTry")
 local MissionBoardViewDefinitions = require("scripts/ui/views/mission_board_view/mission_board_view_definitions")
-local DefaultViewInputSettings = require("scripts/settings/input/default_view_input_settings")
 local MissionTemplates = require("scripts/settings/mission/mission_templates")
 local CircumstanceTemplates = require("scripts/settings/circumstance/circumstance_templates")
 local MissionObjectiveTemplates = require("scripts/settings/mission_objective/mission_objective_templates")
@@ -10,7 +9,7 @@ local BackendUtilities = require("scripts/foundation/managers/backend/utilities/
 
 local locks = mod:persistent_table("locks")
 
-mod.on_enabled = function(initial_call)
+mod:hook_require("scripts/settings/input/default_view_input_settings", function(DefaultViewInputSettings)
 	DefaultViewInputSettings.aliases.mmt_save_mission = {
 		"keyboard_r",
 		"xbox_controller_left_shoulder",
@@ -22,6 +21,13 @@ mod.on_enabled = function(initial_call)
 		key_alias = "mmt_save_mission",
 		type = "pressed",
 	}
+end)
+
+mod.on_enabled = function(initial_call)
+	if Managers.input and Managers.input._aliases and Managers.input._aliases.View then
+		Managers.input._aliases.View._aliases["mmt_save_mission"] = Managers.input._aliases.View._default_aliases
+		["mmt_save_mission"]
+	end
 
 	local exist = false
 	for _, value in ipairs(MissionBoardViewDefinitions.legend_inputs) do
