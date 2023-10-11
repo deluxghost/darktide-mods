@@ -75,7 +75,7 @@ mod.on_enabled = function(initial_call)
 		if not is_valid_crafting_item(item) then
 			return false
 		end
-		if is_item_fav(item.__gear_id) then
+		if is_item_fav(item.gear_id) then
 			return false
 		end
 		return (item.item_type == "WEAPON_MELEE" or item.item_type == "WEAPON_RANGED") and item.traits and #item.traits > 0
@@ -128,7 +128,7 @@ local item_definitions = {
 				return
 			end
 
-			local current = get_item_group(item.__gear_id)
+			local current = get_item_group(item.gear_id)
 			local next = next_color_group(current)
 			if next == 0 then
 				style.hover_color = Color.red(255, true)
@@ -158,7 +158,7 @@ local item_definitions = {
 
 			local hotspot = content.myfav_hotspot
 			local item_hotspot = content.hotspot
-			local current = get_item_group(item.__gear_id)
+			local current = get_item_group(item.gear_id)
 			local next = next_color_group(current)
 			local color_name = mod:get("color_definition_" .. tostring(current))
 			local next_color_name = mod:get("color_definition_" .. tostring(next))
@@ -205,7 +205,7 @@ mod:hook_safe("ViewElementGrid", "init", function(self)
 			return
 		end
 
-		local item_id = item.__gear_id
+		local item_id = item.gear_id
 		switch_item_group(item_id)
 	end
 end)
@@ -264,7 +264,7 @@ mod:hook_safe("InventoryWeaponsView", "_setup_input_legend", function(self)
 				if not item then
 					return false
 				end
-				local is_fav = is_item_fav(item.__gear_id)
+				local is_fav = is_item_fav(item.gear_id)
 				return (not is_item_equipped) and (not is_fav)
 			end
 		end
@@ -299,7 +299,7 @@ mod:hook("CraftingView", "_setup_tab_bar", function(func, self, tab_bar_params, 
 								if not item then
 									return false
 								end
-								local is_fav = is_item_fav(item.__gear_id)
+								local is_fav = is_item_fav(item.gear_id)
 								return (not equipped) and (not is_fav)
 							end
 						end

@@ -39,11 +39,11 @@ local function item_equipped_in_loadout(loadout, item)
 		local slot_item = loadout[slot_name]
 		if slot_item then
 			if type(slot_item) == "string" then
-				if slot_item == item.__gear_id then
+				if slot_item == item.gear_id then
 					return true
 				end
 			else
-				if slot_item.__gear_id == item.__gear_id then
+				if slot_item.gear_id == item.gear_id then
 					return true
 				end
 			end
@@ -67,13 +67,13 @@ local function get_items_extra(a, b, view, with_type_new, with_equipped, with_ty
 	if #inv_items_array > 0 then
 		inv_items = {}
 		for _, inv_item in ipairs(inv_items_array) do
-			inv_items[inv_item.__gear_id] = inv_item
+			inv_items[inv_item.gear_id] = inv_item
 		end
 	end
 
 	if new_items then
-		a_extra.__isort_new = new_items[a.__gear_id]
-		b_extra.__isort_new = new_items[b.__gear_id]
+		a_extra.__isort_new = new_items[a.gear_id]
+		b_extra.__isort_new = new_items[b.gear_id]
 		if inv_items and with_type_new then
 			for new_item_id, _ in pairs(new_items) do
 				local inv_item = inv_items[new_item_id]
@@ -145,14 +145,14 @@ local function get_items_extra(a, b, view, with_type_new, with_equipped, with_ty
 					if a.slots then
 						for _, slot in ipairs(a.slots) do
 							if loadout[slot] then
-								a_slot_item_ids[loadout[slot].__gear_id] = true
+								a_slot_item_ids[loadout[slot].gear_id] = true
 							end
 						end
 					end
 					if b.slots then
 						for _, slot in ipairs(b.slots) do
 							if loadout[slot] then
-								b_slot_item_ids[loadout[slot].__gear_id] = true
+								b_slot_item_ids[loadout[slot].gear_id] = true
 							end
 						end
 					end
