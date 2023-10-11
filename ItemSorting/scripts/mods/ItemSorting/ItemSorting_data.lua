@@ -28,6 +28,22 @@ return {
 				},
 			},
 			{
+				setting_id = "group_always_on_top_options",
+				type = "group",
+				sub_widgets = {
+					{
+						setting_id = "entire_category_on_top",
+						type = "checkbox",
+						default_value = true,
+					},
+					{
+						setting_id = "on_top_of_category",
+						type = "checkbox",
+						default_value = true,
+					},
+				},
+			},
+			{
 				setting_id = "group_custom_sort",
 				type = "group",
 				sub_widgets = {

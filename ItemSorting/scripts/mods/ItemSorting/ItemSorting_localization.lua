@@ -25,9 +25,9 @@ return {
 		ru = "Новый предмет",
 	},
 	always_on_top_new_description = {
-		en = "Items with the \"New Item\" dot are always at the top of the item list.\nWhen sorting by Blessing Category, the categories of new items are always at the top of the list.",
-		["zh-cn"] = "有“新物品”圆点的物品总会显示在物品列表的顶部。\n当使用祝福分类排序时，新物品所属的分类总会显示在列表顶部。",
-		ru = "Предметы с точкой \"Новый предмет\" всегда находятся вверху списка предметов.\nПри сортировке по категории Благословения, новые предметы всегда находятся вверху списка.",
+		en = "Items with the \"New Item\" dot are always at the top of the item list.",
+		["zh-cn"] = "有“新物品”圆点的物品总会显示在物品列表的顶部。",
+		ru = "Предметы с точкой \"Новый предмет\" всегда находятся вверху списка предметов.",
 	},
 	always_on_top_equipped = {
 		en = "Equipped item",
@@ -35,9 +35,29 @@ return {
 		ru = "Экипированнный предмет",
 	},
 	always_on_top_equipped_description = {
-		en = "Items equipped in any Wargear Set are always at the top of the item list.\nWhen sorting by Blessing Category, the categories of equipped items are always at the top of the list.",
-		["zh-cn"] = "在任何战具套组中已装备的物品总会显示在物品列表的顶部。\n当使用祝福分类排序时，已装备物品所属的分类总会显示在列表顶部。",
-		ru = "Предметы, экипированные в любом Наборе снаряжения, всегда находятся вверху списка предметов.\nПри сортировке по категории Благословения, экипированные предметы всегда находятся вверху списка.",
+		en = "Items equipped in any Wargear Set are always at the top of the item list.",
+		["zh-cn"] = "在任何战具套组中已装备的物品总会显示在物品列表的顶部。",
+		ru = "Предметы, экипированные в любом Наборе снаряжения, всегда находятся вверху списка предметов.",
+	},
+	group_always_on_top_options = {
+		en = "Always on top options",
+		["zh-cn"] = "总在最上选项",
+	},
+	entire_category_on_top = {
+		en = "Top entire blessing category",
+		["zh-cn"] = "祝福分类整体置顶",
+	},
+	entire_category_on_top_description = {
+		en = "When sorting by Blessing Category, if an item in the category is topped, the entire category is topped.",
+		["zh-cn"] = "按祝福分类排序时，如果分类内有物品被置顶，则整个分类置顶。",
+	},
+	on_top_of_category = {
+		en = "Top inside blessing category",
+		["zh-cn"] = "在祝福分类内置顶",
+	},
+	on_top_of_category_description = {
+		en = "When sorting by Blessing Category, topped items are also topped in their category.",
+		["zh-cn"] = "按祝福分类排序时，置顶的物品也在所属分类内置顶。",
 	},
 	group_custom_sort = {
 		en = "Extra item sorting methods",

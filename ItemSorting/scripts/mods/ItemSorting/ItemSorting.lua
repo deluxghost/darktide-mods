@@ -31,69 +31,8 @@ local function get_valid_new_items()
 	return new_items
 end
 
-local function compare_item_new(view)
-	local class = view.__class_name
-	if not class or (class ~= "InventoryWeaponsView" and class ~= "CraftingModifyView") then
-		return function(a, b)
-			return nil
-		end
-	end
-	return function(a, b)
-		if not mod:get("always_on_top_new") then
-			return nil
-		end
-		local new_items = get_valid_new_items() or {}
-		local a_new = new_items[a.__gear_id]
-		local b_new = new_items[b.__gear_id]
-
-		if a_new and not b_new then
-			return true
-		elseif b_new and not a_new then
-			return false
-		end
-		return nil
-	end
-end
-
-local function compare_item_type_new(view)
-	local class = view.__class_name
-	if not class or (class ~= "InventoryWeaponsView" and class ~= "CraftingModifyView") then
-		return function(a, b)
-			return nil
-		end
-	end
-	return function(a, b)
-		if not mod:get("always_on_top_new") then
-			return nil
-		end
-		if not view._inventory_items then
-			return nil
-		end
-		local new_items = get_valid_new_items() or {}
-
-		local a_new = false
-		local b_new = false
-		for _, item in pairs(view._inventory_items) do
-			if new_items[item.__gear_id] then
-				if item.trait_category == a.trait_category then
-					a_new = true
-				end
-				if item.trait_category == b.trait_category then
-					b_new = true
-				end
-			end
-		end
-		if a_new and not b_new then
-			return true
-		elseif b_new and not a_new then
-			return false
-		end
-		return nil
-	end
-end
-
 local function item_equipped_in_loadout(loadout, item)
-	if not loadout then
+	if not loadout or not item.slots then
 		return false
 	end
 	for _, slot_name in ipairs(item.slots) do
@@ -113,6 +52,193 @@ local function item_equipped_in_loadout(loadout, item)
 	return false
 end
 
+local function get_items_extra(a, b, view, with_type_new, with_equipped, with_type_equipped)
+	local a_extra = {}
+	local b_extra = {}
+	if not with_type_new and not with_equipped and not with_type_equipped then
+		return a_extra, b_extra
+	end
+	local new_items = get_valid_new_items() or nil
+	local inv_items_array = view and view._inventory_items or {}
+	local presets = ProfileUtils.get_profile_presets()
+	local current_preset_id = ProfileUtils.get_active_profile_preset_id()
+
+	local inv_items = nil
+	if #inv_items_array > 0 then
+		inv_items = {}
+		for _, inv_item in ipairs(inv_items_array) do
+			inv_items[inv_item.__gear_id] = inv_item
+		end
+	end
+
+	if new_items then
+		a_extra.__isort_new = new_items[a.__gear_id]
+		b_extra.__isort_new = new_items[b.__gear_id]
+		if inv_items and with_type_new then
+			for new_item_id, _ in pairs(new_items) do
+				local inv_item = inv_items[new_item_id]
+				if inv_item then
+					if inv_item.trait_category == a.trait_category then
+						a_extra.__isort_type_new = true
+					end
+					if inv_item.trait_category == b.trait_category then
+						b_extra.__isort_type_new = true
+					end
+				end
+			end
+		end
+	end
+
+	if with_equipped then
+		local a_slot_item_ids = {}
+		local b_slot_item_ids = {}
+		if #presets > 0 then
+			for _, preset in ipairs(presets) do
+				local current = preset.id and current_preset_id and preset.id == current_preset_id or false
+				if item_equipped_in_loadout(preset.loadout, a) then
+					a_extra.__isort_equipped = true
+					if current then
+						a_extra.__isort_current = true
+					end
+				end
+				if item_equipped_in_loadout(preset.loadout, b) then
+					b_extra.__isort_equipped = true
+					if current then
+						b_extra.__isort_current = true
+					end
+				end
+
+				if with_type_equipped then
+					if a.slots then
+						for _, slot in ipairs(a.slots) do
+							if preset.loadout[slot] then
+								a_slot_item_ids[preset.loadout[slot]] = a_slot_item_ids[preset.loadout[slot]] or false
+								a_slot_item_ids[preset.loadout[slot]] = a_slot_item_ids[preset.loadout[slot]] or current
+							end
+						end
+					end
+					if b.slots then
+						for _, slot in ipairs(b.slots) do
+							if preset.loadout[slot] then
+								b_slot_item_ids[preset.loadout[slot]] = b_slot_item_ids[preset.loadout[slot]] or false
+								b_slot_item_ids[preset.loadout[slot]] = b_slot_item_ids[preset.loadout[slot]] or current
+							end
+						end
+					end
+				end
+			end
+		else
+			local player = Managers.player:local_player(1)
+			local profile = player:profile()
+			local loadout = profile.loadout
+			if loadout then
+				if item_equipped_in_loadout(loadout, a) then
+					a_extra.__isort_equipped = true
+					a_extra.__isort_current = true
+				end
+				if item_equipped_in_loadout(loadout, b) then
+					b_extra.__isort_equipped = true
+					b_extra.__isort_current = true
+				end
+
+				if with_type_equipped then
+					if a.slots then
+						for _, slot in ipairs(a.slots) do
+							if loadout[slot] then
+								a_slot_item_ids[loadout[slot].__gear_id] = true
+							end
+						end
+					end
+					if b.slots then
+						for _, slot in ipairs(b.slots) do
+							if loadout[slot] then
+								b_slot_item_ids[loadout[slot].__gear_id] = true
+							end
+						end
+					end
+				end
+			end
+		end
+
+		if inv_items and with_type_equipped then
+			for slot_item_id, current in pairs(a_slot_item_ids) do
+				local inv_item = inv_items[slot_item_id]
+				if inv_item then
+					if inv_item.trait_category == a.trait_category then
+						a_extra.__isort_type_equipped = true
+						if current then
+							a_extra.__isort_type_current = true
+						end
+					end
+				end
+			end
+			for slot_item_id, current in pairs(b_slot_item_ids) do
+				local inv_item = inv_items[slot_item_id]
+				if inv_item then
+					if inv_item.trait_category == b.trait_category then
+						b_extra.__isort_type_equipped = true
+						if current then
+							b_extra.__isort_type_current = true
+						end
+					end
+				end
+			end
+		end
+	end
+	return a_extra, b_extra
+end
+
+local function compare_item_new(view)
+	local class = view.__class_name
+	if not class or (class ~= "InventoryWeaponsView" and class ~= "CraftingModifyView") then
+		return function(a, b)
+			return nil
+		end
+	end
+	return function(a, b)
+		if not mod:get("always_on_top_new") then
+			return nil
+		end
+		local a_extra, b_extra = get_items_extra(a, b, view, false, false, false)
+		if a_extra.__isort_new and not b_extra.__isort_new then
+			return true
+		elseif b_extra.__isort_new and not a_extra.__isort_new then
+			return false
+		end
+		return nil
+	end
+end
+
+local function compare_item_type_new(view)
+	local class = view.__class_name
+	if not class or (class ~= "InventoryWeaponsView" and class ~= "CraftingModifyView") then
+		return function(a, b)
+			return nil
+		end
+	end
+	return function(a, b)
+		if not mod:get("always_on_top_new") then
+			return nil
+		end
+		local a_extra, b_extra = get_items_extra(a, b, view, true, false, false)
+		if not mod:get("entire_category_on_top") then
+			if a_extra.__isort_new and not b_extra.__isort_new then
+				return true
+			elseif b_extra.__isort_new and not a_extra.__isort_new then
+				return false
+			end
+			return nil
+		end
+
+		if a_extra.__isort_type_new and not b_extra.__isort_type_new then
+			return true
+		elseif b_extra.__isort_type_new and not a_extra.__isort_type_new then
+			return false
+		end
+		return nil
+	end
+end
+
 local function compare_item_equipped(view)
 	local class = view.__class_name
 	if not class or (class ~= "InventoryWeaponsView" and class ~= "CraftingModifyView") then
@@ -124,43 +250,17 @@ local function compare_item_equipped(view)
 		if not mod:get("always_on_top_equipped") then
 			return nil
 		end
-		if not a.slots then
-			return false
-		end
-		if not b.slots then
+		local a_extra, b_extra = get_items_extra(a, b, view, false, true, false)
+		if a_extra.__isort_equipped and not b_extra.__isort_equipped then
 			return true
-		end
-		local presets = ProfileUtils:get_profile_presets()
-
-		local a_equipped = false
-		local b_equipped = false
-		if #presets > 0 then
-			for _, preset in ipairs(presets) do
-				if item_equipped_in_loadout(preset.loadout, a) then
-					a_equipped = true
-				end
-				if item_equipped_in_loadout(preset.loadout, b) then
-					b_equipped = true
-				end
-			end
-		else
-			local player = Managers.player:local_player(1)
-			local profile = player:profile()
-			local loadout = profile.loadout
-			if not loadout then
-				return nil
-			end
-			if item_equipped_in_loadout(loadout, a) then
-				a_equipped = true
-			end
-			if item_equipped_in_loadout(loadout, b) then
-				b_equipped = true
-			end
-		end
-		if a_equipped and not b_equipped then
-			return true
-		elseif b_equipped and not a_equipped then
+		elseif b_extra.__isort_equipped and not a_extra.__isort_equipped then
 			return false
+		elseif a_extra.__isort_equipped and b_extra.__isort_equipped then
+			if a_extra.__isort_current and not b_extra.__isort_current then
+				return true
+			elseif b_extra.__isort_current and not a_extra.__isort_current then
+				return false
+			end
 		end
 		return nil
 	end
@@ -177,64 +277,62 @@ local function compare_item_type_equipped(view)
 		if not mod:get("always_on_top_equipped") then
 			return nil
 		end
-		if not view._inventory_items then
+		local a_extra, b_extra = get_items_extra(a, b, view, false, true, true)
+		if not mod:get("entire_category_on_top") then
+			if a_extra.__isort_equipped and not b_extra.__isort_equipped then
+				return true
+			elseif b_extra.__isort_equipped and not a_extra.__isort_equipped then
+				return false
+			elseif a_extra.__isort_equipped and b_extra.__isort_equipped then
+				if a_extra.__isort_current and not b_extra.__isort_current then
+					return true
+				elseif b_extra.__isort_current and not a_extra.__isort_current then
+					return false
+				end
+			end
 			return nil
 		end
-		if not a.slots then
+		if a_extra.__isort_type_equipped and not b_extra.__isort_type_equipped then
+			return true
+		elseif b_extra.__isort_type_equipped and not a_extra.__isort_type_equipped then
 			return false
 		end
-		if not b.slots then
-			return true
-		end
-		local a_slot_item_ids = {}
-		local b_slot_item_ids = {}
-		local presets = ProfileUtils:get_profile_presets()
-		for _, preset in ipairs(presets) do
-			for _, slot in ipairs(a.slots) do
-				if preset.loadout[slot] then
-					a_slot_item_ids[preset.loadout[slot]] = true
-				end
-			end
-			for _, slot in ipairs(b.slots) do
-				if preset.loadout[slot] then
-					b_slot_item_ids[preset.loadout[slot]] = true
-				end
-			end
-		end
-		local player = Managers.player:local_player(1)
-		local profile = player:profile()
-		local loadout = profile.loadout
-		if loadout then
-			for _, slot in ipairs(a.slots) do
-				if loadout[slot] then
-					a_slot_item_ids[loadout[slot].__gear_id] = true
-				end
-			end
-			for _, slot in ipairs(b.slots) do
-				if loadout[slot] then
-					b_slot_item_ids[loadout[slot].__gear_id] = true
-				end
-			end
-		end
+		return nil
+	end
+end
 
-		local a_equipped = false
-		local b_equipped = false
-		for _, item in pairs(view._inventory_items) do
-			for item_id, _ in pairs(a_slot_item_ids) do
-				if item.__gear_id == item_id and item.trait_category == a.trait_category then
-					a_equipped = true
+local function compare_item_category_top_items(view)
+	return function(a, b)
+		local a_extra, b_extra = get_items_extra(a, b, view, true, true, true)
+		local a_category = a.trait_category or ""
+		local b_category = b.trait_category or ""
+
+		if a_category == b_category then
+			if mod:get("always_on_top_new") and mod:get("on_top_of_category") then
+				if a_extra.__isort_new and not b_extra.__isort_new then
+					return true
+				elseif b_extra.__isort_new and not a_extra.__isort_new then
+					return false
 				end
 			end
-			for item_id, _ in pairs(b_slot_item_ids) do
-				if item.__gear_id == item_id and item.trait_category == b.trait_category then
-					b_equipped = true
+			if mod:get("always_on_top_equipped") and mod:get("on_top_of_category") then
+				if a_extra.__isort_equipped and not b_extra.__isort_equipped then
+					return true
+				elseif b_extra.__isort_equipped and not a_extra.__isort_equipped then
+					return false
+				end
+				if a_extra.__isort_current and not b_extra.__isort_current then
+					return true
+				elseif b_extra.__isort_current and not a_extra.__isort_current then
+					return false
 				end
 			end
-		end
-		if a_equipped and not b_equipped then
-			return true
-		elseif b_equipped and not a_equipped then
-			return false
+		elseif a_extra.__isort_type_equipped and b_extra.__isort_type_equipped then
+			if a_extra.__isort_type_current and not b_extra.__isort_type_current then
+				return true
+			elseif b_extra.__isort_type_current and not a_extra.__isort_type_current then
+				return false
+			end
 		end
 		return nil
 	end
@@ -307,6 +405,7 @@ local custom_sorts_def = {
 		sort_functions = {
 			{"<", compare_item_type_new},
 			{"<", compare_item_type_equipped},
+			{"<", compare_item_category_top_items},
 			{">", compare_item_category},
 			{">", wrap(ItemUtils.compare_item_rarity)},
 			{">", wrap(ItemUtils.compare_item_level)},
@@ -320,6 +419,7 @@ local custom_sorts_def = {
 		sort_functions = {
 			{"<", compare_item_type_new},
 			{"<", compare_item_type_equipped},
+			{"<", compare_item_category_top_items},
 			{">", compare_item_category},
 			{">", wrap(ItemUtils.compare_item_type)},
 			{"<", wrap(ItemUtils.compare_item_name)},
