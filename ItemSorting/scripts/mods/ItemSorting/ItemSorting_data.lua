@@ -25,6 +25,11 @@ return {
 						type = "checkbox",
 						default_value = false,
 					},
+					{
+						setting_id = "always_on_top_myfav",
+						type = "checkbox",
+						default_value = false,
+					},
 				},
 			},
 			{

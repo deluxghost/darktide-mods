@@ -20,7 +20,7 @@ return {
 		ru = "Всегда сверху",
 	},
 	always_on_top_new = {
-		en = "New item",
+		en = "New items",
 		["zh-cn"] = "新物品",
 		ru = "Новый предмет",
 	},
@@ -30,7 +30,7 @@ return {
 		ru = "Предметы с точкой \"Новый предмет\" всегда находятся вверху списка предметов.",
 	},
 	always_on_top_equipped = {
-		en = "Equipped item",
+		en = "Equipped items",
 		["zh-cn"] = "已装备的物品",
 		ru = "Экипированнный предмет",
 	},
@@ -38,6 +38,14 @@ return {
 		en = "Items equipped in any Wargear Set are always at the top of the item list.",
 		["zh-cn"] = "在任何战具套组中已装备的物品总会显示在物品列表的顶部。",
 		ru = "Предметы, экипированные в любом Наборе снаряжения, всегда находятся вверху списка предметов.",
+	},
+	always_on_top_myfav = {
+		en = "Favorite items (\"My Favorites\" mod)",
+		["zh-cn"] = "收藏的物品（“我的收藏”模组）",
+	},
+	always_on_top_myfav_description = {
+		en = "With \"My Favorites\" mod, favorite items are always at the top of the item list.",
+		["zh-cn"] = "如果有“我的收藏（My Favorites）”模组，收藏的物品总会显示在物品列表的顶部。",
 	},
 	group_always_on_top_options = {
 		en = "Always on top options",
