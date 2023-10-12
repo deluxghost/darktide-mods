@@ -84,6 +84,15 @@ local function item_equipped_in_loadout(loadout, item)
 	return false
 end
 
+local function get_trait_category(item)
+	if item.item_type == "GADGET" then
+		if item.traits and #item.traits > 0 then
+			return item.traits[1].id
+		end
+	end
+	return item.trait_category or ""
+end
+
 local function get_items_extra(a, b, view, with_type_new, with_equipped, with_type_equipped, with_type_myfav)
 	local a_extra = {}
 	local b_extra = {}
@@ -107,10 +116,10 @@ local function get_items_extra(a, b, view, with_type_new, with_equipped, with_ty
 			for new_item_id, _ in pairs(new_items) do
 				local inv_item = inv_items[new_item_id]
 				if inv_item then
-					if inv_item.trait_category == a.trait_category then
+					if get_trait_category(inv_item) == get_trait_category(a) then
 						a_extra.type_new = true
 					end
-					if inv_item.trait_category == b.trait_category then
+					if get_trait_category(inv_item) == get_trait_category(b) then
 						b_extra.type_new = true
 					end
 				end
@@ -201,7 +210,7 @@ local function get_items_extra(a, b, view, with_type_new, with_equipped, with_ty
 			for slot_item_id, current in pairs(a_slot_item_ids) do
 				local inv_item = inv_items[slot_item_id]
 				if inv_item then
-					if inv_item.trait_category == a.trait_category then
+					if get_trait_category(inv_item) == get_trait_category(a) then
 						a_extra.type_equipped = true
 						if current then
 							a_extra.type_current = true
@@ -212,7 +221,7 @@ local function get_items_extra(a, b, view, with_type_new, with_equipped, with_ty
 			for slot_item_id, current in pairs(b_slot_item_ids) do
 				local inv_item = inv_items[slot_item_id]
 				if inv_item then
-					if inv_item.trait_category == b.trait_category then
+					if get_trait_category(inv_item) == get_trait_category(b) then
 						b_extra.type_equipped = true
 						if current then
 							b_extra.type_current = true
@@ -227,12 +236,12 @@ local function get_items_extra(a, b, view, with_type_new, with_equipped, with_ty
 		for fav_id, fav_group in pairs(fav_list) do
 			local inv_item = inv_items[fav_id]
 			if inv_item then
-				if inv_item.trait_category == a.trait_category then
+				if get_trait_category(inv_item) == get_trait_category(a) then
 					if a_extra.type_myfav and fav_group < a_extra.type_myfav or not a_extra.type_myfav then
 						a_extra.type_myfav = fav_group
 					end
 				end
-				if inv_item.trait_category == b.trait_category then
+				if get_trait_category(inv_item) == get_trait_category(b) then
 					if b_extra.type_myfav and fav_group < b_extra.type_myfav or not b_extra.type_myfav then
 						b_extra.type_myfav = fav_group
 					end
@@ -435,8 +444,8 @@ end
 local function compare_item_category_top_items(view)
 	return function(a, b)
 		local a_extra, b_extra = get_items_extra(a, b, view, true, true, true, false)
-		local a_category = a.trait_category or ""
-		local b_category = b.trait_category or ""
+		local a_category = get_trait_category(a)
+		local b_category = get_trait_category(b)
 
 		if a_category == b_category then
 			if mod:get("always_on_top_new") and mod:get("on_top_of_category") then
@@ -484,8 +493,8 @@ end
 
 local function compare_item_category(view)
 	return function(a, b)
-		local a_category = a.trait_category or ""
-		local b_category = b.trait_category or ""
+		local a_category = get_trait_category(a)
+		local b_category = get_trait_category(b)
 
 		if a_category < b_category then
 			return true
