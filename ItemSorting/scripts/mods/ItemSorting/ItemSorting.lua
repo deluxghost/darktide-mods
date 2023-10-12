@@ -1,10 +1,42 @@
 local mod = get_mod("ItemSorting")
 local ItemUtils = require("scripts/utilities/items")
 local ItemGridViewBase = require("scripts/ui/views/item_grid_view_base/item_grid_view_base")
+local InventoryCosmeticsView = require("scripts/ui/views/inventory_cosmetics_view/inventory_cosmetics_view")
 local ProfileUtils = require("scripts/utilities/profile_utils")
 
-local rem_sort_index_key = "rem_sort_index"
-local memory = mod:persistent_table("memory")
+local rem_sort_index_prefix = "rem_sort_index_view_"
+local view_context_handler = {
+	cosmetics_vendor_view = function(self)
+		return self._optional_store_service or nil
+	end,
+	inventory_cosmetics_view = function(self)
+		if not self._cosmetic_layout then
+			return nil
+		end
+		for i = 1, #self._cosmetic_layout do
+			local layout = self._cosmetic_layout[i]
+			if layout.item and layout.item.rarity then
+				return "_isort_invcos_rarity"
+			end
+		end
+		return "_isort_invcos_basic"
+	end
+}
+
+local function get_view_rem_key(view)
+	if not view or not view.view_name then
+		return ""
+	end
+	local key = rem_sort_index_prefix .. view.view_name
+	if view_context_handler[view.view_name] then
+		local context = view_context_handler[view.view_name](view)
+		if context == nil then
+			return ""
+		end
+		key = key .. "_" .. context
+	end
+	return key
+end
 
 local function get_valid_new_items()
 	local local_player_id = 1
@@ -455,15 +487,34 @@ local custom_sorts_def = {
 }
 
 mod.on_enabled = function(initial_call)
-	memory[rem_sort_index_key] = mod:get(rem_sort_index_key) or 1
+	local old_rem_value = mod:get("rem_sort_index")
+	if old_rem_value then
+		mod:set("rem_sort_index_view_inventory_weapons_view", old_rem_value)
+		mod:set("rem_sort_index_view_crafting_modify_view", old_rem_value)
+		mod:set("rem_sort_index", nil)
+	end
 end
 
-local function is_cosmetics_store(object)
+local function is_cosmetics_or_store(object)
 	if object._optional_store_service ~= nil then
 		return true
 	end
-	if object.view_name and object.view_name == "inventory_cosmetics_view" then
-		return true
+	if object.view_name then
+		if object.view_name == "inventory_cosmetics_view" then
+			return true
+		end
+		if object.view_name == "inventory_weapon_cosmetics_view" then
+			return true
+		end
+	end
+	return false
+end
+
+local function is_blacklist_view(object)
+	if object.view_name then
+		if object.view_name == "inventory_weapon_cosmetics_view" then
+			return true
+		end
 	end
 	return false
 end
@@ -495,19 +546,29 @@ local function set_extra_sort(self)
 	end
 end
 
-mod:hook_safe(ItemGridViewBase, "on_enter", function(self)
-	if is_cosmetics_store(self) then
+local function setup_rem_sorting(self)
+	if not is_cosmetics_or_store(self) then
+		set_extra_sort(self)
+	end
+	if is_blacklist_view(self) then
 		return
 	end
-	set_extra_sort(self)
 
 	if mod:get("remember_sort_index") then
+		local view_rem_key = get_view_rem_key(self)
+		if not view_rem_key then
+			return
+		end
+
 		local options = self._sort_options
 		if not options then
 			return
 		end
 		local length = #options
-		local index = memory[rem_sort_index_key] or 1
+		local index = mod:get(view_rem_key) or 1
+		if length < 1 then
+			return
+		end
 		if index > length then
 			index = 1
 		end
@@ -516,21 +577,32 @@ mod:hook_safe(ItemGridViewBase, "on_enter", function(self)
 		self._selected_sort_option = option
 		self:trigger_sort_index(index)
 	end
+end
+
+mod:hook_safe(ItemGridViewBase, "on_enter", function(self)
+	if self._item_grid._widgets_by_name.grid_loading.content.is_loading then
+		return
+	end
+	setup_rem_sorting(self)
+end)
+
+mod:hook_safe(InventoryCosmeticsView, "_setup_sort_options", function(self)
+	setup_rem_sorting(self)
 end)
 
 mod:hook_safe(ItemGridViewBase, "on_exit", function(self)
-	if not mod:get("remember_sort_index") then
-		mod:set(rem_sort_index_key, 1)
-		memory[rem_sort_index_key] = 1
+	local view_rem_key = get_view_rem_key(self)
+	if not view_rem_key then
 		return
 	end
 
-	if is_cosmetics_store(self) then
+	if not mod:get("remember_sort_index") then
+		mod:set(view_rem_key, nil)
 		return
 	end
+
 	if self._selected_sort_option_index == nil then
 		return
 	end
-	mod:set(rem_sort_index_key, self._selected_sort_option_index)
-	memory[rem_sort_index_key] = self._selected_sort_option_index
+	mod:set(view_rem_key, self._selected_sort_option_index)
 end)
