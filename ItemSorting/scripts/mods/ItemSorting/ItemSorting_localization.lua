@@ -19,6 +19,14 @@ return {
 		["zh-cn"] = "总在最上",
 		ru = "Всегда сверху",
 	},
+	always_on_top_curio = {
+		en = "Curios (Store)",
+		["zh-cn"] = "珍品（商店）",
+	},
+	always_on_top_curio_description = {
+		en = "Curios are always at the top of the store item list.",
+		["zh-cn"] = "珍品总会显示在商店物品列表的顶部。",
+	},
 	always_on_top_new = {
 		en = "New items",
 		["zh-cn"] = "新物品",

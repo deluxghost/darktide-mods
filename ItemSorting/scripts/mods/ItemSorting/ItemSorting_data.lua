@@ -16,6 +16,11 @@ return {
 				type = "group",
 				sub_widgets = {
 					{
+						setting_id = "always_on_top_curio",
+						type = "checkbox",
+						default_value = false,
+					},
+					{
 						setting_id = "always_on_top_new",
 						type = "checkbox",
 						default_value = false,

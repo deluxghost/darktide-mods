@@ -418,6 +418,20 @@ local function compare_item_type_myfav(view)
 	end
 end
 
+local function compare_item_top_curios(view)
+	return function(a, b)
+		if not mod:get("always_on_top_curio") then
+			return nil
+		end
+		if a.item_type == "GADGET" and b.item_type ~= "GADGET" then
+			return true
+		elseif b.item_type == "GADGET" and a.item_type ~= "GADGET" then
+			return false
+		end
+		return nil
+	end
+end
+
 local function compare_item_category_top_items(view)
 	return function(a, b)
 		local a_extra, b_extra = get_items_extra(a, b, view, true, true, true, false)
@@ -508,6 +522,7 @@ local custom_sorts_def = {
 		display_name = Localize("loc_inventory_item_grid_sort_title_item_power"),
 		replace = true,
 		sort_functions = {
+			{"<", compare_item_top_curios},
 			{"<", compare_item_new},
 			{"<", compare_item_equipped},
 			{"<", compare_item_myfav},
@@ -522,6 +537,7 @@ local custom_sorts_def = {
 		display_name = Localize("loc_inventory_item_grid_sort_title_item_type"),
 		replace = true,
 		sort_functions = {
+			{"<", compare_item_top_curios},
 			{"<", compare_item_new},
 			{"<", compare_item_equipped},
 			{"<", compare_item_myfav},
@@ -535,6 +551,7 @@ local custom_sorts_def = {
 		name = "custom_sort_category",
 		display_name = mod:localize("custom_sort_category"),
 		sort_functions = {
+			{"<", compare_item_top_curios},
 			{"<", compare_item_type_new},
 			{"<", compare_item_type_equipped},
 			{"<", compare_item_type_myfav},
@@ -550,6 +567,7 @@ local custom_sorts_def = {
 		name = "custom_sort_category_mark",
 		display_name = mod:localize("custom_sort_category_mark"),
 		sort_functions = {
+			{"<", compare_item_top_curios},
 			{"<", compare_item_type_new},
 			{"<", compare_item_type_equipped},
 			{"<", compare_item_type_myfav},
@@ -565,6 +583,7 @@ local custom_sorts_def = {
 		name = "custom_sort_rarity",
 		display_name = mod:localize("custom_sort_rarity"),
 		sort_functions = {
+			{"<", compare_item_top_curios},
 			{"<", compare_item_new},
 			{"<", compare_item_equipped},
 			{"<", compare_item_myfav},
@@ -578,6 +597,7 @@ local custom_sorts_def = {
 		name = "custom_sort_base_level",
 		display_name = mod:localize("custom_sort_base_level"),
 		sort_functions = {
+			{"<", compare_item_top_curios},
 			{"<", compare_item_new},
 			{"<", compare_item_equipped},
 			{">", compare_item_base_level},
@@ -599,7 +619,7 @@ mod.on_enabled = function(initial_call)
 	end
 end
 
-local function is_cosmetics_or_store(object)
+local function is_cosmetics_view(object)
 	if object._optional_store_service ~= nil then
 		return true
 	end
@@ -651,7 +671,7 @@ local function set_extra_sort(self)
 end
 
 local function setup_rem_sorting(self)
-	if not is_cosmetics_or_store(self) then
+	if not is_cosmetics_view(self) then
 		set_extra_sort(self)
 	end
 	if is_blacklist_view(self) then
