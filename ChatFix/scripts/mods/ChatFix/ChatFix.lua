@@ -1,5 +1,7 @@
 local mod = get_mod("ChatFix")
 local ChatSettings = require("scripts/ui/constant_elements/elements/chat/constant_element_chat_settings")
+local InputDevice = require("scripts/managers/input/input_device")
+
 local chat_scroll_multiplier = 1.0
 
 mod.on_enabled = function(initial_call)
@@ -40,6 +42,8 @@ mod:hook_origin("ConstantElementChat", "_update_scrollbar", function(self, rende
 	local scrollbar_content = scrollbar_widget.content
 	local scroll_value = scrollbar_content.scroll_value
 	local total_scroll_length = total_chat_height - chat_window_height
+	scrollbar_content.hotspot.is_focused = not InputDevice.gamepad_active or self:using_input()
+	scrollbar_content.focused = InputDevice.gamepad_active and self:using_input()
 	scrollbar_content.scroll_length = total_scroll_length
 	scrollbar_content.area_length = chat_window_height
 	-- change start
