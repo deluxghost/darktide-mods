@@ -49,6 +49,10 @@ local loc = {
 		en = "None",
 		["zh-cn"] = "无",
 	},
+	format_auric = {
+		en = Localize("loc_mission_board_type_auric") .. " %s",
+		["zh-cn"] = Localize("loc_mission_board_type_auric") .. "%s",
+	},
 	group_modifiers = {
 		en = "Modifiers",
 		["zh-cn"] = "修改项",
@@ -79,58 +83,27 @@ local loc = {
 
 -- No more translations below
 
-for name, mission in pairs(MissionTemplates) do
-	local display = Localize(mission.mission_name)
-	if string.starts_with(display, "<") then
-		display = name
-	end
-	loc["loc_mission_" .. name] = {
-		en = display,
+for _, mission in ipairs(SoloPlaySettings.missions) do
+	loc[mission.loc_key] = {
+		en = mission.loc_value,
 	}
 end
-
-local circumstance_reverse_map = {}
-for name, circumstance in pairs(CircumstanceTemplates) do
-	if circumstance.ui then
-		local display_name = circumstance.ui.display_name
-		circumstance_reverse_map[display_name] = circumstance_reverse_map[display_name] or {}
-		table.insert(circumstance_reverse_map[display_name], name)
-	end
-end
-
-for name, circumstance in pairs(CircumstanceTemplates) do
-	if circumstance.ui then
-		local deny = false
-		for _, deny_entry in ipairs(SoloPlaySettings.circumstance_denylist) do
-			if string.find(name, deny_entry, 1, true) ~= nil then
-				deny = true
-				break
-			end
-		end
-		if not deny then
-			local display_name = circumstance.ui.display_name
-			local use_name = false
-			local names = circumstance_reverse_map[display_name] or {}
-			if #names > 1 then
-				if SoloPlaySettings.circumstance_prefer_list[display_name] ~= name then
-					use_name = true
-				end
-			end
-			local display = Localize(circumstance.ui.display_name)
-			if use_name or string.starts_with(display, "<") then
-				display = name
-			end
-			loc["loc_circumstance_" .. name] = {
-				en = display,
-			}
-		end
-	end
-end
-
-for name, side_mission in pairs(MissionObjectiveTemplates.side_mission.objectives) do
-	loc["loc_side_mission_" .. name] = {
-		en = Localize(side_mission.header),
+for _, side_mission in ipairs(SoloPlaySettings.side_missions) do
+	loc[side_mission.loc_key] = {
+		en = side_mission.loc_value,
 	}
+end
+for _, circumstance in ipairs(SoloPlaySettings.circumstances) do
+	if circumstance.format_key then
+		for locale, format in pairs(loc[circumstance.format_key]) do
+			loc[circumstance.loc_key] = loc[circumstance.loc_key] or {}
+			loc[circumstance.loc_key][locale] = string.format(format, circumstance.loc_value)
+		end
+	else
+		loc[circumstance.loc_key] = {
+			en = circumstance.loc_value,
+		}
+	end
 end
 
 return loc
