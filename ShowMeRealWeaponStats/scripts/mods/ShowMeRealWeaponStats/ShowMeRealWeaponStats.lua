@@ -1,4 +1,5 @@
 local mod = get_mod("ShowMeRealWeaponStats")
+require("scripts/ui/view_content_blueprints/item_stats_blueprints")
 local WeaponStats = require("scripts/utilities/weapon_stats")
 local ViewElementWeaponInfo = require("scripts/ui/view_elements/view_element_weapon_info/view_element_weapon_info")
 
@@ -114,7 +115,7 @@ end)
 mod:hook(ViewElementWeaponInfo, "_get_stats_text", function(func, self, stat)
 	local stat_clone = table.clone(stat)
 	if mod:get("show_real_max_breakdown") then
-		stat_clone.max = stat_clone.max_real
+		stat_clone.max = stat_clone.max_real or stat_clone.max
 	end
 	return func(self, stat_clone)
 end)
