@@ -7,6 +7,13 @@ return {
 	options = {
 		widgets = {
 			{
+				setting_id = "max_modifier_score",
+				type = "numeric",
+				default_value = 80,
+				range = {0, 100},
+				decimals_number = 0
+			},
+			{
 				setting_id = "show_full_bar",
 				type = "checkbox",
 				default_value = true,

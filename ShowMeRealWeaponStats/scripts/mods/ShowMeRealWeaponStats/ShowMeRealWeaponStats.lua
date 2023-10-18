@@ -49,7 +49,6 @@ local function breakdown_equal(a, b)
 	return get_breakdown_compare_string(a) == get_breakdown_compare_string(b)
 end
 
-local x = true
 mod:hook(package.loaded, "scripts/ui/view_content_blueprints/item_stats_blueprints", function(generate_blueprints_function, grid_size, optional_item)
 	local blueprints = generate_blueprints_function(grid_size, optional_item)
 	if not blueprints.weapon_stats or not blueprints.weapon_stats.init or not blueprints.weapon_stats.update then
@@ -65,7 +64,7 @@ mod:hook(package.loaded, "scripts/ui/view_content_blueprints/item_stats_blueprin
 		local item = element.item
 		local item_clone = fake_item(item)
 		for _, stat in pairs(item_clone.base_stats) do
-			stat.value = 0.80
+			stat.value = mod:get("max_modifier_score") / 100
 		end
 		local weapon_stats = WeaponStats:new(item_clone)
 		local compairing_stats = weapon_stats:get_compairing_stats()
@@ -103,8 +102,12 @@ mod:hook(package.loaded, "scripts/ui/view_content_blueprints/item_stats_blueprin
 			end
 			local value = content["bar_breakdown_" .. i].value
 			local bar_style = style["bar_" .. i]
-			if mod:get("show_full_bar") then
-				bar_style.size[1] = bar_size * value * 1.25
+				if mod:get("show_full_bar") then
+				local multiplier = mod:get("max_modifier_score") > 0 and 100 / mod:get("max_modifier_score") or 100
+				bar_style.size[1] = bar_size * value * multiplier
+				if bar_style.size[1] > bar_size then
+					bar_style.size[1] = bar_size
+				end
 			end
 		end
 		return ret
