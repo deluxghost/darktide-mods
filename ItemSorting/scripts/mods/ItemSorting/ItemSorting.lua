@@ -38,6 +38,42 @@ local function get_view_rem_key(view)
 	return key
 end
 
+local function is_cosmetics_view(object)
+	if object._optional_store_service ~= nil then
+		return true
+	end
+	if object.view_name then
+		if object.view_name == "inventory_cosmetics_view" then
+			return true
+		end
+		if object.view_name == "inventory_weapon_cosmetics_view" then
+			return true
+		end
+	end
+	return false
+end
+
+local function is_inventory_view(object)
+	if object.view_name then
+		if object.view_name == "inventory_weapons_view" then
+			return true
+		end
+		if object.view_name == "crafting_modify_view" then
+			return true
+		end
+	end
+	return false
+end
+
+local function is_blacklist_view(object)
+	if object.view_name then
+		if object.view_name == "inventory_weapon_cosmetics_view" then
+			return true
+		end
+	end
+	return false
+end
+
 local function get_valid_new_items()
 	local local_player_id = 1
 	local player_manager = Managers.player
@@ -97,15 +133,15 @@ local function get_items_extra(a, b, view, with_type_new, with_equipped, with_ty
 	local a_extra = {}
 	local b_extra = {}
 	local new_items = get_valid_new_items() or nil
-	local inv_items_array = view and view._inventory_items or {}
+	local inv_items_layout = view and view._offer_items_layout or {}
 	local presets = ProfileUtils.get_profile_presets()
 	local current_preset_id = ProfileUtils.get_active_profile_preset_id()
 
 	local inv_items = nil
-	if #inv_items_array > 0 then
+	if #inv_items_layout > 0 then
 		inv_items = {}
-		for _, inv_item in ipairs(inv_items_array) do
-			inv_items[inv_item.gear_id] = inv_item
+		for _, layout in ipairs(inv_items_layout) do
+			inv_items[layout.item.gear_id] = layout.item
 		end
 	end
 
@@ -253,8 +289,7 @@ local function get_items_extra(a, b, view, with_type_new, with_equipped, with_ty
 end
 
 local function compare_item_new(view)
-	local class = view.__class_name
-	if not class or (class ~= "InventoryWeaponsView" and class ~= "CraftingModifyView") then
+	if not is_inventory_view(view) then
 		return function(a, b)
 			return nil
 		end
@@ -274,8 +309,7 @@ local function compare_item_new(view)
 end
 
 local function compare_item_type_new(view)
-	local class = view.__class_name
-	if not class or (class ~= "InventoryWeaponsView" and class ~= "CraftingModifyView") then
+	if not is_inventory_view(view) then
 		return function(a, b)
 			return nil
 		end
@@ -304,8 +338,7 @@ local function compare_item_type_new(view)
 end
 
 local function compare_item_equipped(view)
-	local class = view.__class_name
-	if not class or (class ~= "InventoryWeaponsView" and class ~= "CraftingModifyView") then
+	if not is_inventory_view(view) then
 		return function(a, b)
 			return nil
 		end
@@ -331,8 +364,7 @@ local function compare_item_equipped(view)
 end
 
 local function compare_item_type_equipped(view)
-	local class = view.__class_name
-	if not class or (class ~= "InventoryWeaponsView" and class ~= "CraftingModifyView") then
+	if not is_inventory_view(view) then
 		return function(a, b)
 			return nil
 		end
@@ -366,8 +398,7 @@ local function compare_item_type_equipped(view)
 end
 
 local function compare_item_myfav(view)
-	local class = view.__class_name
-	if not class or (class ~= "InventoryWeaponsView" and class ~= "CraftingModifyView") then
+	if not is_inventory_view(view) then
 		return function(a, b)
 			return nil
 		end
@@ -393,8 +424,7 @@ local function compare_item_myfav(view)
 end
 
 local function compare_item_type_myfav(view)
-	local class = view.__class_name
-	if not class or (class ~= "InventoryWeaponsView" and class ~= "CraftingModifyView") then
+	if not is_inventory_view(view) then
 		return function(a, b)
 			return nil
 		end
@@ -442,6 +472,11 @@ local function compare_item_top_curios(view)
 end
 
 local function compare_item_category_top_items(view)
+	if not is_inventory_view(view) then
+		return function(a, b)
+			return nil
+		end
+	end
 	return function(a, b)
 		local a_extra, b_extra = get_items_extra(a, b, view, true, true, true, false)
 		local a_category = get_trait_category(a)
@@ -626,30 +661,6 @@ mod.on_enabled = function(initial_call)
 		mod:set("rem_sort_index_view_crafting_modify_view", old_rem_value)
 		mod:set("rem_sort_index", nil)
 	end
-end
-
-local function is_cosmetics_view(object)
-	if object._optional_store_service ~= nil then
-		return true
-	end
-	if object.view_name then
-		if object.view_name == "inventory_cosmetics_view" then
-			return true
-		end
-		if object.view_name == "inventory_weapon_cosmetics_view" then
-			return true
-		end
-	end
-	return false
-end
-
-local function is_blacklist_view(object)
-	if object.view_name then
-		if object.view_name == "inventory_weapon_cosmetics_view" then
-			return true
-		end
-	end
-	return false
 end
 
 local function set_extra_sort(self)
