@@ -1,6 +1,8 @@
 local mod = get_mod("ItemSorting")
 local ItemUtils = require("scripts/utilities/items")
 local ItemGridViewBase = require("scripts/ui/views/item_grid_view_base/item_grid_view_base")
+local InventoryWeaponsView = require("scripts/ui/views/inventory_weapons_view/inventory_weapons_view")
+local CraftingModifyView = require("scripts/ui/views/crafting_modify_view/crafting_modify_view")
 local InventoryCosmeticsView = require("scripts/ui/views/inventory_cosmetics_view/inventory_cosmetics_view")
 local ProfileUtils = require("scripts/utilities/profile_utils")
 
@@ -129,83 +131,48 @@ local function get_trait_category(item)
 	return item.trait_category or ""
 end
 
-local function get_items_extra(a, b, view, with_type_new, with_equipped, with_type_equipped, with_type_myfav)
-	local a_extra = {}
-	local b_extra = {}
+local __isort_keys = {
+	"__isort_new",
+	"__isort_equipped",
+	"__isort_current",
+	"__isort_myfav",
+	"__isort_type_new",
+	"__isort_type_equipped",
+	"__isort_type_current",
+	"__isort_type_myfav",
+}
+
+local function fill_items_extra(view, with_type_extra)
 	local new_items = get_valid_new_items() or nil
 	local inv_items_layout = view and view._offer_items_layout or {}
 	local presets = ProfileUtils.get_profile_presets()
 	local current_preset_id = ProfileUtils.get_active_profile_preset_id()
-
-	local inv_items = nil
-	if #inv_items_layout > 0 then
-		inv_items = {}
-		for _, layout in ipairs(inv_items_layout) do
-			inv_items[layout.item.gear_id] = layout.item
-		end
-	end
-
-	if new_items then
-		a_extra.new = new_items[a.gear_id]
-		b_extra.new = new_items[b.gear_id]
-		if inv_items and with_type_new then
-			for new_item_id, _ in pairs(new_items) do
-				local inv_item = inv_items[new_item_id]
-				if inv_item then
-					if get_trait_category(inv_item) == get_trait_category(a) then
-						a_extra.type_new = true
-					end
-					if get_trait_category(inv_item) == get_trait_category(b) then
-						b_extra.type_new = true
-					end
-				end
-			end
-		end
-	end
-
-	local fav_list = {}
 	local MyFavorites = get_mod("MyFavorites")
-	if MyFavorites and MyFavorites:is_enabled() then
-		fav_list = MyFavorites:get("favorite_item_list") or {}
-		a_extra.myfav = fav_list[a.gear_id]
-		b_extra.myfav = fav_list[b.gear_id]
-	end
 
-	if with_equipped then
-		local a_slot_item_ids = {}
-		local b_slot_item_ids = {}
+	local new_types, equipped_types, current_types, myfav_types = {}, {}, {}, {}
+
+	for _, layout in ipairs(inv_items_layout) do
+		local item = layout.item
+		local category = get_trait_category(item)
+
+		for _, key in ipairs(__isort_keys) do
+			item.__master_item[key] = nil
+		end
+
+		if new_items[item.gear_id] then
+			item.__master_item.__isort_new = true
+			new_types[category] = true
+		end
+
 		if #presets > 0 then
 			for _, preset in ipairs(presets) do
 				local current = preset.id and current_preset_id and preset.id == current_preset_id or false
-				if item_equipped_in_loadout(preset.loadout, a) then
-					a_extra.equipped = true
+				if item_equipped_in_loadout(preset.loadout, item) then
+					item.__master_item.__isort_equipped = true
+					equipped_types[category] = true
 					if current then
-						a_extra.current = true
-					end
-				end
-				if item_equipped_in_loadout(preset.loadout, b) then
-					b_extra.equipped = true
-					if current then
-						b_extra.current = true
-					end
-				end
-
-				if with_type_equipped then
-					if a.slots then
-						for _, slot in ipairs(a.slots) do
-							if preset.loadout[slot] then
-								a_slot_item_ids[preset.loadout[slot]] = a_slot_item_ids[preset.loadout[slot]] or false
-								a_slot_item_ids[preset.loadout[slot]] = a_slot_item_ids[preset.loadout[slot]] or current
-							end
-						end
-					end
-					if b.slots then
-						for _, slot in ipairs(b.slots) do
-							if preset.loadout[slot] then
-								b_slot_item_ids[preset.loadout[slot]] = b_slot_item_ids[preset.loadout[slot]] or false
-								b_slot_item_ids[preset.loadout[slot]] = b_slot_item_ids[preset.loadout[slot]] or current
-							end
-						end
+						item.__master_item.__isort_current = true
+						current_types[category] = true
 					end
 				end
 			end
@@ -214,78 +181,46 @@ local function get_items_extra(a, b, view, with_type_new, with_equipped, with_ty
 			local profile = player:profile()
 			local loadout = profile.loadout
 			if loadout then
-				if item_equipped_in_loadout(loadout, a) then
-					a_extra.equipped = true
-					a_extra.current = true
-				end
-				if item_equipped_in_loadout(loadout, b) then
-					b_extra.equipped = true
-					b_extra.current = true
-				end
-
-				if with_type_equipped then
-					if a.slots then
-						for _, slot in ipairs(a.slots) do
-							if loadout[slot] then
-								a_slot_item_ids[loadout[slot].gear_id] = true
-							end
-						end
-					end
-					if b.slots then
-						for _, slot in ipairs(b.slots) do
-							if loadout[slot] then
-								b_slot_item_ids[loadout[slot].gear_id] = true
-							end
-						end
-					end
+				if item_equipped_in_loadout(loadout, item) then
+					item.__master_item.__isort_equipped = true
+					equipped_types[category] = true
+					item.__master_item.__isort_current = true
+					current_types[category] = true
 				end
 			end
 		end
 
-		if inv_items and with_type_equipped then
-			for slot_item_id, current in pairs(a_slot_item_ids) do
-				local inv_item = inv_items[slot_item_id]
-				if inv_item then
-					if get_trait_category(inv_item) == get_trait_category(a) then
-						a_extra.type_equipped = true
-						if current then
-							a_extra.type_current = true
-						end
-					end
-				end
-			end
-			for slot_item_id, current in pairs(b_slot_item_ids) do
-				local inv_item = inv_items[slot_item_id]
-				if inv_item then
-					if get_trait_category(inv_item) == get_trait_category(b) then
-						b_extra.type_equipped = true
-						if current then
-							b_extra.type_current = true
-						end
-					end
+		if MyFavorites and MyFavorites:is_enabled() then
+			local fav_list = MyFavorites:get("favorite_item_list") or {}
+			local fav_group = fav_list[item.gear_id]
+			if fav_group then
+				item.__master_item.__isort_myfav = fav_group
+				if myfav_types[category] and fav_group < myfav_types[category] or not myfav_types[category] then
+					myfav_types[category] = fav_group
 				end
 			end
 		end
 	end
 
-	if inv_items and with_type_myfav then
-		for fav_id, fav_group in pairs(fav_list) do
-			local inv_item = inv_items[fav_id]
-			if inv_item then
-				if get_trait_category(inv_item) == get_trait_category(a) then
-					if a_extra.type_myfav and fav_group < a_extra.type_myfav or not a_extra.type_myfav then
-						a_extra.type_myfav = fav_group
-					end
-				end
-				if get_trait_category(inv_item) == get_trait_category(b) then
-					if b_extra.type_myfav and fav_group < b_extra.type_myfav or not b_extra.type_myfav then
-						b_extra.type_myfav = fav_group
-					end
-				end
+	if with_type_extra then
+		for _, layout in ipairs(inv_items_layout) do
+			local item = layout.item
+			local category = get_trait_category(item)
+
+			if new_types[category] then
+				item.__master_item.__isort_type_new = true
+			end
+			if equipped_types[category] then
+				item.__master_item.__isort_type_equipped = true
+			end
+			if current_types[category] then
+				item.__master_item.__isort_type_current = true
+			end
+			if myfav_types[category] then
+				item.__master_item.__isort_type_myfav = myfav_types[category]
 			end
 		end
 	end
-	return a_extra, b_extra
 end
 
 local function compare_item_new(view)
@@ -298,10 +233,9 @@ local function compare_item_new(view)
 		if not mod:get("always_on_top_new") then
 			return nil
 		end
-		local a_extra, b_extra = get_items_extra(a, b, view, false, false, false, false)
-		if a_extra.new and not b_extra.new then
+		if a.__isort_new and not b.__isort_new then
 			return true
-		elseif b_extra.new and not a_extra.new then
+		elseif b.__isort_new and not a.__isort_new then
 			return false
 		end
 		return nil
@@ -318,19 +252,18 @@ local function compare_item_type_new(view)
 		if not mod:get("always_on_top_new") then
 			return nil
 		end
-		local a_extra, b_extra = get_items_extra(a, b, view, true, false, false, false)
 		if not mod:get("entire_category_on_top") then
-			if a_extra.new and not b_extra.new then
+			if a.__isort_new and not b.__isort_new then
 				return true
-			elseif b_extra.new and not a_extra.new then
+			elseif b.__isort_new and not a.__isort_new then
 				return false
 			end
 			return nil
 		end
 
-		if a_extra.type_new and not b_extra.type_new then
+		if a.__isort_type_new and not b.__isort_type_new then
 			return true
-		elseif b_extra.type_new and not a_extra.type_new then
+		elseif b.__isort_type_new and not a.__isort_type_new then
 			return false
 		end
 		return nil
@@ -347,15 +280,14 @@ local function compare_item_equipped(view)
 		if not mod:get("always_on_top_equipped") then
 			return nil
 		end
-		local a_extra, b_extra = get_items_extra(a, b, view, false, true, false, false)
-		if a_extra.equipped and not b_extra.equipped then
+		if a.__isort_equipped and not b.__isort_equipped then
 			return true
-		elseif b_extra.equipped and not a_extra.equipped then
+		elseif b.__isort_equipped and not a.__isort_equipped then
 			return false
-		elseif a_extra.equipped and b_extra.equipped then
-			if a_extra.current and not b_extra.current then
+		elseif a.__isort_equipped and b.__isort_equipped then
+			if a.__isort_current and not b.__isort_current then
 				return true
-			elseif b_extra.current and not a_extra.current then
+			elseif b.__isort_current and not a.__isort_current then
 				return false
 			end
 		end
@@ -373,24 +305,23 @@ local function compare_item_type_equipped(view)
 		if not mod:get("always_on_top_equipped") then
 			return nil
 		end
-		local a_extra, b_extra = get_items_extra(a, b, view, false, true, true, false)
 		if not mod:get("entire_category_on_top") then
-			if a_extra.equipped and not b_extra.equipped then
+			if a.__isort_equipped and not b.__isort_equipped then
 				return true
-			elseif b_extra.equipped and not a_extra.equipped then
+			elseif b.__isort_equipped and not a.__isort_equipped then
 				return false
-			elseif a_extra.equipped and b_extra.equipped then
-				if a_extra.current and not b_extra.current then
+			elseif a.__isort_equipped and b.__isort_equipped then
+				if a.__isort_current and not b.__isort_current then
 					return true
-				elseif b_extra.current and not a_extra.current then
+				elseif b.__isort_current and not a.__isort_current then
 					return false
 				end
 			end
 			return nil
 		end
-		if a_extra.type_equipped and not b_extra.type_equipped then
+		if a.__isort_type_equipped and not b.__isort_type_equipped then
 			return true
-		elseif b_extra.type_equipped and not a_extra.type_equipped then
+		elseif b.__isort_type_equipped and not a.__isort_type_equipped then
 			return false
 		end
 		return nil
@@ -407,15 +338,14 @@ local function compare_item_myfav(view)
 		if not mod:get("always_on_top_myfav") then
 			return nil
 		end
-		local a_extra, b_extra = get_items_extra(a, b, view, false, false, false, false)
-		if a_extra.myfav and not b_extra.myfav then
+		if a.__isort_myfav and not b.__isort_myfav then
 			return true
-		elseif b_extra.myfav and not a_extra.myfav then
+		elseif b.__isort_myfav and not a.__isort_myfav then
 			return false
-		elseif a_extra.myfav and b_extra.myfav then
-			if a_extra.myfav < b_extra.myfav then
+		elseif a.__isort_myfav and b.__isort_myfav then
+			if a.__isort_myfav < b.__isort_myfav then
 				return true
-			elseif b_extra.myfav < a_extra.myfav then
+			elseif b.__isort_myfav < a.__isort_myfav then
 				return false
 			end
 		end
@@ -433,24 +363,23 @@ local function compare_item_type_myfav(view)
 		if not mod:get("always_on_top_myfav") then
 			return nil
 		end
-		local a_extra, b_extra = get_items_extra(a, b, view, false, false, false, true)
 		if not mod:get("entire_category_on_top") then
-			if a_extra.myfav and not b_extra.myfav then
+			if a.__isort_myfav and not b.__isort_myfav then
 				return true
-			elseif b_extra.myfav and not a_extra.myfav then
+			elseif b.__isort_myfav and not a.__isort_myfav then
 				return false
-			elseif a_extra.myfav and b_extra.myfav then
-				if a_extra.myfav < b_extra.myfav then
+			elseif a.__isort_myfav and b.__isort_myfav then
+				if a.__isort_myfav < b.__isort_myfav then
 					return true
-				elseif b_extra.myfav < a_extra.myfav then
+				elseif b.__isort_myfav < a.__isort_myfav then
 					return false
 				end
 			end
 			return nil
 		end
-		if a_extra.type_myfav and not b_extra.type_myfav then
+		if a.__isort_type_myfav and not b.__isort_type_myfav then
 			return true
-		elseif b_extra.type_myfav and not a_extra.type_myfav then
+		elseif b.__isort_type_myfav and not a.__isort_type_myfav then
 			return false
 		end
 		return nil
@@ -478,47 +407,46 @@ local function compare_item_category_top_items(view)
 		end
 	end
 	return function(a, b)
-		local a_extra, b_extra = get_items_extra(a, b, view, true, true, true, false)
 		local a_category = get_trait_category(a)
 		local b_category = get_trait_category(b)
 
 		if a_category == b_category then
 			if mod:get("always_on_top_new") and mod:get("on_top_of_category") then
-				if a_extra.new and not b_extra.new then
+				if a.__isort_new and not b.__isort_new then
 					return true
-				elseif b_extra.new and not a_extra.new then
+				elseif b.__isort_new and not a.__isort_new then
 					return false
 				end
 			end
 			if mod:get("always_on_top_equipped") and mod:get("on_top_of_category") then
-				if a_extra.equipped and not b_extra.equipped then
+				if a.__isort_equipped and not b.__isort_equipped then
 					return true
-				elseif b_extra.equipped and not a_extra.equipped then
+				elseif b.__isort_equipped and not a.__isort_equipped then
 					return false
 				end
-				if a_extra.current and not b_extra.current then
+				if a.__isort_current and not b.__isort_current then
 					return true
-				elseif b_extra.current and not a_extra.current then
+				elseif b.__isort_current and not a.__isort_current then
 					return false
 				end
 			end
 			if mod:get("always_on_top_myfav") and mod:get("on_top_of_category") then
-				if a_extra.myfav and not b_extra.myfav then
+				if a.__isort_myfav and not b.__isort_myfav then
 					return true
-				elseif b_extra.myfav and not a_extra.myfav then
+				elseif b.__isort_myfav and not a.__isort_myfav then
 					return false
-				elseif a_extra.myfav and b_extra.myfav then
-					if a_extra.myfav < b_extra.myfav then
+				elseif a.__isort_myfav and b.__isort_myfav then
+					if a.__isort_myfav < b.__isort_myfav then
 						return true
-					elseif b_extra.myfav < a_extra.myfav then
+					elseif b.__isort_myfav < a.__isort_myfav then
 						return false
 					end
 				end
 			end
-		elseif a_extra.type_equipped and b_extra.type_equipped then
-			if a_extra.type_current and not b_extra.type_current then
+		elseif a.__isort_type_equipped and b.__isort_type_equipped then
+			if a.__isort_type_current and not b.__isort_type_current then
 				return true
-			elseif b_extra.type_current and not a_extra.type_current then
+			elseif b.__isort_type_current and not a.__isort_type_current then
 				return false
 			end
 		end
@@ -728,6 +656,22 @@ mod:hook_safe(ItemGridViewBase, "on_enter", function(self)
 		return
 	end
 	setup_rem_sorting(self)
+end)
+
+local function sort_hook(func, self, sort_function)
+	if not self._filtered_offer_items_layout then
+		return
+	end
+	fill_items_extra(self, true)
+	func(self, sort_function)
+end
+
+mod:hook(InventoryWeaponsView, "_sort_grid_layout", function(func, self, sort_function)
+	sort_hook(func, self, sort_function)
+end)
+
+mod:hook(CraftingModifyView, "_sort_grid_layout", function(func, self, sort_function)
+	sort_hook(func, self, sort_function)
 end)
 
 mod:hook_safe(InventoryCosmeticsView, "_setup_sort_options", function(self)
