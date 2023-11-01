@@ -21,6 +21,11 @@ return {
 						default_value = false,
 					},
 					{
+						setting_id = "always_on_top_store_unearned_blessing",
+						type = "checkbox",
+						default_value = false,
+					},
+					{
 						setting_id = "always_on_top_new",
 						type = "checkbox",
 						default_value = false,

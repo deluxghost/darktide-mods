@@ -67,6 +67,18 @@ local function is_inventory_view(object)
 	return false
 end
 
+local function is_store_view(object)
+	if object.view_name then
+		if object.view_name == "credits_vendor_view" then
+			return true
+		end
+		if object.view_name == "marks_vendor_view" then
+			return true
+		end
+	end
+	return false
+end
+
 local function is_blacklist_view(object)
 	if object.view_name then
 		if object.view_name == "inventory_weapon_cosmetics_view" then
@@ -129,6 +141,46 @@ local function get_trait_category(item)
 		end
 	end
 	return item.trait_category or ""
+end
+
+local function has_unearned_trait(item)
+	if item.item_type ~= "WEAPON_MELEE" and item.item_type ~= "WEAPON_RANGED" then
+		return false
+	end
+	if not item.traits then
+		return false
+	end
+	local cache = Managers.data_service.crafting._trait_sticker_book_cache
+	if not cache then
+		return false
+	end
+	local category = cache:cached_data_by_key(item.trait_category)
+	if not category then
+		return false
+	end
+
+	for _, trait in ipairs(item.traits) do
+		if trait.rarity then
+			local book = category[trait.id]
+			if book then
+				if book[trait.rarity] ~= "seen" then
+					local i = trait.rarity + 1
+					local low = false
+					while book[i] and book[i] ~= "invalid" do
+						if book[i] == "seen" then
+							low = true
+							break
+						end
+						i = i + 1
+					end
+					if not low then
+						return true
+					end
+				end
+			end
+		end
+	end
+	return false
 end
 
 local __isort_keys = {
@@ -387,6 +439,11 @@ local function compare_item_type_myfav(view)
 end
 
 local function compare_item_top_curios(view)
+	if not is_store_view(view) then
+		return function(a, b)
+			return nil
+		end
+	end
 	return function(a, b)
 		if not mod:get("always_on_top_curio") then
 			return nil
@@ -394,6 +451,28 @@ local function compare_item_top_curios(view)
 		if a.item_type == "GADGET" and b.item_type ~= "GADGET" then
 			return true
 		elseif b.item_type == "GADGET" and a.item_type ~= "GADGET" then
+			return false
+		end
+		return nil
+	end
+end
+
+local function compare_item_top_unearned_blessings(view)
+	mod:notify(view.view_name)
+	if not is_store_view(view) then
+		return function(a, b)
+			return nil
+		end
+	end
+	return function(a, b)
+		if not mod:get("always_on_top_store_unearned_blessing") then
+			return nil
+		end
+		local a_unearned = has_unearned_trait(a)
+		local b_unearned = has_unearned_trait(b)
+		if a_unearned and not b_unearned then
+			return true
+		elseif b_unearned and not a_unearned then
 			return false
 		end
 		return nil
@@ -495,6 +574,7 @@ local custom_sorts_def = {
 		replace = true,
 		sort_functions = {
 			{"<", compare_item_top_curios},
+			{"<", compare_item_top_unearned_blessings},
 			{"<", compare_item_new},
 			{"<", compare_item_equipped},
 			{"<", compare_item_myfav},
@@ -510,6 +590,7 @@ local custom_sorts_def = {
 		replace = true,
 		sort_functions = {
 			{"<", compare_item_top_curios},
+			{"<", compare_item_top_unearned_blessings},
 			{"<", compare_item_new},
 			{"<", compare_item_equipped},
 			{"<", compare_item_myfav},
@@ -524,6 +605,7 @@ local custom_sorts_def = {
 		display_name = mod:localize("custom_sort_category"),
 		sort_functions = {
 			{"<", compare_item_top_curios},
+			{"<", compare_item_top_unearned_blessings},
 			{"<", compare_item_type_new},
 			{"<", compare_item_type_equipped},
 			{"<", compare_item_type_myfav},
@@ -540,6 +622,7 @@ local custom_sorts_def = {
 		display_name = mod:localize("custom_sort_category_mark"),
 		sort_functions = {
 			{"<", compare_item_top_curios},
+			{"<", compare_item_top_unearned_blessings},
 			{"<", compare_item_type_new},
 			{"<", compare_item_type_equipped},
 			{"<", compare_item_type_myfav},
@@ -556,6 +639,7 @@ local custom_sorts_def = {
 		display_name = mod:localize("custom_sort_rarity"),
 		sort_functions = {
 			{"<", compare_item_top_curios},
+			{"<", compare_item_top_unearned_blessings},
 			{"<", compare_item_new},
 			{"<", compare_item_equipped},
 			{"<", compare_item_myfav},
@@ -570,6 +654,7 @@ local custom_sorts_def = {
 		display_name = mod:localize("custom_sort_base_level"),
 		sort_functions = {
 			{"<", compare_item_top_curios},
+			{"<", compare_item_top_unearned_blessings},
 			{"<", compare_item_new},
 			{"<", compare_item_equipped},
 			{"<", compare_item_myfav},

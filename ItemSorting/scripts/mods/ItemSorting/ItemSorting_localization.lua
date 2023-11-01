@@ -29,6 +29,14 @@ return {
 		["zh-cn"] = "珍品总会显示在商店物品列表的顶部。",
 		ru = "Редкости всегда находятся вверху списка товаров в оружейной.",
 	},
+	always_on_top_store_unearned_blessing = {
+		en = "Items with unearned blessings (Store)",
+		["zh-cn"] = "含有未获取祝福的物品（商店）",
+	},
+	always_on_top_store_unearned_blessing_description = {
+		en = "Items with unearned (higher tier) blessings, i.e. the \"green\" blessings in some mods, are always at the top of the store item list.",
+		["zh-cn"] = "含有未获取（更高等级）祝福，也就是在一些模组中标记为“绿色”祝福的物品，总会显示在商店物品列表的顶部。",
+	},
 	always_on_top_new = {
 		en = "New items",
 		["zh-cn"] = "新物品",
