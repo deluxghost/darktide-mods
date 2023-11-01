@@ -22,12 +22,12 @@ return {
 	always_on_top_curio = {
 		en = "Curios (Store)",
 		["zh-cn"] = "珍品（商店）",
-		ru = "Устройства (Оружейная)",
+		ru = "Устройства (Магазин)",
 	},
 	always_on_top_curio_description = {
 		en = "Curios are always at the top of the store item list.",
 		["zh-cn"] = "珍品总会显示在商店物品列表的顶部。",
-		ru = "Устройства всегда находятся вверху списка товаров в оружейной.",
+		ru = "Устройства всегда находятся вверху списка товаров в магазине.",
 	},
 	always_on_top_store_unearned_blessing = {
 		en = "Items with unearned blessings (Store)",
