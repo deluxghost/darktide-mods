@@ -22,25 +22,27 @@ return {
 	always_on_top_curio = {
 		en = "Curios (Store)",
 		["zh-cn"] = "珍品（商店）",
-		ru = "Редкости (Оружейная)",
+		ru = "Устройства (Оружейная)",
 	},
 	always_on_top_curio_description = {
 		en = "Curios are always at the top of the store item list.",
 		["zh-cn"] = "珍品总会显示在商店物品列表的顶部。",
-		ru = "Редкости всегда находятся вверху списка товаров в оружейной.",
+		ru = "Устройства всегда находятся вверху списка товаров в оружейной.",
 	},
 	always_on_top_store_unearned_blessing = {
 		en = "Items with unearned blessings (Store)",
 		["zh-cn"] = "含有未获取祝福的物品（商店）",
+		ru = "Предметы с неизученными Благословениями (Магазин)",
 	},
 	always_on_top_store_unearned_blessing_description = {
 		en = "Items with unearned (higher tier) blessings, i.e. the \"green\" blessings in some mods, are always at the top of the store item list.",
 		["zh-cn"] = "含有未获取（更高等级）祝福，也就是在一些模组中标记为“绿色”祝福的物品，总会显示在商店物品列表的顶部。",
+		ru = "Предметы с неизученными благословениями (высокого уровня), то есть с «зелёными» благословениями в некоторых модах, всегда находятся вверху списка предметов в магазине.",
 	},
 	always_on_top_new = {
 		en = "New items",
 		["zh-cn"] = "新物品",
-		ru = "Новый предмет",
+		ru = "Новые предметы",
 	},
 	always_on_top_new_description = {
 		en = "Items with the \"New Item\" dot are always at the top of the item list.",
@@ -50,7 +52,7 @@ return {
 	always_on_top_equipped = {
 		en = "Equipped items",
 		["zh-cn"] = "已装备的物品",
-		ru = "Экипированнный предмет",
+		ru = "Экипированнные предметы",
 	},
 	always_on_top_equipped_description = {
 		en = "Items equipped in any Wargear Set are always at the top of the item list.",
@@ -70,12 +72,12 @@ return {
 	group_always_on_top_options = {
 		en = "Always on top options",
 		["zh-cn"] = "总在最上选项",
-		ru = "Опции «Всегда вверху»",
+		ru = "Опции «Всегда сверху»",
 	},
 	entire_category_on_top = {
 		en = "Top entire blessing category",
 		["zh-cn"] = "祝福分类整体置顶",
-		ru = "Поднять вверх всю категорию «Благословений»",
+		ru = "Наверх всю категорию «Благословения»",
 	},
 	entire_category_on_top_description = {
 		en = "When sorting by Blessing Category, if an item in the category is topped, the entire category is topped.",
@@ -85,7 +87,7 @@ return {
 	on_top_of_category = {
 		en = "Top inside blessing category",
 		["zh-cn"] = "在祝福分类内置顶",
-		ru = "Наверху в категории «Благословения»",
+		ru = "Наверх внутри категории «Благословения»",
 	},
 	on_top_of_category_description = {
 		en = "When sorting by Blessing Category, topped items are also topped in their category.",
