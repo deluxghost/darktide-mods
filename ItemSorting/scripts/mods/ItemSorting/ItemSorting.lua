@@ -458,7 +458,6 @@ local function compare_item_top_curios(view)
 end
 
 local function compare_item_top_unearned_blessings(view)
-	mod:notify(view.view_name)
 	if not is_store_view(view) then
 		return function(a, b)
 			return nil
