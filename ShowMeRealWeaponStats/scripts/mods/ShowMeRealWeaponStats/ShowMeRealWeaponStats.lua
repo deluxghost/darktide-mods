@@ -45,8 +45,38 @@ local function get_breakdown_compare_string(breakdown)
 	return string.format("%s %s%s%s%s", group_prefix, prefix, name, suffix, postfix)
 end
 
-local function breakdown_equal(a, b)
+local function same_breakdown(a, b)
 	return get_breakdown_compare_string(a) == get_breakdown_compare_string(b)
+end
+
+local function get_item_stats(item)
+	local weapon_stats = WeaponStats:new(item)
+	local compairing_stats = weapon_stats:get_compairing_stats()
+	local num_stats = table.size(compairing_stats)
+	local compairing_stats_array = {}
+	for key, stat in pairs(compairing_stats) do
+		compairing_stats_array[#compairing_stats_array + 1] = stat
+	end
+
+	local weapon_stats_sort_order = {
+		rate_of_fire = 2,
+		attack_speed = 2,
+		damage = 1,
+		stamina_block_cost = 4,
+		reload_speed = 4,
+		stagger = 3
+	}
+	local function sort_function(a, b)
+		local a_sort_order = weapon_stats_sort_order[a.type] or math.huge
+		local b_sort_order = weapon_stats_sort_order[b.type] or math.huge
+
+		return a_sort_order < b_sort_order
+	end
+	table.sort(compairing_stats_array, sort_function)
+
+	local bar_breakdown = table.clone(weapon_stats._weapon_statistics.bar_breakdown)
+	table.sort(bar_breakdown, sort_function)
+	return compairing_stats_array, bar_breakdown
 end
 
 mod:hook(package.loaded, "scripts/ui/view_content_blueprints/item_stats_blueprints", function(generate_blueprints_function, grid_size, optional_item)
@@ -66,45 +96,23 @@ mod:hook(package.loaded, "scripts/ui/view_content_blueprints/item_stats_blueprin
 		for _, stat in pairs(item_clone.base_stats) do
 			stat.value = mod:get("max_modifier_score") / 100
 		end
-		local weapon_stats = WeaponStats:new(item_clone)
-		local compairing_stats = weapon_stats:get_compairing_stats()
-		local num_stats = table.size(compairing_stats)
-		local compairing_stats_array = {}
-		for key, stat in pairs(compairing_stats) do
-			compairing_stats_array[#compairing_stats_array + 1] = stat
-		end
 
-		local weapon_stats_sort_order = {
-			rate_of_fire = 2,
-			attack_speed = 2,
-			damage = 1,
-			stamina_block_cost = 4,
-			reload_speed = 4,
-			stagger = 3
-		}
-		local function sort_function(a, b)
-			local a_sort_order = weapon_stats_sort_order[a.type] or math.huge
-			local b_sort_order = weapon_stats_sort_order[b.type] or math.huge
+		local stats_array, bar_breakdown = get_item_stats(item)
+		local stats_array_fake, bar_breakdown_fake = get_item_stats(item_clone)
 
-			return a_sort_order < b_sort_order
-		end
-		table.sort(compairing_stats_array, sort_function)
-
-		local bar_breakdown = table.clone(weapon_stats._weapon_statistics.bar_breakdown)
-		table.sort(bar_breakdown, sort_function)
-		for i = 1, num_stats do
+		for i = 1, #stats_array do
 			for _, breakdown in ipairs(content["bar_breakdown_" .. i]) do
-				for _, breakdown_fake in ipairs(bar_breakdown[i]) do
-					if breakdown_equal(breakdown, breakdown_fake) then
+				for _, breakdown_fake in ipairs(bar_breakdown_fake[i]) do
+					if same_breakdown(breakdown, breakdown_fake) then
 						breakdown.max_real = breakdown_fake.value
 					end
 				end
 			end
-			local value = content["bar_breakdown_" .. i].value
+			local bar_value = content["bar_breakdown_" .. i].value
 			local bar_style = style["bar_" .. i]
-				if mod:get("show_full_bar") then
+			if mod:get("show_full_bar") then
 				local multiplier = mod:get("max_modifier_score") > 0 and 100 / mod:get("max_modifier_score") or 100
-				bar_style.size[1] = bar_size * value * multiplier
+				bar_style.size[1] = bar_size * bar_value * multiplier
 				if bar_style.size[1] > bar_size then
 					bar_style.size[1] = bar_size
 				end
