@@ -27,6 +27,7 @@ local interaction_types = {
 	premium_vendor = "vendor",
 	training_ground = "vendor",
 	contracts = "vendor",
+	cosmetics_vendor = "vendor",
 	moveable_platform = "button",
 	pocketable = "supply",
 	side_mission = "book",
