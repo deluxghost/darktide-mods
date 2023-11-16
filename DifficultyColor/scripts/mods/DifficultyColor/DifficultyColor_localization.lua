@@ -2,22 +2,27 @@ local loc = {
 	mod_name = {
 		en = "Difficulty Color",
 		["zh-cn"] = "难度颜色",
+		ru = "Цвета сложности",
 	},
 	mod_description = {
 		en = "Customize the color of each difficulty.",
 		["zh-cn"] = "自定义每个难度的颜色。",
+		ru = "Difficulty Color - Настройте цвета каждой сложности.",
 	},
 	common_r = {
 		en = "Red",
 		["zh-cn"] = "红",
+		ru = "Красный",
 	},
 	common_g = {
 		en = "Green",
 		["zh-cn"] = "绿",
+		ru = "Зелёный",
 	},
 	common_b = {
 		en = "Blue",
 		["zh-cn"] = "蓝",
+		ru = "Синий",
 	},
 	opt_color_1 = {
 		en = Localize("loc_mission_board_danger_lowest"),
