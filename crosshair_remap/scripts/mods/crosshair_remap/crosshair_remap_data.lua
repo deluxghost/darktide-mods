@@ -50,7 +50,9 @@ return {
 		widgets = {
 			make_dropdown("none_class", "none"),
 			make_dropdown("melee_class", "dot"),
-			make_dropdown("psyker_bb_class", "charge_up"),
+			make_dropdown("psyker_smite_class", "charge_up"),
+			make_dropdown("psyker_throwing_knives_class", "dot"),
+			make_group("psyker_chain_lightning_class", "dot", "charge_up"),
 			make_group("autogun_infantry_class", "assault", "ironsight"),
 			make_group("autogun_braced_class", "assault", "spray_n_pray"),
 			make_group("autogun_headhunter_class", "cross", "ironsight"),

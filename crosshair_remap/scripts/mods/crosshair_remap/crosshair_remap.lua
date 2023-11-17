@@ -49,7 +49,17 @@ local keywords_to_class = {
 	shotgun_grenade = "thumpers_kickback_or_rumbler",
 }
 
-local function determine_ranged_weapon_class(weapon_template)
+local template_name_to_class = {
+	psyker_chain_lightning = "psyker_chain_lightning_class",
+}
+
+local function determine_ranged_weapon_class(weapon_template_name, weapon_template)
+	for k, v in pairs(template_name_to_class) do
+		if weapon_template_name == k then
+			return v
+		end
+	end
+
 	local function has_keyword(keyword)
 		return WeaponTemplate.has_keyword(weapon_template, keyword)
 	end
@@ -72,7 +82,9 @@ local function determine_ranged_weapon_class(weapon_template)
 		end
 	end
 
-	assert(weapon_class)
+	if weapon_class == nil then
+		return nil
+	end
 
 	if weapon_class == "thumpers_kickback_or_rumbler" then
 		if not weapon_template.crosshair then
@@ -145,6 +157,7 @@ mod:hook_origin("HudElementCrosshair", "_get_current_crosshair_type", function(s
 	if player_extensions then
 		local unit_data_extension = player_extensions.unit_data
 		local weapon_action_component = unit_data_extension and unit_data_extension:read_component("weapon_action")
+		local weapon_template_name = weapon_action_component.template_name or ""
 
 		if weapon_action_component then
 			local weapon_template = WeaponTemplate.current_weapon_template(weapon_action_component)
@@ -159,15 +172,17 @@ mod:hook_origin("HudElementCrosshair", "_get_current_crosshair_type", function(s
 					goto unchanged
 				end
 
-				if weapon_template.psyker_smite then
-					return mod.settings["psyker_bb_class"]
+				if weapon_template_name == "psyker_smite" then
+					return mod.settings["psyker_smite_class"]
+				elseif weapon_template_name == "psyker_throwing_knives" then
+					return mod.settings["psyker_throwing_knives_class"]
 				end
 
 				if WeaponTemplate.is_melee(weapon_template) then
 					return mod.settings["melee_class"]
 				end
 
-				if WeaponTemplate.is_ranged(weapon_template) then
+				if WeaponTemplate.is_ranged(weapon_template) or weapon_template.psyker_smite then
 					if melee_action_kinds[action_kind] then
 						return mod.settings["melee_class"]
 					end
@@ -176,7 +191,10 @@ mod:hook_origin("HudElementCrosshair", "_get_current_crosshair_type", function(s
 						goto unchanged
 					end
 
-					local weapon_class = determine_ranged_weapon_class(weapon_template)
+					local weapon_class = determine_ranged_weapon_class(weapon_template_name, weapon_template)
+					if not weapon_class then
+						goto unchanged
+					end
 					local in_alt_fire = altfire_action_kinds[action_kind] or alternate_fire_component.is_active
 
 					if string.starts_with(weapon_class, "shotgun_") then
@@ -195,13 +213,13 @@ mod:hook_origin("HudElementCrosshair", "_get_current_crosshair_type", function(s
 				end
 
 				::unchanged::
-				if action_settings then
-					crosshair_type = action_settings.crosshair_type
-				elseif alternate_fire_component.is_active and alternate_fire_settings and alternate_fire_settings.crosshair_type then
-					crosshair_type = alternate_fire_settings.crosshair_type
+				if action_settings and action_settings.crosshair then
+					crosshair_type = action_settings.crosshair.crosshair_type
+				elseif alternate_fire_component.is_active and alternate_fire_settings and alternate_fire_settings.crosshair and alternate_fire_settings.crosshair.crosshair_type then
+					crosshair_type = alternate_fire_settings.crosshair.crosshair_type
 				end
 
-				crosshair_type = crosshair_type or weapon_template.crosshair_type
+				crosshair_type = crosshair_type or (weapon_template.crosshair and weapon_template.crosshair.crosshair_type)
 			end
 		end
 	end

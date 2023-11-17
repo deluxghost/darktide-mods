@@ -38,8 +38,8 @@ local locres = {
 		["zh-cn"] = "准星自定义",
 	},
 	mod_description = {
-		en = "Remap crosshairs.",
-		["zh-cn"] = "重新映射武器准星。",
+		en = "Allows players to change crosshairs per weapon type.",
+		["zh-cn"] = "允许玩家按武器类型修改准星。",
 	},
 
 	assault_crosshair = {
@@ -91,8 +91,8 @@ local locres = {
 		["zh-cn"] = "扫射",
 	},
 	none_crosshair = {
-		en = "None",
-		["zh-cn"] = "无准星",
+		en = "None (No Hitmarkers)",
+		["zh-cn"] = "无准星（无命中提示）",
 	},
 
 	none_class = {
@@ -103,9 +103,17 @@ local locres = {
 		en = "Melee Weapons and Actions",
 		["zh-cn"] = "近战武器和动作",
 	},
-	psyker_bb_class = {
-		en = "Psyker Blitz",
-		["zh-cn"] = "灵能者闪击",
+	psyker_smite_class = {
+		en = Localize("loc_class_psyker_title") .. " " .. Localize("loc_ability_psyker_smite"),
+		["zh-cn"] = Localize("loc_class_psyker_title") .. Localize("loc_ability_psyker_smite"),
+	},
+	psyker_throwing_knives_class = {
+		en = Localize("loc_class_psyker_title") .. " " .. Localize("loc_ability_psyker_blitz_throwing_knives"),
+		["zh-cn"] = Localize("loc_class_psyker_title") .. Localize("loc_ability_psyker_blitz_throwing_knives"),
+	},
+	psyker_chain_lightning_class = {
+		en = Localize("loc_class_psyker_title") .. " " .. Localize("loc_ability_psyker_chain_lightning"),
+		["zh-cn"] = Localize("loc_class_psyker_title") .. Localize("loc_ability_psyker_chain_lightning"),
 	},
 	autogun_infantry_class = {
 		en = "Autoguns (Infantry)",
