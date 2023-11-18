@@ -188,7 +188,7 @@ mod:hook_origin("HudElementCrosshair", "_get_current_crosshair_type", function(s
 					end
 
 					if reload_action_kinds[action_kind] then
-						goto unchanged
+						return mod.settings["none_class"]
 					end
 
 					local weapon_class = determine_ranged_weapon_class(weapon_template_name, weapon_template)
