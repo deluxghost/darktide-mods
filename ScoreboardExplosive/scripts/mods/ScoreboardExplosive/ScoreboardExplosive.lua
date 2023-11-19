@@ -2,8 +2,6 @@ local mod = get_mod("ScoreboardExplosive")
 local scoreboard = get_mod("scoreboard")
 local TextUtilities = require("scripts/utilities/ui/text")
 
-local explosive_cache = mod:persistent_table("explosive_cache")
-
 mod.on_all_mods_loaded = function()
 	if not scoreboard then
 		mod:hook(CLASS.HudElementCombatFeed, "event_combat_feed_kill", function(func, self, attacking_unit, attacked_unit, ...)
@@ -28,13 +26,6 @@ mod.on_enabled = function(initial_call)
 	mod:set("explosive_ignited", nil, false)
 end
 
-mod.on_game_state_changed = function(status, state_name)
-	if state_name ~= "StateGameplay" then
-		return
-	end
-	table.clear(explosive_cache)
-end
-
 local function player_from_unit(unit)
 	if unit then
 		for _, player in pairs(Managers.player:players()) do
@@ -44,21 +35,6 @@ local function player_from_unit(unit)
 		end
 	end
 	return nil
-end
-
-local function explosive_type_from_cache(unit)
-	local id = Unit.id_string(unit)
-	if explosive_cache[id] then
-		local content = explosive_cache[id].content
-		if content == "explosion" then
-			return "explosive_explosion_barrel"
-		elseif content == "fire" then
-			return "explosive_fire_barrel"
-		elseif content == "gas" then
-			return "explosive_gas_barrel"
-		end
-	end
-	return "explosive_common"
 end
 
 local function explosive_text_color(explosive_type)
@@ -72,55 +48,46 @@ local function explosive_text_color(explosive_type)
 	return Color.citadel_jokaero_orange(255, true)
 end
 
-local function explosive_first_damage(unit)
-	local id = Unit.id_string(unit)
-	if explosive_cache[id] and explosive_cache[id].content and (not explosive_cache[id].ignited) then
-		return true
+local function get_explosive_type(damage_profile, unit)
+	if damage_profile.name == "barrel_explosion" or damage_profile.name == "barrel_explosion_close" then
+		return "explosive_explosion_barrel"
+	elseif damage_profile.name == "fire_barrel_explosion" or damage_profile.name == "fire_barrel_explosion_close" then
+		return "explosive_fire_barrel"
 	end
-	return false
+	local hazard_prop_extension = ScriptUnit.has_extension(unit, "hazard_prop_system")
+	if hazard_prop_extension then
+		if hazard_prop_extension._content == "explosion" then
+			return "explosive_explosion_barrel"
+		elseif hazard_prop_extension._content == "fire" then
+			return "explosive_fire_barrel"
+		end
+	end
+	return "explosive_common"
 end
 
-local function set_explosive_ignited_cache(attacking, attacked)
-	local id = Unit.id_string(attacked)
-	explosive_cache[id] = explosive_cache[id] or {}
-	explosive_cache[id].emitter = attacking
-	explosive_cache[id].ignited = true
-end
-
-local function handle_attack(account_id, damage, attacking_unit, attacked_unit, attack_type)
-	local explosive_type = explosive_type_from_cache(attacked_unit)
+local function handle_attack(account_id, damage_profile, attacking_unit, attacked_unit)
+	local explosive_type = get_explosive_type(damage_profile, attacked_unit)
 	local explosive = mod:localize(explosive_type)
-	if damage == 0 and attack_type == nil then
-		-- exploded
-		if mod:get("option_message_explosive_detonated") and explosive_type ~= "explosive_common" then
+	local hazard_prop_extension = ScriptUnit.has_extension(attacked_unit, "hazard_prop_system")
+	if not hazard_prop_extension then
+		return
+	end
+	if hazard_prop_extension._current_state == "triggered" then
+		if mod:get("option_explosive_ignited") and scoreboard and account_id then
+			scoreboard:update_stat("scoreboard_explosive_ignited", account_id, 1)
+		end
+		if mod:get("option_message_explosive_ignited") then
+			local color = explosive_text_color(explosive_type)
+			local message = mod:localize("message_explosive_ignited")
+			message = string.gsub(message, ":explosive:", TextUtilities.apply_color_to_text(explosive, color))
+			Managers.event:trigger("event_combat_feed_kill", attacking_unit, message)
+		end
+	elseif hazard_prop_extension._current_state == "broken" then
+		if mod:get("option_message_explosive_detonated") then
 			local color = explosive_text_color(explosive_type)
 			local message = mod:localize("message_explosive_detonated")
 			message = string.gsub(message, ":explosive:", TextUtilities.apply_color_to_text(explosive, color))
-			if player_from_unit(attacking_unit) then
-				Managers.event:trigger("event_combat_feed_kill", attacking_unit, message)
-			else
-				local id = Unit.id_string(attacked_unit)
-				if explosive_cache[id] and explosive_cache[id].emitter and player_from_unit(explosive_cache[id].emitter) then
-					Managers.event:trigger("event_combat_feed_kill", explosive_cache[id].emitter, message)
-				end
-			end
-		end
-		explosive_cache[Unit.id_string(attacked_unit)] = nil
-	else
-		-- triggered / additional damage
-		if explosive_first_damage(attacked_unit) then
-			if mod:get("option_explosive_ignited") and scoreboard and account_id and explosive_type ~= "explosive_common" then
-				scoreboard:update_stat("scoreboard_explosive_ignited", account_id, 1)
-			end
-			if mod:get("option_message_explosive_ignited") and explosive_type ~= "explosive_common" then
-				local color = explosive_text_color(explosive_type)
-				local message = mod:localize("message_explosive_ignited")
-				message = string.gsub(message, ":explosive:", TextUtilities.apply_color_to_text(explosive, color))
-				if player_from_unit(attacking_unit) then
-					Managers.event:trigger("event_combat_feed_kill", attacking_unit, message)
-				end
-			end
-			set_explosive_ignited_cache(attacking_unit, attacked_unit)
+			Managers.event:trigger("event_combat_feed_kill", attacking_unit, message)
 		end
 	end
 end
@@ -140,23 +107,13 @@ mod:hook(CLASS.AttackReportManager, "add_attack_result", function(
 		if breed then
 			local breed_name = unit_data_extension:breed_name()
 			if breed_name == "hazard_prop" or breed_name == "hazard_sphere" then
-				local hazard_prop_extension = ScriptUnit.has_extension(attacked_unit, "hazard_prop_system")
-				if hazard_prop_extension then
-					handle_attack(account_id, damage, attacking_unit, attacked_unit, attack_type)
+				if damage > 0 then
+					handle_attack(account_id, damage_profile, attacking_unit, attacked_unit)
 				end
 			end
 		end
 	end
 	return func(self, damage_profile, attacked_unit, attacking_unit, attack_direction, hit_world_position, hit_weakspot, damage, attack_result, attack_type, damage_efficiency, ...)
-end)
-
-mod:hook_safe("HazardPropExtension", "set_current_state", function(self, state)
-	local unit = self._unit
-	local id = Unit.id_string(unit)
-	if state == "triggered" or state == "exploding" then
-		explosive_cache[id] = explosive_cache[id] or {}
-		explosive_cache[id].content = self:content()
-	end
 end)
 
 mod.scoreboard_rows = {

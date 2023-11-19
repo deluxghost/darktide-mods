@@ -31,10 +31,6 @@ return {
 		en = "Fire Barrel",
 		["zh-cn"] = "燃料桶",
 	},
-	explosive_gas_barrel = {
-		en = "Gas Barrel",
-		["zh-cn"] = "毒气桶",
-	},
 	explosive_explosion_barrel = {
 		en = "Explosion Barrel",
 		["zh-cn"] = "炸药桶",
