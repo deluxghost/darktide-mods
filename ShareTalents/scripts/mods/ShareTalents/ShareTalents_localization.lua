@@ -5,9 +5,8 @@ return {
 		ru = "Делитесь билдами",
 	},
 	mod_description = {
-		en = "Share current talents build with /sharetalents command.",
-		["zh-cn"] = "使用 /sharetalents 命令分享当前的天赋加点。",
-		ru = "Share Talents - Поделитесь текущим билдом талантов с помощью команды /sharetalents.",
+		en = "Copy, paste and share talents builds.",
+		["zh-cn"] = "复制、粘贴和分享天赋加点。",
 	},
 	cmd_share = {
 		en = "Copy current talents build code",
