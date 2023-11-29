@@ -19,6 +19,14 @@ return {
 		["zh-cn"] = "将天赋加点代码覆盖到当前配装",
 		ru = "Переписать билд в текущем профиле",
 	},
+	msg_view_copied = {
+		en = "Talents copied!",
+		["zh-cn"] = "已复制天赋加点！",
+	},
+	msg_view_pasted = {
+		en = "Talents pasted!",
+		["zh-cn"] = "已粘贴天赋加点！",
+	},
 	msg_code_copied = {
 		en = "Talents code copied! This code may expire after a game update",
 		["zh-cn"] = "已复制天赋加点代码！此代码可能会在游戏更新后失效",
@@ -53,5 +61,17 @@ return {
 		en = "Error: command argument invalid",
 		["zh-cn"] = "错误：命令参数无效",
 		ru = "Ошибка: неверный аргумент команды",
+	},
+	err_clipboard_notfound = {
+		en = "Error: no talents in the clipboard",
+		["zh-cn"] = "错误：剪贴板中没有天赋",
+	},
+	widget__share_talents_copy = {
+		en = "Copy Talents",
+		["zh-cn"] = "复制天赋",
+	},
+	widget__share_talents_paste = {
+		en = "Paste Talents",
+		["zh-cn"] = "粘贴天赋",
 	},
 }
