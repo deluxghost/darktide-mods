@@ -68,7 +68,6 @@ mod.on_game_state_changed = function(status, state_name)
 	if Managers.mechanism and Managers.mechanism._mechanism and Managers.mechanism._mechanism._mechanism_data then
 		local mechanism_data = Managers.mechanism._mechanism._mechanism_data
 		if mechanism_data.backend_mission_id then
-			mod:notify("saved")
 			mod:set("_last_mission_id", mechanism_data.backend_mission_id, false)
 		end
 	end
