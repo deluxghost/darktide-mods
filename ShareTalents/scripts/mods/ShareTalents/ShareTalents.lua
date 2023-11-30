@@ -146,7 +146,7 @@ local button_def_table = {
 			parent = "canvas",
 			vertical_alignment = "center",
 			horizontal_alignment = "right",
-			size = { 200, 40 },
+			size = { 250, 40 },
 			position = { -16, -25, 20 }
 		},
 		pressed_callback = function(self, widget)
@@ -163,7 +163,7 @@ local button_def_table = {
 			parent = "__share_talents_copy",
 			vertical_alignment = "top",
 			horizontal_alignment = "right",
-			size = { 200, 40 },
+			size = { 250, 40 },
 			position = { 0, 50, 20 }
 		},
 		pressed_callback = function(self, widget)
