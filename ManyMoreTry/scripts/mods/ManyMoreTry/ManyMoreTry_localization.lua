@@ -13,8 +13,8 @@ return {
 		["zh-cn"] = "再来很多局",
 	},
 	mod_description = {
-		en = "Mission ID saving/sharing mod. Check commands with '/mmt' prefix for details.\nNote: Fatshark will nerf the mission expire time eventually.",
-		["zh-cn"] = "任务 ID 保存/分享模组。用法详见带有“/mmt”前缀的命令。\n注意：肥鲨确认会在将来缩短任务过期时间。",
+		en = "Mission ID saving/sharing mod. Check commands with '/mmt' prefix for details.\nNote: Fatshark claims they will nerf the mission expire time eventually.",
+		["zh-cn"] = "任务 ID 保存/分享模组。用法详见带有“/mmt”前缀的命令。\n注意：肥鲨声称会在将来缩短任务过期时间。",
 	},
 	text_expired = {
 		en = "Expired",
@@ -56,9 +56,17 @@ return {
 		en = "Saved missions:",
 		["zh-cn"] = "保存的任务：",
 	},
+	msg_no_valid_last_mission = {
+		en = "Error: no valid last mission",
+		["zh-cn"] = "错误：未找到有效的上次任务",
+	},
 	msg_invalid_number = {
 		en = "Error: invalid number",
 		["zh-cn"] = "错误：编号无效",
+	},
+	msg_expired = {
+		en = "Error: mission is expired",
+		["zh-cn"] = "错误：任务已过期",
 	},
 	msg_expired_safe_to_delete = {
 		en = "Error: mission is expired, please remove manually",
@@ -77,8 +85,8 @@ return {
 		["zh-cn"] = "清理了 # 个任务",
 	},
 	msg_help_queue = {
-		en = "Type {#color(0,192,255)}/mmt mission_number{#reset()} to queue (e.g. {#color(0,192,255)}/mmt 1{#reset()})",
-		["zh-cn"] = "输入 {#color(0,192,255)}/mmt 任务编号{#reset()} 开始匹配（例：{#color(0,192,255)}/mmt 1{#reset()}）",
+		en = "Type {#color(0,192,255)}/mmt mission_number_or_id{#reset()} to queue (e.g. {#color(0,192,255)}/mmt 1{#reset()})",
+		["zh-cn"] = "输入 {#color(0,192,255)}/mmt 任务编号或ID{#reset()} 开始匹配（例：{#color(0,192,255)}/mmt 1{#reset()}）",
 	},
 	msg_help_del = {
 		en = "Type {#color(0,192,255)}/mmtdel mission_number{#reset()} to remove",
@@ -116,6 +124,10 @@ return {
 		en = "View and queue saved missions",
 		["zh-cn"] = "查看和匹配已保存的任务",
 	},
+	cmd_lm = {
+		en = "Replay the last mission",
+		["zh-cn"] = "重玩上次进行的任务",
+	},
 	cmd_del = {
 		en = "Remove saved mission",
 		["zh-cn"] = "删除已保存的任务",
@@ -132,12 +144,12 @@ return {
 		en = "Clear missions started X hours ago",
 		["zh-cn"] = "清理已开始了 X 小时的任务",
 	},
+	cmd_get = {
+		en = "Open mission history online website",
+		["zh-cn"] = "打开任务历史记录在线网站",
+	},
 	private_game = {
 		en = "Private game",
 		["zh-cn"] = "私人游戏",
-	},
-	private_game_description = {
-		en = "WARNING: Think twice before turn off this option, not all quickplay players are happy with your 'hidden' mission.",
-		["zh-cn"] = "警告：关闭此选项前请认真考虑，不是所有快速游戏玩家都愿意加入你的“隐藏”任务。",
 	},
 }

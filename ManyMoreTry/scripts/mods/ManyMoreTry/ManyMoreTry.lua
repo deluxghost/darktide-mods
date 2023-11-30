@@ -58,6 +58,22 @@ mod.on_disabled = function(initial_call)
 	end)
 end
 
+mod.on_game_state_changed = function(status, state_name)
+	if state_name ~= "StateGameplay" then
+		return
+	end
+	if status ~= "enter" then
+		return
+	end
+	if Managers.mechanism and Managers.mechanism._mechanism and Managers.mechanism._mechanism._mechanism_data then
+		local mechanism_data = Managers.mechanism._mechanism._mechanism_data
+		if mechanism_data.backend_mission_id then
+			mod:notify("saved")
+			mod:set("_last_mission_id", mechanism_data.backend_mission_id, false)
+		end
+	end
+end
+
 local function in_hub()
 	if not Managers.state or not Managers.state.game_mode then
 		return false
@@ -165,7 +181,7 @@ mod:hook_safe("MissionBoardView", "init", function(self, settings)
 	end
 end)
 
-local function go_match(mission)
+local function go_match(mission_id, mission_name)
 	local private = true
 	if mod:get("private_game") then
 		local num_members = 0
@@ -179,11 +195,11 @@ local function go_match(mission)
 	else
 		private = false
 	end
-	mod:echo(mod:localize("msg_on_your_way_to") .. mission.display_name)
-	Managers.party_immaterium:wanted_mission_selected(mission.id, private, BackendUtilities.prefered_mission_region)
+	mod:echo(mod:localize("msg_on_your_way_to") .. mission_name)
+	Managers.party_immaterium:wanted_mission_selected(mission_id, private, BackendUtilities.prefered_mission_region)
 end
 
-mod:command("mmt", mod:localize("cmd_main"), function(idx_str)
+local function mmt_main_command(idx_str)
 	local now = tonumber(os.time())
 	local saved_mission = mod:get("_saved_mission") or {}
 	if not idx_str then
@@ -203,15 +219,29 @@ mod:command("mmt", mod:localize("cmd_main"), function(idx_str)
 		mod:echo(mission_text)
 		return
 	end
-	local idx = tonumber(idx_str)
-	if not idx or idx < 1 or #saved_mission < idx then
-		mod:echo(mod:localize("msg_invalid_number"))
-		return
-	end
-	local mission = saved_mission[idx]
-	if mission.expired then
-		mod:echo(mod:localize("msg_expired_safe_to_delete"))
-		return
+
+	local mission_id = "00000000-0000-0000-0000-000000000000"
+	local mission = nil
+	local loc_expire_msg = ""
+	if idx_str == "last" then
+		mission_id = mod:get("_last_mission_id") or mission_id
+		loc_expire_msg = "msg_no_valid_last_mission"
+	elseif #idx_str == 36 then
+		mission_id = idx_str
+		loc_expire_msg = "msg_import_invalid_mission"
+	else
+		local idx = tonumber(idx_str)
+		if not idx or idx < 1 or #saved_mission < idx then
+			mod:echo(mod:localize("msg_invalid_number"))
+			return
+		end
+		mission = saved_mission[idx]
+		if mission.expired then
+			mod:echo(mod:localize("msg_expired_safe_to_delete"))
+			return
+		end
+		mission_id = mission.id
+		loc_expire_msg = "msg_expired_safe_to_delete"
 	end
 
 	if locks.match then
@@ -219,7 +249,7 @@ mod:command("mmt", mod:localize("cmd_main"), function(idx_str)
 		return
 	end
 	locks.match = true
-	Managers.data_service.mission_board:fetch_mission(mission.id):next(function(data)
+	Managers.data_service.mission_board:fetch_mission(mission_id):next(function(data)
 		if not in_hub() then
 			mod:echo(mod:localize("msg_not_in_hub"))
 			locks.match = nil
@@ -230,19 +260,27 @@ mod:command("mmt", mod:localize("cmd_main"), function(idx_str)
 			locks.match = nil
 			return
 		end
-		go_match(mission)
+		local mission_name = get_mission_name(data.mission, "map", "circumstance")
+		go_match(mission_id, mission_name)
 		locks.match = nil
 	end):catch(function(e)
 		mod:dump(e, "mmt_fetch_error", 3)
 		if e and e.code and tonumber(e.code) == 404 then
-			mod:echo(mod:localize("msg_expired_safe_to_delete"))
-			mission.expired = true
+			if mission then
+				mission.expired = true
+			end
+			mod:echo(mod:localize(loc_expire_msg))
 		else
 			mod:echo(mod:localize("msg_unknown_err"))
 		end
 		mod:set("_saved_mission", saved_mission, false)
 		locks.match = nil
 	end)
+end
+
+mod:command("mmt", mod:localize("cmd_main"), mmt_main_command)
+mod:command("lm", mod:localize("cmd_lm"), function()
+	mmt_main_command("last")
 end)
 
 mod:command("mmtdel", mod:localize("cmd_del"), function(idx_str)
@@ -357,4 +395,8 @@ mod:command("mmtclear", mod:localize("cmd_clear"), function(hour_str)
 	local num = #saved_mission - #saved_mission_new
 	mod:echo(string.gsub(mod:localize("msg_cleared"), "#", num))
 	mod:set("_saved_mission", saved_mission_new, false)
+end)
+
+mod:command("mmtget", mod:localize("cmd_get"), function()
+	Application.open_url_in_browser("https://darkti.de/mission-board/history")
 end)
