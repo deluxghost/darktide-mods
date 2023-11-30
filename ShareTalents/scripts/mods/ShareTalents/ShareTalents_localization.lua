@@ -7,6 +7,7 @@ return {
 	mod_description = {
 		en = "Copy, paste and share talents builds.",
 		["zh-cn"] = "复制、粘贴和分享天赋加点。",
+		ru = "Share Talents - Копируйте, вставляйте и делитесь текущим билдом талантов.",
 	},
 	cmd_share = {
 		en = "Copy current talents build code",
@@ -21,10 +22,12 @@ return {
 	msg_view_copied = {
 		en = "Talents copied!",
 		["zh-cn"] = "已复制天赋加点！",
+		ru = "Таланты скопированы!",
 	},
 	msg_view_pasted = {
 		en = "Talents pasted!",
 		["zh-cn"] = "已粘贴天赋加点！",
+		ru = "Таланты вставлены!",
 	},
 	msg_code_copied = {
 		en = "Talents code copied! This code may expire after a game update",
@@ -64,13 +67,16 @@ return {
 	err_clipboard_notfound = {
 		en = "Error: no talents in the clipboard",
 		["zh-cn"] = "错误：剪贴板中没有天赋",
+		ru = "",
 	},
 	widget__share_talents_copy = {
 		en = "Copy Talents",
 		["zh-cn"] = "复制天赋",
+		ru = "Копировать таланты",
 	},
 	widget__share_talents_paste = {
 		en = "Paste Talents",
 		["zh-cn"] = "粘贴天赋",
+		ru = "Вставить таланты",
 	},
 }
