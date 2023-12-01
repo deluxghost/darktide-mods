@@ -673,6 +673,9 @@ mod.on_enabled = function(initial_call)
 		mod:set("rem_sort_index_view_crafting_modify_view", old_rem_value)
 		mod:set("rem_sort_index", nil)
 	end
+	if Managers.data_service.crafting._trait_sticker_book_cache then
+		Managers.data_service.crafting:warm_trait_sticker_book_cache()
+	end
 end
 
 local function set_extra_sort(self)

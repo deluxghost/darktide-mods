@@ -5,7 +5,6 @@ local BuffTemplates = require("scripts/settings/buff/buff_templates")
 local MasterItems = require("scripts/backend/master_items")
 local ItemUtils = require("scripts/utilities/items")
 
-
 local QLColor = {
 	default = { 255, 250, 250, 250 },
 	modifier = {255, 250, 189, 73},
