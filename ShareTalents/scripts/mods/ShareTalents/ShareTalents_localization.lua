@@ -67,7 +67,7 @@ return {
 	err_clipboard_notfound = {
 		en = "Error: no talents in the clipboard",
 		["zh-cn"] = "错误：剪贴板中没有天赋",
-		ru = "",
+		ru = "Ошибка: в буфере обмена нет скопированных талантов",
 	},
 	widget__share_talents_copy = {
 		en = "Copy Talents",
