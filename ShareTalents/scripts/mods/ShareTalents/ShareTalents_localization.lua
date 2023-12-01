@@ -72,11 +72,11 @@ return {
 	widget__share_talents_copy = {
 		en = "Copy Talents",
 		["zh-cn"] = "复制天赋",
-		ru = "Копировать таланты",
+		ru = "Копировать билд",
 	},
 	widget__share_talents_paste = {
 		en = "Paste Talents",
 		["zh-cn"] = "粘贴天赋",
-		ru = "Вставить таланты",
+		ru = "Вставить билд",
 	},
 }
