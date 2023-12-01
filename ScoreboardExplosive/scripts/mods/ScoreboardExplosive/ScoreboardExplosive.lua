@@ -82,7 +82,7 @@ local function handle_attack(account_id, damage_profile, attacking_unit, attacke
 			message = string.gsub(message, ":explosive:", TextUtilities.apply_color_to_text(explosive, color))
 			Managers.event:trigger("event_combat_feed_kill", attacking_unit, message)
 		end
-	elseif hazard_prop_extension._current_state == "broken" then
+	elseif hazard_prop_extension._current_state == "broken" and explosive_type ~= "explosive_common" then
 		if mod:get("option_message_explosive_detonated") then
 			local color = explosive_text_color(explosive_type)
 			local message = mod:localize("message_explosive_detonated")
