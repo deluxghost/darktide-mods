@@ -145,7 +145,7 @@ return {
 		ru = "Напишите {#color(0,192,255)}/mmtimport идентификатор_миссии{#reset()}, чтобы импортировать миссию",
 	},
 	msg_import_invalid_mission = {
-		en = "Error: invalid mission id",
+		en = "Error: invalid mission ID",
 		["zh-cn"] = "错误：任务 ID 无效",
 		ru = "Ошибка: неправильный идентификатор миссии",
 	},
