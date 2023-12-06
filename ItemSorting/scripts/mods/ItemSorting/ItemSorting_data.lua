@@ -7,11 +7,6 @@ return {
 	options = {
 		widgets = {
 			{
-				setting_id = "remember_sort_index",
-				type = "checkbox",
-				default_value = true,
-			},
-			{
 				setting_id = "group_always_on_top",
 				type = "group",
 				sub_widgets = {
@@ -68,19 +63,65 @@ return {
 						default_value = true,
 					},
 					{
-						setting_id = "custom_sort_category_mark",
+						setting_id = "custom_sort_category_group_by_name",
 						type = "checkbox",
 						default_value = false,
 					},
 					{
-						setting_id = "custom_sort_rarity",
+						setting_id = "custom_sort_base_level_desc",
 						type = "checkbox",
 						default_value = true,
 					},
 					{
-						setting_id = "custom_sort_base_level",
+						setting_id = "custom_sort_base_level_asc",
+						type = "checkbox",
+						default_value = false,
+					},
+				},
+			},
+			{
+				setting_id = "group_enable_vanilla_sort",
+				type = "group",
+				sub_widgets = {
+					{
+						setting_id = "enable_vanilla_level_desc",
 						type = "checkbox",
 						default_value = true,
+					},
+					{
+						setting_id = "enable_vanilla_level_asc",
+						type = "checkbox",
+						default_value = false,
+					},
+					{
+						setting_id = "enable_vanilla_rarity_desc",
+						type = "checkbox",
+						default_value = true,
+					},
+					{
+						setting_id = "enable_vanilla_rarity_asc",
+						type = "checkbox",
+						default_value = false,
+					},
+					{
+						setting_id = "enable_vanilla_price_asc",
+						type = "checkbox",
+						default_value = false,
+					},
+					{
+						setting_id = "enable_vanilla_price_desc",
+						type = "checkbox",
+						default_value = false,
+					},
+					{
+						setting_id = "enable_vanilla_name_asc",
+						type = "checkbox",
+						default_value = true,
+					},
+					{
+						setting_id = "enable_vanilla_name_desc",
+						type = "checkbox",
+						default_value = false,
 					},
 				},
 			},

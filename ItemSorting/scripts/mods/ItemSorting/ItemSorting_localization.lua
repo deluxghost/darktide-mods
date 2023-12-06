@@ -5,14 +5,8 @@ return {
 		ru = "Сортировка предметов",
 	},
 	mod_description = {
-		en = "Add extra item sorting methods and remember your sorting method.",
-		["zh-cn"] = "添加额外的物品排序方式，并且记住上次使用的排序方式。",
-		ru = "Item Sorting - Добавляет дополнительные методы сортировки предметов и запоминает ваш метод сортировки.",
-	},
-	remember_sort_index = {
-		en = "Remember item sorting method",
-		["zh-cn"] = "记住物品排序方式",
-		ru = "Запоминать метод сортировки предметов",
+		en = "Add extra item sorting options and allow toggling vanilla sorting methods.",
+		["zh-cn"] = "添加额外的物品排序选项，并且允许开关原版的排序方式。",
 	},
 	group_always_on_top = {
 		en = "Always on top",
@@ -21,12 +15,12 @@ return {
 	},
 	always_on_top_curio = {
 		en = "Curios (Store)",
-		["zh-cn"] = "珍品（商店）",
+		["zh-cn"] = "附件（商店）",
 		ru = "Устройства (Магазин)",
 	},
 	always_on_top_curio_description = {
 		en = "Curios are always at the top of the store item list.",
-		["zh-cn"] = "珍品总会显示在商店物品列表的顶部。",
+		["zh-cn"] = "附件总会显示在商店物品列表的顶部。",
 		ru = "Устройства всегда находятся вверху списка товаров в магазине.",
 	},
 	always_on_top_store_unearned_blessing = {
@@ -104,20 +98,68 @@ return {
 		["zh-cn"] = "祝福分类",
 		ru = "Благословения",
 	},
-	custom_sort_category_mark = {
-		en = "Blessing Category (Group by Mark)",
-		["zh-cn"] = "祝福分类（按型号分组）",
-		ru = "Благословения (группировка по Модели)",
-	},
 	custom_sort_category_description = {
 		en = "Weapons fall into same category share same blessing pool.",
 		["zh-cn"] = "相同祝福分类下的武器共享同一个祝福池。",
 		ru = "Оружие попадает в одну категорию, если имеет одинаковые Благословения.",
 	},
-	custom_sort_rarity = {
-		en = Localize("loc_inventory_item_grid_sort_title_rarity"),
+	custom_sort_category_group_by_name = {
+		en = "Blessing Category (Group by Name)",
+		["zh-cn"] = "祝福分类（按名称分组）",
+		ru = "Благословения (группировка по Модели)",
 	},
-	custom_sort_base_level = {
-		en = Localize("loc_weapon_stats_display_base_rating"),
+	custom_sort_base_level_desc = {
+		en = Localize("loc_inventory_item_grid_sort_title_format_high_low", true, {
+			sort_name = Localize("loc_weapon_stats_display_base_rating")
+		}),
+	},
+	custom_sort_base_level_asc = {
+		en = Localize("loc_inventory_item_grid_sort_title_format_low_high", true, {
+			sort_name = Localize("loc_weapon_stats_display_base_rating")
+		}),
+	},
+	group_enable_vanilla_sort = {
+		en = "Enable vanilla sorting methods",
+		["zh-cn"] = "启用原版排序方式",
+	},
+	enable_vanilla_level_desc = {
+		en = Localize("loc_inventory_item_grid_sort_title_format_high_low", true, {
+			sort_name = Localize("loc_inventory_item_grid_sort_title_item_power")
+		}),
+	},
+	enable_vanilla_level_asc = {
+		en = Localize("loc_inventory_item_grid_sort_title_format_low_high", true, {
+			sort_name = Localize("loc_inventory_item_grid_sort_title_item_power")
+		}),
+	},
+	enable_vanilla_rarity_desc = {
+		en = Localize("loc_inventory_item_grid_sort_title_format_high_low", true, {
+			sort_name = Localize("loc_inventory_item_grid_sort_title_rarity")
+		}),
+	},
+	enable_vanilla_rarity_asc = {
+		en = Localize("loc_inventory_item_grid_sort_title_format_low_high", true, {
+			sort_name = Localize("loc_inventory_item_grid_sort_title_rarity")
+		}),
+	},
+	enable_vanilla_name_asc = {
+		en = Localize("loc_inventory_item_grid_sort_title_format_increasing_letters", true, {
+			sort_name = Localize("loc_inventory_item_grid_sort_title_name")
+		}),
+	},
+	enable_vanilla_name_desc = {
+		en = Localize("loc_inventory_item_grid_sort_title_format_decreasing_letters", true, {
+			sort_name = Localize("loc_inventory_item_grid_sort_title_name")
+		}),
+	},
+	enable_vanilla_price_asc = {
+		en = Localize("loc_inventory_item_grid_sort_title_format_low_high", true, {
+			sort_name = Localize("loc_inventory_item_grid_sort_title_item_price")
+		}),
+	},
+	enable_vanilla_price_desc = {
+		en = Localize("loc_inventory_item_grid_sort_title_format_high_low", true, {
+			sort_name = Localize("loc_inventory_item_grid_sort_title_item_price")
+		}),
 	},
 }
