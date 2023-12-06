@@ -119,8 +119,8 @@ return {
 		}),
 	},
 	group_enable_vanilla_sort = {
-		en = "Enable vanilla sorting methods",
-		["zh-cn"] = "启用原版排序方式",
+		en = "Enable vanilla sorting methods for gears",
+		["zh-cn"] = "为装备启用原版排序方式",
 	},
 	enable_vanilla_level_desc = {
 		en = Localize("loc_inventory_item_grid_sort_title_format_high_low", true, {
