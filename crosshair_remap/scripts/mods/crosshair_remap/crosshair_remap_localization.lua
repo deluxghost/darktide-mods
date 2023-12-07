@@ -179,6 +179,10 @@ local locres = {
 		en = "Stub Revolvers",
 		["zh-cn"] = "速发左轮枪",
 	},
+	revolver_fanning_class = {
+		en = "Stub Revolvers (Fanning)",
+		["zh-cn"] = "速发左轮枪（击锤速射）",
+	},
 	shotgun_lawbringer_class = {
 		en = "Shotguns (Lawbringer)",
 		["zh-cn"] = "霰弹枪（执法者）",

@@ -102,6 +102,16 @@ local function determine_ranged_weapon_class(weapon_template_name, weapon_templa
 		else
 			weapon_class = "shotgun_kantrael_class"
 		end
+	elseif weapon_class == "revolver_class" then
+		if not weapon_template.crosshair then
+			return weapon_class
+		end
+		if weapon_template.alternate_fire_settings and weapon_template.alternate_fire_settings.crosshair then
+			if weapon_template.alternate_fire_settings.crosshair.crosshair_type == "bfg" then
+				return "revolver_fanning_class"
+			end
+		end
+		return weapon_class
 	end
 
 	return weapon_class

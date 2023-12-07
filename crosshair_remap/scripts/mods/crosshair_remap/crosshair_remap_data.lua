@@ -69,6 +69,7 @@ return {
 			make_group("laspistol_class", "assault", "ironsight"),
 			make_group("plasma_gun_class", "bfg", "bfg"),
 			make_group("revolver_class", "bfg", "ironsight"),
+			make_group("revolver_fanning_class", "bfg", "bfg"),
 			make_group("shotgun_lawbringer_class", "shotgun", "ironsight", "shotgun_wide"),
 			make_group("shotgun_agripinaa_class", "shotgun", "ironsight", "shotgun_slug"),
 			make_group("shotgun_kantrael_class", "shotgun", "ironsight", "shotgun"),
