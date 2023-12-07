@@ -1,5 +1,4 @@
 local mod = get_mod("ItemSorting")
-local ItemUtils = require("scripts/utilities/items")
 local ItemSortingUtils = {}
 
 function ItemSortingUtils.get_trait_category(item)
