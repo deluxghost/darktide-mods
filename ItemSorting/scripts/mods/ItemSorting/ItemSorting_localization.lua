@@ -7,6 +7,7 @@ return {
 	mod_description = {
 		en = "Add extra item sorting options and allow toggling vanilla sorting methods.",
 		["zh-cn"] = "添加额外的物品排序选项，并且允许开关原版的排序方式。",
+		ru = "Item Sorting - Добавляет дополнительные параметры сортировки предметов и позволяет переключать стандартные методы сортировки.",
 	},
 	group_always_on_top = {
 		en = "Always on top",
@@ -121,6 +122,7 @@ return {
 	group_enable_vanilla_sort = {
 		en = "Enable vanilla sorting methods for gears",
 		["zh-cn"] = "为装备启用原版排序方式",
+		ru = "Включить стандартные методы сортировки для снаряжения.",
 	},
 	enable_vanilla_level_desc = {
 		en = Localize("loc_inventory_item_grid_sort_title_format_high_low", true, {
