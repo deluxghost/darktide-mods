@@ -4,6 +4,7 @@ local HudElementWorldMarkers = require("scripts/ui/hud/elements/world_markers/hu
 local HUDElementInteractionSettings = require("scripts/ui/hud/elements/interaction/hud_element_interaction_settings")
 local HUDElementSmartTagging = require("scripts/ui/hud/elements/smart_tagging/hud_element_smart_tagging")
 local BaseInteraction = require("scripts/extension_systems/interaction/interactions/base_interaction")
+local InteractionTemplates = require("scripts/settings/interaction/interaction_templates")
 
 local memory = mod:persistent_table("memory")
 
@@ -38,6 +39,16 @@ local all_categories = {
 	"unknown", "supply", "chest", "button", "station", "luggable", "vendor", "book", "material",
 }
 
+mod.load_package = function(self, package_name)
+	if not Managers.package:is_loading(package_name) and not Managers.package:has_loaded(package_name) then
+		Managers.package:load(package_name, "FoundYa", nil, true)
+	end
+end
+
+mod.on_all_mods_loaded = function()
+	mod:load_package("packages/ui/views/options_view/options_view")
+end
+
 local function get_max_distance(category)
 	return mod:get("max_distance_" .. category) or 15
 end
@@ -59,9 +70,27 @@ local function update_settings()
 		local category_max_distance = get_max_distance(category)
 		memory["max_distance_" .. category] = category_max_distance
 	end
+	memory.alter_chest_icon = mod:get("alter_chest_icon")
+	local max_distance = 0
+	for _, category in ipairs(all_categories) do
+		local category_max_distance = get_max_distance(category)
+		if category_max_distance > max_distance then
+			max_distance = category_max_distance
+		end
+	end
+	local max_spawn_distance_sq = max_distance * max_distance
+	if max_spawn_distance_sq < 1000 then
+		max_spawn_distance_sq = 1000
+	end
+	HUDElementInteractionSettings.max_spawn_distance_sq = max_spawn_distance_sq
+	if memory.alter_chest_icon then
+		InteractionTemplates.chest.interaction_icon = "content/ui/materials/icons/system/settings/category_video"
+	else
+		InteractionTemplates.chest.interaction_icon = "content/ui/materials/hud/interactions/icons/default"
+	end
 end
 
-mod.on_enabled = function(initial_call)
+mod.on_enabled = function()
 	local legacy_max_distance = mod:get("max_distance")
 	if legacy_max_distance then
 		for _, category in ipairs(all_categories) do
@@ -70,41 +99,18 @@ mod.on_enabled = function(initial_call)
 		mod:set("max_distance", nil)
 	end
 	update_settings()
-	local max_distance = 0
-	for _, category in ipairs(all_categories) do
-		local category_max_distance = get_max_distance(category)
-		if category_max_distance > max_distance then
-			max_distance = category_max_distance
-		end
-	end
-	local max_spawn_distance_sq = max_distance * max_distance
-	if max_spawn_distance_sq < 1000 then
-		max_spawn_distance_sq = 1000
-	end
-	HUDElementInteractionSettings.max_spawn_distance_sq = max_spawn_distance_sq
 end
 
 mod.on_setting_changed = function(setting_id)
 	update_settings()
-	local max_distance = 0
-	for _, category in ipairs(all_categories) do
-		local category_max_distance = get_max_distance(category)
-		if category_max_distance > max_distance then
-			max_distance = category_max_distance
-		end
-	end
-	local max_spawn_distance_sq = max_distance * max_distance
-	if max_spawn_distance_sq < 1000 then
-		max_spawn_distance_sq = 1000
-	end
-	HUDElementInteractionSettings.max_spawn_distance_sq = max_spawn_distance_sq
 end
 
-mod.on_disabled = function(initial_call)
+mod.on_disabled = function()
 	HUDElementInteractionSettings.max_spawn_distance_sq = 1000
+	InteractionTemplates.chest.interaction_icon = "content/ui/materials/hud/interactions/icons/default"
 end
 
-local function update_marker(marker, elem)
+local function update_marker(widget, marker, elem)
 	if not marker.data then
 		return
 	end
@@ -123,13 +129,13 @@ local function update_marker(marker, elem)
 end
 
 mod:hook(WorldMarkerTemplateInteraction, "on_enter", function(func, widget, marker, self)
-	update_marker(marker, self)
+	update_marker(widget, marker, self)
 	func(widget, marker, self)
 end)
 
 
 mod:hook(WorldMarkerTemplateInteraction, "update_function", function(func, parent, ui_renderer, widget, marker, self, dt, t)
-	update_marker(marker, self)
+	update_marker(widget, marker, self)
 	func(parent, ui_renderer, widget, marker, self, dt, t)
 end)
 
