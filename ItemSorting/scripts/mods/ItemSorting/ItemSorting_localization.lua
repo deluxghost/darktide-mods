@@ -107,7 +107,7 @@ return {
 	custom_sort_category_group_by_name = {
 		en = "Blessing Category (Group by Name)",
 		["zh-cn"] = "祝福分类（按名称分组）",
-		ru = "Благословения (группировка по Модели)",
+		ru = "Благословения (группировка по Имени)",
 	},
 	custom_sort_base_level_desc = {
 		en = Localize("loc_inventory_item_grid_sort_title_format_high_low", true, {
