@@ -1,7 +1,13 @@
 local mod = get_mod("StimmsPickupIcon")
 
 mod:hook_safe(CLASS.HudElementWorldMarkers, "event_add_world_marker_unit", function (self, marker_type, unit, callback, data)
-	if not unit then
+	if marker_type ~= "interaction" then
+		return
+	end
+	if not unit or not Unit then
+		return
+	end
+	if not Unit.alive(unit) then
 		return
 	end
 	if not Unit.has_data(unit, "pickup_type") then
