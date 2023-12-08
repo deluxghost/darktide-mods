@@ -12,9 +12,21 @@ return {
 		en = "Max view distance (default: 15m)",
 		["zh-cn"] = "最大可视距离（默认：15 米）",
 	},
+	alter_icons = {
+		en = "Alternative icons",
+		["zh-cn"] = "改版图标",
+	},
 	alter_chest_icon = {
-		en = "Alternative chest icon",
+		en = "Alternative chests icon",
 		["zh-cn"] = "改版箱子图标",
+	},
+	alter_luggable_icon = {
+		en = "Alternative luggables icon",
+		["zh-cn"] = "改版搬运物图标",
+	},
+	alter_large_ammo_icon = {
+		en = "Alternative large ammo clips icon",
+		["zh-cn"] = "改版大弹药包图标",
 	},
 	max_distance_material = {
 		en = "Forge materials",

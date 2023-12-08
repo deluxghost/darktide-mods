@@ -13,9 +13,25 @@ return {
 				range = {10, 80},
 			},
 			{
-				setting_id = "alter_chest_icon",
-				type = "checkbox",
-				default_value = true,
+				setting_id = "alter_icons",
+				type = "group",
+				sub_widgets = {
+					{
+						setting_id = "alter_chest_icon",
+						type = "checkbox",
+						default_value = true,
+					},
+					{
+						setting_id = "alter_luggable_icon",
+						type = "checkbox",
+						default_value = true,
+					},
+					{
+						setting_id = "alter_large_ammo_icon",
+						type = "checkbox",
+						default_value = true,
+					},
+				},
 			},
 			{
 				setting_id = "max_distance",

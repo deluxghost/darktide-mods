@@ -8,6 +8,13 @@ local InteractionTemplates = require("scripts/settings/interaction/interaction_t
 
 local memory = mod:persistent_table("memory")
 
+local DEFAULT_COMMON_ICON = "content/ui/materials/hud/interactions/icons/default"
+local DEFAULT_AMMO_ICON = "content/ui/materials/hud/interactions/icons/ammunition"
+local ALTER_CHEST_ICON = "content/ui/materials/icons/system/settings/category_video"
+local ALTER_LUGGABLE_ICON = "content/ui/materials/icons/presets/preset_18"
+local ALTER_LARGE_AMMO_ICON = "content/ui/materials/icons/presets/preset_16"
+local LIGHTER_ICON_COLOR = { 255, 232, 255, 204 }
+
 local interaction_types = {
 	default = "unknown",
 	ammunition = "supply",
@@ -47,6 +54,7 @@ end
 
 mod.on_all_mods_loaded = function()
 	mod:load_package("packages/ui/views/options_view/options_view")
+	mod:load_package("packages/ui/views/inventory_background_view/inventory_background_view")
 end
 
 local function get_max_distance(category)
@@ -71,6 +79,8 @@ local function update_settings()
 		memory["max_distance_" .. category] = category_max_distance
 	end
 	memory.alter_chest_icon = mod:get("alter_chest_icon")
+	memory.alter_luggable_icon = mod:get("alter_luggable_icon")
+	memory.alter_large_ammo_icon = mod:get("alter_large_ammo_icon")
 	local max_distance = 0
 	for _, category in ipairs(all_categories) do
 		local category_max_distance = get_max_distance(category)
@@ -84,9 +94,16 @@ local function update_settings()
 	end
 	HUDElementInteractionSettings.max_spawn_distance_sq = max_spawn_distance_sq
 	if memory.alter_chest_icon then
-		InteractionTemplates.chest.interaction_icon = "content/ui/materials/icons/system/settings/category_video"
+		InteractionTemplates.chest.interaction_icon = ALTER_CHEST_ICON
 	else
-		InteractionTemplates.chest.interaction_icon = "content/ui/materials/hud/interactions/icons/default"
+		InteractionTemplates.chest.interaction_icon = DEFAULT_COMMON_ICON
+	end
+	if memory.alter_luggable_icon then
+		InteractionTemplates.luggable.interaction_icon = ALTER_LUGGABLE_ICON
+		InteractionTemplates.luggable_socket.interaction_icon = ALTER_LUGGABLE_ICON
+	else
+		InteractionTemplates.luggable.interaction_icon = DEFAULT_COMMON_ICON
+		InteractionTemplates.luggable_socket.interaction_icon = DEFAULT_COMMON_ICON
 	end
 end
 
@@ -107,15 +124,30 @@ end
 
 mod.on_disabled = function()
 	HUDElementInteractionSettings.max_spawn_distance_sq = 1000
-	InteractionTemplates.chest.interaction_icon = "content/ui/materials/hud/interactions/icons/default"
+	InteractionTemplates.chest.interaction_icon = DEFAULT_COMMON_ICON
+	InteractionTemplates.luggable.interaction_icon = DEFAULT_COMMON_ICON
+	InteractionTemplates.luggable_socket.interaction_icon = DEFAULT_COMMON_ICON
+end
+
+local function get_pickup_type(marker)
+	if marker.type ~= "interaction" then
+		return
+	end
+	if not marker.unit or not Unit then
+		return
+	end
+	if not Unit.alive(marker.unit) then
+		return
+	end
+	if not Unit.has_data(marker.unit, "pickup_type") then
+		return
+	end
+	local pickup_type = Unit.get_data(marker.unit, "pickup_type")
+	return pickup_type
 end
 
 local function update_marker(widget, marker, elem)
-	if not marker.data then
-		return
-	end
-	local marker_type = marker.data:interaction_type()
-	local marker_category = interaction_types[marker_type]
+	local marker_category = marker.__foundya_marker_category
 	if not marker_category then
 		elem.max_distance = 15
 		elem.fade_settings.distance_max = 15
@@ -128,15 +160,44 @@ local function update_marker(widget, marker, elem)
 	elem.fade_settings.distance_min = max_distance - elem.evolve_distance * 2
 end
 
+local function post_update_marker(widget, marker, elem)
+	if marker.__foundya_marker_category == "luggable" and memory.alter_luggable_icon then
+		widget.style.icon.size[1] = widget.style.icon.size[1] * 0.85
+		widget.style.icon.size[2] = widget.style.icon.size[2] * 0.85
+		widget.style.icon.color = LIGHTER_ICON_COLOR
+	end
+
+	if marker.__foundya_pickup_type == "large_clip" then
+		if memory.alter_large_ammo_icon then
+			widget.content.icon = ALTER_LARGE_AMMO_ICON
+			widget.style.icon.size[1] = widget.style.icon.size[1] * 0.8
+			widget.style.icon.size[2] = widget.style.icon.size[2] * 0.8
+			widget.style.icon.color = LIGHTER_ICON_COLOR
+		else
+			widget.content.icon = DEFAULT_AMMO_ICON
+		end
+	end
+end
+
 mod:hook(WorldMarkerTemplateInteraction, "on_enter", function(func, widget, marker, self)
+	if marker.data then
+		local marker_type = marker.data:interaction_type()
+		local marker_category = interaction_types[marker_type]
+		marker.__foundya_marker_category = marker_category
+	end
+	local pickup_type = get_pickup_type(marker)
+	marker.__foundya_pickup_type = pickup_type
+
 	update_marker(widget, marker, self)
 	func(widget, marker, self)
+	post_update_marker(widget, marker, self)
 end)
 
 
 mod:hook(WorldMarkerTemplateInteraction, "update_function", function(func, parent, ui_renderer, widget, marker, self, dt, t)
 	update_marker(widget, marker, self)
 	func(parent, ui_renderer, widget, marker, self, dt, t)
+	post_update_marker(widget, marker, self)
 end)
 
 mod:hook(HudElementWorldMarkers, "_template_by_type", function(func, self, marker_type, clone)
