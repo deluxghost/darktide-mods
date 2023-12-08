@@ -1,5 +1,34 @@
 local mod = get_mod("StimmsPickupIcon")
 
+local STIMM_COLORS = {
+	syringe_corruption_pocketable = { 255, 38, 205, 26 },
+	syringe_ability_boost_pocketable = { 255, 230, 192, 13 },
+	syringe_power_boost_pocketable = { 255, 205, 51, 26 },
+	syringe_speed_boost_pocketable = { 255, 0, 127, 218 },
+}
+
+local recolor_mod = nil
+
+mod.on_all_mods_loaded = function ()
+	recolor_mod = get_mod("RecolorStimms")
+end
+
+local _get_stimm_colors = function (stimm_name)
+	local main_color = recolor_mod and recolor_mod:is_enabled() and recolor_mod.get_stimm_argb_255 and recolor_mod.get_stimm_argb_255(stimm_name) or STIMM_COLORS[stimm_name]
+	if not main_color then
+		return nil, nil
+	end
+
+	local color_offset = (main_color[2] + main_color[3] + main_color[4]) / 3.0 > 64 and 0 or 128
+	local math_floor = math.floor
+	local trim_color = { 255,
+		math_floor(0.4 * main_color[2] + color_offset),
+		math_floor(0.4 * main_color[3] + color_offset),
+		math_floor(0.4 * main_color[4] + color_offset),
+	}
+	return trim_color, main_color
+end
+
 mod:hook_safe(CLASS.HudElementWorldMarkers, "event_add_world_marker_unit", function (self, marker_type, unit, callback, data)
 	if marker_type ~= "interaction" then
 		return
@@ -26,20 +55,7 @@ mod:hook_safe(CLASS.HudElementWorldMarkers, "event_add_world_marker_unit", funct
 	if not marker then
 		return
 	end
-	local color, bg_color = nil, nil
-	if pickup_type == "syringe_corruption_pocketable" then
-		bg_color = { 255, 38, 205, 26 }
-		color = { 255, 0, 76, 0 }
-	elseif pickup_type == "syringe_ability_boost_pocketable" then
-		bg_color = { 255, 230, 192, 13 }
-		color = { 255, 95, 77, 0 }
-	elseif pickup_type == "syringe_power_boost_pocketable" then
-		bg_color = { 255, 205, 51, 26 }
-		color = { 255, 100, 0, 15 }
-	elseif pickup_type == "syringe_speed_boost_pocketable" then
-		bg_color = { 255, 0, 127, 218 }
-		color = { 255, 0, 0, 77 }
-	end
+	local color, bg_color = _get_stimm_colors(pickup_type)
 	if color and bg_color then
 		for _, pass in ipairs(marker.widget.passes) do
 			if pass.value_id == "icon" then
