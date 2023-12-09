@@ -7,6 +7,16 @@ return {
 	options = {
 		widgets = {
 			{
+				setting_id = "show_team_panel_color",
+				type = "checkbox",
+				default_value = true,
+			},
+			{
+				setting_id = "show_self_weapon_color",
+				type = "checkbox",
+				default_value = true,
+			},
+			{
 				setting_id = "use_recolor_stimms_mod",
 				type = "checkbox",
 				default_value = false,
