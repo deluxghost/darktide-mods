@@ -1,5 +1,8 @@
 local mod = get_mod("StimmsPickupIcon")
 
+local settings = mod:persistent_table("settings")
+local recolor_mod = nil
+
 local STIMM_COLORS = {
 	syringe_corruption_pocketable = { 255, 38, 205, 26 },
 	syringe_ability_boost_pocketable = { 255, 230, 192, 13 },
@@ -7,14 +10,25 @@ local STIMM_COLORS = {
 	syringe_speed_boost_pocketable = { 255, 0, 127, 218 },
 }
 
-local recolor_mod = nil
-
 mod.on_all_mods_loaded = function ()
 	recolor_mod = get_mod("RecolorStimms")
 end
 
+mod.on_enabled = function()
+	settings.use_recolor_stimms_mod = mod:get("use_recolor_stimms_mod")
+end
+
+mod.on_setting_changed = function(setting_id)
+	settings.use_recolor_stimms_mod = mod:get("use_recolor_stimms_mod")
+end
+
 local _get_stimm_colors = function (stimm_name)
-	local main_color = recolor_mod and recolor_mod:is_enabled() and recolor_mod.get_stimm_argb_255 and recolor_mod.get_stimm_argb_255(stimm_name) or STIMM_COLORS[stimm_name]
+	local main_color = settings.use_recolor_stimms_mod
+		and recolor_mod
+		and recolor_mod:is_enabled()
+		and recolor_mod.get_stimm_argb_255
+		and recolor_mod.get_stimm_argb_255(stimm_name)
+		or STIMM_COLORS[stimm_name]
 	if not main_color then
 		return nil, nil
 	end

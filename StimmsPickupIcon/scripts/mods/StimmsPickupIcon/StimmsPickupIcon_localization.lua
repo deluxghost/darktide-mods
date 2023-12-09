@@ -9,4 +9,8 @@ return {
 		["zh-cn"] = "给兴奋剂拾取图标设置对应的颜色。",
 		ru = "Stimms Pickup Icon - Установливает соответствующие цвета для значков стимуляторов.",
 	},
+	use_recolor_stimms_mod = {
+		en = "Use color settings of RecolorStimms mod",
+		["zh-cn"] = "使用 RecolorStimms 模组的颜色设置",
+	},
 }
