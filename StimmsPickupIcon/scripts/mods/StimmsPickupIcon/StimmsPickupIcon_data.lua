@@ -7,6 +7,11 @@ return {
 	options = {
 		widgets = {
 			{
+				setting_id = "show_pickup_color",
+				type = "checkbox",
+				default_value = true,
+			},
+			{
 				setting_id = "show_team_panel_color",
 				type = "checkbox",
 				default_value = true,

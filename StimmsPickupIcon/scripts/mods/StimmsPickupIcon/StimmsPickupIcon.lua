@@ -16,12 +16,14 @@ end
 
 mod.on_enabled = function()
 	settings.use_recolor_stimms_mod = mod:get("use_recolor_stimms_mod")
+	settings.show_pickup_color = mod:get("show_pickup_color")
 	settings.show_team_panel_color = mod:get("show_team_panel_color")
 	settings.show_self_weapon_color = mod:get("show_self_weapon_color")
 end
 
 mod.on_setting_changed = function(setting_id)
 	settings.use_recolor_stimms_mod = mod:get("use_recolor_stimms_mod")
+	settings.show_pickup_color = mod:get("show_pickup_color")
 	settings.show_team_panel_color = mod:get("show_team_panel_color")
 	settings.show_self_weapon_color = mod:get("show_self_weapon_color")
 end
@@ -92,14 +94,18 @@ mod:hook_safe(CLASS.HudElementWorldMarkers, "event_add_world_marker_unit", funct
 			if pass.value_id == "icon" then
 				local f = pass.visibility_function
 				pass.visibility_function = function (content, style)
-					style.color = color
+					if settings.show_pickup_color then
+						style.color = color
+					end
 					return f(content, style)
 				end
 			end
 			if pass.value_id == "background" then
 				local f = pass.visibility_function
 				pass.visibility_function = function (content, style)
-					style.color = bg_color
+					if settings.show_pickup_color then
+						style.color = bg_color
+					end
 					return f(content, style)
 				end
 			end
@@ -108,6 +114,9 @@ mod:hook_safe(CLASS.HudElementWorldMarkers, "event_add_world_marker_unit", funct
 end)
 
 mod:hook_safe("HudElementTeamPlayerPanel", "_update_player_features", function(self, dt, t, player, ui_renderer)
+	if not settings.show_team_panel_color then
+		return
+	end
 	local syringe_icon_widget = self._widgets_by_name.pocketable_small
 	local extensions = self:_player_extensions(player)
 	local visual_loadout_extension = extensions and extensions.visual_loadout
@@ -127,6 +136,9 @@ mod:hook_safe("HudElementTeamPlayerPanel", "_update_player_features", function(s
 end)
 
 mod:hook_safe("HudElementPlayerWeapon", "update", function(self, dt, t, ui_renderer)
+	if not settings.show_self_weapon_color then
+		return
+	end
 	if self._slot_name == "slot_pocketable_small" then
 		local icon_widget = self._widgets_by_name.icon
 		local background_widget = self._widgets_by_name.background
