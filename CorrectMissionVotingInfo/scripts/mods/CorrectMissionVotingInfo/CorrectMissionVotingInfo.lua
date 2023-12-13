@@ -13,11 +13,14 @@ end)
 
 mod:hook_safe(MissionVotingView, "_set_mission_data", function(self, mission_data)
 	local auric = mission_data.category == "auric"
+	local special = mission_data.category == "narrative"
 	local has_flash_mission = not not mission_data.flags.flash
 
 	self._widgets_by_name.title_bar_bottom.visible = has_flash_mission or auric
 	local text = ""
-	if auric and has_flash_mission then
+	if special then
+		text = Localize("loc_story_mission_menu_access_button_text")
+	elseif auric and has_flash_mission then
 		text = Localize("loc_mission_board_type_auric") .. " " .. Localize("loc_mission_board_maelstrom_header")
 	elseif auric then
 		text = Localize("loc_mission_board_type_auric")
