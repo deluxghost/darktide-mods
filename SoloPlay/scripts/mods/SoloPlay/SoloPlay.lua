@@ -5,6 +5,7 @@ local MatchmakingConstants = require("scripts/settings/network/matchmaking_const
 local DifficultyManager = require("scripts/managers/difficulty/difficulty_manager")
 local PickupSystem = require("scripts/extension_systems/pickups/pickup_system")
 local PickupSettings = require("scripts/settings/pickup/pickup_settings")
+local SoloPlaySettings = mod:io_dofile("SoloPlay/scripts/mods/SoloPlay/SoloPlaySettings")
 local HOST_TYPES = MatchmakingConstants.HOST_TYPES
 local DISTRIBUTION_TYPES = PickupSettings.distribution_types
 
@@ -60,10 +61,12 @@ mod:hook_require("scripts/ui/views/system_view/system_view_content_list", functi
 				local is_hub = game_mode_name == "hub"
 				local is_training_grounds = game_mode_name == "training_grounds" or game_mode_name == "shooting_range"
 				local host_type = Managers.multiplayer_session:host_type()
-				local can_exit = is_onboarding or is_hub or is_training_grounds or host_type == HOST_TYPES.singleplay
+				local can_show = is_onboarding or is_hub or is_training_grounds or host_type == HOST_TYPES.singleplay
+				local is_leaving_game = game_mode_manager:game_mode_state() == "leaving_game"
 				local is_in_matchmaking = Managers.data_service.social:is_in_matchmaking()
+				local is_disabled = is_leaving_game or is_in_matchmaking
 
-				return can_exit, is_in_matchmaking
+				return can_show, is_disabled
 			end
 		elseif item.text == "loc_leave_mission_display_name" then
 			item.validation_function = function ()
@@ -121,6 +124,15 @@ mod:command("solo", mod:localize("solo_command_desc"), function()
 		circumstance_name = mod:get("choose_circumstance"),
 		side_mission = mod:get("choose_side_mission"),
 	}
+	for map_name, override in pairs(SoloPlaySettings.context_override) do
+		if mission_context.mission_name == map_name then
+			for key, settings in pairs(override) do
+				if not settings.default or (settings.default and mission_context[key] == settings.default) then
+					mission_context[key] = settings.value
+				end
+			end
+		end
+	end
 	local mission_settings = MissionTemplates[mission_context.mission_name]
 	local mechanism_name = mission_settings.mechanism_name
 

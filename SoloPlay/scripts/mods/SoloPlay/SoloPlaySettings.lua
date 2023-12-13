@@ -27,6 +27,19 @@ local settings = {
 	side_missions = {},
 	circumstances = {},
 }
+settings.context_override = {
+	km_enforcer_twins = {
+		circumstance_name = {
+			default = "default",
+			value = "toxic_gas_twins_01",
+		},
+		pacing_control = {
+			value = {
+				activate_twins = true,
+			},
+		},
+	},
+}
 
 for name, mission in pairs(MissionTemplates) do
 	if (not mission.objectives) or (not table.array_contains(objectives_denylist, mission.objectives)) then
