@@ -36,7 +36,13 @@ local function get_breakdown_compare_string(breakdown)
 	local group_type_data = breakdown.group_type_data
 	local override_data = breakdown.override_data or {}
 
-	local name = override_data.display_name or type_data.display_name
+	local name = ""
+	if type_data.display_name then
+		name = name .. type_data.display_name
+	end
+	if override_data.display_name then
+		name = name .. override_data.display_name
+	end
 	local group_prefix = group_type_data and group_type_data.prefix and group_type_data.prefix or ""
 	local prefix = override_data.prefix or type_data.prefix
 	prefix = prefix and prefix .. " " or ""
