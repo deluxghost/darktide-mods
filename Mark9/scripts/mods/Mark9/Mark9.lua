@@ -2,11 +2,11 @@ local mod = get_mod("Mark9")
 local UISettings = require("scripts/settings/ui/ui_settings")
 local LocalizationManager = require("scripts/managers/localization/localization_manager")
 
-mod.on_enabled = function(initial_call)
+mod.on_enabled = function()
 	table.clear(Managers.localization._string_cache)
 end
 
-mod.on_disabled = function(initial_call)
+mod.on_disabled = function()
 	table.clear(Managers.localization._string_cache)
 end
 

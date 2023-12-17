@@ -47,7 +47,7 @@ mod.reload_templates = function()
 	end
 end
 
-mod.on_enabled = function(initial_call)
+mod.on_enabled = function()
 	mod.reload_templates()
 end
 
@@ -55,7 +55,7 @@ mod.on_all_mods_loaded = function()
 	mod.reload_templates()
 end
 
-mod.on_disabled = function(initial_call)
+mod.on_disabled = function()
 	table.clear(Managers.localization._string_cache)
 	table.clear(registered_fixes)
 end

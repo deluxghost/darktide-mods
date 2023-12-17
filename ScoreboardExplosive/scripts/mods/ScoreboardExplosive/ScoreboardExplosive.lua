@@ -16,7 +16,7 @@ mod.on_all_mods_loaded = function()
 	end
 end
 
-mod.on_enabled = function(initial_call)
+mod.on_enabled = function()
 	if mod:get("option_explosive_detonated") == false then
 		mod:set("option_explosive_ignited", false, false)
 	elseif mod:get("option_explosive_detonated") == nil and mod:get("explosive_ignited") == false then

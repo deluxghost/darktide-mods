@@ -23,7 +23,7 @@ mod:hook_require("scripts/settings/input/default_view_input_settings", function(
 	}
 end)
 
-mod.on_enabled = function(initial_call)
+mod.on_enabled = function()
 	if Managers.input and Managers.input._aliases and Managers.input._aliases.View then
 		Managers.input._aliases.View._aliases["mmt_save_mission"] = Managers.input._aliases.View._default_aliases
 		["mmt_save_mission"]
@@ -52,7 +52,7 @@ mod.on_enabled = function(initial_call)
 	end
 end
 
-mod.on_disabled = function(initial_call)
+mod.on_disabled = function()
 	table.array_remove_if(MissionBoardViewDefinitions.legend_inputs, function(v)
 		return v.input_action == "mmt_save_mission"
 	end)

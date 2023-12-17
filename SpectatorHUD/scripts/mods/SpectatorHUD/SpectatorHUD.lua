@@ -96,7 +96,7 @@ local hud_data = {
 	},
 }
 
-mod.on_enabled = function(initial_call)
+mod.on_enabled = function()
 	local m = {}
 	for _, elem in ipairs(HUDElementsSpectator) do
 		m[elem.class_name] = true
@@ -108,7 +108,7 @@ mod.on_enabled = function(initial_call)
 	end
 end
 
-mod.on_disabled = function(initial_call)
+mod.on_disabled = function()
 	for i = #HUDElementsSpectator, 1, -1 do
 		if hud_data[HUDElementsSpectator[i].class_name] ~= nil then
 			table.remove(HUDElementsSpectator, i)

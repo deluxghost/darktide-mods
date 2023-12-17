@@ -63,7 +63,7 @@ mod.load_package = function(self, package_name)
 	end
 end
 
-mod.on_enabled = function(initial_call)
+mod.on_enabled = function()
 	local favorite_item_list = mod:get("favorite_item_list") or {}
 	for id, value in pairs(favorite_item_list) do
 		if type(value) == "boolean" and value then
@@ -82,7 +82,7 @@ mod.on_enabled = function(initial_call)
 	end
 end
 
-mod.on_disabled = function(initial_call)
+mod.on_disabled = function()
 	CraftingSettings.recipes.extract_trait.is_valid_item = function (item)
 		return is_valid_crafting_item(item) and (item.item_type == "WEAPON_MELEE" or item.item_type == "WEAPON_RANGED") and item.traits and #item.traits > 0
 	end

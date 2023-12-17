@@ -1,7 +1,7 @@
 local mod = get_mod("PreferAuric")
 local MissionBoardView = require("scripts/ui/views/mission_board_view/mission_board_view")
 
-mod.on_enabled = function(initial_call)
+mod.on_enabled = function()
 	mod:set("_last_mission_board_selection", mod:get("_last_mission_board_selection") or "normal", false)
 end
 

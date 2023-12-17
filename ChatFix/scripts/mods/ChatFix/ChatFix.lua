@@ -4,7 +4,7 @@ local InputDevice = require("scripts/managers/input/input_device")
 
 local chat_scroll_multiplier = 1.0
 
-mod.on_enabled = function(initial_call)
+mod.on_enabled = function()
 	local inactivity_timeout = mod:get("chat_inactivity_timeout")
 	if not inactivity_timeout then
 		inactivity_timeout = 10
@@ -21,7 +21,7 @@ mod.on_setting_changed = function(setting_id)
 	chat_scroll_multiplier = mod:get("chat_scroll_multiplier") or 1.0
 end
 
-mod.on_disabled = function(initial_call)
+mod.on_disabled = function()
 	ChatSettings.inactivity_timeout = 5
 end
 
