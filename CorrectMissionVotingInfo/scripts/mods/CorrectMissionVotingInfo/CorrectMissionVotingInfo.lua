@@ -35,14 +35,13 @@ mod:hook_safe(MissionVotingView, "_set_rewards_info", function(self, mission_dat
 	local rewards_string = " %d\t %d"
 	local total_xp = math.floor(mission_data.xp)
 	local total_credits = math.floor(mission_data.credits)
-	if mission_data.extraRewards then
-		for _, reward in pairs(mission_data.extraRewards) do
-			if reward.xp then
-				total_xp = total_xp + math.floor(reward.xp)
-			end
-			if reward.credits then
-				total_credits = total_credits + math.floor(reward.credits)
-			end
+	if mission_data.extraRewards and mission_data.extraRewards.circumstance then
+		local extraReward = mission_data.extraRewards.circumstance
+		if extraReward.xp then
+			total_xp = total_xp + math.floor(extraReward.xp)
+		end
+		if extraReward.credits then
+			total_credits = total_credits + math.floor(extraReward.credits)
 		end
 	end
 	main_mission_rewards_widget.content.reward_main_mission_text = string.format(rewards_string, total_credits, total_xp)
