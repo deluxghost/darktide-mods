@@ -23,12 +23,13 @@ mod:hook_require("scripts/settings/input/default_view_input_settings", function(
 	}
 end)
 
-mod.on_enabled = function()
+mod.on_all_mods_loaded = function()
 	if Managers.input and Managers.input._aliases and Managers.input._aliases.View then
-		Managers.input._aliases.View._aliases["mmt_save_mission"] = Managers.input._aliases.View._default_aliases
-		["mmt_save_mission"]
+		Managers.input._aliases.View._aliases["mmt_save_mission"] = Managers.input._aliases.View._default_aliases["mmt_save_mission"]
 	end
+end
 
+mod.on_enabled = function()
 	local exist = false
 	for _, value in ipairs(MissionBoardViewDefinitions.legend_inputs) do
 		if value.input_action == "mmt_save_mission" then
@@ -397,5 +398,5 @@ mod:command("mmtclear", mod:localize("cmd_clear"), function(hour_str)
 end)
 
 mod:command("mmtget", mod:localize("cmd_get"), function()
-	Application.open_url_in_browser("https://darkti.de/mission-board/history")
+	Application.open_url_in_browser("https://maelstroom.net/")
 end)
