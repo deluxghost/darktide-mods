@@ -5,6 +5,7 @@ local HUDElementInteractionSettings = require("scripts/ui/hud/elements/interacti
 local HUDElementSmartTagging = require("scripts/ui/hud/elements/smart_tagging/hud_element_smart_tagging")
 local BaseInteraction = require("scripts/extension_systems/interaction/interactions/base_interaction")
 local InteractionTemplates = require("scripts/settings/interaction/interaction_templates")
+local Pickups = require("scripts/settings/pickup/pickups")
 
 local memory = mod:persistent_table("memory")
 
@@ -37,9 +38,14 @@ local interaction_types = {
 	contracts = "vendor",
 	cosmetics_vendor = "vendor",
 	moveable_platform = "button",
-	pocketable = "supply",
 	side_mission = "book",
 	forge_material = "material",
+	pocketable = function (pickup_data)
+		if pickup_data.is_side_mission_pickup then
+			return "book"
+		end
+		return "supply"
+	end,
 }
 
 local all_categories = {
@@ -146,6 +152,22 @@ local function get_pickup_type(marker)
 	return pickup_type
 end
 
+local function get_interaction_category(marker, pickup_type)
+	if not marker.data then
+		return
+	end
+	local marker_type = marker.data:interaction_type()
+	local marker_category = interaction_types[marker_type]
+	if type(marker_category) == "function" then
+		local pickup_data = Pickups.by_name[pickup_type]
+		if pickup_data then
+			return marker_category(pickup_data)
+		end
+		return
+	end
+	return marker_category
+end
+
 local function update_marker(widget, marker, elem)
 	local marker_category = marker.__foundya_marker_category
 	if not marker_category then
@@ -180,13 +202,10 @@ local function post_update_marker(widget, marker, elem)
 end
 
 mod:hook(WorldMarkerTemplateInteraction, "on_enter", function(func, widget, marker, self)
-	if marker.data then
-		local marker_type = marker.data:interaction_type()
-		local marker_category = interaction_types[marker_type]
-		marker.__foundya_marker_category = marker_category
-	end
 	local pickup_type = get_pickup_type(marker)
 	marker.__foundya_pickup_type = pickup_type
+	local marker_category = get_interaction_category(marker, pickup_type)
+	marker.__foundya_marker_category = marker_category
 
 	update_marker(widget, marker, self)
 	func(widget, marker, self)

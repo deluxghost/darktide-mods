@@ -33,8 +33,8 @@ return {
 		["zh-cn"] = "锻造材料",
 	},
 	max_distance_book = {
-		en = "Scriptures and grimoires",
-		["zh-cn"] = "圣经和魔法书",
+		en = "Secondary objectives (scriptures and grimoires)",
+		["zh-cn"] = "次要目标（圣经和魔法书）",
 	},
 	max_distance_supply = {
 		en = "Supplies",
