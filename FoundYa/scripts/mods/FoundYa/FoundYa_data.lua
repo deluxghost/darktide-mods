@@ -31,6 +31,11 @@ return {
 						type = "checkbox",
 						default_value = true,
 					},
+					{
+						setting_id = "alter_skull_icon",
+						type = "checkbox",
+						default_value = true,
+					},
 				},
 			},
 			{
@@ -45,6 +50,12 @@ return {
 					},
 					{
 						setting_id = "max_distance_book",
+						type = "numeric",
+						default_value = 15,
+						range = {10, 80},
+					},
+					{
+						setting_id = "max_distance_penance",
 						type = "numeric",
 						default_value = 15,
 						range = {10, 80},

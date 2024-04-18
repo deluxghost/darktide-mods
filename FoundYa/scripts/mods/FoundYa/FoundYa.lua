@@ -14,6 +14,7 @@ local DEFAULT_AMMO_ICON = "content/ui/materials/hud/interactions/icons/ammunitio
 local ALTER_CHEST_ICON = "content/ui/materials/icons/system/settings/category_video"
 local ALTER_LUGGABLE_ICON = "content/ui/materials/icons/presets/preset_18"
 local ALTER_LARGE_AMMO_ICON = "content/ui/materials/icons/presets/preset_16"
+local ALTER_SKULL_ICON = "content/ui/materials/hud/interactions/icons/enemy"
 local LIGHTER_ICON_COLOR = { 255, 232, 255, 204 }
 
 local interaction_types = {
@@ -40,6 +41,7 @@ local interaction_types = {
 	moveable_platform = "button",
 	side_mission = "book",
 	forge_material = "material",
+	penance_collectible = "penance",
 	pocketable = function (pickup_data)
 		if pickup_data.is_side_mission_pickup then
 			return "book"
@@ -49,7 +51,7 @@ local interaction_types = {
 }
 
 local all_categories = {
-	"unknown", "supply", "chest", "button", "station", "luggable", "vendor", "book", "material",
+	"unknown", "supply", "chest", "button", "station", "luggable", "vendor", "book", "material", "penance",
 }
 
 mod.load_package = function(self, package_name)
@@ -87,6 +89,7 @@ local function update_settings()
 	memory.alter_chest_icon = mod:get("alter_chest_icon")
 	memory.alter_luggable_icon = mod:get("alter_luggable_icon")
 	memory.alter_large_ammo_icon = mod:get("alter_large_ammo_icon")
+	memory.alter_skull_icon = mod:get("alter_skull_icon")
 	local max_distance = 0
 	for _, category in ipairs(all_categories) do
 		local category_max_distance = get_max_distance(category)
@@ -197,6 +200,12 @@ local function post_update_marker(widget, marker, elem)
 			widget.style.icon.color = LIGHTER_ICON_COLOR
 		else
 			widget.content.icon = DEFAULT_AMMO_ICON
+		end
+	elseif marker.__foundya_pickup_type == "collectible_01_pickup" then
+		if memory.alter_skull_icon then
+			widget.content.icon = ALTER_SKULL_ICON
+		else
+			widget.content.icon = DEFAULT_COMMON_ICON
 		end
 	end
 end

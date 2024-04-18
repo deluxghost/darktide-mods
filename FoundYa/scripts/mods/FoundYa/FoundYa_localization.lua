@@ -34,6 +34,10 @@ return {
 		["zh-cn"] = "改版大弹药包图标",
 		ru = "Альтернативный значок больших обойм с боеприпасами",
 	},
+	alter_skull_icon = {
+		en = "Alternative Martyr's Skull icon",
+		["zh-cn"] = "改版殉道者头骨图标",
+	},
 	max_distance_material = {
 		en = "Forge materials",
 		["zh-cn"] = "锻造材料",
@@ -43,6 +47,10 @@ return {
 		en = "Secondary objectives (scriptures and grimoires)",
 		["zh-cn"] = "次要目标（圣经和魔法书）",
 		ru = "Второстепенные задачи (писания и гримуары)",
+	},
+	max_distance_penance = {
+		en = "Penance collectibles",
+		["zh-cn"] = "苦修收集物",
 	},
 	max_distance_supply = {
 		en = "Supplies",
