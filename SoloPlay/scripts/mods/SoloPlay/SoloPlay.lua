@@ -44,6 +44,27 @@ mod.open_inventory = function()
 	Managers.ui:open_view("inventory_background_view", nil, nil, nil, nil, nil)
 end
 
+local function get_mission_context()
+	local resistance = DangerSettings.by_index[mod:get("choose_difficulty")].expected_resistance
+	local mission_context = {
+		mission_name = mod:get("choose_mission"),
+		challenge = mod:get("choose_difficulty"),
+		resistance = resistance,
+		circumstance_name = mod:get("choose_circumstance"),
+		side_mission = mod:get("choose_side_mission"),
+	}
+	for map_name, override in pairs(SoloPlaySettings.context_override) do
+		if mission_context.mission_name == map_name then
+			for key, settings in pairs(override) do
+				if not settings.default or (settings.default and mission_context[key] == settings.default) then
+					mission_context[key] = settings.value
+				end
+			end
+		end
+	end
+	return mission_context
+end
+
 mod:hook_require("scripts/ui/views/system_view/system_view_content_list", function(instance)
 	if not mod:is_enabled() then
 		return
@@ -100,6 +121,33 @@ mod:hook(PickupSystem, "_spawn_spread_pickups", function(func, self, distributio
 	return func(self, distribution_type, pickup_pool, seed)
 end)
 
+local main_menu_want_solo_play = false
+
+mod:hook(CLASS.StateMainMenu, "update", function(func, self, main_dt, main_t)
+	if self._continue and not self:_waiting_for_profile_synchronization() then
+		if main_menu_want_solo_play then
+			main_menu_want_solo_play = false
+
+			local mission_context = get_mission_context()
+			local mission_settings = MissionTemplates[mission_context.mission_name]
+			local mechanism_name = mission_settings.mechanism_name
+
+			mod:echo(mod:localize("msg_starting_soloplay"))
+			Managers.multiplayer_session:boot_singleplayer_session()
+			Managers.mechanism:change_mechanism(mechanism_name, mission_context)
+			Managers.mechanism:trigger_event("all_players_ready")
+
+			local next_state, state_context = Managers.mechanism:wanted_transition()
+			return next_state, state_context
+		end
+	elseif self._continue then
+		self._continue = false
+	end
+
+	local next_state, next_state_params = func(self, main_dt, main_t)
+	return next_state, next_state_params
+end)
+
 local function in_hub_or_psykhanium()
 	if not Managers.state or not Managers.state.game_mode then
 		return false
@@ -108,42 +156,36 @@ local function in_hub_or_psykhanium()
 	return (game_mode_name == "hub" or game_mode_name == "prologue_hub" or game_mode_name == "shooting_range")
 end
 
+local function on_main_menu()
+	if not Managers.ui then
+		return false
+	end
+	return Managers.ui:view_active("main_menu_view")
+end
+
 mod:command("solo", mod:localize("solo_command_desc"), function()
-	if not in_hub_or_psykhanium() and not mod.is_soloplay() then
+	if not in_hub_or_psykhanium() and not mod.is_soloplay() and not on_main_menu() then
 		mod:echo(mod:localize("msg_not_in_hub_or_mission"))
 		return
 	end
-
-	local multiplayer_session_manager = Managers.multiplayer_session
-	local mechanism_manager = Managers.mechanism
-	local resistance = DangerSettings.by_index[mod:get("choose_difficulty")].expected_resistance
-	local mission_context = {
-		mission_name = mod:get("choose_mission"),
-		challenge = mod:get("choose_difficulty"),
-		resistance = resistance,
-		circumstance_name = mod:get("choose_circumstance"),
-		side_mission = mod:get("choose_side_mission"),
-	}
-	for map_name, override in pairs(SoloPlaySettings.context_override) do
-		if mission_context.mission_name == map_name then
-			for key, settings in pairs(override) do
-				if not settings.default or (settings.default and mission_context[key] == settings.default) then
-					mission_context[key] = settings.value
-				end
-			end
-		end
+	if on_main_menu() then
+		main_menu_want_solo_play = true
+		Managers.event:trigger("event_state_main_menu_continue")
+		return
 	end
+
+	local mission_context = get_mission_context()
 	local mission_settings = MissionTemplates[mission_context.mission_name]
 	local mechanism_name = mission_settings.mechanism_name
 
-	multiplayer_session_manager:reset("Hosting SoloPlay session")
-	multiplayer_session_manager:boot_singleplayer_session()
+	Managers.multiplayer_session:reset("Hosting SoloPlay session")
+	Managers.multiplayer_session:boot_singleplayer_session()
 
 	mod:echo(mod:localize("msg_starting_soloplay"))
 	Promise.until_true(function()
-		return multiplayer_session_manager._session_boot and multiplayer_session_manager._session_boot.leaving_game_session
+		return Managers.multiplayer_session._session_boot and Managers.multiplayer_session._session_boot.leaving_game_session
 	end):next(function()
-		mechanism_manager:change_mechanism(mechanism_name, mission_context)
-		mechanism_manager:trigger_event("all_players_ready")
+		Managers.mechanism:change_mechanism(mechanism_name, mission_context)
+		Managers.mechanism:trigger_event("all_players_ready")
 	end)
 end)

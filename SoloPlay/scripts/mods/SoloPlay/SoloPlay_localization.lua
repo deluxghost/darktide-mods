@@ -1,8 +1,5 @@
 local mod = get_mod("SoloPlay")
 local SoloPlaySettings = mod:io_dofile("SoloPlay/scripts/mods/SoloPlay/SoloPlaySettings")
-local MissionTemplates = require("scripts/settings/mission/mission_templates")
-local CircumstanceTemplates = require("scripts/settings/circumstance/circumstance_templates")
-local MissionObjectiveTemplates = require("scripts/settings/mission_objective/mission_objective_templates")
 
 local loc = {
 	mod_name = {
@@ -10,8 +7,10 @@ local loc = {
 		["zh-cn"] = "单人游戏",
 	},
 	mod_description = {
-		en = "Play offline solo mission with /solo command. You won't get any progression or reward.",
-		["zh-cn"] = "输入 /solo 命令玩离线单人任务。不会获得任何进度或奖励。",
+		en = "Play offline solo mission with /solo command. You won't get any progression or reward.\n" ..
+			"Some combinations of missions and special conditions are not supported by Fatshark, which will lead to crashes.",
+		["zh-cn"] = "输入 /solo 命令玩离线单人任务。不会获得任何进度或奖励。\n" ..
+			"某些任务与特殊状况的组合未被肥鲨支持，会导致崩溃。",
 	},
 	solo_command_desc = {
 		en = "Play offline solo mission",
