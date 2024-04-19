@@ -399,6 +399,23 @@ template.update_function = function (parent, ui_renderer, widget, crosshair_temp
 		left_style.offset[1] = left_style.default_offset[1] - spread_offset_x
 		local right_style = style.right
 		right_style.offset[1] = right_style.default_offset[1] + spread_offset_x
+
+		local crosshairs_fix = get_mod("crosshairs_fix")
+		if crosshairs_fix and crosshairs_fix:is_enabled() then
+			yaw, pitch = crosshairs_fix.spread_yaw_pitch(yaw, pitch)
+			local up_style = widget.style.up
+			local down_style = widget.style.down
+			local left_style = widget.style.left
+			local right_style = widget.style.right
+			local styles = {right_style, up_style, left_style, down_style}
+			for i = 1, 4 do
+				styles[i].angle = math.rad(-90 + 90*i)
+				styles[i].horizontal_alignment = "center"
+				styles[i].vertical_alignment = "center"
+				styles[i].offset[1] = math.cos(styles[i].angle) * (styles[i].size[1]/2 + yaw)
+				styles[i].offset[2] = -math.sin(styles[i].angle) * (styles[i].size[1]/2 + pitch)
+			end
+		end
 	end
 
 	local mask_height = mask_size[2]
