@@ -70,14 +70,6 @@ local loc = {
 		["zh-cn"] = "目前，次要目标的生成位置是固定的，仅会每周刷新一次。\n" ..
 			"此选项会在单人游戏中启用旧版的随机位置生成器。",
 	},
-	group_global_options = {
-		en = "Global options",
-		["zh-cn"] = "全局选项",
-	},
-	inventory_keybind = {
-		en = "Inventory keybind",
-		["zh-cn"] = "库存快捷键",
-	},
 }
 
 -- No more translations below

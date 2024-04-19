@@ -32,7 +32,7 @@ end
 return {
 	name = mod:localize("mod_name"),
 	description = mod:localize("mod_description"),
-	is_togglable = true,
+	is_togglable = false,
 	options = {
 		widgets = {
 			{
@@ -78,20 +78,6 @@ return {
 						setting_id = "random_side_mission_seed",
 						type = "checkbox",
 						default_value = true,
-					},
-				},
-			},
-			{
-				setting_id = "group_global_options",
-				type = "group",
-				sub_widgets = {
-					{
-						setting_id = "inventory_keybind",
-						type = "keybind",
-						default_value = { "i" },
-						keybind_trigger = "pressed",
-						keybind_type = "function_call",
-						function_name = "open_inventory",
 					},
 				},
 			},

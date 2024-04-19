@@ -3,6 +3,7 @@ local MissionTemplates = require("scripts/settings/mission/mission_templates")
 local DangerSettings = require("scripts/settings/difficulty/danger_settings")
 local MatchmakingConstants = require("scripts/settings/network/matchmaking_constants")
 local DifficultyManager = require("scripts/managers/difficulty/difficulty_manager")
+local GameModeManager = require("scripts/managers/game_mode/game_mode_manager")
 local PickupSystem = require("scripts/extension_systems/pickups/pickup_system")
 local PickupSettings = require("scripts/settings/pickup/pickup_settings")
 local SoloPlaySettings = mod:io_dofile("SoloPlay/scripts/mods/SoloPlay/SoloPlaySettings")
@@ -22,26 +23,6 @@ mod.is_soloplay = function()
 	end
 	local host_type = Managers.multiplayer_session:host_type()
 	return host_type == HOST_TYPES.singleplay
-end
-
-mod.open_inventory = function()
-	if Managers.ui:chat_using_input() then
-		return
-	end
-	if not mod.is_soloplay() then
-		return
-	end
-	local active = false
-	local active_views = Managers.ui:active_views()
-	for _, active_view in pairs(active_views) do
-		if active_view == "inventory_background_view" then
-			active = true
-		end
-	end
-	if active then
-		return
-	end
-	Managers.ui:open_view("inventory_background_view", nil, nil, nil, nil, nil)
 end
 
 local function get_mission_context()
@@ -66,9 +47,6 @@ local function get_mission_context()
 end
 
 mod:hook_require("scripts/ui/views/system_view/system_view_content_list", function(instance)
-	if not mod:is_enabled() then
-		return
-	end
 	for _, item in ipairs(instance.default) do
 		if item.text == "loc_exit_to_main_menu_display_name" then
 			item.validation_function = function ()
@@ -109,6 +87,15 @@ mod:hook(DifficultyManager, "friendly_fire_enabled", function(func, self, target
 	local ret = func(self, target_is_player, target_is_minion)
 	if mod.is_soloplay() and mod:get("friendly_fire_enabled") then
 		return true
+	end
+	return ret
+end)
+
+mod:hook(GameModeManager, "hotkey_settings", function(func, self)
+	local ret = table.clone(func(self))
+	if self:game_mode_name() == "coop_complete_objective" and mod.is_soloplay() then
+		ret.hotkeys["hotkey_inventory"] = "inventory_background_view"
+		ret.lookup["inventory_background_view"] = "hotkey_inventory"
 	end
 	return ret
 end)
