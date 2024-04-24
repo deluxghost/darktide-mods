@@ -89,6 +89,14 @@ return {
 		["zh-cn"] = "错误：任务已过期，请手动删除",
 		ru = "Ошибка: срок действия миссии истёк, удалите её вручную",
 	},
+	msg_level_required = {
+		en = "Error: character hasn't reached required level of this mission",
+		["zh-cn"] = "错误：角色未达到任务所需等级",
+	},
+	msg_team_mate_not_available = {
+		en = "Error: teammate is not available for matchmaking",
+		["zh-cn"] = "错误：队友还无法进行匹配",
+	},
 	msg_unknown_err = {
 		en = "Error: unknown reason",
 		["zh-cn"] = "错误：未知原因",

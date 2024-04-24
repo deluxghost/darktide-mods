@@ -181,7 +181,19 @@ mod:hook_safe("MissionBoardView", "init", function(self, settings)
 	end
 end)
 
-local function go_match(mission_id, mission_name)
+local function go_match(mission_id, mission_name, required_level)
+	local player = Managers.player:local_player(1)
+	local profile = player:profile()
+	local current_level = profile.current_level or 0
+	if current_level < required_level then
+		mod:echo(mod:localize("msg_level_required"))
+		return
+	end
+	if not Managers.party_immaterium:are_all_members_in_hub() then
+		mod:echo(mod:localize("msg_team_mate_not_available"))
+		return
+	end
+
 	local save_data = Managers.save:account_data()
 	local mission_board = save_data.mission_board or {}
 	local private = mission_board.private_matchmaking or false
@@ -261,7 +273,8 @@ local function mmt_main_command(idx_str)
 			return
 		end
 		local mission_name = get_mission_name(data.mission, "map", "circumstance")
-		go_match(mission_id, mission_name)
+		local required_level = data.mission.requiredLevel or 0
+		go_match(mission_id, mission_name, required_level)
 		locks.match = nil
 	end):catch(function(e)
 		mod:dump(e, "mmt_fetch_error", 3)
