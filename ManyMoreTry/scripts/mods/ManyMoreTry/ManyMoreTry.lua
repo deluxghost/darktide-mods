@@ -74,14 +74,6 @@ mod.on_game_state_changed = function(status, state_name)
 	end
 end
 
-local function in_hub()
-	if not Managers.state or not Managers.state.game_mode then
-		return false
-	end
-	local game_mode_name = Managers.state.game_mode:game_mode_name()
-	return game_mode_name == "hub"
-end
-
 local function get_start(start)
 	local start_str = tostring(start)
 	start_str = string.sub(start_str, 1, string.len(start_str) - 3)
@@ -181,6 +173,26 @@ mod:hook_safe("MissionBoardView", "init", function(self, settings)
 	end
 end)
 
+local function all_member_ready()
+	local psych_ward = get_mod("psych_ward")
+	if psych_ward then
+		local myself = Managers.party_immaterium:get_myself()
+		if myself:presence_name() ~= "hub" and myself:presence_name() ~= "training_grounds" and myself:presence_name() ~= "main_menu" then
+			return false
+		end
+
+		-- let's just assume other members don't have psych_ward while we can't actually detect that
+		for _, member in ipairs(Managers.party_immaterium._other_members) do
+			if member:presence_name() ~= "hub" and member:presence_name() ~= "training_grounds" then
+				return false
+			end
+		end
+		return true
+	end
+
+	return Managers.party_immaterium:are_all_members_in_hub()
+end
+
 local function go_match(mission_id, mission_name, required_level)
 	local player = Managers.player:local_player(1)
 	local profile = player:profile()
@@ -189,8 +201,8 @@ local function go_match(mission_id, mission_name, required_level)
 		mod:echo(mod:localize("msg_level_required"))
 		return
 	end
-	if not Managers.party_immaterium:are_all_members_in_hub() then
-		mod:echo(mod:localize("msg_team_mate_not_available"))
+	if not all_member_ready() then
+		mod:echo(mod:localize("msg_team_not_available"))
 		return
 	end
 
@@ -262,11 +274,6 @@ local function mmt_main_command(idx_str)
 	end
 	locks.match = true
 	Managers.data_service.mission_board:fetch_mission(mission_id):next(function(data)
-		if not in_hub() then
-			mod:echo(mod:localize("msg_not_in_hub"))
-			locks.match = nil
-			return
-		end
 		if not data.mission then
 			mod:echo(mod:localize("msg_unknown_err"))
 			locks.match = nil

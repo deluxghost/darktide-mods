@@ -44,14 +44,9 @@ return {
 		["zh-cn"] = "错误：命令正忙",
 		ru = "Ошибка: команда в работе",
 	},
-	msg_not_in_hub = {
-		en = "Error: not in Mourningstar",
-		["zh-cn"] = "错误：不在哀星号上",
-		ru = "Ошибка: Вы не в Моунингстар",
-	},
 	msg_not_in_party = {
-		en = "Error: not in a Strike Team",
-		["zh-cn"] = "错误：不在打击小队中",
+		en = "Error: private game is enabled in the Mission Board, but you are not in a Strike Team",
+		["zh-cn"] = "错误：任务面板中已启用私人游戏，但你不在打击小队中",
 		ru = "Ошибка: Вы не в Ударной команде",
 	},
 	msg_on_your_way_to = {
@@ -90,12 +85,12 @@ return {
 		ru = "Ошибка: срок действия миссии истёк, удалите её вручную",
 	},
 	msg_level_required = {
-		en = "Error: character hasn't reached required level of this mission",
+		en = "Error: character hasn't reached the required level of this mission",
 		["zh-cn"] = "错误：角色未达到任务所需等级",
 	},
-	msg_team_mate_not_available = {
-		en = "Error: teammate is not available for matchmaking",
-		["zh-cn"] = "错误：队友还无法进行匹配",
+	msg_team_not_available = {
+		en = "Error: team is not available for matchmaking",
+		["zh-cn"] = "错误：队伍还无法进行匹配",
 	},
 	msg_unknown_err = {
 		en = "Error: unknown reason",
