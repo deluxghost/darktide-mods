@@ -182,8 +182,10 @@ mod:hook_safe("MissionBoardView", "init", function(self, settings)
 end)
 
 local function go_match(mission_id, mission_name)
-	local private = true
-	if mod:get("private_game") then
+	local save_data = Managers.save:account_data()
+	local mission_board = save_data.mission_board or {}
+	local private = mission_board.private_matchmaking or false
+	if private then
 		local num_members = 0
 		if GameParameters.prod_like_backend then
 			num_members = Managers.party_immaterium:num_other_members()
@@ -192,8 +194,6 @@ local function go_match(mission_id, mission_name)
 			mod:echo(mod:localize("msg_not_in_party"))
 			return
 		end
-	else
-		private = false
 	end
 	mod:echo(mod:localize("msg_on_your_way_to") .. mission_name)
 	Managers.party_immaterium:wanted_mission_selected(mission_id, private, BackendUtilities.prefered_mission_region)
