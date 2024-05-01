@@ -87,10 +87,12 @@ return {
 	msg_level_required = {
 		en = "Error: character hasn't reached the required level of this mission",
 		["zh-cn"] = "错误：角色未达到任务所需等级",
+		ru = "Ошибка: персонаж не достиг необходимого уровня для этой миссии",
 	},
 	msg_team_not_available = {
 		en = "Error: team is not available for matchmaking",
 		["zh-cn"] = "错误：队伍还无法进行匹配",
+		ru = "Ошибка: команда недоступна для подбора миссии",
 	},
 	msg_unknown_err = {
 		en = "Error: unknown reason",
