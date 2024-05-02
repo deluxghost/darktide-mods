@@ -47,7 +47,7 @@ return {
 	msg_not_in_party = {
 		en = "Error: private game is enabled in the Mission Board, but you are not in a Strike Team",
 		["zh-cn"] = "错误：任务面板中已启用私人游戏，但你不在打击小队中",
-		ru = "Ошибка: Вы не в Ударной команде",
+		ru = "Ошибка: закрытая игра включена в меню миссий, но вы не состоите в Ударной группе",
 	},
 	msg_on_your_way_to = {
 		en = "On your way to: ",
