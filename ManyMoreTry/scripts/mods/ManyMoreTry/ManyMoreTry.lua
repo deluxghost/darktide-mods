@@ -94,6 +94,16 @@ local function get_mission_name(mission, name_key, circumstance_key)
 		end
 	end
 
+	local category_name = nil
+	if mission.category == "narrative" then
+		category_name = Localize("loc_story_mission_menu_access_button_text")
+	elseif mission.category == "auric" then
+		category_name = Localize("loc_mission_board_type_auric")
+	end
+	if category_name then
+		table.insert(name_parts, category_name)
+	end
+
 	local danger_settings = DangerSettings.by_index[mission.challenge]
 	table.insert(name_parts, Localize(danger_settings.display_name))
 
