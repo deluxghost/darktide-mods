@@ -7,10 +7,8 @@ local loc = {
 		["zh-cn"] = "单人游戏",
 	},
 	mod_description = {
-		en = "Play offline solo mission with /solo command. You won't get any progression or reward.\n" ..
-			"Some combinations of missions and special conditions are not supported by Fatshark, which will lead to crashes.",
-		["zh-cn"] = "输入 /solo 命令玩离线单人任务。不会获得任何进度或奖励。\n" ..
-			"某些任务与特殊状况的组合未被肥鲨支持，会导致崩溃。",
+		en = "Play offline solo mission with /solo command. You won't get any progression or reward.",
+		["zh-cn"] = "输入 /solo 命令玩离线单人任务。不会获得任何进度或奖励。",
 	},
 	solo_command_desc = {
 		en = "Play offline solo mission",
@@ -19,6 +17,10 @@ local loc = {
 	msg_not_in_hub_or_mission = {
 		en = "Error: not in Mourningstar, Psykhanium or Solo Play",
 		["zh-cn"] = "错误：不在哀星号上、灵能室内或单人任务中",
+	},
+	msg_not_valid_mission_giver = {
+		en = "Error: invalid mission giver for selected mission, valid options: ",
+		["zh-cn"] = "错误：任务发布者对所选任务无效，有效的选项：",
 	},
 	msg_starting_soloplay = {
 		en = "Starting solo mission...",
@@ -40,11 +42,31 @@ local loc = {
 		en = "Choose side mission",
 		["zh-cn"] = "选择次要目标",
 	},
+	choose_side_mission_description = {
+		en = "Note: in specific missions, some options may not be supported, not work, or cause crashes.",
+		["zh-cn"] = "注意：在特定任务下，某些选项可能不受支持、不生效或导致崩溃。",
+	},
 	choose_circumstance = {
 		en = "Choose special condition",
 		["zh-cn"] = "选择特殊状况",
 	},
+	choose_circumstance_description = {
+		en = "Note: in specific missions, some options may not be supported, not work, or cause crashes.",
+		["zh-cn"] = "注意：在特定任务下，某些选项可能不受支持、不生效或导致崩溃。",
+	},
+	choose_mission_giver = {
+		en = "Choose mission giver",
+		["zh-cn"] = "选择任务发布者",
+	},
+	choose_mission_giver_description = {
+		en = "Note: in specific missions, some options may not be supported, not work, or cause crashes.",
+		["zh-cn"] = "注意：在特定任务下，某些选项可能不受支持、不生效或导致崩溃。",
+	},
 	default_text = {
+		en = "Default",
+		["zh-cn"] = "默认",
+	},
+	default_text_none = {
 		en = "None",
 		["zh-cn"] = "无",
 	},
@@ -95,6 +117,11 @@ for _, circumstance in ipairs(SoloPlaySettings.circumstances) do
 			en = circumstance.loc_value,
 		}
 	end
+end
+for _, mission_giver in ipairs(SoloPlaySettings.mission_givers) do
+	loc[mission_giver.loc_key] = {
+		en = mission_giver.loc_value,
+	}
 end
 
 return loc

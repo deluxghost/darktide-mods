@@ -10,7 +10,7 @@ for _, mission in ipairs(SoloPlaySettings.missions) do
 end
 
 local side_mission_options = {
-	{ text = "default_text", value = "default" },
+	{ text = "default_text_none", value = "default" },
 }
 for _, side_mission in ipairs(SoloPlaySettings.side_missions) do
 	table.insert(side_mission_options, {
@@ -20,12 +20,22 @@ for _, side_mission in ipairs(SoloPlaySettings.side_missions) do
 end
 
 local circumstance_options = {
-	{ text = "default_text", value = "default" },
+	{ text = "default_text_none", value = "default" },
 }
 for _, circumstance in ipairs(SoloPlaySettings.circumstances) do
 	table.insert(circumstance_options, {
 		text = circumstance.loc_key,
 		value = circumstance.data,
+	})
+end
+
+local mission_giver_options = {
+	{ text = "default_text", value = "default" },
+}
+for _, mission_giver in ipairs(SoloPlaySettings.mission_givers) do
+	table.insert(mission_giver_options, {
+		text = mission_giver.loc_key,
+		value = mission_giver.data,
 	})
 end
 
@@ -62,6 +72,12 @@ return {
 						type = "dropdown",
 						default_value = "default",
 						options = circumstance_options,
+					},
+					{
+						setting_id = "choose_mission_giver",
+						type = "dropdown",
+						default_value = "default",
+						options = mission_giver_options,
 					},
 				},
 			},

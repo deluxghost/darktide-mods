@@ -1,6 +1,8 @@
 local MissionTemplates = require("scripts/settings/mission/mission_templates")
 local CircumstanceTemplates = require("scripts/settings/circumstance/circumstance_templates")
 local MissionObjectiveTemplates = require("scripts/settings/mission_objective/mission_objective_templates")
+local MissionGiverVoSettings = require("scripts/settings/dialogue/mission_giver_vo_settings")
+local DialogueSpeakerVoiceSettings = require("scripts/settings/dialogue/dialogue_speaker_voice_settings")
 
 local objectives_denylist = {
 	"hub",
@@ -26,11 +28,12 @@ local settings = {
 	missions = {},
 	side_missions = {},
 	circumstances = {},
+	mission_givers = {},
 }
 settings.context_override = {
 	km_enforcer_twins = {
 		circumstance_name = {
-			default = "default",
+			default = "default", -- only replace default value
 			value = "toxic_gas_twins_01",
 		},
 		pacing_control = {
@@ -138,5 +141,35 @@ for _, entry in ipairs(circumstance_array) do
 		data = entry.name,
 	})
 end
+
+local mission_giver_reverse_map = {}
+for name, _ in pairs(MissionGiverVoSettings.overrides) do
+	if DialogueSpeakerVoiceSettings[name] and DialogueSpeakerVoiceSettings[name].full_name then
+		local loc_value = Localize(DialogueSpeakerVoiceSettings[name].full_name)
+		mission_giver_reverse_map[loc_value] = mission_giver_reverse_map[loc_value] or {}
+		table.insert(mission_giver_reverse_map[loc_value], name)
+	end
+end
+for loc_value, names in pairs(mission_giver_reverse_map) do
+	if #names == 1 then
+		table.insert(settings.mission_givers, {
+			loc_key = "loc_mission_giver_" .. names[1],
+			loc_value = loc_value,
+			data = names[1],
+		})
+	else
+		for _, name in ipairs(names) do
+			local suffix = string.upper(string.sub(name, -1))
+			table.insert(settings.mission_givers, {
+				loc_key = "loc_mission_giver_" .. name,
+				loc_value = loc_value .. " " .. suffix,
+				data = name,
+			})
+		end
+	end
+end
+table.sort(settings.mission_givers, function (a, b)
+	return a.loc_value < b.loc_value
+end)
 
 return settings
