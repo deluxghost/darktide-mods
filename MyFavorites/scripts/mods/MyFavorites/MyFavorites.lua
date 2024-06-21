@@ -8,6 +8,25 @@ local RaritySettings = require("scripts/settings/item/rarity_settings")
 local fav_icon = "content/ui/materials/icons/presets/preset_15"
 local remove_icon = "content/ui/materials/icons/system/settings/category_interface"
 
+local item_cache = mod:persistent_table("item_cache")
+
+local function get_item_cache()
+	item_cache.favorites = item_cache.favorites or {}
+	return item_cache.favorites
+end
+
+local function set_item_cache(item_list)
+	item_cache.favorites = item_list or {}
+	mod:set("favorite_item_list", item_cache.favorites)
+end
+
+mod.on_setting_changed = function(setting_id)
+	if setting_id == "favorite_item_list" then
+		local favorite_item_list = mod:get("favorite_item_list") or {}
+		set_item_cache(favorite_item_list)
+	end
+end
+
 local function max_color_group()
 	return mod:get("favorite_preset_count") or 5
 end
@@ -25,7 +44,7 @@ local function is_valid_crafting_item(item)
 end
 
 local function get_item_group(id)
-	local favorite_item_list = mod:get("favorite_item_list") or {}
+	local favorite_item_list = get_item_cache()
 	local group = favorite_item_list[id] or 0
 	if group > max_color_group() then
 		group = max_color_group()
@@ -41,13 +60,13 @@ end
 local function switch_item_group(id)
 	local current = get_item_group(id)
 	local next = next_color_group(current)
-	local favorite_item_list = mod:get("favorite_item_list") or {}
+	local favorite_item_list = get_item_cache()
 	if next > 0 then
 		favorite_item_list[id] = next
 	else
 		favorite_item_list[id] = nil
 	end
-	mod:set("favorite_item_list", favorite_item_list)
+	set_item_cache(favorite_item_list)
 end
 
 local function content_to_item(content)
@@ -57,7 +76,7 @@ local function content_to_item(content)
 	return content.element.item
 end
 
-mod.load_package = function(self, package_name)
+mod.load_package = function(package_name)
 	if not Managers.package:is_loading(package_name) and not Managers.package:has_loaded(package_name) then
 		Managers.package:load(package_name, "my_favorites", nil, true)
 	end
@@ -70,7 +89,7 @@ mod.on_enabled = function()
 			favorite_item_list[id] = 1
 		end
 	end
-	mod:set("favorite_item_list", favorite_item_list)
+	set_item_cache(favorite_item_list)
 	CraftingSettings.recipes.extract_trait.is_valid_item = function(item)
 		if not is_valid_crafting_item(item) then
 			return false
@@ -89,7 +108,7 @@ mod.on_disabled = function()
 end
 
 mod.on_all_mods_loaded = function()
-	mod:load_package("packages/ui/views/inventory_background_view/inventory_background_view")
+	mod.load_package("packages/ui/views/inventory_background_view/inventory_background_view")
 end
 
 local item_definitions = {
