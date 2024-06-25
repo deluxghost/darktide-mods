@@ -967,7 +967,7 @@ local function fill_weapon_base_stats(content, item)
 
 	-- sort stats, copied from source code
 	local weapon_stats = WeaponStats:new(item)
-	local compairing_stats = weapon_stats:get_compairing_stats()
+	local compairing_stats = weapon_stats:get_comparing_stats()
 	local num_stats = table.size(compairing_stats)
 	local compairing_stats_array = {}
 	for _, stat in pairs(compairing_stats) do
