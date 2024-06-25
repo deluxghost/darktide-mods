@@ -1,6 +1,6 @@
 local mod = get_mod("crosshair_remap")
 
--- Not part of localization. DO NOT CHANGE.
+-- Not part of localization. DO NOT CHANGE. SCROLL DOWN.
 
 mod.vanilla_crosshair_names = {
 	"assault",
@@ -9,10 +9,10 @@ mod.vanilla_crosshair_names = {
 	"charge_up_ads",
 	"cross",
 	"dot",
+	"flamer",
 	"ironsight",
 	"projectile_drop",
 	"shotgun",
-	"shotgun_slug",
 	"shotgun_wide",
 	"spray_n_pray",
 	"none",
@@ -43,12 +43,10 @@ local locres = {
 	},
 
 	assault_crosshair = {
-		en = "Assault",
-		["zh-cn"] = "突击",
+		en = Localize("loc_setting_crosshair_type_override_assault"),
 	},
 	bfg_crosshair = {
-		en = "BFG",
-		["zh-cn"] = "BFG",
+		en = Localize("loc_setting_crosshair_type_override_bfg"),
 	},
 	charge_up_crosshair = {
 		en = "Charge Up",
@@ -59,12 +57,14 @@ local locres = {
 		["zh-cn"] = "充能机瞄",
 	},
 	cross_crosshair = {
-		en = "Cross",
-		["zh-cn"] = "十字",
+		en = Localize("loc_setting_crosshair_type_override_killshot"),
 	},
 	dot_crosshair = {
-		en = "Dot",
-		["zh-cn"] = "单点",
+		en = Localize("loc_setting_crosshair_type_override_dot"),
+	},
+	flamer_crosshair = {
+		en = "Flamer",
+		["zh-cn"] = "喷火",
 	},
 	ironsight_crosshair = {
 		en = "Ironsight",
@@ -75,20 +75,14 @@ local locres = {
 		["zh-cn"] = "弹道下坠",
 	},
 	shotgun_crosshair = {
-		en = "Shotgun",
-		["zh-cn"] = "霰弹",
-	},
-	shotgun_slug_crosshair = {
-		en = "Shotgun Slug",
-		["zh-cn"] = "独头霰弹",
+		en = Localize("loc_setting_crosshair_type_override_shotgun"),
 	},
 	shotgun_wide_crosshair = {
-		en = "Shotgun Wide",
-		["zh-cn"] = "宽散布霰弹",
+		en = "Wider Spreadshot",
+		["zh-cn"] = "宽散射",
 	},
 	spray_n_pray_crosshair = {
-		en = "Spray-n-Pray",
-		["zh-cn"] = "扫射",
+		en = Localize("loc_setting_crosshair_type_override_spray_n_pray"),
 	},
 	none_crosshair = {
 		en = "None (No Hitmarkers)",
@@ -134,6 +128,10 @@ local locres = {
 	boltgun_class = {
 		en = "Boltguns",
 		["zh-cn"] = "爆矢枪",
+	},
+	boltpistal_class = {
+		en = "Bolt Pistols",
+		["zh-cn"] = "爆矢手枪",
 	},
 	flamer_class = {
 		en = "Flamers",
@@ -181,19 +179,23 @@ local locres = {
 	},
 	revolver_fanning_class = {
 		en = "Stub Revolvers (Fanning)",
-		["zh-cn"] = "速发左轮枪（击锤速射）",
+		["zh-cn"] = "速发左轮枪（击锤速射型）",
 	},
 	shotgun_lawbringer_class = {
-		en = "Shotguns (Lawbringer)",
-		["zh-cn"] = "霰弹枪（执法者）",
+		en = "Combat Shotguns (Lawbringer)",
+		["zh-cn"] = "战斗霰弹枪（执法者）",
 	},
 	shotgun_agripinaa_class = {
-		en = "Shotguns (Agripinaa)",
-		["zh-cn"] = "霰弹枪（阿格里皮娜）",
+		en = "Combat Shotguns (Agripinaa)",
+		["zh-cn"] = "战斗霰弹枪（阿格里皮娜）",
 	},
 	shotgun_kantrael_class = {
-		en = "Shotguns (Kantrael)",
-		["zh-cn"] = "霰弹枪（卡特雷尔）",
+		en = "Combat Shotguns (Kantrael)",
+		["zh-cn"] = "战斗霰弹枪（卡特雷尔）",
+	},
+	assault_shotgun_class = {
+		en = "Assault Shotguns",
+		["zh-cn"] = "突击霰弹枪",
 	},
 	grenadier_gauntlet_class = {
 		en = "Grenadier Gauntlets",

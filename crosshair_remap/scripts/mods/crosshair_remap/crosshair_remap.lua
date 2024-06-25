@@ -7,7 +7,12 @@ local slot_configuration = PlayerCharacterConstants.slot_configuration
 
 local function collect_settings()
 	for k, _ in pairs(mod.settings) do
-		mod.settings[k] = mod:get(k)
+		local v = mod:get(k)
+		if v == "shotgun_slug" then
+			v = "cross"
+			mod:set(k, v)
+		end
+		mod.settings[k] = v
 	end
 end
 
@@ -27,6 +32,7 @@ local keywords_to_class = {
 	},
 	autopistol = "autopistol_class",
 	bolter = "boltgun_class",
+	boltpistol = "boltpistal_class",
 	flamer = "flamer_class",
 	force_staff = {
 		p1 = "force_staff_trauma_class",
@@ -42,7 +48,10 @@ local keywords_to_class = {
 	laspistol = "laspistol_class",
 	plasma_rifle = "plasma_gun_class",
 	stub_pistol = "revolver_class",
-	shotgun = "shotguns",
+	shotgun = {
+		p1 = "combat_shotguns",
+		p2 = "assault_shotgun_class"
+	},
 	grenadier_gauntlet = "grenadier_gauntlet_class",
 	heavystubber = "heavy_stubber_class",
 	rippergun = "ripper_gun_class",
@@ -91,13 +100,13 @@ local function determine_ranged_weapon_class(weapon_template_name, weapon_templa
 			return weapon_class
 		end
 		weapon_class = weapon_template.crosshair.crosshair_type == "shotgun" and "kickback_class" or "rumbler_class"
-	elseif weapon_class == "shotguns" then
+	elseif weapon_class == "combat_shotguns" then
 		if not weapon_template.crosshair then
 			return weapon_class
 		end
 		if weapon_template.crosshair.crosshair_type_special_active == "shotgun_wide" then
 			weapon_class = "shotgun_lawbringer_class"
-		elseif weapon_template.crosshair.crosshair_type_special_active == "shotgun_slug" then
+		elseif weapon_template.crosshair.crosshair_type_special_active == "bfg" then
 			weapon_class = "shotgun_agripinaa_class"
 		else
 			weapon_class = "shotgun_kantrael_class"
@@ -197,9 +206,9 @@ mod:hook_origin("HudElementCrosshair", "_get_current_crosshair_type", function(s
 						return mod.settings["melee_class"]
 					end
 
-					if reload_action_kinds[action_kind] then
-						return mod.settings["none_class"]
-					end
+					-- if reload_action_kinds[action_kind] then
+					-- 	return mod.settings["none_class"]
+					-- end
 
 					local weapon_class = determine_ranged_weapon_class(weapon_template_name, weapon_template)
 					if not weapon_class then
@@ -249,6 +258,13 @@ mod:hook_safe("HudElementCrosshair", "init", function(self, ...)
 	end
 end)
 
+mod:hook("HudElementCrosshair", "_crosshair_settings", function(func, self)
+	local crosshair_settings = func(self)
+	return crosshair_settings or {
+		crosshair_type = "none",
+	}
+end)
+
 -- Provide default spread for melee weapons.
 mod:hook("HudElementCrosshair", "_spread_yaw_pitch", function(func, self)
 	local yaw, pitch = func(self)
@@ -265,7 +281,7 @@ mod:hook("HudElementCrosshair", "_spread_yaw_pitch", function(func, self)
 
 			if weapon_template then
 				if WeaponTemplate.is_melee(weapon_template) then
-					return 2, 2
+					return 1.5, 1.5
 				end
 			end
 		end
