@@ -57,32 +57,15 @@ end
 
 local function get_item_stats(item)
 	local weapon_stats = WeaponStats:new(item)
-	local compairing_stats = weapon_stats:get_compairing_stats()
-	local num_stats = table.size(compairing_stats)
-	local compairing_stats_array = {}
-	for key, stat in pairs(compairing_stats) do
-		compairing_stats_array[#compairing_stats_array + 1] = stat
+	local comparing_stats = weapon_stats:get_comparing_stats()
+	local num_stats = table.size(comparing_stats)
+	local comparing_stats_array = {}
+	for key, stat in pairs(comparing_stats) do
+		comparing_stats_array[#comparing_stats_array + 1] = stat
 	end
-
-	local weapon_stats_sort_order = {
-		rate_of_fire = 2,
-		attack_speed = 2,
-		damage = 1,
-		stamina_block_cost = 4,
-		reload_speed = 4,
-		stagger = 3
-	}
-	local function sort_function(a, b)
-		local a_sort_order = weapon_stats_sort_order[a.type] or math.huge
-		local b_sort_order = weapon_stats_sort_order[b.type] or math.huge
-
-		return a_sort_order < b_sort_order
-	end
-	table.sort(compairing_stats_array, sort_function)
 
 	local bar_breakdown = table.clone(weapon_stats._weapon_statistics.bar_breakdown)
-	table.sort(bar_breakdown, sort_function)
-	return compairing_stats_array, bar_breakdown
+	return comparing_stats_array, bar_breakdown
 end
 
 mod:hook(package.loaded, "scripts/ui/view_content_blueprints/item_stats_blueprints", function(generate_blueprints_function, grid_size, optional_item)
