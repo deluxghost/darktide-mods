@@ -148,6 +148,9 @@ mod.on_enabled = function()
 		mod:set("custom_sort_category_group_by_name", true)
 		mod:set("custom_sort_category_mark", nil)
 	end
+end
+
+mod.on_all_mods_loaded = function()
 	if Managers.data_service.crafting._trait_sticker_book_cache then
 		Managers.data_service.crafting:warm_trait_sticker_book_cache()
 	end
