@@ -27,6 +27,7 @@ local keywords_to_class = {
 	},
 	autopistol = "autopistol_class",
 	bolter = "boltgun_class",
+	boltpistol = "boltpistol_class",
 	flamer = "flamer_class",
 	force_staff = {
 		p1 = "force_staff_trauma_class",

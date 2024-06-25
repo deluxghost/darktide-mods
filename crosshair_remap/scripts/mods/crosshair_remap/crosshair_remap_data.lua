@@ -58,6 +58,7 @@ return {
 			make_group("autogun_headhunter_class", "cross", "ironsight"),
 			make_group("autopistol_class", "assault", "assault"),
 			make_group("boltgun_class", "spray_n_pray", "ironsight"),
+			make_group("boltpistol_class", "spray_n_pray", "ironsight"),
 			make_group("flamer_class", "spray_n_pray", "spray_n_pray"),
 			make_group("force_staff_trauma_class", "assault", "charge_up"),
 			make_group("force_staff_purgatus_class", "spray_n_pray", "charge_up"),

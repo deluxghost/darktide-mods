@@ -135,6 +135,9 @@ local locres = {
 		en = "Boltguns",
 		["zh-cn"] = "爆矢枪",
 	},
+	boltpistol_class = {
+		en = "Bolt Pistols",
+	},
 	flamer_class = {
 		en = "Flamers",
 		["zh-cn"] = "火焰喷射器",
