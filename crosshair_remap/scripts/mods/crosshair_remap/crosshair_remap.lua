@@ -1,18 +1,33 @@
 local mod = get_mod("crosshair_remap")
-
 local Action = require("scripts/utilities/weapon/action")
 local WeaponTemplate = require("scripts/utilities/weapon/weapon_template")
 local PlayerCharacterConstants = require("scripts/settings/player_character/player_character_constants")
 local slot_configuration = PlayerCharacterConstants.slot_configuration
 
+local settings_migration = {
+	shotgun_slug = "cross",
+	ironsight_dot = "dot",
+	ironsight_chevron = "chevron",
+}
+
 local function collect_settings()
-	for k, _ in pairs(mod.settings) do
+	for k, def in pairs(mod.default_settings) do
 		local v = mod:get(k)
-		if v == "shotgun_slug" then
-			v = "cross"
+		local migration = settings_migration[v]
+		if migration then
+			v = migration
+			mod:set(k, v)
+		elseif not table.array_contains(mod.all_crosshair_names, v) then
+			v = def
 			mod:set(k, v)
 		end
 		mod.settings[k] = v
+	end
+end
+
+mod.load_package = function(package_name)
+	if not Managers.package:is_loading(package_name) and not Managers.package:has_loaded(package_name) then
+		Managers.package:load(package_name, "crosshair_remap", nil, true)
 	end
 end
 
@@ -22,6 +37,10 @@ end
 
 mod.on_setting_changed = function()
 	collect_settings()
+end
+
+mod.on_all_mods_loaded = function()
+	mod.load_package("packages/ui/views/mission_board_view/mission_board_view")
 end
 
 local keywords_to_class = {
@@ -146,7 +165,7 @@ local melee_action_kinds = {
 	sweep = true,
 	push = true,
 	melee_explosivve = true,
-	block = true, -- No ranged has this action.
+	block = true, -- No ranged has this action
 }
 
 local reload_action_kinds = {
@@ -206,6 +225,7 @@ mod:hook_origin("HudElementCrosshair", "_get_current_crosshair_type", function(s
 						return mod.settings["melee_class"]
 					end
 
+					-- -- changing crosshair while reloading is weird
 					-- if reload_action_kinds[action_kind] then
 					-- 	return mod.settings["none_class"]
 					-- end
@@ -247,14 +267,18 @@ mod:hook_origin("HudElementCrosshair", "_get_current_crosshair_type", function(s
 	return crosshair_type == "none" and mod.settings["none_class"] or crosshair_type
 end)
 
--- Inject custom crosshairs.
+-- Inject custom crosshairs
 mod:hook_safe("HudElementCrosshair", "init", function(self, ...)
 	local scenegraph_id = "pivot"
+	for _, template in ipairs(mod.builtin_crosshair_templates) do
+		self._crosshair_templates[template.name] = template
+		self._crosshair_widget_definitions[template.name] = template:create_widget_defintion(scenegraph_id)
+	end
 	for _, name in ipairs(mod.custom_crosshair_names) do
-		local template = Mods.file.dofile(mod.custom_dir .. name)
+		local template = Mods.file.dofile(mod.custom_crosshair_templates[name])
 		template.name = name
-		self._crosshair_templates[name] = template
-		self._crosshair_widget_definitions[name] = template:create_widget_defintion(scenegraph_id)
+		self._crosshair_templates[template.name] = template
+		self._crosshair_widget_definitions[template.name] = template:create_widget_defintion(scenegraph_id)
 	end
 end)
 
@@ -265,7 +289,7 @@ mod:hook("HudElementCrosshair", "_crosshair_settings", function(func, self)
 	}
 end)
 
--- Provide default spread for melee weapons.
+-- Provide default spread for melee weapons
 mod:hook("HudElementCrosshair", "_spread_yaw_pitch", function(func, self)
 	local yaw, pitch = func(self)
 

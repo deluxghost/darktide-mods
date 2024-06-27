@@ -1,5 +1,6 @@
 local mod = get_mod("crosshair_remap")
 
+mod.default_settings = {}
 mod.settings = {}
 
 local function make_options()
@@ -14,6 +15,7 @@ local function make_options()
 end
 
 local function make_dropdown(name, default, title)
+	mod.default_settings[name] = default
 	mod.settings[name] = default
 	return {
 		setting_id = name,

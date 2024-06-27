@@ -1,38 +1,49 @@
 local mod = get_mod("crosshair_remap")
+mod:io_dofile("crosshair_remap/scripts/mods/crosshair_remap/crosshair_remap_init")
 
--- Not part of localization. DO NOT CHANGE. SCROLL DOWN.
-
-mod.vanilla_crosshair_names = {
-	"assault",
-	"bfg",
-	"charge_up",
-	"charge_up_ads",
-	"cross",
-	"dot",
-	"flamer",
-	"ironsight",
-	"projectile_drop",
-	"shotgun",
-	"shotgun_wide",
-	"spray_n_pray",
-	"none",
+local builtin_crosshairs_localization = {
+	chevron_crosshair = {
+		en = "Chevron",
+		["zh-cn"] = "倒 V 形",
+	},
+	small_circle_crosshair = {
+		en = "Small Circle",
+		["zh-cn"] = "小圆圈",
+	},
+	t_shape_crosshair = {
+		en = "T Shape",
+		["zh-cn"] = "T 形",
+	},
+	t_shape_dot_crosshair = {
+		en = "T Shape + " .. Localize("loc_setting_crosshair_type_override_dot"),
+		["zh-cn"] = "T 形 + " .. Localize("loc_setting_crosshair_type_override_dot"),
+	},
+	shotgun_dot_crosshair = {
+		en = Localize("loc_setting_crosshair_type_override_shotgun") .. " + " .. Localize("loc_setting_crosshair_type_override_dot"),
+	},
+	charge_up_cross_crosshair = {
+		en = "Charge Up + " .. Localize("loc_setting_crosshair_type_override_killshot"),
+		["zh-cn"] = "充能 + " .. Localize("loc_setting_crosshair_type_override_killshot"),
+	},
+	charge_up_chevron_crosshair = {
+		en = "Charge Up + Chevron",
+		["zh-cn"] = "充能 + 倒 V 形",
+	},
+	charge_up_ads_dot_crosshair = {
+		en = "Wider Charge Up + " .. Localize("loc_setting_crosshair_type_override_dot"),
+		["zh-cn"] = "宽充能 + " .. Localize("loc_setting_crosshair_type_override_dot"),
+	},
+	charge_up_ads_cross_crosshair = {
+		en = "Wider Charge Up + " .. Localize("loc_setting_crosshair_type_override_killshot"),
+		["zh-cn"] = "宽充能 + " .. Localize("loc_setting_crosshair_type_override_killshot"),
+	},
+	charge_up_ads_chevron_crosshair = {
+		en = "Wider Charge Up + Chevron",
+		["zh-cn"] = "宽充能 + 倒 V 形",
+	},
 }
 
-mod.custom_dir = "crosshair_remap/custom_crosshairs/"
-
-mod.custom_crosshair_names = Mods.file.dofile(mod.custom_dir .. "LIST")
-
-mod.all_crosshair_names = {}
-for _, name in ipairs(mod.vanilla_crosshair_names) do
-	table.insert(mod.all_crosshair_names, name)
-end
-for _, name in ipairs(mod.custom_crosshair_names) do
-	table.insert(mod.all_crosshair_names, name)
-end
-
--- Localization starts here
-
-local locres = {
+local localization = {
 	mod_name = {
 		en = "Crosshair Remap",
 		["zh-cn"] = "准星自定义",
@@ -42,6 +53,10 @@ local locres = {
 		["zh-cn"] = "允许玩家按武器类型修改准星。",
 	},
 
+	none_crosshair = {
+		en = "None (No Hitmarkers)",
+		["zh-cn"] = "无准星（无命中提示）",
+	},
 	assault_crosshair = {
 		en = Localize("loc_setting_crosshair_type_override_assault"),
 	},
@@ -53,8 +68,8 @@ local locres = {
 		["zh-cn"] = "充能",
 	},
 	charge_up_ads_crosshair = {
-		en = "Charge Up ADS",
-		["zh-cn"] = "充能机瞄",
+		en = "Wider Charge Up ADS",
+		["zh-cn"] = "宽充能机瞄",
 	},
 	cross_crosshair = {
 		en = Localize("loc_setting_crosshair_type_override_killshot"),
@@ -83,10 +98,6 @@ local locres = {
 	},
 	spray_n_pray_crosshair = {
 		en = Localize("loc_setting_crosshair_type_override_spray_n_pray"),
-	},
-	none_crosshair = {
-		en = "None (No Hitmarkers)",
-		["zh-cn"] = "无准星（无命中提示）",
 	},
 
 	none_class = {
@@ -232,10 +243,14 @@ local locres = {
 	},
 }
 
-for _, name in ipairs(mod.custom_crosshair_names) do
-	locres[name .. "_crosshair"] = {
-		en = "> " .. name
-	}
+for name, loc in pairs(builtin_crosshairs_localization) do
+	localization[name] = {}
+	for lang, msg in pairs(loc) do
+		localization[name][lang] = " " .. msg
+	end
+end
+for name, loc in pairs(mod.custom_localization) do
+	localization[name] = loc
 end
 
-return locres
+return localization
