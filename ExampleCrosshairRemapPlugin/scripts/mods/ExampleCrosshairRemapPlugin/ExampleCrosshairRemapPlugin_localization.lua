@@ -2,6 +2,7 @@
 
 -- initialize crosshair data in localization file
 local mod = get_mod("ExampleCrosshairRemapPlugin")
+-- you must define crosshair settings in `mod.crosshair_remap_crosshairs`
 mod.crosshair_remap_crosshairs = {
 	{
 		-- crosshair name, should be unique
