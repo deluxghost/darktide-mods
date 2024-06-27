@@ -3,6 +3,7 @@ local crosshairs = {
 	"small_circle",
 	"t_shape",
 	"t_shape_dot",
+	"dash_dot",
 	"shotgun_dot",
 	"charge_up_cross",
 	"charge_up_chevron" ,

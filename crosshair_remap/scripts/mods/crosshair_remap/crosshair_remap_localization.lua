@@ -18,6 +18,10 @@ local builtin_crosshairs_localization = {
 		en = "T Shape + " .. Localize("loc_setting_crosshair_type_override_dot"),
 		["zh-cn"] = "T 形 + " .. Localize("loc_setting_crosshair_type_override_dot"),
 	},
+	dash_dot_crosshair = {
+		en = "Dash + " .. Localize("loc_setting_crosshair_type_override_dot"),
+		["zh-cn"] = "横线 + " .. Localize("loc_setting_crosshair_type_override_dot"),
+	},
 	shotgun_dot_crosshair = {
 		en = Localize("loc_setting_crosshair_type_override_shotgun") .. " + " .. Localize("loc_setting_crosshair_type_override_dot"),
 	},
