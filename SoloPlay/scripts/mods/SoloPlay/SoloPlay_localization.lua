@@ -90,7 +90,6 @@ local loc = {
 	format_auric = {
 		en = Localize("loc_mission_board_type_auric") .. " %s",
 		["zh-cn"] = Localize("loc_mission_board_type_auric") .. "%s",
-		ru = Localize("loc_mission_board_type_auric") .. "%s",
 	},
 	group_modifiers = {
 		en = "Modifiers",
