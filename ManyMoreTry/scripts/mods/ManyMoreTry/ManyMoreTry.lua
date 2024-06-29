@@ -9,6 +9,12 @@ local BackendUtilities = require("scripts/foundation/managers/backend/utilities/
 
 local locks = mod:persistent_table("locks")
 
+local function update_input_alias()
+	if Managers.input and Managers.input._aliases and Managers.input._aliases.View then
+		Managers.input._aliases.View._aliases["mmt_save_mission"] = Managers.input._aliases.View._default_aliases["mmt_save_mission"]
+	end
+end
+
 mod:hook_require("scripts/settings/input/default_view_input_settings", function(DefaultViewInputSettings)
 	DefaultViewInputSettings.aliases.mmt_save_mission = {
 		"keyboard_r",
@@ -21,12 +27,11 @@ mod:hook_require("scripts/settings/input/default_view_input_settings", function(
 		key_alias = "mmt_save_mission",
 		type = "pressed",
 	}
+	update_input_alias()
 end)
 
 mod.on_all_mods_loaded = function()
-	if Managers.input and Managers.input._aliases and Managers.input._aliases.View then
-		Managers.input._aliases.View._aliases["mmt_save_mission"] = Managers.input._aliases.View._default_aliases["mmt_save_mission"]
-	end
+	update_input_alias()
 end
 
 mod.on_enabled = function()
