@@ -467,8 +467,8 @@ local item_definitions = {
 			vertical_alignment = "top",
 			horizontal_alignment = "left",
 			text_vertical_alignment = "center",
-			offset = { 248, 80, 5 },
-			offset_i2d = { 105, 47, 5 },
+			offset = { 248, 60, 5 },
+			offset_i2d = { 105, 34, 5 },
 			size = { 120, 36 },
 			text_color = QLColor.default,
 			font_type = "machine_medium",
@@ -486,8 +486,8 @@ local item_definitions = {
 			vertical_alignment = "top",
 			horizontal_alignment = "left",
 			text_vertical_alignment = "center",
-			offset = { 288, 80, 5 },
-			offset_i2d = { 132, 47, 5 },
+			offset = { 288, 60, 5 },
+			offset_i2d = { 132, 34, 5 },
 			size = { 120, 36 },
 			text_color = QLColor.modifier,
 			font_type = "machine_medium",
@@ -956,6 +956,8 @@ mod:hook_require("scripts/ui/pass_templates/item_pass_templates", function(insta
 	end
 end)
 
+local base_stats_position_map = { 1, 5, 3, 4, 2 }
+
 local function fill_weapon_base_stats(content, item)
 	if not item.base_stats then
 		return
@@ -967,39 +969,24 @@ local function fill_weapon_base_stats(content, item)
 
 	-- sort stats, copied from source code
 	local weapon_stats = WeaponStats:new(item)
-	local compairing_stats = weapon_stats:get_comparing_stats()
-	local num_stats = table.size(compairing_stats)
-	local compairing_stats_array = {}
-	for _, stat in pairs(compairing_stats) do
-		compairing_stats_array[#compairing_stats_array + 1] = stat
+	local comparing_stats = weapon_stats:get_comparing_stats()
+	local num_stats = table.size(comparing_stats)
+	local comparing_stats_array = {}
+	for _, stat in pairs(comparing_stats) do
+		comparing_stats_array[#comparing_stats_array + 1] = stat
 	end
-
-	local weapon_stats_sort_order = {
-		rate_of_fire = 2,
-		attack_speed = 2,
-		damage = 1,
-		stamina_block_cost = 4,
-		reload_speed = 4,
-		stagger = 3
-	}
-	local function sort_function(a, b)
-		local a_sort_order = weapon_stats_sort_order[a.type] or math.huge
-		local b_sort_order = weapon_stats_sort_order[b.type] or math.huge
-
-		return a_sort_order < b_sort_order
-	end
-	table.sort(compairing_stats_array, sort_function)
 
 	-- fill values
 	for i = 1, num_stats do
-		local stat_data = compairing_stats_array[i]
+		local stat_data = comparing_stats_array[i]
+		local ii = base_stats_position_map[i]
 		local title = mod:localize("stat_" .. stat_data.display_name)
 		if title == "<" .. "stat_" .. stat_data.display_name .. ">" then
 			title = "???"
 		end
 		local value = math.floor(stat_data.fraction * 100 + 0.5)
-		content["qlc_stats_title_" .. tostring(i)] = title
-		content["qlc_stats_value_" .. tostring(i)] = tostring(value)
+		content["qlc_stats_title_" .. tostring(ii)] = title
+		content["qlc_stats_value_" .. tostring(ii)] = tostring(value)
 	end
 	content["qlc_baseLevel"] = tostring(item.baseItemLevel)
 end
