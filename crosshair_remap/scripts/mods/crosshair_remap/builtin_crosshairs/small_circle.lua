@@ -12,7 +12,7 @@ local template = {
 			{
 				value = CHAR,
 				pass_type = "text",
-				style_id = "center1",
+				style_id = "center",
 				style = {
 					vertical_alignment = "center",
 					horizontal_alignment = "center",
