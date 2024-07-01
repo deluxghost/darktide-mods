@@ -2,24 +2,27 @@ local Crosshair = require("scripts/ui/utilities/crosshair")
 local UIWidget = require("scripts/managers/ui/ui_widget")
 local UIHudSettings = require("scripts/settings/ui/ui_hud_settings")
 
+local CHAR = "O"
+local FONT_TYPE = "arial"
+
 local template = {
 	name = "small_circle",
 	create_widget_defintion = function (template, scenegraph_id)
 		return UIWidget.create_definition({
 			{
-				value = "〇",
+				value = CHAR,
 				pass_type = "text",
-				style_id = "center",
+				style_id = "center1",
 				style = {
 					vertical_alignment = "center",
 					horizontal_alignment = "center",
 					text_vertical_alignment = "center",
 					text_horizontal_alignment = "center",
 					offset = { 0, 0, 1 },
-					size = { 20, 20 },
+					size = { 30, 30 },
 					drop_shadow = false,
-					font_type = "arial",
-					font_size = 16,
+					font_type = FONT_TYPE,
+					font_size = 23,
 					color = UIHudSettings.color_tint_main_1, -- HACK
 					text_color = UIHudSettings.color_tint_main_1,
 				},
@@ -31,7 +34,7 @@ local template = {
 				end,
 			},
 			{
-				value = "〇",
+				value = CHAR,
 				pass_type = "text",
 				style_id = "hit_border_inner",
 				style = {
@@ -40,15 +43,15 @@ local template = {
 					text_vertical_alignment = "center",
 					text_horizontal_alignment = "center",
 					offset = { 0, 0, 0 },
-					size = { 20, 20 },
+					size = { 30, 30 },
 					drop_shadow = false,
-					font_type = "arial",
-					font_size = 13,
+					font_type = FONT_TYPE,
+					font_size = 17,
 					text_color = Color.citadel_nuln_oil(216, true),
 				}
 			},
 			{
-				value = "〇",
+				value = CHAR,
 				pass_type = "text",
 				style_id = "hit_border_outer",
 				style = {
@@ -57,10 +60,10 @@ local template = {
 					text_vertical_alignment = "center",
 					text_horizontal_alignment = "center",
 					offset = { 0, 0, 0 },
-					size = { 20, 20 },
+					size = { 30, 30 },
 					drop_shadow = false,
-					font_type = "arial",
-					font_size = 19,
+					font_type = FONT_TYPE,
+					font_size = 27,
 					text_color = Color.citadel_nuln_oil(216, true),
 				}
 			},
