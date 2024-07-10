@@ -26,20 +26,19 @@ mod.is_soloplay = function()
 end
 
 local function check_mission_giver(mission, check_giver)
-	local valid = { "default" }
 	local mission_info = MissionTemplates[mission]
 	if not mission_info then
-		return valid
+		return nil
 	end
 	local mission_brief_vo = mission_info.mission_brief_vo
 	if not mission_brief_vo then
-		return valid
+		return nil
 	end
 	local mission_giver_packs = mission_brief_vo.mission_giver_packs
 	if not mission_giver_packs then
 		return nil
 	end
-	valid = {}
+	local valid = {}
 	for giver, _ in pairs(mission_giver_packs) do
 		table.insert(valid, giver)
 	end
