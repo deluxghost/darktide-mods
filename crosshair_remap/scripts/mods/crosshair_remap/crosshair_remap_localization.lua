@@ -10,6 +10,10 @@ local builtin_crosshairs_localization = {
 		en = "Small Circle",
 		["zh-cn"] = "小圆圈",
 	},
+	larger_dot_crosshair = {
+		en = "Larger Dot",
+		["zh-cn"] = "更大的点准星",
+	},
 	t_shape_crosshair = {
 		en = "T Shape",
 		["zh-cn"] = "T 形",
