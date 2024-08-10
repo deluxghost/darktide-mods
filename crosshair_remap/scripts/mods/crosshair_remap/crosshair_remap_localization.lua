@@ -10,6 +10,10 @@ local builtin_crosshairs_localization = {
 		en = "Small Circle",
 		["zh-cn"] = "小圆圈",
 	},
+	small_cross_no_spread_crosshair = {
+		en = "Small Cross (No Spread)",
+		["zh-cn"] = "小十字（无扩散）",
+	},
 	larger_dot_crosshair = {
 		en = "Larger Dot",
 		["zh-cn"] = "更大的点准星",
