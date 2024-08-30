@@ -33,6 +33,10 @@ local builtin_crosshairs_localization = {
 	shotgun_dot_crosshair = {
 		en = Localize("loc_setting_crosshair_type_override_shotgun") .. " + " .. Localize("loc_setting_crosshair_type_override_dot"),
 	},
+	shotgun_wide_dot_crosshair = {
+		en = "Wider Spreadshot + " .. Localize("loc_setting_crosshair_type_override_dot"),
+		["zh-cn"] = "宽散射 + " .. Localize("loc_setting_crosshair_type_override_dot"),
+	},
 	spray_n_pray_dot_crosshair = {
 		en = Localize("loc_setting_crosshair_type_override_spray_n_pray") .. " + " .. Localize("loc_setting_crosshair_type_override_dot"),
 	},
