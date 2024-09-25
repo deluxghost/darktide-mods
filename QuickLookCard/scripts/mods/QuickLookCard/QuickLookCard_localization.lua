@@ -426,7 +426,7 @@ return {
 		ja = "活力", -- 最大スタミナ
 		ru = "ВНСЛ", -- Выносливость
 	},
-	trait_gadget_inate_health_increase = {
+	trait_gadget_innate_health_increase = {
 		en = "HP", -- Max Health
 		["zh-cn"] = "生命", -- 最大生命值
 		ja = "体力", -- 最大ヘルス
@@ -456,7 +456,7 @@ return {
 		ja = "策謀", -- 策謀
 		ru = "ТОЧН", -- Точность
 	},
-	trait_gadget_inate_max_wounds_increase = {
+	trait_gadget_innate_max_wounds_increase = {
 		en = "WND", -- Wound(s)
 		["zh-cn"] = "伤口", -- 生命格
 		ja = "傷口", -- 傷口
@@ -588,7 +588,7 @@ return {
 		ja = "致率", -- 遠隔攻撃のクリティカル率が増加する
 		ru = "ВКДБ", -- Вероятность критического удара от атак дальнего боя
 	},
-	trait_gadget_inate_toughness_increase = {
+	trait_gadget_innate_toughness_increase = {
 		en = "TN", -- Toughness
 		["zh-cn"] = "韧性", -- 韧性
 		ja = "靭性", -- 最大タフネス
