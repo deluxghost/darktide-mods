@@ -6,7 +6,7 @@ local MasterItems = require("scripts/backend/master_items")
 
 local QLColor = {
 	default = { 255, 250, 250, 250 },
-	modifier = {255, 250, 189, 73},
+	modifier = { 255, 250, 189, 73 },
 	new_trait = { 255, 90, 255, 0 },
 	low_trait = { 255, 255, 180, 0 },
 }
@@ -134,35 +134,12 @@ local function visibility_function_trait(content, style, index)
 	end
 	local item = content.element.item
 	if (not item.traits) or #item.traits < index then
-		return nil
+		return false
 	end
 	if not item.traits[index].rarity then
-		return nil
+		return false
 	end
-	local cache = Managers.data_service.crafting._trait_sticker_book_cache
-	if not cache then
-		return nil
-	end
-	local category = cache:cached_data_by_key(item.trait_category)
-	if not category then
-		return nil
-	end
-	local trait = item.traits[index]
-	local book = category[trait.id]
-	if not book then
-		return nil
-	end
-	if book[trait.rarity] == "seen" then
-		return "own"
-	end
-	local i = trait.rarity + 1
-	while book[i] and book[i] ~= "invalid" do
-		if book[i] == "seen" then
-			return "low"
-		end
-		i = i + 1
-	end
-	return "new"
+	return true
 end
 
 local function visibility_function_modifier(content, style)
