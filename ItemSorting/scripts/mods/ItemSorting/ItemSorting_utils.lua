@@ -10,46 +10,6 @@ function ItemSortingUtils.get_trait_category(item)
 	return item.trait_category or ""
 end
 
-function ItemSortingUtils.has_unearned_trait(item)
-	if item.item_type ~= "WEAPON_MELEE" and item.item_type ~= "WEAPON_RANGED" then
-		return false
-	end
-	if not item.traits then
-		return false
-	end
-	local cache = Managers.data_service.crafting._trait_sticker_book_cache
-	if not cache then
-		return false
-	end
-	local category = cache:cached_data_by_key(item.trait_category)
-	if not category then
-		return false
-	end
-
-	for _, trait in ipairs(item.traits) do
-		if trait.rarity then
-			local book = category[trait.id]
-			if book then
-				if book[trait.rarity] ~= "seen" then
-					local i = trait.rarity + 1
-					local low = false
-					while book[i] and book[i] ~= "invalid" do
-						if book[i] == "seen" then
-							low = true
-							break
-						end
-						i = i + 1
-					end
-					if not low then
-						return true
-					end
-				end
-			end
-		end
-	end
-	return false
-end
-
 function ItemSortingUtils.compare_item_new(a, b)
 	if not mod:get("always_on_top_new") then
 		return nil
@@ -135,12 +95,6 @@ function ItemSortingUtils.compare_item_myfav(a, b)
 		return true
 	elseif b.__isort_myfav and not a.__isort_myfav then
 		return false
-	elseif a.__isort_myfav and b.__isort_myfav then
-		if a.__isort_myfav < b.__isort_myfav then
-			return true
-		elseif b.__isort_myfav < a.__isort_myfav then
-			return false
-		end
 	end
 	return nil
 end
@@ -154,12 +108,6 @@ function ItemSortingUtils.compare_item_type_myfav(a, b)
 			return true
 		elseif b.__isort_myfav and not a.__isort_myfav then
 			return false
-		elseif a.__isort_myfav and b.__isort_myfav then
-			if a.__isort_myfav < b.__isort_myfav then
-				return true
-			elseif b.__isort_myfav < a.__isort_myfav then
-				return false
-			end
 		end
 		return nil
 	end
@@ -178,20 +126,6 @@ function ItemSortingUtils.compare_item_top_curios(a, b)
 	if a.item_type == "GADGET" and b.item_type ~= "GADGET" then
 		return true
 	elseif b.item_type == "GADGET" and a.item_type ~= "GADGET" then
-		return false
-	end
-	return nil
-end
-
-function ItemSortingUtils.compare_item_top_unearned_blessings(a, b)
-	if not mod:get("always_on_top_store_unearned_blessing") then
-		return nil
-	end
-	local a_unearned = ItemSortingUtils.has_unearned_trait(a)
-	local b_unearned = ItemSortingUtils.has_unearned_trait(b)
-	if a_unearned and not b_unearned then
-		return true
-	elseif b_unearned and not a_unearned then
 		return false
 	end
 	return nil
@@ -226,12 +160,6 @@ function ItemSortingUtils.compare_item_category_top_items(a, b)
 				return true
 			elseif b.__isort_myfav and not a.__isort_myfav then
 				return false
-			elseif a.__isort_myfav and b.__isort_myfav then
-				if a.__isort_myfav < b.__isort_myfav then
-					return true
-				elseif b.__isort_myfav < a.__isort_myfav then
-					return false
-				end
 			end
 		end
 	elseif a.__isort_type_equipped and b.__isort_type_equipped then
@@ -251,6 +179,28 @@ function ItemSortingUtils.compare_item_category(a, b)
 	if a_category < b_category then
 		return true
 	elseif b_category < a_category then
+		return false
+	end
+	return nil
+end
+
+function ItemSortingUtils.compare_item_mark(a, b)
+	if a.item_type == "GADGET" or b.item_type == "GADGET" then
+		return nil
+	end
+
+	local a_mark = ""
+	local b_mark = ""
+	if a.weapon_mark_display_name and a.weapon_mark_display_name.loc_id then
+		a_mark = a.weapon_mark_display_name.loc_id
+	end
+	if b.weapon_mark_display_name and b.weapon_mark_display_name.loc_id then
+		b_mark = b.weapon_mark_display_name.loc_id
+	end
+
+	if a_mark < b_mark then
+		return true
+	elseif b_mark < a_mark then
 		return false
 	end
 	return nil

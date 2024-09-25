@@ -16,11 +16,6 @@ return {
 						default_value = false,
 					},
 					{
-						setting_id = "always_on_top_store_unearned_blessing",
-						type = "checkbox",
-						default_value = false,
-					},
-					{
 						setting_id = "always_on_top_new",
 						type = "checkbox",
 						default_value = false,
@@ -63,7 +58,7 @@ return {
 						default_value = true,
 					},
 					{
-						setting_id = "custom_sort_category_group_by_name",
+						setting_id = "custom_sort_category_mark",
 						type = "checkbox",
 						default_value = false,
 					},

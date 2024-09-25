@@ -24,16 +24,6 @@ return {
 		["zh-cn"] = "附件总会显示在商店物品列表的顶部。",
 		ru = "Устройства всегда находятся вверху списка товаров в магазине.",
 	},
-	always_on_top_store_unearned_blessing = {
-		en = "Items with unearned blessings (Store)",
-		["zh-cn"] = "含有未获取祝福的物品（商店）",
-		ru = "Предметы с неизученными Благословениями (Магазин)",
-	},
-	always_on_top_store_unearned_blessing_description = {
-		en = "Items with unearned (higher tier) blessings, i.e. the \"green\" blessings in some mods, are always at the top of the store item list.",
-		["zh-cn"] = "含有未获取（更高等级）祝福，也就是在一些模组中标记为“绿色”祝福的物品，总会显示在商店物品列表的顶部。",
-		ru = "Предметы с неизученными благословениями (высокого уровня), то есть с «зелёными» благословениями в некоторых модах, всегда находятся вверху списка предметов в магазине.",
-	},
 	always_on_top_new = {
 		en = "New items",
 		["zh-cn"] = "新物品",
@@ -55,14 +45,13 @@ return {
 		ru = "Предметы, экипированные в любом Наборе снаряжения, всегда находятся вверху списка предметов.",
 	},
 	always_on_top_myfav = {
-		en = "Favorite items (\"My Favorites\" mod)",
-		["zh-cn"] = "收藏的物品（“我的收藏”模组）",
-		ru = "Избранные предметы (мод «Моё избранное»)",
+		en = "Favorite items",
+		["zh-cn"] = "收藏的物品",
+		ru = "Избранные предметы",
 	},
 	always_on_top_myfav_description = {
-		en = "With \"My Favorites\" mod, favorite items are always at the top of the item list.",
-		["zh-cn"] = "如果有“我的收藏（My Favorites）”模组，收藏的物品总会显示在物品列表的顶部。",
-		ru = "С модом «Моё избранное» избранные предметы всегда находятся вверху списка предметов.",
+		en = "Favorite items are always at the top of the item list. \n\n\"My Favorites\" mod is not supported.",
+		["zh-cn"] = "收藏的物品总会显示在物品列表的顶部。\n\n“我的收藏（My Favorites）”模组不受支持。",
 	},
 	group_always_on_top_options = {
 		en = "Always on top options",
@@ -104,10 +93,9 @@ return {
 		["zh-cn"] = "相同祝福分类下的武器共享同一个祝福池。",
 		ru = "Оружие попадает в одну категорию, если имеет одинаковые Благословения.",
 	},
-	custom_sort_category_group_by_name = {
-		en = "Blessing Category (Group by Name)",
-		["zh-cn"] = "祝福分类（按名称分组）",
-		ru = "Благословения (группировка по Имени)",
+	custom_sort_category_mark = {
+		en = "Blessing Category (Group by Mark)",
+		["zh-cn"] = "祝福分类（按型号分组）",
 	},
 	custom_sort_base_level_desc = {
 		en = Localize("loc_inventory_item_grid_sort_title_format_high_low", true, {
