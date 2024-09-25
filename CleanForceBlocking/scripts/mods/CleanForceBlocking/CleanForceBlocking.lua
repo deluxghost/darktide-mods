@@ -16,11 +16,18 @@ local function is_force_sword(template)
 	return false
 end
 
-mod:hook(ForceWeaponBlockEffects, "_update_block_effects", function(func, self, dt)
+mod:hook(ForceWeaponBlockEffects, "_update_vfx", function(func, self)
 	if not mod:get("remove_blocking_effect") then
-		return func(self, dt)
+		return func(self)
 	end
-	self:_destroy_effects()
+	self:_destroy_vfx()
+end)
+
+mod:hook(ForceWeaponBlockEffects, "_update_sfx", function(func, self)
+	if not mod:get("remove_blocking_sound") then
+		return func(self)
+	end
+	self:_stop_sfx()
 end)
 
 mod:hook_require("scripts/extension_systems/weapon/actions/action_damage_target", function(ActionDamageTarget)
@@ -46,60 +53,3 @@ mod:hook_require("scripts/extension_systems/weapon/actions/action_push", functio
 		return func(self)
 	end)
 end)
-
-mod.on_all_mods_loaded = function ()
-	mod:hook(CLASS.PlayerUnitFxExtension, "_trigger_looping_wwise_event", function(func, self, sound_alias, optional_source_name)
-		if not mod:get("remove_blocking_sound") then
-			return func(self, sound_alias, optional_source_name)
-		end
-		if sound_alias == "block_loop" and optional_source_name == "slot_primary_block" then
-			return
-		end
-		return func(self, sound_alias, optional_source_name)
-	end)
-
-	mod:hook(CLASS.PlayerUnitFxExtension, "rpc_stop_looping_player_sound", function(func, self, channel_id, game_object_id, sound_alias_id)
-		if not mod:get("remove_blocking_sound") then
-			return func(self, channel_id, game_object_id, sound_alias_id)
-		end
-		local sound_alias = NetworkLookup.player_character_looping_sound_aliases[sound_alias_id]
-		local data = self._looping_sounds[sound_alias]
-		if not data then
-			return func(self, channel_id, game_object_id, sound_alias_id)
-		end
-
-		if sound_alias == "block_loop" and (not data.is_playing) then
-			return
-		end
-		return func(self, channel_id, game_object_id, sound_alias_id)
-	end)
-end
--- mod:hook_require("scripts/extension_systems/fx/player_unit_fx_extension", function(PlayerUnitFxExtension)
--- 	mod:hook(PlayerUnitFxExtension, "_trigger_looping_wwise_event", function(func, self, sound_alias, optional_source_name)
--- 		if not mod:get("remove_blocking_sound") then
--- 			return func(self, sound_alias, optional_source_name)
--- 		end
--- 		if sound_alias == "block_loop" and optional_source_name == "slot_primary_block" then
--- 			return
--- 		end
--- 		return func(self, sound_alias, optional_source_name)
--- 	end)
--- end)
-
--- mod:hook_require("scripts/extension_systems/fx/player_unit_fx_extension", function(PlayerUnitFxExtension)
--- 	mod:hook(PlayerUnitFxExtension, "rpc_stop_looping_player_sound", function(func, self, channel_id, game_object_id, sound_alias_id)
--- 		if not mod:get("remove_blocking_sound") then
--- 			return func(self, channel_id, game_object_id, sound_alias_id)
--- 		end
--- 		local sound_alias = NetworkLookup.player_character_looping_sound_aliases[sound_alias_id]
--- 		local data = self._looping_sounds[sound_alias]
--- 		if not data then
--- 			return func(self, channel_id, game_object_id, sound_alias_id)
--- 		end
-
--- 		if sound_alias == "block_loop" and (not data.is_playing) then
--- 			return
--- 		end
--- 		return func(self, channel_id, game_object_id, sound_alias_id)
--- 	end)
--- end)
