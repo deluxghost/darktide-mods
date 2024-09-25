@@ -67,7 +67,7 @@ mod:hook_safe("SocialMenuRosterView", "init", function(self, settings, context)
 			"https://xbox-profile-api.deluxghost.me/profiles/" .. xuid
 		):next(function(data)
 			if data and data.body and data.body.gamertag then
-				local profile = "https://account.xbox.com/profile?gamertag=" .. data.body.gamertag
+				local profile = "https://www.xbox.com/play/user/" .. data.body.gamertag
 				if HAS_STEAM and mod:get("use_steam_overlay") then
 					Steam.open_url(profile)
 				else
