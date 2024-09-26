@@ -20,9 +20,8 @@ return {
 		ru = "Максимальное значение модификатора будет стремиться к этому значению, но не меньше того, что есть на оружии.",
 	},
 	show_full_bar = {
-		en = "Show full modifier bar at 80",
-		["zh-cn"] = "在 80 时显示满修正条",
-		ru = "Показывать полоску только до 80",
+		en = "Show full stats bar at \"max modifier score\"",
+		["zh-cn"] = "在“最大修正分数”时显示满数据条",
 	},
 	show_real_max_breakdown = {
 		en = "Show real weapon max stats",
@@ -30,8 +29,7 @@ return {
 		ru = "Показывать реальный максимум",
 	},
 	show_real_max_breakdown_description = {
-		en = "Modify max stats in \"Inspect\" screen, as if the max value is the data at 80 instead of 100.",
-		["zh-cn"] = "修改“检查”界面的最大数据，以 80 而非 100 时的数据为最大值。",
-		ru = "Изменить максимальную характеристику на экране «Проверить», как будто максимальное значение — это 80, а не 100.",
+		en = "Modify max stats in \"Inspect\" screen, as if the max value is the data at \"max modifier score\" instead of 100.",
+		["zh-cn"] = "修改“检视”界面的最大数据，以“最大修正分数”而非 100 时的数据为最大值。",
 	},
 }
