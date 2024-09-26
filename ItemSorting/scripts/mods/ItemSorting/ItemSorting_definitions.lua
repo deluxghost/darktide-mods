@@ -17,6 +17,7 @@ local definitions = {
 					">", "item", ItemUtils.compare_item_level,
 					">", "item", ItemUtils.compare_item_rarity,
 					"<", "item", ItemUtils.compare_item_name,
+					">", "item", ItemSortingUtils.compare_item_base_level,
 				})
 			},
 			{
@@ -31,6 +32,7 @@ local definitions = {
 					"<", "item", ItemUtils.compare_item_level,
 					"<", "item", ItemUtils.compare_item_rarity,
 					"<", "item", ItemUtils.compare_item_name,
+					"<", "item", ItemSortingUtils.compare_item_base_level,
 				})
 			},
 			{
@@ -45,6 +47,7 @@ local definitions = {
 					">", "item", ItemUtils.compare_item_rarity,
 					">", "item", ItemUtils.compare_item_level,
 					"<", "item", ItemUtils.compare_item_name,
+					">", "item", ItemSortingUtils.compare_item_base_level,
 				})
 			},
 			{
@@ -59,6 +62,7 @@ local definitions = {
 					"<", "item", ItemUtils.compare_item_rarity,
 					"<", "item", ItemUtils.compare_item_level,
 					"<", "item", ItemUtils.compare_item_name,
+					"<", "item", ItemSortingUtils.compare_item_base_level,
 				})
 			},
 			{
@@ -73,6 +77,7 @@ local definitions = {
 					"<", "item", ItemUtils.compare_item_name,
 					">", "item", ItemUtils.compare_item_level,
 					">", "item", ItemUtils.compare_item_rarity,
+					">", "item", ItemSortingUtils.compare_item_base_level,
 				})
 			},
 			{
@@ -87,6 +92,7 @@ local definitions = {
 					">", "item", ItemUtils.compare_item_name,
 					">", "item", ItemUtils.compare_item_level,
 					">", "item", ItemUtils.compare_item_rarity,
+					">", "item", ItemSortingUtils.compare_item_base_level,
 				})
 			}
 		},
@@ -102,6 +108,7 @@ local definitions = {
 					">", "item", ItemUtils.compare_item_level,
 					">", "item", ItemUtils.compare_item_rarity,
 					"<", "item", ItemUtils.compare_item_name,
+					">", "item", ItemSortingUtils.compare_item_base_level,
 				})
 			},
 			{
@@ -115,6 +122,7 @@ local definitions = {
 					"<", "item", ItemUtils.compare_item_level,
 					"<", "item", ItemUtils.compare_item_rarity,
 					"<", "item", ItemUtils.compare_item_name,
+					"<", "item", ItemSortingUtils.compare_item_base_level,
 				})
 			},
 			{
@@ -128,6 +136,7 @@ local definitions = {
 					">", "item", ItemUtils.compare_item_rarity,
 					">", "item", ItemUtils.compare_item_level,
 					"<", "item", ItemUtils.compare_item_name,
+					">", "item", ItemSortingUtils.compare_item_base_level,
 				})
 			},
 			{
@@ -141,6 +150,7 @@ local definitions = {
 					"<", "item", ItemUtils.compare_item_rarity,
 					"<", "item", ItemUtils.compare_item_level,
 					"<", "item", ItemUtils.compare_item_name,
+					"<", "item", ItemSortingUtils.compare_item_base_level,
 				})
 			},
 			{
@@ -155,6 +165,7 @@ local definitions = {
 					"<", "item", ItemUtils.compare_item_level,
 					"<", "item", ItemUtils.compare_item_rarity,
 					"<", "item", ItemUtils.compare_item_name,
+					"<", "item", ItemSortingUtils.compare_item_base_level,
 				})
 			},
 			{
@@ -169,6 +180,7 @@ local definitions = {
 					">", "item", ItemUtils.compare_item_level,
 					">", "item", ItemUtils.compare_item_rarity,
 					"<", "item", ItemUtils.compare_item_name,
+					">", "item", ItemSortingUtils.compare_item_base_level,
 				})
 			},
 			{
@@ -182,6 +194,7 @@ local definitions = {
 					"<", "item", ItemUtils.compare_item_name,
 					">", "item", ItemUtils.compare_item_level,
 					">", "item", ItemUtils.compare_item_rarity,
+					">", "item", ItemSortingUtils.compare_item_base_level,
 				})
 			},
 			{
@@ -195,6 +208,7 @@ local definitions = {
 					">", "item", ItemUtils.compare_item_name,
 					">", "item", ItemUtils.compare_item_level,
 					">", "item", ItemUtils.compare_item_rarity,
+					">", "item", ItemSortingUtils.compare_item_base_level,
 				})
 			}
 		},
@@ -213,6 +227,7 @@ local definitions = {
 					">", "item", ItemUtils.compare_item_rarity,
 					">", "item", ItemUtils.compare_item_level,
 					"<", "item", ItemUtils.compare_item_name,
+					">", "item", ItemSortingUtils.compare_item_base_level,
 				})
 			},
 			{
@@ -228,6 +243,7 @@ local definitions = {
 					">", "item", ItemUtils.compare_item_rarity,
 					">", "item", ItemUtils.compare_item_level,
 					"<", "item", ItemUtils.compare_item_name,
+					">", "item", ItemSortingUtils.compare_item_base_level,
 				})
 			},
 			{
@@ -272,6 +288,7 @@ local definitions = {
 					">", "item", ItemUtils.compare_item_rarity,
 					">", "item", ItemUtils.compare_item_level,
 					"<", "item", ItemUtils.compare_item_name,
+					">", "item", ItemSortingUtils.compare_item_base_level,
 				})
 			},
 			{
@@ -285,6 +302,7 @@ local definitions = {
 					">", "item", ItemUtils.compare_item_rarity,
 					">", "item", ItemUtils.compare_item_level,
 					"<", "item", ItemUtils.compare_item_name,
+					">", "item", ItemSortingUtils.compare_item_base_level,
 				})
 			},
 			{
