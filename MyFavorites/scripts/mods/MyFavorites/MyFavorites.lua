@@ -99,48 +99,58 @@ local function content_to_item(content)
 	return content.element.item
 end
 
-local function get_character_save_data()
+local function get_save_data()
 	local local_player_id = 1
 	local player_manager = Managers.player
 	local player = player_manager and player_manager:local_player(local_player_id)
-	local character_id = player and player:character_id()
+	local account_id = player and player:account_id()
 	local save_manager = Managers.save
-	local character_data = character_id and save_manager and save_manager:character_data(character_id)
+	local account_data = account_id and save_manager and save_manager:account_data(account_id)
 
-	return character_data
+	return account_data
 end
 
 local function switch_to_official()
-	if mod:get("switch_to_official_done") then
+	if mod:get("switch_to_official_done_fix") then
 		return
 	end
 	Promise.until_true(function()
-		return (not not get_character_save_data()) and Managers.save:state() == "idle"
+		return (not not get_save_data()) and Managers.save:state() == "idle"
 	end):next(function()
 		local favorite_item_list = get_item_cache()
-		local character_data = get_character_save_data()
+		local account_data = get_save_data()
+		if not account_data then
+			return
+		end
+		local character_data = account_data.character_data
 		if not character_data then
 			return
 		end
-		if not character_data.favorite_items then
-			character_data.favorite_items = {}
-		end
 
-		local favorite_items = character_data.favorite_items
+		local sync_ids = {}
 		for id, value in pairs(favorite_item_list) do
 			if type(value) == "boolean" and value then
-				favorite_items[id] = true
+				sync_ids[id] = true
 			elseif type(value) == "number" and value > 0 then
-				favorite_items[id] = true
+				sync_ids[id] = true
 				if value <= 1 then
 					favorite_item_list[id] = nil
 				end
 			end
 		end
-		mod:dump(character_data, "character_data", 3)
+
+		for char_id, data in pairs(character_data) do
+			if not data.favorite_items then
+				character_data[char_id].favorite_items = {}
+			end
+			for id, _ in pairs(sync_ids) do
+				character_data[char_id].favorite_items[id] = true
+			end
+		end
+
 		set_item_cache(favorite_item_list)
 		Managers.save:queue_save()
-		mod:set("switch_to_official_done", true)
+		mod:set("switch_to_official_done_fix", true)
 	end)
 end
 
