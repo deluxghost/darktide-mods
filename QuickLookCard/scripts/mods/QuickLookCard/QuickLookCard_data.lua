@@ -7,6 +7,21 @@ return {
 	options = {
 		widgets = {
 			{
+				setting_id = "opt_modifier_mode",
+				type = "dropdown",
+				default_value = "current",
+				options = {
+					{
+						text = "opt_modifier_mode_current",
+						value = "current",
+					},
+					{
+						text = "opt_modifier_mode_potential",
+						value = "potential",
+					},
+				},
+			},
+			{
 				setting_id = "opt_group_toggles",
 				type = "group",
 				sub_widgets = {

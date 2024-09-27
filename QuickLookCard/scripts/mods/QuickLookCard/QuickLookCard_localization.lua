@@ -11,6 +11,18 @@ return {
 		ru = "Quick Look Card - Позволяет быстро узнать характеристики оружия в списке предметов.",
 	},
 
+	opt_modifier_mode = {
+		en = "Modifier Stats display mode",
+		["zh-cn"] = "五维数据显示模式",
+	},
+	opt_modifier_mode_current = {
+		en = "Current value",
+		["zh-cn"] = "当前值",
+	},
+	opt_modifier_mode_potential = {
+		en = "Potential value",
+		["zh-cn"] = "潜力值",
+	},
 	opt_group_toggles = {
 		en = "Toggles",
 		["zh-cn"] = "开关",

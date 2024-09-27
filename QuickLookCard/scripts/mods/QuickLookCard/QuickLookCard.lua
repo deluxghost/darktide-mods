@@ -1,4 +1,5 @@
 local mod = get_mod("QuickLookCard")
+local Items = require("scripts/utilities/items")
 local WeaponTemplates = require("scripts/settings/equipment/weapon_templates/weapon_templates")
 local WeaponStats = require("scripts/utilities/weapon_stats")
 local BuffTemplates = require("scripts/settings/buff/buff_templates")
@@ -845,18 +846,23 @@ local function fill_weapon_base_stats(content, item)
 		return
 	end
 
-	-- sort stats, copied from source code
 	local weapon_stats = WeaponStats:new(item)
-	local comparing_stats = weapon_stats:get_comparing_stats()
+	local comparing_stats = table.clone(weapon_stats:get_comparing_stats())
 	local num_stats = table.size(comparing_stats)
-	local comparing_stats_array = {}
-	for _, stat in pairs(comparing_stats) do
-		comparing_stats_array[#comparing_stats_array + 1] = stat
+	local start_preview_expertise = Items.expertise_level(item, true)
+	local max_preview_expertise = Items.max_expertise_level() - start_preview_expertise
+	local max_stats = Items.preview_stats_change(item, max_preview_expertise, comparing_stats)
+	if mod:get("opt_modifier_mode") == "potential" then
+		for _, stat in ipairs(comparing_stats) do
+			if stat.display_name and max_stats[stat.display_name] then
+				stat.fraction = max_stats[stat.display_name].fraction
+			end
+		end
 	end
 
 	-- fill values
 	for i = 1, num_stats do
-		local stat_data = comparing_stats_array[i]
+		local stat_data = comparing_stats[i]
 		local ii = base_stats_position_map[i]
 		local title = mod:localize("stat_" .. stat_data.display_name)
 		if title == "<" .. "stat_" .. stat_data.display_name .. ">" then
