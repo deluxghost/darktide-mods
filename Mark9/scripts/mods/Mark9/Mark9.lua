@@ -42,6 +42,9 @@ end
 
 mod:hook(LocalizationManager, "_lookup", function(func, self, key)
 	local ret = func(self, key)
+	if not key then
+		return ret
+	end
 	if not string.starts_with(key, "loc_weapon_mark_") then
 		return ret
 	end
