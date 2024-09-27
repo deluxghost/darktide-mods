@@ -1,16 +1,37 @@
 local mod = get_mod("MyFavorites")
+local Items = require("scripts/utilities/items")
 local Promise = require("scripts/foundation/utilities/promise")
-local ColorUtilities = require("scripts/utilities/ui/colors")
+local UIRenderer = require("scripts/managers/ui/ui_renderer")
 local UISoundEvents = require("scripts/settings/ui/ui_sound_events")
-local CraftingSettings = require("scripts/settings/item/crafting_settings")
-local RaritySettings = require("scripts/settings/item/rarity_settings")
 
-local fav_icon = "content/ui/materials/icons/presets/preset_15"
-local remove_icon = "content/ui/materials/icons/system/settings/category_interface"
+local item_definitions = {
+	hotspot = {
+		pass_type = "hotspot",
+		style_id = "myfav_hotspot",
+		style = {
+			horizontal_alignment = "left",
+			vertical_alignment = "bottom",
+			offset = {
+				15,
+				-5,
+				16,
+			},
+			size = { 10, 10 },
+		},
+		content_id = "myfav_hotspot",
+		content = {
+			on_hover_sound = UISoundEvents.default_mouse_hover,
+			on_pressed_sound = UISoundEvents.default_click
+		},
+	},
+}
 
 local item_cache = mod:persistent_table("item_cache")
 
 local function get_item_cache()
+	if item_cache.favorites == nil then
+		item_cache.favorites = mod:get("favorite_item_list") or {}
+	end
 	item_cache.favorites = item_cache.favorites or {}
 	return item_cache.favorites
 end
@@ -18,6 +39,11 @@ end
 local function set_item_cache(item_list)
 	item_cache.favorites = item_list or {}
 	mod:set("favorite_item_list", item_cache.favorites)
+end
+
+mod.on_enabled = function()
+	local favorite_item_list = mod:get("favorite_item_list") or {}
+	set_item_cache(favorite_item_list)
 end
 
 mod.on_setting_changed = function(setting_id)
@@ -39,33 +65,30 @@ local function next_color_group(current)
 	return current + 1
 end
 
-local function is_valid_crafting_item(item)
-	return item and not item.no_crafting and RaritySettings[item.rarity]
-end
-
 local function get_item_group(id)
 	local favorite_item_list = get_item_cache()
-	local group = favorite_item_list[id] or 0
+	local group = favorite_item_list[id] or 1
 	if group > max_color_group() then
 		group = max_color_group()
 	end
 	return group
 end
 
-local function is_item_fav(id)
-	local group = get_item_group(id)
-	return group > 0
-end
-
 local function switch_item_group(id)
 	local current = get_item_group(id)
 	local next = next_color_group(current)
 	local favorite_item_list = get_item_cache()
-	if next > 0 then
+	if next > 1 then
 		favorite_item_list[id] = next
 	else
 		favorite_item_list[id] = nil
 	end
+	set_item_cache(favorite_item_list)
+end
+
+local function clear_item_group(id)
+	local favorite_item_list = get_item_cache()
+	favorite_item_list[id] = nil
 	set_item_cache(favorite_item_list)
 end
 
@@ -76,141 +99,110 @@ local function content_to_item(content)
 	return content.element.item
 end
 
-mod.load_package = function(package_name)
-	if not Managers.package:is_loading(package_name) and not Managers.package:has_loaded(package_name) then
-		Managers.package:load(package_name, "my_favorites", nil, true)
-	end
+local function get_character_save_data()
+	local local_player_id = 1
+	local player_manager = Managers.player
+	local player = player_manager and player_manager:local_player(local_player_id)
+	local character_id = player and player:character_id()
+	local save_manager = Managers.save
+	local character_data = character_id and save_manager and save_manager:character_data(character_id)
+
+	return character_data
 end
 
-mod.on_enabled = function()
-	local favorite_item_list = mod:get("favorite_item_list") or {}
-	for id, value in pairs(favorite_item_list) do
-		if type(value) == "boolean" and value then
-			favorite_item_list[id] = 1
+local function switch_to_official()
+	if mod:get("switch_to_official_done") then
+		return
+	end
+	Promise.until_true(function()
+		return (not not get_character_save_data()) and Managers.save:state() == "idle"
+	end):next(function()
+		local favorite_item_list = get_item_cache()
+		local character_data = get_character_save_data()
+		if not character_data then
+			return
 		end
-	end
-	set_item_cache(favorite_item_list)
-	CraftingSettings.recipes.extract_trait.is_valid_item = function(item)
-		if not is_valid_crafting_item(item) then
-			return false
+		if not character_data.favorite_items then
+			character_data.favorite_items = {}
 		end
-		if is_item_fav(item.gear_id) then
-			return false
+
+		local favorite_items = character_data.favorite_items
+		for id, value in pairs(favorite_item_list) do
+			if type(value) == "boolean" and value then
+				favorite_items[id] = true
+			elseif type(value) == "number" and value > 0 then
+				favorite_items[id] = true
+				if value <= 1 then
+					favorite_item_list[id] = nil
+				end
+			end
 		end
-		return (item.item_type == "WEAPON_MELEE" or item.item_type == "WEAPON_RANGED") and item.traits and #item.traits > 0
+		mod:dump(character_data, "character_data", 3)
+		set_item_cache(favorite_item_list)
+		Managers.save:queue_save()
+		mod:set("switch_to_official_done", true)
+	end)
+end
+
+mod.on_game_state_changed = function(status, state_name)
+	if state_name ~= "StateMainMenu" then
+		return
 	end
-end
-
-mod.on_disabled = function()
-	CraftingSettings.recipes.extract_trait.is_valid_item = function (item)
-		return is_valid_crafting_item(item) and (item.item_type == "WEAPON_MELEE" or item.item_type == "WEAPON_RANGED") and item.traits and #item.traits > 0
+	if status ~= "enter" then
+		return
 	end
+	switch_to_official()
 end
 
-mod.on_all_mods_loaded = function()
-	mod.load_package("packages/ui/views/inventory_background_view/inventory_background_view")
-end
 
-local item_definitions = {
-	{
-		pass_type = "hotspot",
-		style_id = "myfav_hotspot",
-		style = {
-			vertical_alignment = "center",
-			horizontal_alignment = "right",
-			offset = { 0, 0, 1 },
-			size = { 32, 32 },
-		},
-		content_id = "myfav_hotspot",
-		content = {
-			on_hover_sound = UISoundEvents.default_mouse_hover,
-			on_pressed_sound = UISoundEvents.default_click
-		},
-	},
-	{
-		pass_type = "texture",
-		value = fav_icon,
-		value_id = "myfav_item_icon",
-		style_id = "myfav_item_icon",
-		style = {
-			vertical_alignment = "center",
-			horizontal_alignment = "right",
-			offset = { 0, 0, 20 },
-			color = Color.white(255, true),
-			default_color = Color.white(255, true),
-			hover_color = Color.spring_green(255, true),
-			size = { 32, 32 },
-		},
-		change_function = function(content, style)
-			local item = content_to_item(content)
-			if not item then
-				return
-			end
-
-			local current = get_item_group(item.gear_id)
-			local next = next_color_group(current)
-			if next == 0 then
-				style.hover_color = Color.red(255, true)
-			else
-				local color_name = mod:get("color_definition_" .. tostring(next))
-				style.hover_color = Color[color_name](255, true)
-			end
-			local hotspot = content.myfav_hotspot
-			local color = style.color
-			local default_color = hotspot.disabled and style.disabled_color or style.default_color
-			local hover_color = style.hover_color
-			local hover_progress = hotspot.anim_hover_progress or 0
-			local ignore_alpha = true
-			ColorUtilities.color_lerp(default_color, hover_color, hover_progress, color, ignore_alpha)
-		end,
-		visibility_function = function(content, style)
-			if not mod:is_enabled() then
-				return false
-			end
-			if content.store_item then
-				return false
-			end
-			local item = content_to_item(content)
-			if not item then
-				return
-			end
-
-			local hotspot = content.myfav_hotspot
-			local item_hotspot = content.hotspot
-			local current = get_item_group(item.gear_id)
-			local next = next_color_group(current)
-			local color_name = mod:get("color_definition_" .. tostring(current))
-			local next_color_name = mod:get("color_definition_" .. tostring(next))
-			content.myfav_item_icon = fav_icon
-			if current > 0 and next == 0 and hotspot.is_hover then
-				content.myfav_item_icon = remove_icon
-			end
-			if current > 0 then
-				style.color = Color[color_name](255, true)
-				style.default_color = Color[color_name](255, true)
-			else
-				style.color = Color[next_color_name](255, true)
-				style.default_color = Color[next_color_name](255, true)
-			end
-			return current > 0 or item_hotspot.is_hover
-		end,
-	},
-}
+mod:hook_safe(Items, "set_item_id_as_favorite", function(item_gear_id, state)
+	if not state then
+		clear_item_group(item_gear_id)
+	end
+end)
 
 mod:hook_require("scripts/ui/pass_templates/item_pass_templates", function(instance)
-	for _, def in ipairs(item_definitions) do
-		local idx = nil
-		for i, v in ipairs(instance.item) do
-			if v.style_id == def.style_id then
-				idx = i
-				break
+	local ui_renderer_instance = Managers.ui:ui_constant_elements():ui_renderer()
+	local fav_w, fav_h = UIRenderer.text_size(ui_renderer_instance, string.format("%s %s", "", Localize("loc_inventory_menu_favorite_item")), "proxima_nova_bold", 18)
+	local idx = nil
+	for i, v in ipairs(instance.item) do
+		if v.style_id == "myfav_hotspot" then
+			idx = i
+		elseif v.style_id == "favorite_icon" then
+			v.value_id = "favorite_icon"
+			v.visibility_function = function(content, style)
+				if not content.favorite then
+					return false
+				end
+				if not mod:is_enabled() then
+					return true
+				end
+				local item = content_to_item(content)
+				if not item then
+					return true
+				end
+
+				local hotspot = content.myfav_hotspot
+				local current = get_item_group(item.gear_id)
+				local color_name = mod:get("color_definition_" .. tostring(current))
+				style.text_color = Color[color_name](255, true)
+				if hotspot.is_hover then
+					content.favorite_icon = string.format("%s %s", "", mod:localize("color_definition") .. " " .. tostring(current))
+					style.font_size = 18.5
+				else
+					content.favorite_icon = string.format("%s %s", "", Localize("loc_inventory_menu_favorite_item"))
+					style.font_size = 18
+				end
+				return true
 			end
 		end
-		if idx then
-			table.remove(instance.item, idx)
-		end
-		table.insert(instance.item, def)
 	end
+	if idx then
+		table.remove(instance.item, idx)
+	end
+	local def = table.clone(item_definitions.hotspot)
+	def.style.size = { fav_w, fav_h }
+	table.insert(instance.item, def)
 end)
 
 mod:hook_safe("ViewElementGrid", "init", function(self)
@@ -225,6 +217,9 @@ mod:hook_safe("ViewElementGrid", "init", function(self)
 		end
 
 		local item_id = item.gear_id
+		if not Items.is_item_id_favorited(item_id) then
+			return
+		end
 		switch_item_group(item_id)
 	end
 end)
@@ -242,90 +237,4 @@ mod:hook("ViewElementGrid", "_create_entry_widget_from_config", function(func, s
 	end
 	content.myfav_hotspot.pressed_callback = callback(self, "__myfav_cb_main_pressed", widget)
 	return widget, alignment_widget
-end)
-
--- last checks
-mod:hook("GearService", "delete_gear", function(func, self, gear_id)
-	if is_item_fav(gear_id) then
-		mod:notify(mod:localize("unexpected_delete_message"))
-		local promise = Promise.new()
-		promise:reject("gear deleting is stopped by MyFavorites mod")
-		return promise
-	end
-	return func(self, gear_id)
-end)
-
-mod:hook("CraftingService", "extract_trait_from_weapon", function(func, self, gear_id, trait_index, costs)
-	if is_item_fav(gear_id) then
-		mod:notify(mod:localize("unexpected_extract_message"))
-		local promise = Promise.new()
-		promise:reject("gear extracting is stopped by MyFavorites mod")
-		return promise
-	end
-	return func(self, gear_id, trait_index, costs)
-end)
-
--- Inventory: hide legend
-mod:hook_safe("InventoryWeaponsView", "_setup_input_legend", function(self)
-	for _, entry in ipairs(self._input_legend_element._entries) do
-		if entry.input_action == "hotkey_item_discard" then
-			entry.visibility_function = function(parent)
-				local selected_grid_widget = parent:selected_grid_widget()
-				if not selected_grid_widget then
-					return false
-				end
-				local is_item_equipped = parent:is_selected_item_equipped()
-				local content = selected_grid_widget.content
-				if not content then
-					return false
-				end
-				local item = content_to_item(content)
-				if not item then
-					return false
-				end
-				local is_fav = is_item_fav(item.gear_id)
-				return (not is_item_equipped) and (not is_fav)
-			end
-		end
-	end
-end)
-
--- Crafting: hide legend
-mod:hook("CraftingView", "_setup_tab_bar", function(func, self, tab_bar_params, additional_context)
-	if tab_bar_params and tab_bar_params.tabs_params then
-		local params = tab_bar_params.tabs_params
-		for _, param in ipairs(params) do
-			if param.view == "crafting_modify_view" then
-				local legends = param.input_legend_buttons
-				if legends then
-					for _, legend in ipairs(legends) do
-						if legend.input_action == "hotkey_item_discard" then
-							legend.visibility_function = function(parent)
-								local view = Managers.ui:view_instance("crafting_modify_view")
-								if (not view) or (not view._item_grid) then
-									return false
-								end
-								local selected_grid_widget = view:selected_grid_widget()
-								if not selected_grid_widget then
-									return false
-								end
-								local content = selected_grid_widget.content
-								if not content then
-									return false
-								end
-								local equipped = content.equipped
-								local item = content_to_item(content)
-								if not item then
-									return false
-								end
-								local is_fav = is_item_fav(item.gear_id)
-								return (not equipped) and (not is_fav)
-							end
-						end
-					end
-				end
-			end
-		end
-	end
-	return func(self, tab_bar_params, additional_context)
 end)
