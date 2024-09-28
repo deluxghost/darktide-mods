@@ -140,112 +140,89 @@ local localization = {
 		["zh-cn"] = Localize("loc_class_psyker_title") .. Localize("loc_ability_psyker_chain_lightning"),
 	},
 	autogun_infantry_class = {
-		en = "Autoguns (Infantry)",
-		["zh-cn"] = "自动枪（步兵）",
+		en = Localize("loc_weapon_family_autogun_p1_m1"),
 	},
 	autogun_braced_class = {
-		en = "Autoguns (Braced)",
-		["zh-cn"] = "自动枪（稳固）",
+		en = Localize("loc_weapon_family_autogun_p2_m1"),
 	},
 	autogun_headhunter_class = {
-		en = "Autoguns (Headhunter)",
-		["zh-cn"] = "自动枪（猎颅者）",
+		en = Localize("loc_weapon_family_autogun_p3_m1"),
 	},
 	autopistol_class = {
-		en = "Autopistols",
-		["zh-cn"] = "自动手枪",
+		en = Localize("loc_weapon_family_autopistol_p1_m1"),
 	},
 	boltgun_class = {
-		en = "Boltguns",
-		["zh-cn"] = "爆矢枪",
+		en = Localize("loc_weapon_family_bolter_p1_m1"),
 	},
 	boltpistal_class = {
-		en = "Bolt Pistols",
-		["zh-cn"] = "爆矢手枪",
+		en = Localize("loc_weapon_family_boltpistol_p1_m1"),
 	},
 	flamer_class = {
-		en = "Flamers",
-		["zh-cn"] = "火焰喷射器",
+		en = Localize("loc_weapon_family_flamer_p1_m1"),
 	},
 	force_staff_trauma_class = {
-		en = "Force Staves (Trauma)",
-		["zh-cn"] = "力场杖（创伤）",
+		en = Localize("loc_weapon_family_forcestaff_p1_m1"),
 	},
 	force_staff_purgatus_class = {
-		en = "Force Staves (Purgatus)",
-		["zh-cn"] = "力场杖（净化）",
+		en = Localize("loc_weapon_family_forcestaff_p2_m1"),
 	},
 	force_staff_surge_class = {
-		en = "Force Staves (Surge)",
-		["zh-cn"] = "力场杖（激涌）",
+		en = Localize("loc_weapon_family_forcestaff_p3_m1"),
 	},
 	force_staff_voidstrike_class = {
-		en = "Force Staves (Voidstrike)",
-		["zh-cn"] = "力场杖（虚空打击）",
+		en = Localize("loc_weapon_family_forcestaff_p4_m1"),
 	},
 	lasgun_infantry_class = {
-		en = "Lasguns (Infantry)",
-		["zh-cn"] = "激光枪（步兵）",
+		en = Localize("loc_weapon_family_lasgun_p1_m1"),
 	},
 	lasgun_helbore_class = {
-		en = "Lasguns (Helbore)",
-		["zh-cn"] = "激光枪（地狱钻）",
+		en = Localize("loc_weapon_family_lasgun_p2_m1"),
 	},
 	lasgun_recon_class = {
-		en = "Lasguns (Recon)",
-		["zh-cn"] = "激光枪（侦察）",
+		en = Localize("loc_weapon_family_lasgun_p3_m1"),
 	},
 	laspistol_class = {
-		en = "Laspistols",
-		["zh-cn"] = "激光手枪",
+		en = Localize("loc_weapon_family_laspistol_p1_m1"),
 	},
 	plasma_gun_class = {
-		en = "Plasma Guns",
-		["zh-cn"] = "等离子枪",
+		en = Localize("loc_weapon_family_plasmagun_p1_m1"),
 	},
 	revolver_class = {
-		en = "Stub Revolvers",
-		["zh-cn"] = "速发左轮枪",
+		en = Localize("loc_weapon_family_stubrevolver_p1_m1"),
 	},
 	revolver_fanning_class = {
-		en = "Stub Revolvers (Fanning)",
-		["zh-cn"] = "速发左轮枪（击锤速射型）",
+		en = Localize("loc_weapon_family_stubrevolver_p1_m1") .. " (Fanning)",
+		["zh-cn"] = Localize("loc_weapon_family_stubrevolver_p1_m1") .. "（击锤速射型）",
 	},
 	shotgun_lawbringer_class = {
-		en = "Combat Shotguns (Lawbringer)",
-		["zh-cn"] = "战斗霰弹枪（执法者）",
+		en = Localize("loc_weapon_family_shotgun_p1_m1") .. " (Wider Spreadshot)",
+		["zh-cn"] = Localize("loc_weapon_family_shotgun_p1_m1") .. "（宽散射）",
 	},
 	shotgun_agripinaa_class = {
-		en = "Combat Shotguns (Agripinaa)",
-		["zh-cn"] = "战斗霰弹枪（阿格里皮娜）",
+		en = Localize("loc_weapon_family_shotgun_p1_m1") .. " (Slug)",
+		["zh-cn"] = Localize("loc_weapon_family_shotgun_p1_m1") .. "（独头弹）",
 	},
 	shotgun_kantrael_class = {
-		en = "Combat Shotguns (Kantrael)",
-		["zh-cn"] = "战斗霰弹枪（卡特雷尔）",
+		en = Localize("loc_weapon_family_shotgun_p1_m1") .. " (Incendiary)",
+		["zh-cn"] = Localize("loc_weapon_family_shotgun_p1_m1") .. "（燃烧弹）",
 	},
 	assault_shotgun_class = {
-		en = "Assault Shotguns",
-		["zh-cn"] = "突击霰弹枪",
+		en = Localize("loc_weapon_family_shotgun_p2_m1"),
 	},
 	grenadier_gauntlet_class = {
-		en = "Grenadier Gauntlets",
-		["zh-cn"] = "掷弹兵臂铠",
+		en = Localize("loc_weapon_family_ogryn_gauntlet_p1_m1"),
 	},
 	heavy_stubber_class = {
-		en = "Heavy Stubbers",
-		["zh-cn"] = "重机枪",
+		en = Localize("loc_weapon_family_ogryn_heavystubber_p1_m1"),
 	},
 	ripper_gun_class = {
-		en = "Ripper Guns",
-		["zh-cn"] = "开膛枪",
+		en = Localize("loc_weapon_family_ogryn_rippergun_p1_m1"),
 	},
 	kickback_class = {
-		en = "Kickbacks",
-		["zh-cn"] = "击退者",
+		en = Localize("loc_weapon_family_ogryn_thumper_p1_m1"),
 	},
 	rumbler_class = {
-		en = "Rumblers",
-		["zh-cn"] = "低吼者",
+		en = Localize("loc_weapon_family_ogryn_thumper_p1_m2"),
 	},
 
 	primary = {
