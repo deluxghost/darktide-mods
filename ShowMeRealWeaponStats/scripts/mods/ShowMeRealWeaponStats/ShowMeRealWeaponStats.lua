@@ -120,52 +120,10 @@ local function _apply_stat_bar_values(widget, item)
 
 		divider_2_style.offset[1] = bar_bg_style.offset[1] + max_value_bar_width
 		content["bar_breakdown_" .. ii] = bar_breakdown[ii]
-	end
-end
-
-local function get_item_stats(content, item)
-	local weapon_stats = WeaponStats:new(item)
-	local comparing_stats = weapon_stats:get_comparing_stats()
-	local advanced_weapon_stats = weapon_stats._weapon_statistics
-	local bar_breakdown = table.clone(advanced_weapon_stats.bar_breakdown)
-	local start_preview_expertise = content.start_expertise_value
-	local current_preview_expertise = content.preview_expertise_value and math.max(content.preview_expertise_value - start_preview_expertise, 0) or 0
-	local max_preview_expertise = Items.max_expertise_level() - start_preview_expertise
-	local current_expertise = Items.expertise_level(item, true)
-
-	local added_stats = Items.preview_stats_change(item, current_preview_expertise, comparing_stats)
-	local max_stats = Items.preview_stats_change(item, max_preview_expertise, comparing_stats)
-
-	local item_full = fake_item(item)
-	for _, stat in pairs(item_full.base_stats) do
-		stat.value = mod:get("max_modifier_score") / 100
-	end
-	local weapon_stats_full = WeaponStats:new(item_full)
-	local advanced_weapon_stats_full = weapon_stats_full._weapon_statistics
-	local bar_breakdown_full = table.clone(advanced_weapon_stats_full.bar_breakdown)
-
-	return comparing_stats, added_stats, max_stats, bar_breakdown, bar_breakdown_full
-end
-
-local function update_stats_styles(content, style, item)
-	local comparing_stats, added_stats, max_stats, bar_breakdown, bar_breakdown_full = get_item_stats(content, item)
-	local num_stats = #comparing_stats
-
-	for ii = 1, num_stats do
-		local stat_data = comparing_stats[ii]
-		local stat = added_stats[stat_data.display_name]
-		local max_stat = max_stats[stat_data.display_name]
-		local bar_id = "bar_" .. ii
-		local bar_bg_id = "bar_bg_" .. ii
-		local divider_1_id = "divider_1_" .. ii
-		local divider_2_id = "divider_2_" .. ii
-
-		local bar_style = style[bar_id]
-		local bar_bg_style = style[bar_bg_id]
-		local divider_1_style = style[divider_1_id]
-		local divider_2_style = style[divider_2_id]
 
 		if mod:get("show_real_max_breakdown") then
+			local advanced_weapon_stats_full = content.__smrws_weapon_stats_full._weapon_statistics
+			local bar_breakdown_full = advanced_weapon_stats_full.bar_breakdown
 			for _, breakdown in ipairs(content["bar_breakdown_" .. ii]) do
 				for _, breakdown_full in ipairs(bar_breakdown_full[ii]) do
 					if same_breakdown(breakdown, breakdown_full) then
@@ -177,18 +135,18 @@ local function update_stats_styles(content, style, item)
 
 		if mod:get("show_full_bar") then
 			local multiplier = mod:get("max_modifier_score") > 0 and 100 / mod:get("max_modifier_score") or 100
-			local value_bar_width = math.round(bar_width * stat.fraction * multiplier)
-			local max_value_bar_width = math.round(bar_width * max_stat.fraction * multiplier)
-			bar_style.size[1] = value_bar_width
+			local value_bar_width_full = math.round(bar_width * stat.fraction * multiplier)
+			local max_value_bar_width_full = math.round(bar_width * max_stat.fraction * multiplier)
+			bar_style.size[1] = value_bar_width_full
 			if bar_style.size[1] > bar_width then
 				bar_style.size[1] = bar_width
 			end
-			bar_bg_style.size[1] = max_value_bar_width
+			bar_bg_style.size[1] = max_value_bar_width_full
 			if bar_bg_style.size[1] > bar_width then
 				bar_bg_style.size[1] = bar_width
 			end
-			divider_1_style.offset[1] = bar_bg_style.offset[1] + value_bar_width - 2
-			divider_2_style.offset[1] = bar_bg_style.offset[1] + max_value_bar_width
+			divider_1_style.offset[1] = bar_bg_style.offset[1] + value_bar_width_full - 2
+			divider_2_style.offset[1] = bar_bg_style.offset[1] + max_value_bar_width_full
 		end
 	end
 end
@@ -201,14 +159,58 @@ mod:hook(package.loaded, "scripts/ui/view_content_blueprints/item_stats_blueprin
 
 	local old_init = blueprints.weapon_stats.init
 	blueprints.weapon_stats.init = function(parent, widget, element, callback_name)
-		local ret = old_init(parent, widget, element, callback_name)
-
 		local content = widget.content
 		local style = widget.style
-		local item = element.item
 
-		update_stats_styles(content, style, item)
-		return ret
+		content.element = element
+		style.background.visible = not not element.add_background
+
+		local item = element.item
+		local weapon_stats = WeaponStats:new(item)
+		local current_expertise = Items.expertise_level(item, true)
+
+		content.start_expertise_value = tonumber(current_expertise)
+
+		local item_full = fake_item(item)
+		for _, stat in pairs(item_full.base_stats) do
+			stat.value = mod:get("max_modifier_score") / 100
+		end
+		local weapon_stats_full = WeaponStats:new(item_full)
+		content.__smrws_item_full = item_full
+		content.__smrws_weapon_stats_full = weapon_stats_full
+
+		_apply_stat_bar_values(widget, item)
+
+		content.bar_breakdown_6 = {
+			description = "loc_weapon_stats_display_base_rating_desc",
+			display_name = "loc_weapon_stats_display_base_rating",
+			name = "base_rating",
+		}
+		content.gamepad_bar_matrix = {
+			{
+				1,
+				2,
+				6,
+			},
+			{
+				4,
+				5,
+				3,
+			},
+		}
+		content.gamepad_selected_index = {}
+		parent._weapon_advanced_stats = weapon_stats._weapon_statistics
+
+		local show_base_stats = content.element.show_base_rating
+
+		if show_base_stats then
+			local base_stats_rating = Items.calculate_stats_rating(item)
+
+			content.text_extra_value = " " .. base_stats_rating
+			style.text_extra_value.text_color = Color.white(255, true)
+			style.text_extra_value.font_size = 30
+			style.text_extra_value.offset[2] = style.text_extra_value.offset[2] - 10
+		end
 	end
 
 	blueprints.weapon_stats.update = function(parent, widget, input_service, dt, t, ui_renderer)
@@ -218,7 +220,6 @@ mod:hook(package.loaded, "scripts/ui/view_content_blueprints/item_stats_blueprin
 		local item = content.element.item
 
 		_apply_stat_bar_values(widget, item)
-		update_stats_styles(content, style, item)
 
 		if not content.element.interactive then
 			return
