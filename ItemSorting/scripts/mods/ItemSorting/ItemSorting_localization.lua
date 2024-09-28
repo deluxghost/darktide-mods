@@ -50,8 +50,8 @@ return {
 		ru = "Избранные предметы",
 	},
 	always_on_top_myfav_description = {
-		en = "Favorite items are always at the top of the item list. \n\n\"My Favorites\" mod is not supported.",
-		["zh-cn"] = "收藏的物品总会显示在物品列表的顶部。\n\n“我的收藏（My Favorites）”模组不受支持。",
+		en = "Favorite items are always at the top of the item list. ",
+		["zh-cn"] = "收藏的物品总会显示在物品列表的顶部。",
 	},
 	group_always_on_top_options = {
 		en = "Always on top options",
@@ -59,24 +59,20 @@ return {
 		ru = "Опции «Всегда сверху»",
 	},
 	entire_category_on_top = {
-		en = "Top entire blessing category",
-		["zh-cn"] = "祝福分类整体置顶",
-		ru = "Наверх всю категорию «Благословения»",
+		en = "Top entire group of same \"Family\"",
+		["zh-cn"] = "相同“类别”整体置顶",
 	},
 	entire_category_on_top_description = {
-		en = "When sorting by Blessing Category, if an item in the category is topped, the entire category is topped.",
-		["zh-cn"] = "按祝福分类排序时，如果分类内有物品被置顶，则整个分类置顶。",
-		ru = "При сортировке по категории «Благословения», если какой-либо предмет в категории занимает верхнее место, то оказывается наверху вся категория.",
+		en = "When sorting by \"Family\", if an item in the family is topped, the entire family is topped.",
+		["zh-cn"] = "按“类别”排序时，如果类别内有物品被置顶，则整个类别置顶。",
 	},
 	on_top_of_category = {
-		en = "Top inside blessing category",
-		["zh-cn"] = "在祝福分类内置顶",
-		ru = "Наверх внутри категории «Благословения»",
+		en = "Top inside group of same \"Family\"",
+		["zh-cn"] = "在相同“类别”内置顶",
 	},
 	on_top_of_category_description = {
-		en = "When sorting by Blessing Category, topped items are also topped in their category.",
-		["zh-cn"] = "按祝福分类排序时，置顶的物品也在所属分类内置顶。",
-		ru = "При сортировке по категории «Благословения», лучшие предметы также занимают первое место в своей категории.",
+		en = "When sorting by \"Family\", topped items are also topped in their family.",
+		["zh-cn"] = "按“类别”排序时，置顶的物品也在所属类别内置顶。",
 	},
 	group_custom_sort = {
 		en = "Extra item sorting methods",
@@ -84,18 +80,20 @@ return {
 		ru = "Дополнительные методы сортировки предметов",
 	},
 	custom_sort_category = {
-		en = "Blessing Category",
-		["zh-cn"] = "祝福分类",
-		ru = "Благословения",
+		en = "Family",
+		["zh-cn"] = "类别",
 	},
 	custom_sort_category_description = {
-		en = "Weapons fall into same category share same blessing pool.",
-		["zh-cn"] = "相同祝福分类下的武器共享同一个祝福池。",
-		ru = "Оружие попадает в одну категорию, если имеет одинаковые Благословения.",
+		en = "Former \"Blessing Category\" method",
+		["zh-cn"] = "原“祝福分类”方式",
 	},
 	custom_sort_category_mark = {
-		en = "Blessing Category (Group by Mark)",
-		["zh-cn"] = "祝福分类（按型号分组）",
+		en = "Family + Mark",
+		["zh-cn"] = "类别 + 型号",
+	},
+	custom_sort_category_mark_description = {
+		en = "Former \"Blessing Category (Group by Mark)\" method",
+		["zh-cn"] = "原“祝福分类（按型号分组）”方式",
 	},
 	custom_sort_base_level_desc = {
 		en = Localize("loc_inventory_item_grid_sort_title_format_high_low", true, {
