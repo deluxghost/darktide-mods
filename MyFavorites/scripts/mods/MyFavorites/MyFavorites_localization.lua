@@ -7,10 +7,12 @@ local loc = {
 	mod_description = {
 		en = "Make favorite icons colorful.",
 		["zh-cn"] = "为收藏图标添加颜色。",
+		ru = "My Favorites - делает значок избранного цветным.",
 	},
 	favorite_preset_count = {
 		en = "Number of enabled colors",
 		["zh-cn"] = "启用的颜色数",
+		ru = "Число выбранных цветов",
 	},
 	favorite_preset_count_description = {
 		en = "Set how many icon colors you want.\nYou can choose color presets below.",
