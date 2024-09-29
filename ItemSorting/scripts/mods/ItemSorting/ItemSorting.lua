@@ -74,6 +74,7 @@ local function fill_items_extra(view, layout_field)
 	local inv_items_layout = view and view[layout_field] or {}
 	local presets = ProfileUtils.get_profile_presets()
 	local current_preset_id = ProfileUtils.get_active_profile_preset_id()
+	local MyFavorites = get_mod("MyFavorites")
 
 	local new_types, equipped_types, current_types, myfav_types = {}, {}, {}, {}
 
@@ -118,8 +119,18 @@ local function fill_items_extra(view, layout_field)
 			end
 
 			if ItemUtils.is_item_id_favorited(item.gear_id) then
-				item.__master_item.__isort_myfav = true
-				myfav_types[category] = true
+				local fav_group = 1
+				if MyFavorites and MyFavorites:is_enabled() then
+					local fav_list = MyFavorites:get("favorite_item_list") or {}
+					local mod_group = fav_list[item.gear_id]
+					if mod_group then
+						fav_group = mod_group
+					end
+				end
+				item.__master_item.__isort_myfav = fav_group
+				if myfav_types[category] and fav_group < myfav_types[category] or not myfav_types[category] then
+					myfav_types[category] = fav_group
+				end
 			end
 		end
 	end
@@ -139,7 +150,7 @@ local function fill_items_extra(view, layout_field)
 				item.__master_item.__isort_type_current = true
 			end
 			if myfav_types[category] then
-				item.__master_item.__isort_type_myfav = true
+				item.__master_item.__isort_type_myfav = myfav_types[category]
 			end
 		end
 	end

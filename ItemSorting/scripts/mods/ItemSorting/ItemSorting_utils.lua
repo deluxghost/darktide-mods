@@ -95,6 +95,12 @@ function ItemSortingUtils.compare_item_myfav(a, b)
 		return true
 	elseif b.__isort_myfav and not a.__isort_myfav then
 		return false
+	elseif a.__isort_myfav and b.__isort_myfav then
+		if a.__isort_myfav < b.__isort_myfav then
+			return true
+		elseif b.__isort_myfav < a.__isort_myfav then
+			return false
+		end
 	end
 	return nil
 end
@@ -108,6 +114,12 @@ function ItemSortingUtils.compare_item_type_myfav(a, b)
 			return true
 		elseif b.__isort_myfav and not a.__isort_myfav then
 			return false
+		elseif a.__isort_myfav and b.__isort_myfav then
+			if a.__isort_myfav < b.__isort_myfav then
+				return true
+			elseif b.__isort_myfav < a.__isort_myfav then
+				return false
+			end
 		end
 		return nil
 	end
@@ -160,6 +172,12 @@ function ItemSortingUtils.compare_item_category_top_items(a, b)
 				return true
 			elseif b.__isort_myfav and not a.__isort_myfav then
 				return false
+			elseif a.__isort_myfav and b.__isort_myfav then
+				if a.__isort_myfav < b.__isort_myfav then
+					return true
+				elseif b.__isort_myfav < a.__isort_myfav then
+					return false
+				end
 			end
 		end
 	elseif a.__isort_type_equipped and b.__isort_type_equipped then
