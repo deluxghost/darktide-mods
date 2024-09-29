@@ -52,6 +52,7 @@ return {
 	always_on_top_myfav_description = {
 		en = "Favorite items are always at the top of the item list. Color info from \"My Favorites\" mod is supported.",
 		["zh-cn"] = "收藏的物品总会显示在物品列表的顶部。支持来自“我的收藏”模组的颜色信息。",
+  	ru = "Избранные предметы всегда находятся вверху списка. Поддерживается информация о цвете из мода «Моё избранное».",
 	},
 	group_always_on_top_options = {
 		en = "Always on top options",
@@ -61,18 +62,22 @@ return {
 	entire_category_on_top = {
 		en = "Top entire group of same \"Family\"",
 		["zh-cn"] = "相同“类别”整体置顶",
+		ru = "Сверху вся группа того же «семейства»",
 	},
 	entire_category_on_top_description = {
 		en = "When sorting by \"Family\", if an item in the family is topped, the entire family is topped.",
 		["zh-cn"] = "按“类别”排序时，如果类别内有物品被置顶，则整个类别置顶。",
+		ru = "При сортировке по «семейству», если предмет в семействе находится сверху, то и вся семья оказывается сверху.",
 	},
 	on_top_of_category = {
 		en = "Top inside group of same \"Family\"",
 		["zh-cn"] = "在相同“类别”内置顶",
+		ru = "Сверху внутри группы из того же «семейства»",
 	},
 	on_top_of_category_description = {
 		en = "When sorting by \"Family\", topped items are also topped in their family.",
 		["zh-cn"] = "按“类别”排序时，置顶的物品也在所属类别内置顶。",
+		ru = "При сортировке по «семейству» предметы занимают верхние позиции в своём семействе.",
 	},
 	group_custom_sort = {
 		en = "Extra item sorting methods",
@@ -82,18 +87,22 @@ return {
 	custom_sort_category = {
 		en = "Family",
 		["zh-cn"] = "类别",
+		ru = "Семейство",
 	},
 	custom_sort_category_description = {
 		en = "Former \"Blessing Category\" method",
 		["zh-cn"] = "原“祝福分类”方式",
+		ru = "Бывший метод «Категории благословений»",
 	},
 	custom_sort_category_mark = {
 		en = "Family + Mark",
 		["zh-cn"] = "类别 + 型号",
+		ru = "Семейство+Модель",
 	},
 	custom_sort_category_mark_description = {
 		en = "Former \"Blessing Category (Group by Mark)\" method",
 		["zh-cn"] = "原“祝福分类（按型号分组）”方式",
+		ru = "Бывший метод «Категория благословений (группировка по Модели)»",
 	},
 	custom_sort_base_level_desc = {
 		en = Localize("loc_inventory_item_grid_sort_title_format_high_low", true, {
