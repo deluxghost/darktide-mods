@@ -50,8 +50,8 @@ return {
 		ru = "Избранные предметы",
 	},
 	always_on_top_myfav_description = {
-		en = "Favorite items are always at the top of the item list. ",
-		["zh-cn"] = "收藏的物品总会显示在物品列表的顶部。",
+		en = "Favorite items are always at the top of the item list. Color info from \"My Favorites\" mod is supported.",
+		["zh-cn"] = "收藏的物品总会显示在物品列表的顶部。支持来自“我的收藏”模组的颜色信息。",
 	},
 	group_always_on_top_options = {
 		en = "Always on top options",
