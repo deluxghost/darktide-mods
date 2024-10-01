@@ -9,6 +9,10 @@ local loc = {
 		["zh-cn"] = "为收藏图标添加颜色。",
 		ru = "My Favorites - делает значок избранного цветным.",
 	},
+	show_extra_icon = {
+		en = "Show extra star icons",
+		["zh-cn"] = "显示额外的星星图标",
+	},
 	favorite_preset_count = {
 		en = "Number of enabled colors",
 		["zh-cn"] = "启用的颜色数",

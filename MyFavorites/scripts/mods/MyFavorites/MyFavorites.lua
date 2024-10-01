@@ -4,28 +4,7 @@ local Promise = require("scripts/foundation/utilities/promise")
 local UIRenderer = require("scripts/managers/ui/ui_renderer")
 local UISoundEvents = require("scripts/settings/ui/ui_sound_events")
 
-local item_definitions = {
-	hotspot = {
-		pass_type = "hotspot",
-		style_id = "myfav_hotspot",
-		style = {
-			horizontal_alignment = "left",
-			vertical_alignment = "bottom",
-			offset = {
-				15,
-				-5,
-				16,
-			},
-			size = { 10, 10 },
-		},
-		content_id = "myfav_hotspot",
-		content = {
-			on_hover_sound = UISoundEvents.default_mouse_hover,
-			on_pressed_sound = UISoundEvents.default_click
-		},
-	},
-}
-
+local star_icon = "content/ui/materials/icons/presets/preset_15"
 local item_cache = mod:persistent_table("item_cache")
 
 local function get_item_cache()
@@ -51,6 +30,16 @@ mod.on_setting_changed = function(setting_id)
 		local favorite_item_list = mod:get("favorite_item_list") or {}
 		set_item_cache(favorite_item_list)
 	end
+end
+
+mod.load_package = function(package_name)
+	if not Managers.package:is_loading(package_name) and not Managers.package:has_loaded(package_name) then
+		Managers.package:load(package_name, "my_favorites", nil, true)
+	end
+end
+
+mod.on_all_mods_loaded = function()
+	mod.load_package("packages/ui/views/inventory_background_view/inventory_background_view")
 end
 
 local function max_color_group()
@@ -164,21 +153,113 @@ mod.on_game_state_changed = function(status, state_name)
 	switch_to_official()
 end
 
-
 mod:hook_safe(Items, "set_item_id_as_favorite", function(item_gear_id, state)
 	if not state then
 		clear_item_group(item_gear_id)
 	end
 end)
 
+local item_definitions = {
+	hotspot = {
+		pass_type = "hotspot",
+		style_id = "myfav_hotspot",
+		style = {
+			horizontal_alignment = "left",
+			vertical_alignment = "bottom",
+			offset = {
+				15,
+				-5,
+				16,
+			},
+			size = { 10, 10 },
+		},
+		content_id = "myfav_hotspot",
+		content = {
+			on_hover_sound = UISoundEvents.default_mouse_hover,
+			on_pressed_sound = UISoundEvents.default_click
+		},
+	},
+	{
+		pass_type = "hotspot",
+		style_id = "myfav_extra_icon_hotspot",
+		style = {
+			vertical_alignment = "center",
+			horizontal_alignment = "right",
+			offset = { 0, 0, 16 },
+			size = { 32, 32 },
+		},
+		content_id = "myfav_extra_icon_hotspot",
+		content = {
+			on_hover_sound = UISoundEvents.default_mouse_hover,
+			on_pressed_sound = UISoundEvents.default_click
+		},
+	},
+	extra_icon = {
+		pass_type = "texture",
+		value = star_icon,
+		value_id = "myfav_extra_icon",
+		style_id = "myfav_extra_icon",
+		style = {
+			vertical_alignment = "center",
+			horizontal_alignment = "right",
+			offset = { 0, 0, 20 },
+			color = Color.white(255, true),
+			default_color = Color.white(255, true),
+			size = { 32, 32 },
+		},
+		visibility_function = function(content, style)
+			if not content.favorite then
+				return false
+			end
+			if not mod:is_enabled() then
+				return false
+			end
+			if not mod:get("show_extra_icon") then
+				return false
+			end
+			if content.store_item then
+				return false
+			end
+			local item = content_to_item(content)
+			if not item then
+				return
+			end
+
+			local current = get_item_group(item.gear_id)
+			local color_name = mod:get("color_definition_" .. tostring(current))
+			if current > 0 then
+				style.color = Color[color_name](255, true)
+				style.default_color = Color[color_name](255, true)
+				return true
+			end
+			return false
+		end,
+	},
+}
+
 mod:hook_require("scripts/ui/pass_templates/item_pass_templates", function(instance)
 	local ui_renderer_instance = Managers.ui:ui_constant_elements():ui_renderer()
 	local fav_w, fav_h = UIRenderer.text_size(ui_renderer_instance, string.format("%s %s", "", Localize("loc_inventory_menu_favorite_item")), "proxima_nova_bold", 18)
-	local idx = nil
-	for i, v in ipairs(instance.item) do
-		if v.style_id == "myfav_hotspot" then
-			idx = i
-		elseif v.style_id == "favorite_icon" then
+	for name, def in pairs(item_definitions) do
+		local idx = nil
+		for i, v in ipairs(instance.item) do
+			if v.style_id == def.style_id then
+				idx = i
+				break
+			end
+		end
+		if idx then
+			table.remove(instance.item, idx)
+		end
+		local def_clone = table.clone(def)
+		if name == "hotspot" then
+			def_clone.style.size = { fav_w, fav_h }
+		end
+		table.insert(instance.item, def_clone)
+	end
+
+	for _, v in ipairs(instance.item) do
+		if v.style_id == "favorite_icon" then
 			v.value_id = "favorite_icon"
 			v.visibility_function = function(content, style)
 				if not content.favorite then
@@ -192,11 +273,21 @@ mod:hook_require("scripts/ui/pass_templates/item_pass_templates", function(insta
 					return true
 				end
 
+				local show_extra_icon = mod:get("show_extra_icon")
+				if show_extra_icon then
+					content.myfav_extra_icon_hotspot.on_hover_sound = UISoundEvents.default_mouse_hover
+					content.myfav_extra_icon_hotspot.on_pressed_sound = UISoundEvents.default_click
+				else
+					content.myfav_extra_icon_hotspot.on_hover_sound = nil
+					content.myfav_extra_icon_hotspot.on_pressed_sound = nil
+				end
 				local hotspot = content.myfav_hotspot
+				local hotspot_extra = content.myfav_extra_icon_hotspot
 				local current = get_item_group(item.gear_id)
 				local color_name = mod:get("color_definition_" .. tostring(current))
 				style.text_color = Color[color_name](255, true)
-				if hotspot.is_hover then
+				local is_hover = hotspot.is_hover or (show_extra_icon and hotspot_extra.is_hover)
+				if is_hover then
 					content.favorite_icon = string.format("%s %s", "", mod:localize("color_definition") .. " " .. tostring(current))
 					style.font_size = 18.5
 				else
@@ -207,12 +298,6 @@ mod:hook_require("scripts/ui/pass_templates/item_pass_templates", function(insta
 			end
 		end
 	end
-	if idx then
-		table.remove(instance.item, idx)
-	end
-	local def = table.clone(item_definitions.hotspot)
-	def.style.size = { fav_w, fav_h }
-	table.insert(instance.item, def)
 end)
 
 mod:hook_safe("ViewElementGrid", "init", function(self)
@@ -232,6 +317,11 @@ mod:hook_safe("ViewElementGrid", "init", function(self)
 		end
 		switch_item_group(item_id)
 	end
+	self.__myfav_cb_extra_pressed = function(self, widget)
+		if mod:get("show_extra_icon") then
+			self.__myfav_cb_main_pressed(self, widget)
+		end
+	end
 end)
 
 mod:hook("ViewElementGrid", "_create_entry_widget_from_config", function(func, self, config, suffix, callback_name, secondary_callback_name, double_click_callback_name)
@@ -246,5 +336,8 @@ mod:hook("ViewElementGrid", "_create_entry_widget_from_config", function(func, s
 		return widget, alignment_widget
 	end
 	content.myfav_hotspot.pressed_callback = callback(self, "__myfav_cb_main_pressed", widget)
+	if content.myfav_extra_icon_hotspot then
+		content.myfav_extra_icon_hotspot.pressed_callback = callback(self, "__myfav_cb_extra_pressed", widget)
+	end
 	return widget, alignment_widget
 end)

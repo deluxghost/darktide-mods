@@ -77,6 +77,11 @@ return {
 	options = {
 		widgets = {
 			{
+				setting_id = "show_extra_icon",
+				type = "checkbox",
+				default_value = false,
+			},
+			{
 				setting_id = "favorite_preset_count",
 				type = "numeric",
 				default_value = 5,
