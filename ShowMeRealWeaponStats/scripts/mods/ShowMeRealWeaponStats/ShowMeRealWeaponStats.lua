@@ -4,6 +4,7 @@ local Items = require("scripts/utilities/items")
 local Text = require("scripts/utilities/ui/text")
 local WeaponStats = require("scripts/utilities/weapon_stats")
 local InputDevice = require("scripts/managers/input/input_device")
+local ViewElementWeaponInfo = require("scripts/ui/view_elements/view_element_weapon_info/view_element_weapon_info")
 
 local bar_width = 150
 
@@ -132,6 +133,17 @@ local function _apply_stat_bar_values(widget, item)
 				end
 			end
 		end
+		if mod:get("show_potential_breakdown") then
+			local advanced_weapon_stats_potential = content.__smrws_weapon_stats_potential._weapon_statistics
+			local bar_breakdown_potential = advanced_weapon_stats_potential.bar_breakdown
+			for _, breakdown in ipairs(content["bar_breakdown_" .. ii]) do
+				for _, breakdown_potential in ipairs(bar_breakdown_potential[ii]) do
+					if same_breakdown(breakdown, breakdown_potential) then
+						breakdown.potential = breakdown_potential.value
+					end
+				end
+			end
+		end
 
 		if mod:get("show_full_bar") then
 			local multiplier = mod:get("max_modifier_score") > 0 and 100 / mod:get("max_modifier_score") or 100
@@ -157,7 +169,6 @@ mod:hook(package.loaded, "scripts/ui/view_content_blueprints/item_stats_blueprin
 		return blueprints
 	end
 
-	local old_init = blueprints.weapon_stats.init
 	blueprints.weapon_stats.init = function(parent, widget, element, callback_name)
 		local content = widget.content
 		local style = widget.style
@@ -170,6 +181,9 @@ mod:hook(package.loaded, "scripts/ui/view_content_blueprints/item_stats_blueprin
 		local current_expertise = Items.expertise_level(item, true)
 
 		content.start_expertise_value = tonumber(current_expertise)
+		local comparing_stats = weapon_stats:get_comparing_stats()
+		local max_preview_expertise = Items.max_expertise_level() - content.start_expertise_value
+		local max_stats = Items.preview_stats_change(item, max_preview_expertise, comparing_stats)
 
 		local item_full = fake_item(item)
 		for _, stat in pairs(item_full.base_stats) do
@@ -178,6 +192,20 @@ mod:hook(package.loaded, "scripts/ui/view_content_blueprints/item_stats_blueprin
 		local weapon_stats_full = WeaponStats:new(item_full)
 		content.__smrws_item_full = item_full
 		content.__smrws_weapon_stats_full = weapon_stats_full
+
+		local item_potential = fake_item(item)
+		local stats_name_map = {}
+		for _, stat in ipairs(comparing_stats) do
+			stats_name_map[stat.name] = stat.display_name
+		end
+		for _, stat in pairs(item_potential.base_stats) do
+			if stats_name_map[stat.name] and max_stats[stats_name_map[stat.name]] then
+				stat.value = max_stats[stats_name_map[stat.name]].fraction
+			end
+		end
+		local weapon_stats_potential = WeaponStats:new(item_potential)
+		content.__smrws_item_potential = item_potential
+		content.__smrws_weapon_stats_potential = weapon_stats_potential
 
 		_apply_stat_bar_values(widget, item)
 
@@ -280,4 +308,54 @@ mod:hook(package.loaded, "scripts/ui/view_content_blueprints/item_stats_blueprin
 		end
 	end
 	return blueprints
+end)
+
+mod:hook(ViewElementWeaponInfo, "_get_stats_text", function(func, self, stat)
+	local override_data = stat.override_data or {}
+	local type_data = stat.type_data
+	local display_type = override_data.display_type or type_data.display_type
+	local is_signed = type_data.signed
+	local value = self:_scale_value_by_type(stat.value, display_type)
+	local value_text = self:_value_to_text(value, is_signed)
+	local range = ""
+	local min, max = stat.min, stat.max
+
+	if min and max then
+		min = self:_scale_value_by_type(min, display_type)
+		max = self:_scale_value_by_type(max, display_type)
+		range = string.format("{#color(150,150,150)}[%s | %s]", self:_value_to_text(min, is_signed), self:_value_to_text(max, is_signed))
+	end
+
+	local name = Localize(override_data.display_name or type_data.display_name)
+	local group_type_data = stat.group_type_data
+	local group_prefix = group_type_data and group_type_data.prefix and Localize(group_type_data.prefix) or ""
+	local prefix = override_data.prefix or type_data.prefix
+
+	prefix = prefix and Localize(prefix) .. " " or ""
+
+	local postfix = group_type_data and group_type_data.postfix and Localize(group_type_data.postfix) .. " " or ""
+	local display_units = override_data.display_units or type_data.display_units or ""
+	local suffix = (override_data.suffix or type_data.suffix) and Localize(override_data.suffix or type_data.suffix) or ""
+	local prefix_display_units = override_data.prefix_display_units or type_data.prefix_display_units or ""
+	local stat_text = ""
+	if mod:get("show_potential_breakdown") then
+		local potential = self:_scale_value_by_type(stat.potential or stat.value, display_type)
+		local potential_text = self:_value_to_text(potential, is_signed)
+		stat_text = string.format(
+			"%s %s%s%s%s:  {#color(250,189,73)}%s%s%s / %s%s%s   %s",
+			group_prefix, prefix, name, suffix, postfix,
+			prefix_display_units, value_text, display_units,
+			prefix_display_units, potential_text, display_units,
+			range
+		)
+	else
+		stat_text = string.format(
+			"%s %s%s%s%s:  {#color(250,189,73)}%s%s%s   %s",
+			group_prefix, prefix, name, suffix, postfix,
+			prefix_display_units, value_text, display_units,
+			range
+		)
+	end
+
+	return stat_text
 end)

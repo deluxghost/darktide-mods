@@ -34,4 +34,12 @@ return {
 		["zh-cn"] = "修改“检视”界面的最大数据，以“最大修正分数”而非 100 时的数据为最大值。",
 		ru = "Изменить максимальное значение характеристик на экране «Проверки», как будто максимальное значение — это данные в поле «максимальный счёт модификатора», а не 100.",
 	},
+	show_potential_breakdown = {
+		en = "Show potential detailed stats",
+		["zh-cn"] = "显示潜力详细数据",
+	},
+	show_potential_breakdown_description = {
+		en = "In \"Inspect\" screen, also show detailed stats of the weapon under potential scores.",
+		["zh-cn"] = "在“检视”界面，也显示武器在潜力分数下的详细数据。",
+	},
 }

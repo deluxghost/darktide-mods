@@ -23,6 +23,11 @@ return {
 				type = "checkbox",
 				default_value = true,
 			},
+			{
+				setting_id = "show_potential_breakdown",
+				type = "checkbox",
+				default_value = true,
+			},
 		}
 	}
 }
