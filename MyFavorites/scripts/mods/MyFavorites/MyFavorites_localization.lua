@@ -12,6 +12,7 @@ local loc = {
 	show_extra_icon = {
 		en = "Show extra star icons",
 		["zh-cn"] = "显示额外的星星图标",
+		ru = "Показать дополнительные значки-звёздочки",
 	},
 	favorite_preset_count = {
 		en = "Number of enabled colors",
