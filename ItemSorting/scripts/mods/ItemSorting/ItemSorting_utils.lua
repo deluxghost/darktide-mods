@@ -1,4 +1,5 @@
 local mod = get_mod("ItemSorting")
+local ItemUtils = require("scripts/utilities/items")
 local ItemSortingUtils = {}
 
 function ItemSortingUtils.get_trait_category(item)
@@ -193,10 +194,33 @@ end
 function ItemSortingUtils.compare_item_category(a, b)
 	local a_category = ItemSortingUtils.get_trait_category(a)
 	local b_category = ItemSortingUtils.get_trait_category(b)
+	local a_name, b_name = "", ""
+	if ItemUtils.is_weapon(a.item_type) then
+		a_name = ItemUtils.weapon_lore_family_name(a)
+	end
+	if ItemUtils.is_weapon(b.item_type) then
+		b_name = ItemUtils.weapon_lore_family_name(b)
+	end
 
-	if a_category < b_category then
+	if a_category == b_category then
+		return nil
+	end
+	if a_name == "" and b_name == "" then
+		if a_category < b_category then
+			return true
+		elseif b_category < a_category then
+			return false
+		end
+		return nil
+	end
+	if a_name == "" then
 		return true
-	elseif b_category < a_category then
+	elseif b_name == "" then
+		return false
+	end
+	if a_name < b_name then
+		return true
+	elseif b_name < a_name then
 		return false
 	end
 	return nil
