@@ -8,6 +8,7 @@ local MasterItems = require("scripts/backend/master_items")
 local QLColor = {
 	default = { 255, 250, 250, 250 },
 	modifier = { 255, 250, 189, 73 },
+	modifier_dark = { 255, 250, 160, 73 },
 	new_trait = { 255, 90, 255, 0 },
 	low_trait = { 255, 255, 180, 0 },
 }
@@ -837,7 +838,7 @@ end)
 
 local base_stats_position_map = { 1, 5, 3, 4, 2 }
 
-local function fill_weapon_base_stats(content, item)
+local function fill_weapon_base_stats(content, style, item)
 	if not item.base_stats then
 		return
 	end
@@ -846,16 +847,22 @@ local function fill_weapon_base_stats(content, item)
 		return
 	end
 
+	local potential_mode = mod:get("opt_modifier_mode") == "potential"
+
 	local weapon_stats = WeaponStats:new(item)
 	local comparing_stats = table.clone(weapon_stats:get_comparing_stats())
 	local num_stats = table.size(comparing_stats)
 	local start_preview_expertise = Items.expertise_level(item, true)
 	local max_preview_expertise = Items.max_expertise_level() - start_preview_expertise
 	local max_stats = Items.preview_stats_change(item, max_preview_expertise, comparing_stats)
-	if mod:get("opt_modifier_mode") == "potential" then
-		for _, stat in ipairs(comparing_stats) do
-			if stat.display_name and max_stats[stat.display_name] then
-				stat.fraction = max_stats[stat.display_name].fraction
+	for _, stat in ipairs(comparing_stats) do
+		if stat.display_name then
+			local max_stat = max_stats[stat.display_name]
+			if max_stat then
+				stat.qlc_max_reached = math.floor(stat.fraction * 100 + 0.5) >= math.floor(max_stat.fraction * 100 + 0.5)
+				if potential_mode then
+					stat.fraction = max_stat.fraction
+				end
 			end
 		end
 	end
@@ -870,7 +877,18 @@ local function fill_weapon_base_stats(content, item)
 		end
 		local value = math.floor(stat_data.fraction * 100 + 0.5)
 		content["qlc_stats_title_" .. tostring(ii)] = title
-		content["qlc_stats_value_" .. tostring(ii)] = tostring(value)
+		local max_sign = ""
+		if not stat_data.qlc_max_reached then
+			max_sign = potential_mode and "-" or "+"
+		end
+		content["qlc_stats_value_" .. tostring(ii)] = tostring(value) .. max_sign
+		if style and style["qlc_stats_value_" .. tostring(ii)] then
+			if stat_data.qlc_max_reached then
+				style["qlc_stats_value_" .. tostring(ii)].text_color = QLColor.modifier
+			else
+				style["qlc_stats_value_" .. tostring(ii)].text_color = QLColor.modifier_dark
+			end
+		end
 	end
 	content["qlc_baseLevel"] = tostring(item.baseItemLevel)
 end
@@ -960,7 +978,7 @@ mod:hook("ViewElementGrid", "_create_entry_widget_from_config", function(func, s
 	update_compatibility_fields(widget, item)
 
 	if item.item_type == "WEAPON_MELEE" or item.item_type == "WEAPON_RANGED" then
-		fill_weapon_base_stats(content, item)
+		fill_weapon_base_stats(content, widget.style, item)
 	elseif item.item_type == "GADGET" then
 		fill_gadget_trait(content, item)
 	end
