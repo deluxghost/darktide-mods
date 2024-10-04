@@ -14,14 +14,17 @@ return {
 	opt_modifier_mode = {
 		en = "Modifier Stats display mode",
 		["zh-cn"] = "五维数据显示模式",
+		ru = "Режим отображения характеристик модификаторов",
 	},
 	opt_modifier_mode_current = {
 		en = "Current value",
 		["zh-cn"] = "当前值",
+		ru = "Текущее значение",
 	},
 	opt_modifier_mode_potential = {
 		en = "Potential value",
 		["zh-cn"] = "潜力值",
+		ru = "Возможное значение",
 	},
 	opt_group_toggles = {
 		en = "Toggles",
@@ -84,7 +87,7 @@ return {
 		en = "Curios only",
 		["zh-cn"] = "仅限附件",
 		ja = "収集品のみ",
-		ru = "Только для устройств",
+		ru = "Только для диковинок",
 	},
 
 	-- To translators: due to the limited screen space,
