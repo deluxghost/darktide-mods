@@ -37,9 +37,11 @@ return {
 	show_potential_breakdown = {
 		en = "Show potential detailed stats",
 		["zh-cn"] = "显示潜力详细数据",
+		ru = "Показать потенциальные подробные характеристики",
 	},
 	show_potential_breakdown_description = {
 		en = "In \"Inspect\" screen, also show detailed stats of the weapon under potential scores.",
 		["zh-cn"] = "在“检视”界面，也显示武器在潜力分数下的详细数据。",
+		ru = "На экране «Осмотр» также отображается подробные характеристики оружия под потенциальными числами.",
 	},
 }
