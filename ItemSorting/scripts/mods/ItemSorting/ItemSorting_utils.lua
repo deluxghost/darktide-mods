@@ -182,10 +182,12 @@ function ItemSortingUtils.compare_item_category_top_items(a, b)
 			end
 		end
 	elseif a.__isort_type_equipped and b.__isort_type_equipped then
-		if a.__isort_type_current and not b.__isort_type_current then
-			return true
-		elseif b.__isort_type_current and not a.__isort_type_current then
-			return false
+		if mod:get("always_on_top_equipped") and mod:get("entire_category_on_top") then
+			if a.__isort_type_current and not b.__isort_type_current then
+				return true
+			elseif b.__isort_type_current and not a.__isort_type_current then
+				return false
+			end
 		end
 	end
 	return nil
