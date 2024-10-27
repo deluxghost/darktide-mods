@@ -1,5 +1,4 @@
 local mod = get_mod("PrivateCharMap")
-
 local UISoundEvents = require("scripts/settings/ui/ui_sound_events")
 local WwiseGameSyncSettings = require("scripts/settings/wwise_game_sync/wwise_game_sync_settings")
 
