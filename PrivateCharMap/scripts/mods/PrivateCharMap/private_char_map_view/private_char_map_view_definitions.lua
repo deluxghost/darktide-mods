@@ -3,6 +3,7 @@ local ButtonPassTemplates = require("scripts/ui/pass_templates/button_pass_templ
 local UIFontSettings = require("scripts/managers/ui/ui_font_settings")
 local UISoundEvents = require("scripts/settings/ui/ui_sound_events")
 local UIWidget = require("scripts/managers/ui/ui_widget")
+local ColorUtilities = require("scripts/utilities/ui/colors")
 
 local grid_width = 1270
 local edge_padding = 60
@@ -32,6 +33,29 @@ local grid_settings = {
 	mask_size = window_size,
 	edge_padding = edge_padding
 }
+
+local function item_change_function(content, style)
+    local hotspot = content.hotspot
+    local is_selected = hotspot.is_selected
+    local is_focused = hotspot.is_focused
+    local is_hover = hotspot.is_hover
+    local default_color = style.default_color
+    local selected_color = style.selected_color
+    local hover_color = style.hover_color
+    local color
+
+    if is_selected or is_focused then
+        color = selected_color
+    elseif is_hover then
+        color = hover_color
+    else
+        color = default_color
+    end
+
+    local progress = math.max(math.max(hotspot.anim_hover_progress or 0, hotspot.anim_select_progress or 0), hotspot.anim_focus_progress or 0)
+
+    ColorUtilities.color_lerp(default_color, color, progress, style.color)
+end
 
 local blueprints = {
 	char_box = {
@@ -146,6 +170,7 @@ local blueprints = {
 						2,
 					}
 				},
+				change_function = item_change_function,
 			},
 			{
 				pass_type = "texture",
@@ -164,6 +189,7 @@ local blueprints = {
 						13,
 					}
 				},
+				change_function = item_change_function,
 			},
 		},
 		init = function (parent, widget, element, callback_name)
