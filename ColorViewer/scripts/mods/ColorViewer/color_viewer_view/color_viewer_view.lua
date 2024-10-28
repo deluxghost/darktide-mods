@@ -14,6 +14,7 @@ ColorViewerView.on_enter = function(self)
 	ColorViewerView.super.on_enter(self)
 	self:_setup_input_legend()
 	self:_setup_color_table_grid()
+	self:_setup_color_table_sort_options()
 	self:_setup_control_grid()
 end
 
@@ -35,6 +36,18 @@ ColorViewerView._setup_input_legend = function(self)
 	end
 end
 
+ColorViewerView.present_grid_layout = function(self, layout)
+	local layout_copy = table.clone(layout)
+	local spacing_entry = {
+		widget_type = "color_table_spacing_vertical"
+	}
+
+	table.insert(layout_copy, 1, spacing_entry)
+	table.insert(layout_copy, #layout_copy + 1, spacing_entry)
+	local left_click_callback = callback(self, "cb_on_color_left_pressed")
+	self._color_table_element:present_grid_layout(layout_copy, definitions.blueprints, left_click_callback)
+end
+
 ColorViewerView._setup_color_table_grid = function(self)
 	self._color_table_element = self:_add_element(ViewElementGrid, "color_table", 103, definitions.color_table_grid_settings, "color_table_pivot")
 	self._color_table_element:set_visibility(true)
@@ -43,27 +56,107 @@ ColorViewerView._setup_color_table_grid = function(self)
 	local layout = {}
 
 	for _, color_name in ipairs(Color.list) do
+		local color = Color[color_name](nil, true)
+		local ahsl = mod.argb_to_ahsl(color)
 		layout[#layout + 1] = {
 			widget_type = "color_box",
 			color_name = color_name,
-			color_data = Color[color_name](nil, true),
+			color_data = color,
+			color_ahsl = ahsl,
 		}
 	end
 
 	table.sort(layout, function(a, b)
 		return a.color_name < b.color_name
 	end)
+	self._layout = layout
 
-	local spacing_entry = {
-		widget_type = "color_table_spacing_vertical"
+	self:present_grid_layout(layout)
+end
+
+ColorViewerView._setup_color_table_sort_options = function(self)
+	self._sort_options = {
+		{
+			display_name = mod:localize("sort_option_name_asc"),
+			sort_function = mod.sort_comparator({
+				"<", mod.compare_color_name,
+			}),
+		},
+		{
+			display_name = mod:localize("sort_option_name_desc"),
+			sort_function = mod.sort_comparator({
+				">", mod.compare_color_name,
+			}),
+		},
+		{
+			display_name = mod:localize("sort_option_hue"),
+			sort_function = mod.sort_comparator({
+				"<", mod.compare_color_mono,
+				"<", mod.compare_color_hue,
+				">", mod.compare_color_alpha,
+			}),
+		},
+		{
+			display_name = mod:localize("sort_option_saturation"),
+			sort_function = mod.sort_comparator({
+				"<", mod.compare_color_mono,
+				">", mod.compare_color_saturation,
+				"<", mod.compare_color_alpha,
+			}),
+		},
+		{
+			display_name = mod:localize("sort_option_lightness"),
+			sort_function = mod.sort_comparator({
+				">", mod.compare_color_lightness,
+				"<", mod.compare_color_alpha,
+			}),
+		},
 	}
+	if self._sort_options and #self._sort_options > 0 then
+		local sort_callback = callback(self, "cb_on_sort_button_pressed")
 
-	table.insert(layout, 1, spacing_entry)
-	table.insert(layout, #layout + 1, spacing_entry)
+		self._color_table_element:setup_sort_button(self._sort_options, sort_callback)
+	end
+end
 
-	local left_click_callback = callback(self, "cb_on_color_left_pressed")
+ColorViewerView.cb_on_sort_button_pressed = function(self, option)
+	local option_sort_index
+	local sort_options = self._sort_options
 
-	self._color_table_element:present_grid_layout(layout, definitions.blueprints, left_click_callback)
+	for i = 1, #sort_options do
+		if sort_options[i] == option then
+			option_sort_index = i
+			break
+		end
+	end
+
+	if option_sort_index ~= self._selected_sort_option_index then
+		self._selected_sort_option_index = option_sort_index
+		self._selected_sort_option = option
+
+		local sort_function = option.sort_function
+
+		self:_sort_grid_layout(sort_function)
+	end
+end
+
+ColorViewerView._sort_grid_layout = function(self, sort_function)
+	local layout = table.clone(self._layout)
+
+	if sort_function and #layout > 1 then
+		table.sort(layout, sort_function)
+	end
+	self:present_grid_layout(layout)
+
+	local selected_widget_index = 1
+	for index, widget in ipairs(self._color_table_element._grid_widgets) do
+		if widget.content.color_codename == self._color_table_element._selected_color then
+			selected_widget_index = index
+			break
+		end
+	end
+	self._color_table_element:select_grid_index(selected_widget_index, nil, true)
+	self._color_table_element:scroll_to_grid_index(selected_widget_index, true)
 end
 
 ColorViewerView._setup_control_grid = function(self)

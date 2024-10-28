@@ -14,7 +14,7 @@ local color_table_grid_width = 1190
 local color_table_edge_padding = 60
 local color_table_window_size = {
 	color_table_grid_width + color_table_edge_padding,
-	830,
+	800,
 }
 local color_table_grid_size = {
 	color_table_grid_width,
@@ -38,7 +38,7 @@ local control_grid_width = 280
 local control_edge_padding = 20
 local control_window_size = {
 	control_grid_width + control_edge_padding,
-	830,
+	800,
 }
 local control_grid_size = {
 	control_grid_width,

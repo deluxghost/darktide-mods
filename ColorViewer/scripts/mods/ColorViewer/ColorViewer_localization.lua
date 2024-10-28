@@ -15,6 +15,26 @@ return {
 		en = "Open the Color Viewer",
 		["zh-cn"] = "打开颜色查看器",
 	},
+	sort_option_name_asc = {
+		en = "Name A - Z",
+		["zh-cn"] = "名称 A - Z",
+	},
+	sort_option_name_desc = {
+		en = "Name Z - A",
+		["zh-cn"] = "名称 Z - A",
+	},
+	sort_option_hue = {
+		en = "Hue",
+		["zh-cn"] = "色相",
+	},
+	sort_option_saturation = {
+		en = "Saturation",
+		["zh-cn"] = "饱和度",
+	},
+	sort_option_lightness = {
+		en = "Lightness",
+		["zh-cn"] = "亮度",
+	},
 	btn_copy = {
 		en = "Copy %s",
 		["zh-cn"] = "复制 %s",
