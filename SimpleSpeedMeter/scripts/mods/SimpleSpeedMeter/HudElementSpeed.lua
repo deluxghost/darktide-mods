@@ -3,7 +3,7 @@ local UIWorkspaceSettings = require("scripts/settings/ui/ui_workspace_settings")
 local UIWidget = require("scripts/managers/ui/ui_widget")
 
 local definitions = {
-  	scenegraph_definition = {
+	scenegraph_definition = {
 		screen = UIWorkspaceSettings.screen,
 		speed_area  = {
 			parent = "screen",
@@ -12,8 +12,8 @@ local definitions = {
 			horizontal_alignment = "right",
 			position = { -20, 20, 100 },
 		}
-  	},
-  	widget_definitions = {
+	},
+	widget_definitions = {
 		speed_text = UIWidget.create_definition({
 			{
 				pass_type = "text",
@@ -28,16 +28,16 @@ local definitions = {
 					text_horizontal_alignment = "right",
 					text_color = Color.terminal_text_body(255, true),
 					offset = { 0, 0, 100 },
-				}
+				},
 			}
 		}, "speed_area")
-  	}
+	}
 }
 
 HudElementSpeed = class("HudElementSpeed", "HudElementBase")
 
 function HudElementSpeed:init(parent, draw_layer, start_scale)
-  	HudElementSpeed.super.init(self, parent, draw_layer, start_scale, definitions)
+	HudElementSpeed.super.init(self, parent, draw_layer, start_scale, definitions)
 end
 
 HudElementSpeed.update = function(self, dt, t, ui_renderer, render_settings, input_service)
