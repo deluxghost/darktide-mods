@@ -66,17 +66,21 @@ HudElementWarpUnboundTimer.update = function(self, dt, t, ui_renderer, render_se
 		self._widgets_by_name.timer_text.style.timer.font_size = 30
 		return
 	end
+	local timer = 0
 	for _, buff in pairs(buff_extensions._buffs_by_index) do
 		local template = buff:template()
 		if template.name == "psyker_overcharge_stance_infinite_casting" then
 			local remaining = buff:duration_progress() or 1
-			self._widgets_by_name.timer_text.content.timer = string.format("%.1f", buff:duration() * remaining)
-			self._widgets_by_name.timer_text.style.timer.font_size = 30 + (1 - remaining) * 20
-			return
+			timer = math.max(timer, buff:duration() * remaining)
 		end
 	end
-	self._widgets_by_name.timer_text.content.timer = ""
-	self._widgets_by_name.timer_text.style.timer.font_size = 30
+	if timer == 0 then
+		self._widgets_by_name.timer_text.content.timer = ""
+		self._widgets_by_name.timer_text.style.timer.font_size = 30
+		return
+	end
+	self._widgets_by_name.timer_text.content.timer = string.format("%.1f", timer)
+	self._widgets_by_name.timer_text.style.timer.font_size = 30 + (10 - math.min(10, timer)) * 2
 end
 
 return HudElementWarpUnboundTimer
