@@ -9,6 +9,7 @@ local QLColor = {
 	default = { 255, 250, 250, 250 },
 	modifier = { 255, 250, 189, 73 },
 	modifier_dark = { 255, 250, 160, 73 },
+	highlight = { 255, 255, 94, 132 },
 	new_trait = { 255, 90, 255, 0 },
 	low_trait = { 255, 255, 180, 0 },
 }
@@ -866,31 +867,48 @@ local function fill_weapon_base_stats(content, style, item)
 			end
 		end
 	end
+	content["qlc_baseLevel"] = tostring(item.baseItemLevel)
 
 	-- fill values
-	for i = 1, num_stats do
-		local stat_data = comparing_stats[i]
-		local ii = base_stats_position_map[i]
-		local title = mod:localize("stat_" .. stat_data.display_name)
-		if title == "<" .. "stat_" .. stat_data.display_name .. ">" then
-			title = "???"
-		end
-		local value = math.floor(stat_data.fraction * 100 + 0.5)
-		content["qlc_stats_title_" .. tostring(ii)] = title
-		local max_sign = ""
-		if not stat_data.qlc_max_reached then
-			max_sign = potential_mode and "-" or "+"
-		end
-		content["qlc_stats_value_" .. tostring(ii)] = tostring(value) .. max_sign
-		if style and style["qlc_stats_value_" .. tostring(ii)] then
-			if stat_data.qlc_max_reached then
-				style["qlc_stats_value_" .. tostring(ii)].text_color = QLColor.modifier
-			else
-				style["qlc_stats_value_" .. tostring(ii)].text_color = QLColor.modifier_dark
+	if num_stats > 0 then
+		local min_value = math.floor(comparing_stats[1].fraction * 100 + 0.5)
+		local min_idx = 1
+		local all_same = false
+		for i = 1, num_stats do
+			local stat_data = comparing_stats[i]
+			local ii = base_stats_position_map[i]
+			local title = mod:localize("stat_" .. stat_data.display_name)
+			if title == "<" .. "stat_" .. stat_data.display_name .. ">" then
+				title = "???"
+			end
+			local value = math.floor(stat_data.fraction * 100 + 0.5)
+
+			if value < min_value then
+				min_value = value
+				min_idx = ii
+				all_same = false
+			elseif value ~= min_value then
+				all_same = false
+			end
+
+			content["qlc_stats_title_" .. tostring(ii)] = title
+			local max_sign = ""
+			if not stat_data.qlc_max_reached then
+				max_sign = potential_mode and "-" or "+"
+			end
+			content["qlc_stats_value_" .. tostring(ii)] = tostring(value) .. max_sign
+			if style and style["qlc_stats_value_" .. tostring(ii)] then
+				if stat_data.qlc_max_reached then
+					style["qlc_stats_value_" .. tostring(ii)].text_color = QLColor.modifier
+				else
+					style["qlc_stats_value_" .. tostring(ii)].text_color = QLColor.modifier_dark
+				end
 			end
 		end
+		if mod:get("opt_highlight_dump_stat") and  not all_same then
+			style["qlc_stats_title_" .. tostring(min_idx)].text_color = QLColor.highlight
+		end
 	end
-	content["qlc_baseLevel"] = tostring(item.baseItemLevel)
 end
 
 local function fill_gadget_trait(content, item)

@@ -26,6 +26,10 @@ return {
 		["zh-cn"] = "潜力值",
 		ru = "Возможное значение",
 	},
+	opt_highlight_dump_stat = {
+		en = "Highlight modifier dump stat",
+		["zh-cn"] = "高亮显示五维最低值",
+	},
 	opt_group_toggles = {
 		en = "Toggles",
 		["zh-cn"] = "开关",

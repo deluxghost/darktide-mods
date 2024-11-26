@@ -22,6 +22,11 @@ return {
 				},
 			},
 			{
+				setting_id = "opt_highlight_dump_stat",
+				type = "checkbox",
+				default_value = true,
+			},
+			{
 				setting_id = "opt_group_toggles",
 				type = "group",
 				sub_widgets = {
