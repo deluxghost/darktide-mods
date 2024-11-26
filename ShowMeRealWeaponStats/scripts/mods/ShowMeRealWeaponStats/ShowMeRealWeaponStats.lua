@@ -122,7 +122,8 @@ local function _apply_stat_bar_values(widget, item)
 		divider_2_style.offset[1] = bar_bg_style.offset[1] + max_value_bar_width
 		content["bar_breakdown_" .. ii] = bar_breakdown[ii]
 
-		if mod:get("show_real_max_breakdown") then
+		local range_opt = mod:get("substats_range_display_mode")
+		if range_opt == "0_80" or range_opt == "60_80" then
 			local advanced_weapon_stats_full = content.__smrws_weapon_stats_full._weapon_statistics
 			local bar_breakdown_full = advanced_weapon_stats_full.bar_breakdown
 			for _, breakdown in ipairs(content["bar_breakdown_" .. ii]) do
@@ -133,7 +134,19 @@ local function _apply_stat_bar_values(widget, item)
 				end
 			end
 		end
-		if mod:get("show_potential_breakdown") then
+		if range_opt == "60_80" then
+			local advanced_weapon_stats_dump = content.__smrws_weapon_stats_dump._weapon_statistics
+			local bar_breakdown_dump = advanced_weapon_stats_dump.bar_breakdown
+			for _, breakdown in ipairs(content["bar_breakdown_" .. ii]) do
+				for _, breakdown_dump in ipairs(bar_breakdown_dump[ii]) do
+					if same_breakdown(breakdown, breakdown_dump) then
+						breakdown.min = breakdown_dump.value
+					end
+				end
+			end
+		end
+
+		if mod:get("current_substats_display_mode") == "potential" then
 			local advanced_weapon_stats_potential = content.__smrws_weapon_stats_potential._weapon_statistics
 			local bar_breakdown_potential = advanced_weapon_stats_potential.bar_breakdown
 			for _, breakdown in ipairs(content["bar_breakdown_" .. ii]) do
@@ -192,6 +205,14 @@ mod:hook(package.loaded, "scripts/ui/view_content_blueprints/item_stats_blueprin
 		local weapon_stats_full = WeaponStats:new(item_full)
 		content.__smrws_item_full = item_full
 		content.__smrws_weapon_stats_full = weapon_stats_full
+
+		local item_dump = fake_item(item)
+		for _, stat in pairs(item_dump.base_stats) do
+			stat.value = mod:get("max_dump_modifier_score") / 100
+		end
+		local weapon_stats_dump = WeaponStats:new(item_dump)
+		content.__smrws_item_dump = item_dump
+		content.__smrws_weapon_stats_dump = weapon_stats_dump
 
 		local item_potential = fake_item(item)
 		local stats_name_map = {}
@@ -338,7 +359,7 @@ mod:hook(ViewElementWeaponInfo, "_get_stats_text", function(func, self, stat)
 	local suffix = (override_data.suffix or type_data.suffix) and Localize(override_data.suffix or type_data.suffix) or ""
 	local prefix_display_units = override_data.prefix_display_units or type_data.prefix_display_units or ""
 	local stat_text = ""
-	if mod:get("show_potential_breakdown") then
+	if mod:get("current_substats_display_mode") == "potential" then
 		local potential = self:_scale_value_by_type(stat.potential or stat.value, display_type)
 		local potential_text = self:_value_to_text(potential, is_signed)
 		stat_text = string.format(
