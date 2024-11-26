@@ -42,28 +42,30 @@ end
 
 HudElementWarpUnboundTimer.update = function(self, dt, t, ui_renderer, render_settings, input_service)
 	HudElementWarpUnboundTimer.super.update(self, dt, t, ui_renderer, render_settings, input_service)
+	local base_font_size = 30 * mod:get("hud_scale")
+
 	local player = Managers.player:local_player(1)
 	if not player or not player.player_unit then
 		self._widgets_by_name.timer_text.content.timer = ""
-		self._widgets_by_name.timer_text.style.timer.font_size = 30
+		self._widgets_by_name.timer_text.style.timer.font_size = base_font_size
 		return
 	end
 	local archetype = player:archetype_name()
 	if archetype ~= "psyker" then
 		self._widgets_by_name.timer_text.content.timer = ""
-		self._widgets_by_name.timer_text.style.timer.font_size = 30
+		self._widgets_by_name.timer_text.style.timer.font_size = base_font_size
 		return
 	end
 	local profile = player:profile()
 	if not profile or not profile.talents or not profile.talents.psyker_overcharge_stance_infinite_casting then
 		self._widgets_by_name.timer_text.content.timer = ""
-		self._widgets_by_name.timer_text.style.timer.font_size = 30
+		self._widgets_by_name.timer_text.style.timer.font_size = base_font_size
 		return
 	end
 	local buff_extensions = ScriptUnit.extension(player.player_unit, "buff_system")
 	if not buff_extensions then
 		self._widgets_by_name.timer_text.content.timer = ""
-		self._widgets_by_name.timer_text.style.timer.font_size = 30
+		self._widgets_by_name.timer_text.style.timer.font_size = base_font_size
 		return
 	end
 	local timer = 0
@@ -76,11 +78,12 @@ HudElementWarpUnboundTimer.update = function(self, dt, t, ui_renderer, render_se
 	end
 	if timer == 0 then
 		self._widgets_by_name.timer_text.content.timer = ""
-		self._widgets_by_name.timer_text.style.timer.font_size = 30
+		self._widgets_by_name.timer_text.style.timer.font_size = base_font_size
 		return
 	end
 	self._widgets_by_name.timer_text.content.timer = string.format("%.1f", timer)
-	self._widgets_by_name.timer_text.style.timer.font_size = 30 + (10 - math.min(10, timer)) * 2
+	local inc_font_size = base_font_size * 0.333
+	self._widgets_by_name.timer_text.style.timer.font_size = base_font_size + (inc_font_size - math.min(inc_font_size, timer)) * 2
 end
 
 return HudElementWarpUnboundTimer
