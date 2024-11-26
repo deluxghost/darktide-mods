@@ -122,34 +122,30 @@ local function _apply_stat_bar_values(widget, item)
 		divider_2_style.offset[1] = bar_bg_style.offset[1] + max_value_bar_width
 		content["bar_breakdown_" .. ii] = bar_breakdown[ii]
 
+		local advanced_weapon_stats_full = content.__smrws_weapon_stats_full._weapon_statistics
+		local bar_breakdown_full = advanced_weapon_stats_full.bar_breakdown
+		local advanced_weapon_stats_dump = content.__smrws_weapon_stats_dump._weapon_statistics
+		local bar_breakdown_dump = advanced_weapon_stats_dump.bar_breakdown
+		local advanced_weapon_stats_potential = content.__smrws_weapon_stats_potential._weapon_statistics
+		local bar_breakdown_potential = advanced_weapon_stats_potential.bar_breakdown
 		local range_opt = mod:get("substats_range_display_mode")
-		if range_opt == "0_80" or range_opt == "60_80" then
-			local advanced_weapon_stats_full = content.__smrws_weapon_stats_full._weapon_statistics
-			local bar_breakdown_full = advanced_weapon_stats_full.bar_breakdown
-			for _, breakdown in ipairs(content["bar_breakdown_" .. ii]) do
+
+		for _, breakdown in ipairs(content["bar_breakdown_" .. ii]) do
+			if range_opt == "0_80" or range_opt == "60_80" then
 				for _, breakdown_full in ipairs(bar_breakdown_full[ii]) do
 					if same_breakdown(breakdown, breakdown_full) then
 						breakdown.max = breakdown_full.value
 					end
 				end
 			end
-		end
-		if range_opt == "60_80" then
-			local advanced_weapon_stats_dump = content.__smrws_weapon_stats_dump._weapon_statistics
-			local bar_breakdown_dump = advanced_weapon_stats_dump.bar_breakdown
-			for _, breakdown in ipairs(content["bar_breakdown_" .. ii]) do
+			if range_opt == "60_80" then
 				for _, breakdown_dump in ipairs(bar_breakdown_dump[ii]) do
 					if same_breakdown(breakdown, breakdown_dump) then
 						breakdown.min = breakdown_dump.value
 					end
 				end
 			end
-		end
-
-		if mod:get("current_substats_display_mode") == "potential" then
-			local advanced_weapon_stats_potential = content.__smrws_weapon_stats_potential._weapon_statistics
-			local bar_breakdown_potential = advanced_weapon_stats_potential.bar_breakdown
-			for _, breakdown in ipairs(content["bar_breakdown_" .. ii]) do
+			if mod:get("current_substats_display_mode") == "potential" then
 				for _, breakdown_potential in ipairs(bar_breakdown_potential[ii]) do
 					if same_breakdown(breakdown, breakdown_potential) then
 						breakdown.potential = breakdown_potential.value
