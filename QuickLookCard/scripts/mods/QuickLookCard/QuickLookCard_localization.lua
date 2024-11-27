@@ -28,7 +28,7 @@ return {
 	},
 	opt_highlight_dump_stat = {
 		en = "Highlight modifier dump stat",
-		["zh-cn"] = "高亮显示五维最低值",
+		["zh-cn"] = "高亮显示五维短板",
 	},
 	opt_group_toggles = {
 		en = "Toggles",
