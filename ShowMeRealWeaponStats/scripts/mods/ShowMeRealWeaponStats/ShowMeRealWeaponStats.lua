@@ -58,7 +58,7 @@ local function same_breakdown(a, b)
 	return get_breakdown_compare_string(a) == get_breakdown_compare_string(b)
 end
 
-local function _apply_stat_bar_values(widget, item)
+local function _apply_stat_bar_values(widget, item, init)
 	local content = widget.content
 	local style = widget.style
 	local weapon_stats = WeaponStats:new(item)
@@ -76,6 +76,11 @@ local function _apply_stat_bar_values(widget, item)
 	local added_stats = Items.preview_stats_change(item, current_preview_expertise, comparing_stats)
 	local max_stats = Items.preview_stats_change(item, max_preview_expertise, comparing_stats)
 	local num_stats = #comparing_stats
+
+	local bar_breakdown_full_array = content.__smrws_bar_breakdown_full
+	local bar_breakdown_dump_array = content.__smrws_bar_breakdown_dump
+	local bar_breakdown_potential_array = content.__smrws_bar_breakdown_potential
+	local range_opt = mod:get("substats_range_display_mode")
 
 	for ii = 1, num_stats do
 		local stat_data = comparing_stats[ii]
@@ -122,35 +127,51 @@ local function _apply_stat_bar_values(widget, item)
 		divider_2_style.offset[1] = bar_bg_style.offset[1] + max_value_bar_width
 		content["bar_breakdown_" .. ii] = bar_breakdown[ii]
 
-		local advanced_weapon_stats_full = content.__smrws_weapon_stats_full._weapon_statistics
-		local bar_breakdown_full = advanced_weapon_stats_full.bar_breakdown
-		local advanced_weapon_stats_dump = content.__smrws_weapon_stats_dump._weapon_statistics
-		local bar_breakdown_dump = advanced_weapon_stats_dump.bar_breakdown
-		local advanced_weapon_stats_potential = content.__smrws_weapon_stats_potential._weapon_statistics
-		local bar_breakdown_potential = advanced_weapon_stats_potential.bar_breakdown
-		local range_opt = mod:get("substats_range_display_mode")
+		local bar_breakdown = content["bar_breakdown_" .. ii]
+		local bar_breakdown_full = bar_breakdown_full_array[ii]
+		local bar_breakdown_dump = bar_breakdown_dump_array[ii]
+		local bar_breakdown_potential = bar_breakdown_potential_array[ii]
+		local num_bar_breakdown = #bar_breakdown
+		local num_bar_breakdown_full = #bar_breakdown_full
+		local num_bar_breakdown_dump = #bar_breakdown_dump
+		local num_bar_breakdown_potential = #bar_breakdown_potential
 
-		for _, breakdown in ipairs(content["bar_breakdown_" .. ii]) do
-			if range_opt == "0_80" or range_opt == "60_80" then
-				for _, breakdown_full in ipairs(bar_breakdown_full[ii]) do
-					if same_breakdown(breakdown, breakdown_full) then
-						breakdown.max = breakdown_full.value
+		if init then
+			local new_bar_breakdown_full, new_bar_breakdown_dump, new_bar_breakdown_potential = {}, {}, {}
+			for i = 1, num_bar_breakdown do
+				for j = 1, num_bar_breakdown_full do
+					if same_breakdown(bar_breakdown[i], bar_breakdown_full[j]) then
+						new_bar_breakdown_full[i] = bar_breakdown_full[j]
+						break
 					end
 				end
+				for j = 1, num_bar_breakdown_dump do
+					if same_breakdown(bar_breakdown[i], bar_breakdown_dump[j]) then
+						new_bar_breakdown_dump[i] = bar_breakdown_dump[j]
+						break
+					end
+				end
+				for j = 1, num_bar_breakdown_potential do
+					if same_breakdown(bar_breakdown[i], bar_breakdown_potential[j]) then
+						new_bar_breakdown_potential[i] = bar_breakdown_potential[j]
+						break
+					end
+				end
+			end
+			bar_breakdown_full_array[ii] = new_bar_breakdown_full
+			bar_breakdown_dump_array[ii] = new_bar_breakdown_dump
+			bar_breakdown_potential_array[ii] = new_bar_breakdown_potential
+		end
+
+		for idx, breakdown in ipairs(content["bar_breakdown_" .. ii]) do
+			if range_opt == "0_80" or range_opt == "60_80" then
+				breakdown.max = bar_breakdown_full_array[ii][idx].value
 			end
 			if range_opt == "60_80" then
-				for _, breakdown_dump in ipairs(bar_breakdown_dump[ii]) do
-					if same_breakdown(breakdown, breakdown_dump) then
-						breakdown.min = breakdown_dump.value
-					end
-				end
+				breakdown.min = bar_breakdown_dump_array[ii][idx].value
 			end
 			if mod:get("current_substats_display_mode") == "potential" then
-				for _, breakdown_potential in ipairs(bar_breakdown_potential[ii]) do
-					if same_breakdown(breakdown, breakdown_potential) then
-						breakdown.potential = breakdown_potential.value
-					end
-				end
+				breakdown.potential = bar_breakdown_potential_array[ii][idx].value
 			end
 		end
 
@@ -199,16 +220,14 @@ mod:hook(package.loaded, "scripts/ui/view_content_blueprints/item_stats_blueprin
 			stat.value = mod:get("max_modifier_score") / 100
 		end
 		local weapon_stats_full = WeaponStats:new(item_full)
-		content.__smrws_item_full = item_full
-		content.__smrws_weapon_stats_full = weapon_stats_full
+		content.__smrws_bar_breakdown_full = weapon_stats_full._weapon_statistics.bar_breakdown
 
 		local item_dump = fake_item(item)
 		for _, stat in pairs(item_dump.base_stats) do
 			stat.value = mod:get("max_dump_modifier_score") / 100
 		end
 		local weapon_stats_dump = WeaponStats:new(item_dump)
-		content.__smrws_item_dump = item_dump
-		content.__smrws_weapon_stats_dump = weapon_stats_dump
+		content.__smrws_bar_breakdown_dump = weapon_stats_dump._weapon_statistics.bar_breakdown
 
 		local item_potential = fake_item(item)
 		local stats_name_map = {}
@@ -221,10 +240,9 @@ mod:hook(package.loaded, "scripts/ui/view_content_blueprints/item_stats_blueprin
 			end
 		end
 		local weapon_stats_potential = WeaponStats:new(item_potential)
-		content.__smrws_item_potential = item_potential
-		content.__smrws_weapon_stats_potential = weapon_stats_potential
+		content.__smrws_bar_breakdown_potential = weapon_stats_potential._weapon_statistics.bar_breakdown
 
-		_apply_stat_bar_values(widget, item)
+		_apply_stat_bar_values(widget, item, true)
 
 		content.bar_breakdown_6 = {
 			description = "loc_weapon_stats_display_base_rating_desc",
@@ -264,7 +282,7 @@ mod:hook(package.loaded, "scripts/ui/view_content_blueprints/item_stats_blueprin
 		local total_stats = content.element.show_base_rating and 6 or 5
 		local item = content.element.item
 
-		_apply_stat_bar_values(widget, item)
+		_apply_stat_bar_values(widget, item, false)
 
 		if not content.element.interactive then
 			return

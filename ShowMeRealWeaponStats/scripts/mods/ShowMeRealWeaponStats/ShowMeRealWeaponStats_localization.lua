@@ -56,11 +56,6 @@ return {
 		en = "[ Value @ 60%% | Value @ 80%% ]",
 		["zh-cn"] = "[ 60%% 数值 | 80%% 数值 ]",
 	},
-	-- show_potential_breakdown = {
-	-- 	en = "Show potential substats (gold numbers)",
-	-- 	["zh-cn"] = "显示潜力详细数据（金色数字）",
-	-- 	ru = "Показать потенциальные подробные характеристики",
-	-- },
 	group_weapon_card = {
 		en = "Weapon info card",
 		["zh-cn"] = "武器信息卡片",
