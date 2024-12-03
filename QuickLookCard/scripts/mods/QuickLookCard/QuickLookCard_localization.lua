@@ -274,7 +274,7 @@ return {
 	stat_loc_stats_display_heat_management_powersword_2h = {
 		en = "HTMG", -- Heat Management
 		["zh-cn"] = "热管", -- 热量管理
-		ja = "熱管", -- 熱量管理
+		ja = "熱制", -- 熱制御
 	},
 
 	-- Perks or blessings
