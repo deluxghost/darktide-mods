@@ -26,7 +26,7 @@ local definitions = {
 					drop_shadow = true,
 					text_vertical_alignment = "center",
 					text_horizontal_alignment = "center",
-					text_color = Color.ui_hud_overcharge_high(255, true),
+					text_color = Color.ui_hud_warp_charge_high(255, true),
 					offset = { 0, 0, 100 }
 				}
 			}
