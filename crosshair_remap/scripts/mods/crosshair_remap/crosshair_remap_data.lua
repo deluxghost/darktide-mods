@@ -78,6 +78,7 @@ return {
 			make_group("shotgun_kantrael_class", "shotgun", "ironsight", "flamer"),
 			make_group("assault_shotgun_class", "shotgun", "shotgun"),
 			make_group("grenadier_gauntlet_class", "dot", "projectile_drop"),
+			make_group("heavy_stubber_single_barrel_class", "assault", "cross"),
 			make_group("heavy_stubber_class", "spray_n_pray", "spray_n_pray"),
 			make_group("ripper_gun_class", "shotgun", "spray_n_pray"),
 			make_group("kickback_class", "shotgun", "shotgun"),

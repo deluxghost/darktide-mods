@@ -72,7 +72,10 @@ local keywords_to_class = {
 		p2 = "assault_shotgun_class"
 	},
 	grenadier_gauntlet = "grenadier_gauntlet_class",
-	heavystubber = "heavy_stubber_class",
+	heavystubber = {
+		p1 = "heavy_stubber_class",
+		p2 = "heavy_stubber_single_barrel_class",
+	},
 	rippergun = "ripper_gun_class",
 	shotgun_grenade = "thumpers_kickback_or_rumbler",
 }

@@ -212,6 +212,9 @@ local localization = {
 	grenadier_gauntlet_class = {
 		en = Localize("loc_weapon_family_ogryn_gauntlet_p1_m1"),
 	},
+	heavy_stubber_single_barrel_class = {
+		en = Localize("loc_weapon_family_ogryn_heavystubber_p2_m1"),
+	},
 	heavy_stubber_class = {
 		en = Localize("loc_weapon_family_ogryn_heavystubber_p1_m1"),
 	},
