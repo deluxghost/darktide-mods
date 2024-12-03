@@ -30,8 +30,8 @@ return {
 	},
 	opt_highlight_dump_stat = {
 		en = "Highlight modifier dump stat",
-		ja = "不要な補正値をハイライトする",
 		["zh-cn"] = "高亮显示五维短板",
+		ja = "不要な補正値をハイライトする",
 	},
 	opt_group_toggles = {
 		en = "Toggles",
