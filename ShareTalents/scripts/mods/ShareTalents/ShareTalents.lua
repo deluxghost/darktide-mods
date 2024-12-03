@@ -219,7 +219,7 @@ mod:hook_safe(TalentBuilderView, "_update_button_statuses", function(self, dt, t
 			if (self._is_readonly or not self._is_own_player) and not button_def.allow_readonly then
 				widget.content.hotspot.disabled = true
 			else
-				widget.content.hotspot.disabled = self:_handeling_popup_window() or self._input_blocked
+				widget.content.hotspot.disabled = self:_is_handling_popup_window() or self._input_blocked
 			end
 		end
 	end
