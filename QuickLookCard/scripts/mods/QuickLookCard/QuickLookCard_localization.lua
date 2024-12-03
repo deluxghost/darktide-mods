@@ -268,6 +268,10 @@ return {
 		ja = "歪耐", -- ワープ耐性
 		ru = "СВАР", -- Сопротивление варпу
 	},
+	stat_loc_stats_display_heat_management_powersword_2h = {
+		en = "HTMG", -- Heat Management
+		["zh-cn"] = "热管", -- 热量管理
+	},
 
 	-- Perks or blessings
 	-- Some of them may not available in game yet
