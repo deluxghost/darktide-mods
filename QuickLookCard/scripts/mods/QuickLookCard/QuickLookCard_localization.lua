@@ -29,7 +29,7 @@ return {
 		ru = "Возможное значение",
 	},
 	opt_highlight_dump_stat = {
-		en = "Highlight modifier dump stat",
+		en = "Highlight lowest modifier stat",
 		["zh-cn"] = "高亮显示五维短板",
 		ja = "最も値の低い補正値をハイライトする",
 	},
