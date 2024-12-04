@@ -19,16 +19,19 @@ return {
 	opt_modifier_mode_current = {
 		en = "Current value",
 		["zh-cn"] = "当前值",
+		ja = "現在の値",
 		ru = "Текущее значение",
 	},
 	opt_modifier_mode_potential = {
 		en = "Potential value",
 		["zh-cn"] = "潜力值",
+		ja = "最大値",
 		ru = "Возможное значение",
 	},
 	opt_highlight_dump_stat = {
 		en = "Highlight modifier dump stat",
 		["zh-cn"] = "高亮显示五维短板",
+		ja = "最も値の低い補正値をハイライトする",
 	},
 	opt_group_toggles = {
 		en = "Toggles",
@@ -271,6 +274,7 @@ return {
 	stat_loc_stats_display_heat_management_powersword_2h = {
 		en = "HTMG", -- Heat Management
 		["zh-cn"] = "热管", -- 热量管理
+		ja = "熱制", -- 熱制御
 	},
 
 	-- Perks or blessings
