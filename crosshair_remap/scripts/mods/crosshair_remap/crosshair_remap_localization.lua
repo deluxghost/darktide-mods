@@ -127,6 +127,10 @@ local localization = {
 		en = "Melee Weapons and Actions",
 		["zh-cn"] = "近战武器和动作",
 	},
+	ability_class = {
+		en = "Combat Ability in Progress",
+		["zh-cn"] = "主动技能进行时",
+	},
 	psyker_smite_class = {
 		en = Localize("loc_class_psyker_title") .. " " .. Localize("loc_ability_psyker_smite"),
 		["zh-cn"] = Localize("loc_class_psyker_title") .. Localize("loc_ability_psyker_smite"),

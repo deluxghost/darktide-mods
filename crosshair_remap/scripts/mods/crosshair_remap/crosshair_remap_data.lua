@@ -52,6 +52,7 @@ return {
 		widgets = {
 			make_dropdown("none_class", "none"),
 			make_dropdown("melee_class", "dot"),
+			make_dropdown("ability_class", "dot"),
 			make_dropdown("psyker_smite_class", "charge_up"),
 			make_dropdown("psyker_throwing_knives_class", "dot"),
 			make_group("psyker_chain_lightning_class", "dot", "charge_up"),

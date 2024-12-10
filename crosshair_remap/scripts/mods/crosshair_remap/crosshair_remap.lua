@@ -213,6 +213,10 @@ mod:hook_origin("HudElementCrosshair", "_get_current_crosshair_type", function(s
 					goto unchanged
 				end
 
+				if weapon_template_name == "unarmed" or weapon_template_name == "zealot_relic" then
+					return mod.settings["ability_class"]
+				end
+
 				if weapon_template_name == "psyker_smite" then
 					return mod.settings["psyker_smite_class"]
 				elseif weapon_template_name == "psyker_throwing_knives" then
