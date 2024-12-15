@@ -418,6 +418,7 @@ SoloPlayModView._regen_havoc = function(self)
 		mod:set(view_settings.dropdown_setting_keys[setting.id], havoc[setting.data])
 		self:_recreate_dropdown(setting.id)
 	end
+	self:_recreate_dropdown("havoc_mission_giver")
 	self:_apply_modifiers(havoc.modifiers)
 end
 
