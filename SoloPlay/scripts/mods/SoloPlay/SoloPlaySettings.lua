@@ -1,6 +1,7 @@
 local mod = get_mod("SoloPlay")
 local MissionTemplates = require("scripts/settings/mission/mission_templates")
 local CircumstanceTemplates = require("scripts/settings/circumstance/circumstance_templates")
+local HavocCircumstanceTemplate = require("scripts/settings/circumstance/templates/havoc_circumstance_template")
 local MissionObjectiveTemplates = require("scripts/settings/mission_objective/mission_objective_templates")
 local MissionGiverVoSettings = require("scripts/settings/dialogue/mission_giver_vo_settings")
 local DialogueSpeakerVoiceSettings = require("scripts/settings/dialogue/dialogue_speaker_voice_settings")
@@ -14,6 +15,7 @@ local objectives_denylist = {
 }
 local circumstance_denylist = {
 	"dummy",
+	"mutator_havoc_duplicating_enemies",
 }
 local circumstance_prefer_list = {
 	loc_circumstance_hunting_grounds_title = "hunting_grounds_01",
@@ -121,6 +123,15 @@ for index, side_mission_loc in ipairs(side_missions_loc_array) do
 	settings.order.side_missions[index] = side_mission_loc.data
 end
 
+-- pre-process havoc circumstances
+local havoc_circumstances_loc = {}
+for circumstance_name in pairs(HavocCircumstanceTemplate) do
+	local loc_data = HavocSettings.ui_settings.circumstances[circumstance_name]
+	if loc_data then
+		havoc_circumstances_loc[circumstance_name] = loc_data.title
+	end
+end
+
 -- circumstances
 local circumstance_property_map = {}
 local circumstance_reverse_map = {}
@@ -140,14 +151,18 @@ for name, circumstance in pairs(CircumstanceTemplates) do
 				break
 			end
 		end
+		local display_name = circumstance.ui.display_name
+		if havoc_circumstances_loc[name] then
+			display_name = havoc_circumstances_loc[name]
+		end
 		if not deny and not format_key then
-			local display_name = circumstance.ui.display_name
 			circumstance_reverse_map[display_name] = circumstance_reverse_map[display_name] or {}
 			table.insert(circumstance_reverse_map[display_name], name)
 		end
 		circumstance_property_map[name] = {
 			deny = deny,
 			format_key = format_key,
+			display_name = display_name,
 		}
 	end
 end
@@ -156,7 +171,7 @@ for name, circumstance in pairs(CircumstanceTemplates) do
 	local property = circumstance_property_map[name]
 	if property then
 		if not property.deny then
-			local display_name = circumstance.ui.display_name
+			local display_name = property.display_name
 			local format_key = property.format_key
 			local no_loc = false
 			local names = circumstance_reverse_map[display_name] or {}
@@ -165,9 +180,12 @@ for name, circumstance in pairs(CircumstanceTemplates) do
 					no_loc = true
 				end
 			end
-			local display = Localize(circumstance.ui.display_name)
-			if no_loc or string.starts_with(display, "<") then
-				display = name
+			local display = display_name
+			if string.starts_with(display, "loc_") then
+				display = Localize(display_name)
+				if no_loc or string.starts_with(display, "<") then
+					display = name
+				end
 			end
 			if format_key then
 				display = mod:localize(format_key, display)
@@ -257,6 +275,34 @@ for theme, theme_circumstances in pairs(HavocSettings.circumstances_per_theme) d
 	for _, theme_circumstance in ipairs(theme_circumstances) do
 		settings.lookup.theme_of_circumstances[theme_circumstance] = theme
 	end
+end
+
+-- unused havoc circumstances
+local used_havoc_circumstances = {}
+for _, circumstance in ipairs(settings.order.havoc_circumstances) do
+	used_havoc_circumstances[circumstance] = true
+end
+for _, circumstance in ipairs(settings.order.havoc_theme_circumstances) do
+	used_havoc_circumstances[circumstance] = true
+end
+for _, circumstance in ipairs(settings.order.havoc_difficulty_circumstances) do
+	used_havoc_circumstances[circumstance] = true
+end
+local unused_havoc_circumstances_array = {}
+for circumstance_name in pairs(HavocCircumstanceTemplate) do
+	if not used_havoc_circumstances[circumstance_name] then
+		local loc = settings.loc.circumstances[circumstance_name]
+		if loc then
+			unused_havoc_circumstances_array[#unused_havoc_circumstances_array+1] = {
+				data = circumstance_name,
+				localized = loc,
+			}
+		end
+	end
+end
+table.sort(unused_havoc_circumstances_array, mod.sort_function_localized)
+for _, circumstance_loc in ipairs(unused_havoc_circumstances_array) do
+	settings.order.havoc_circumstances[#settings.order.havoc_circumstances+1] = circumstance_loc.data
 end
 
 return settings
