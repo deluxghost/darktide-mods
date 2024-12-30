@@ -11,7 +11,7 @@ local bar_width = 150
 local function fake_item(item)
 	local clone = table.clone(item)
 	setmetatable(clone, {
-		__index = function(t, field_name)
+		__index = function (t, field_name)
 			if field_name == "gear_id" then
 				return rawget(clone, "__gear_id")
 			end
@@ -193,13 +193,13 @@ local function _apply_stat_bar_values(widget, item, init)
 	end
 end
 
-mod:hook(package.loaded, "scripts/ui/view_content_blueprints/item_stats_blueprints", function(generate_blueprints_function, grid_size, optional_item)
+mod:hook(package.loaded, "scripts/ui/view_content_blueprints/item_stats_blueprints", function (generate_blueprints_function, grid_size, optional_item)
 	local blueprints = generate_blueprints_function(grid_size, optional_item)
 	if not blueprints.weapon_stats or not blueprints.weapon_stats.init or not blueprints.weapon_stats.update then
 		return blueprints
 	end
 
-	blueprints.weapon_stats.init = function(parent, widget, element, callback_name)
+	blueprints.weapon_stats.init = function (parent, widget, element, callback_name)
 		local content = widget.content
 		local style = widget.style
 
@@ -276,7 +276,7 @@ mod:hook(package.loaded, "scripts/ui/view_content_blueprints/item_stats_blueprin
 		end
 	end
 
-	blueprints.weapon_stats.update = function(parent, widget, input_service, dt, t, ui_renderer)
+	blueprints.weapon_stats.update = function (parent, widget, input_service, dt, t, ui_renderer)
 		local content = widget.content
 		local style = widget.style
 		local total_stats = content.element.show_base_rating and 6 or 5
@@ -345,7 +345,7 @@ mod:hook(package.loaded, "scripts/ui/view_content_blueprints/item_stats_blueprin
 	return blueprints
 end)
 
-mod:hook(ViewElementWeaponInfo, "_get_stats_text", function(func, self, stat)
+mod:hook(ViewElementWeaponInfo, "_get_stats_text", function (func, self, stat)
 	local override_data = stat.override_data or {}
 	local type_data = stat.type_data
 	local display_type = override_data.display_type or type_data.display_type

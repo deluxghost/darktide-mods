@@ -31,7 +31,7 @@ local function hex_to_dec(hex)
 	return bigint.unserialize(big, "string")
 end
 
-mod.on_all_mods_loaded = function()
+mod.on_all_mods_loaded = function ()
 	if mod:get("__open_steam_profile_retired") then
 		return
 	end
@@ -42,8 +42,8 @@ mod.on_all_mods_loaded = function()
 	end
 end
 
-mod:hook_safe("SocialMenuRosterView", "init", function(self, settings, context)
-	self.__oppmod_cb_show_steam_profile = function(self, player_info)
+mod:hook_safe("SocialMenuRosterView", "init", function (self, settings, context)
+	self.__oppmod_cb_show_steam_profile = function (self, player_info)
 		self:_close_popup_menu()
 
 		local steam_id = hex_to_dec(player_info:platform_user_id())
@@ -56,7 +56,7 @@ mod:hook_safe("SocialMenuRosterView", "init", function(self, settings, context)
 			end
 		end
 	end
-	self.__oppmod_cb_show_xbox_profile = function(self, player_info)
+	self.__oppmod_cb_show_xbox_profile = function (self, player_info)
 		self:_close_popup_menu()
 
 		local xuid = hex_to_dec(player_info:platform_user_id())
@@ -65,7 +65,7 @@ mod:hook_safe("SocialMenuRosterView", "init", function(self, settings, context)
 		end
 		Managers.backend:url_request(
 			"https://xbox-profile-api.deluxghost.me/profiles/" .. xuid
-		):next(function(data)
+		):next(function (data)
 			if data and data.body and data.body.gamertag then
 				local profile = "https://www.xbox.com/play/user/" .. data.body.gamertag
 				if HAS_STEAM and mod:get("use_steam_overlay") then
@@ -74,15 +74,15 @@ mod:hook_safe("SocialMenuRosterView", "init", function(self, settings, context)
 					Application.open_url_in_browser(profile)
 				end
 			end
-		end):catch(function(e)
+		end):catch(function (e)
 			mod:dump(e, "opp_fetch_profile_err", 3)
 			mod:notify(mod:localize("msg_get_profile_err"))
 		end)
 	end
 end)
 
-mod:hook_require("scripts/ui/view_elements/view_element_player_social_popup/view_element_player_social_popup_content_list", function(instance)
-	mod:hook(instance, "from_player_info", function(func, parent, player_info)
+mod:hook_require("scripts/ui/view_elements/view_element_player_social_popup/view_element_player_social_popup_content_list", function (instance)
+	mod:hook(instance, "from_player_info", function (func, parent, player_info)
 		local menu_items, num_menu_items = func(parent, player_info)
 		local social_service = Managers.data_service.social
 		local is_xbox = social_service:platform() == SocialConstants.Platforms.xbox

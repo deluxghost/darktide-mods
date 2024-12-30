@@ -10,7 +10,7 @@ function mod.on_enabled()
 	cache.opt_selected_b = mod:get("opt_selected_b")
 end
 
-mod.on_setting_changed = function(setting_id)
+mod.on_setting_changed = function (setting_id)
 	cache[setting_id] = mod:get(setting_id)
 end
 
@@ -30,7 +30,7 @@ local function get_selected_color()
 end
 
 local function hook_pass(pass, key, darken)
-	pass.visibility_function = function(content, style)
+	pass.visibility_function = function (content, style)
 		local color = DEFAULT_SELECTED_COLOR
 		if mod:is_enabled() then
 			color = get_selected_color()
@@ -41,7 +41,7 @@ local function hook_pass(pass, key, darken)
 	end
 end
 
-mod:hook_require("scripts/ui/pass_templates/item_pass_templates", function(templates)
+mod:hook_require("scripts/ui/pass_templates/item_pass_templates", function (templates)
 	for _, template in pairs(templates) do
 		if template and type(template) == "table" then
 			for _, pass in ipairs(template) do

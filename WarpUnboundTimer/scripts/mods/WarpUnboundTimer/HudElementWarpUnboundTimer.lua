@@ -40,7 +40,7 @@ function HudElementWarpUnboundTimer:init(parent, draw_layer, start_scale)
   	HudElementWarpUnboundTimer.super.init(self, parent, draw_layer, start_scale, definitions)
 end
 
-HudElementWarpUnboundTimer.update = function(self, dt, t, ui_renderer, render_settings, input_service)
+HudElementWarpUnboundTimer.update = function (self, dt, t, ui_renderer, render_settings, input_service)
 	HudElementWarpUnboundTimer.super.update(self, dt, t, ui_renderer, render_settings, input_service)
 	local base_font_size = 30 * mod:get("hud_scale")
 

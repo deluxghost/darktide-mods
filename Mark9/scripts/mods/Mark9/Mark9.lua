@@ -1,11 +1,11 @@
 local mod = get_mod("Mark9")
 local LocalizationManager = require("scripts/managers/localization/localization_manager")
 
-mod.on_enabled = function()
+mod.on_enabled = function ()
 	table.clear(Managers.localization._string_cache)
 end
 
-mod.on_disabled = function()
+mod.on_disabled = function ()
 	table.clear(Managers.localization._string_cache)
 end
 
@@ -40,7 +40,7 @@ local function try_once(text, start)
 	return text, false, 1
 end
 
-mod:hook(LocalizationManager, "_lookup", function(func, self, key)
+mod:hook(LocalizationManager, "_lookup", function (func, self, key)
 	local ret = func(self, key)
 	if not key then
 		return ret

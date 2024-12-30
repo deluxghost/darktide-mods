@@ -2,12 +2,12 @@ local mod = get_mod("ColorViewer")
 local UISoundEvents = require("scripts/settings/ui/ui_sound_events")
 local WwiseGameSyncSettings = require("scripts/settings/wwise_game_sync/wwise_game_sync_settings")
 
-mod.argb_to_hex = function(color)
+mod.argb_to_hex = function (color)
 	local a, r, g, b = color[1], color[2], color[3], color[4]
 	return string.format("#%02X%02X%02X%02X", a, r, g, b)
 end
 
-mod.argb_to_ahsl = function(color)
+mod.argb_to_ahsl = function (color)
 	local a, r, g, b = color[1], color[2], color[3], color[4]
 	r, g, b = r / 255, g / 255, b / 255
 
@@ -41,7 +41,7 @@ mod.argb_to_ahsl = function(color)
 	return { a or 255, h, s, l }
 end
 
-mod.sort_comparator = function(definitions)
+mod.sort_comparator = function (definitions)
 	return function (a_item, b_item)
 		if a_item and b_item then
 			for i = 1, #definitions, 2 do
@@ -146,7 +146,7 @@ mod:add_require_path("ColorViewer/scripts/mods/ColorViewer/color_viewer_view/col
 mod:register_view({
 	view_name = "color_viewer_view",
 	view_settings = {
-		init_view_function = function(ingame_ui_context)
+		init_view_function = function (ingame_ui_context)
 			return true
 		end,
 		state_bound = true,
@@ -178,7 +178,7 @@ mod:register_view({
 	},
 })
 
-mod:command("colorview", mod:localize("cmd_open_color_viewer"), function()
+mod:command("colorview", mod:localize("cmd_open_color_viewer"), function ()
 	if not Managers.ui:view_instance("color_viewer_view") then
 		Managers.ui:open_view("color_viewer_view", nil, nil, nil, nil, {})
 	end

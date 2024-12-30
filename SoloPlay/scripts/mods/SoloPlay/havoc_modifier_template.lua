@@ -5,7 +5,7 @@ local BuffTemplates = require("scripts/settings/buff/buff_templates")
 local BuffSettings = require("scripts/settings/buff/buff_settings")
 local buff_stat_buffs = BuffSettings.stat_buffs
 
-mod.sort_function_localized = function(a, b)
+mod.sort_function_localized = function (a, b)
 	return a.localized < b.localized
 end
 

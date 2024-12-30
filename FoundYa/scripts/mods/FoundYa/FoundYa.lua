@@ -54,13 +54,13 @@ local all_categories = {
 	"unknown", "supply", "chest", "button", "station", "luggable", "vendor", "book", "material", "penance",
 }
 
-mod.load_package = function(self, package_name)
+mod.load_package = function (self, package_name)
 	if not Managers.package:is_loading(package_name) and not Managers.package:has_loaded(package_name) then
 		Managers.package:load(package_name, "FoundYa", nil, true)
 	end
 end
 
-mod.on_all_mods_loaded = function()
+mod.on_all_mods_loaded = function ()
 	mod:load_package("packages/ui/views/options_view/options_view")
 	mod:load_package("packages/ui/views/inventory_background_view/inventory_background_view")
 end
@@ -116,7 +116,7 @@ local function update_settings()
 	end
 end
 
-mod.on_enabled = function()
+mod.on_enabled = function ()
 	local legacy_max_distance = mod:get("max_distance")
 	if legacy_max_distance then
 		for _, category in ipairs(all_categories) do
@@ -127,11 +127,11 @@ mod.on_enabled = function()
 	update_settings()
 end
 
-mod.on_setting_changed = function(setting_id)
+mod.on_setting_changed = function (setting_id)
 	update_settings()
 end
 
-mod.on_disabled = function()
+mod.on_disabled = function ()
 	HUDElementInteractionSettings.max_spawn_distance_sq = 1000
 	InteractionTemplates.chest.interaction_icon = DEFAULT_COMMON_ICON
 	InteractionTemplates.luggable.interaction_icon = DEFAULT_COMMON_ICON
@@ -210,7 +210,7 @@ local function post_update_marker(widget, marker, elem)
 	end
 end
 
-mod:hook(WorldMarkerTemplateInteraction, "on_enter", function(func, widget, marker, self)
+mod:hook(WorldMarkerTemplateInteraction, "on_enter", function (func, widget, marker, self)
 	local pickup_type = get_pickup_type(marker)
 	marker.__foundya_pickup_type = pickup_type
 	local marker_category = get_interaction_category(marker, pickup_type)
@@ -222,20 +222,20 @@ mod:hook(WorldMarkerTemplateInteraction, "on_enter", function(func, widget, mark
 end)
 
 
-mod:hook(WorldMarkerTemplateInteraction, "update_function", function(func, parent, ui_renderer, widget, marker, self, dt, t)
+mod:hook(WorldMarkerTemplateInteraction, "update_function", function (func, parent, ui_renderer, widget, marker, self, dt, t)
 	update_marker(widget, marker, self)
 	func(parent, ui_renderer, widget, marker, self, dt, t)
 	post_update_marker(widget, marker, self)
 end)
 
-mod:hook(HudElementWorldMarkers, "_template_by_type", function(func, self, marker_type, clone)
+mod:hook(HudElementWorldMarkers, "_template_by_type", function (func, self, marker_type, clone)
 	if marker_type == "interaction" then
 		return table.clone(self._marker_templates[marker_type])
 	end
 	return func(self, marker_type, clone)
 end)
 
-mod:hook(HUDElementSmartTagging, "_is_marker_valid_for_tagging", function(func, self, player_unit, marker, distance)
+mod:hook(HUDElementSmartTagging, "_is_marker_valid_for_tagging", function (func, self, player_unit, marker, distance)
 	local template = marker.template
 	if template and template.name == "interaction" then
 		local max_tag_distance = mod:get("max_tag_distance") or 15
@@ -246,7 +246,7 @@ mod:hook(HUDElementSmartTagging, "_is_marker_valid_for_tagging", function(func, 
 	return func(self, player_unit, marker, distance)
 end)
 
-mod:hook(BaseInteraction, "_interactor_disabled", function(func, self, interactor_unit)
+mod:hook(BaseInteraction, "_interactor_disabled", function (func, self, interactor_unit)
 	local unit_data_extension = ScriptUnit.extension(interactor_unit, "unit_data_system")
 	if not unit_data_extension then
 		return false, false

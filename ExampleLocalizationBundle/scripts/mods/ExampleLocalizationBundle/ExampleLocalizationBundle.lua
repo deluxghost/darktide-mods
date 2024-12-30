@@ -10,7 +10,7 @@ mod.localization_templates = {
             "loc_example_1",
         },
         -- "locales" field is omitted, this fix will apply to all locales
-        handle_func = function(locale, value)
+        handle_func = function (locale, value)
             -- we only change parts of the official translation,
             -- game updates would be unlikely to break the fix.
             return string.gsub(value, "wrong", "correct")
@@ -24,7 +24,7 @@ mod.localization_templates = {
         locales = {
             "zh-cn",
         },
-        handle_func = function(locale, value)
+        handle_func = function (locale, value)
             -- we replace the entire translation, sometimes it's necessary,
             -- but it needs to be reviewed between game updates.
             return "this_is_the_new_translation"

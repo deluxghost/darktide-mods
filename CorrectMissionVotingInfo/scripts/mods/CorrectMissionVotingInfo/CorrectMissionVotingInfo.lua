@@ -5,13 +5,13 @@ local UIFontSettings = require("scripts/managers/ui/ui_font_settings")
 local MissionVotingView = require("scripts/ui/views/mission_voting_view/mission_voting_view")
 local MissionDetailsBlueprints = require("scripts/ui/views/mission_voting_view/mission_voting_view_blueprints")
 
-mod:hook_safe(MissionVotingView, "_populate_quickplay_data", function(self)
+mod:hook_safe(MissionVotingView, "_populate_quickplay_data", function (self)
 	local auric = string.ends_with(self._backend_mission_id, "|auric")
 	self._widgets_by_name.title_bar_bottom.visible = auric
 	self._widgets_by_name.title_bar_bottom.content.text = auric and Localize("loc_mission_board_type_auric") or ""
 end)
 
-mod:hook_safe(MissionVotingView, "_set_mission_data", function(self, mission_data)
+mod:hook_safe(MissionVotingView, "_set_mission_data", function (self, mission_data)
 	local auric = mission_data.category == "auric"
 	local special = mission_data.category == "narrative"
 	local has_flash_mission = not not mission_data.flags.flash
@@ -30,7 +30,7 @@ mod:hook_safe(MissionVotingView, "_set_mission_data", function(self, mission_dat
 	self._widgets_by_name.title_bar_bottom.content.text = text
 end)
 
-mod:hook_safe(MissionVotingView, "_set_rewards_info", function(self, mission_data)
+mod:hook_safe(MissionVotingView, "_set_rewards_info", function (self, mission_data)
 	local main_mission_rewards_widget = self._widgets_by_name.reward_main_mission
 	local rewards_string = " %d\t %d"
 	local total_xp = math.floor(mission_data.xp)
@@ -47,13 +47,13 @@ mod:hook_safe(MissionVotingView, "_set_rewards_info", function(self, mission_dat
 	main_mission_rewards_widget.content.reward_main_mission_text = string.format(rewards_string, total_credits, total_xp)
 end)
 
-mod:hook_require("scripts/ui/views/mission_voting_view/mission_voting_view_styles", function(MissionVotingViewStyles)
+mod:hook_require("scripts/ui/views/mission_voting_view/mission_voting_view_styles", function (MissionVotingViewStyles)
 	MissionVotingViewStyles.blueprints.circumstance.rewards_text = table.clone(UIFontSettings.mission_detail_sub_header)
 	MissionVotingViewStyles.blueprints.circumstance.rewards_text.text_horizontal_alignment = "left"
 	MissionVotingViewStyles.blueprints.circumstance.rewards_text.text_color = Color.terminal_text_header(255, true)
 end)
 
-mod:hook_require("scripts/ui/views/mission_voting_view/mission_voting_view_blueprints", function(blueprints)
+mod:hook_require("scripts/ui/views/mission_voting_view/mission_voting_view_blueprints", function (blueprints)
 	local pass_template = blueprints.templates.circumstance.pass_template
 	local exist = false
 	for _, pass in ipairs(pass_template) do
@@ -72,7 +72,7 @@ mod:hook_require("scripts/ui/views/mission_voting_view/mission_voting_view_bluep
 	end
 end)
 
-mod:hook(MissionDetailsBlueprints.utility_functions, "prepare_details_data", function(func, mission_data, include_mission_header)
+mod:hook(MissionDetailsBlueprints.utility_functions, "prepare_details_data", function (func, mission_data, include_mission_header)
 	local ret = func(mission_data, include_mission_header)
 	if not ret then
 		return ret
@@ -95,7 +95,7 @@ local function calculate_text_size(widget, text_and_style_id, ui_renderer)
 	return UIRenderer.text_size(ui_renderer, text, text_style.font_type, text_style.font_size, size, text_options)
 end
 
-mod:hook_safe(MissionDetailsBlueprints.templates.circumstance, "init", function(widget, data, ui_renderer)
+mod:hook_safe(MissionDetailsBlueprints.templates.circumstance, "init", function (widget, data, ui_renderer)
 	local rewards = data.extraRewards and data.extraRewards.circumstance
 	if rewards then
 		local has_xp_reward = rewards.xp and true or false

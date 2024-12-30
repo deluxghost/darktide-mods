@@ -156,7 +156,7 @@ local function fill_items_extra(view, layout_field)
 	end
 end
 
-mod.on_enabled = function()
+mod.on_enabled = function ()
 	if mod:get("custom_sort_category_group_by_name") then
 		mod:set("custom_sort_category_mark", true)
 		mod:set("custom_sort_category_group_by_name", nil)
@@ -171,15 +171,15 @@ local function sort_grid_layout(func, self, sort_function)
 	func(self, sort_function)
 end
 
-mod:hook(InventoryWeaponsView, "_sort_grid_layout", function(func, self, sort_function)
+mod:hook(InventoryWeaponsView, "_sort_grid_layout", function (func, self, sort_function)
 	sort_grid_layout(func, self, sort_function)
 end)
 
-mod:hook(CraftingMechanicusModifyView, "_sort_grid_layout", function(func, self, sort_function)
+mod:hook(CraftingMechanicusModifyView, "_sort_grid_layout", function (func, self, sort_function)
 	sort_grid_layout(func, self, sort_function)
 end)
 
-mod:hook(CraftingMechanicusBarterItemsView, "_sort_grid_layout", function(func, self, sort_function)
+mod:hook(CraftingMechanicusBarterItemsView, "_sort_grid_layout", function (func, self, sort_function)
 	sort_grid_layout(func, self, sort_function)
 end)
 
@@ -224,22 +224,22 @@ local function setup_sort_options(self, view_type)
 	self._item_grid:setup_sort_button(self._sort_options, sort_callback)
 end
 
-mod:hook(InventoryWeaponsView, "_setup_sort_options", function(func, self)
+mod:hook(InventoryWeaponsView, "_setup_sort_options", function (func, self)
 	setup_sort_options(self, "inventory")
 end)
 
-mod:hook(CraftingMechanicusModifyView, "_setup_sort_options", function(func, self)
+mod:hook(CraftingMechanicusModifyView, "_setup_sort_options", function (func, self)
 	setup_sort_options(self, "inventory")
 end)
 
-mod:hook(CraftingMechanicusBarterItemsView, "_setup_sort_options", function(func, self)
+mod:hook(CraftingMechanicusBarterItemsView, "_setup_sort_options", function (func, self)
 	setup_sort_options(self, "inventory")
 end)
 
-mod:hook(CreditsVendorView, "_setup_sort_options", function(func, self)
+mod:hook(CreditsVendorView, "_setup_sort_options", function (func, self)
 	setup_sort_options(self, "store")
 end)
 
-mod:hook(MarksVendorView, "_setup_sort_options", function(func, self)
+mod:hook(MarksVendorView, "_setup_sort_options", function (func, self)
 	setup_sort_options(self, "store")
 end)

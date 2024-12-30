@@ -40,7 +40,7 @@ function HudElementSpeed:init(parent, draw_layer, start_scale)
 	HudElementSpeed.super.init(self, parent, draw_layer, start_scale, definitions)
 end
 
-HudElementSpeed.update = function(self, dt, t, ui_renderer, render_settings, input_service)
+HudElementSpeed.update = function (self, dt, t, ui_renderer, render_settings, input_service)
 	HudElementSpeed.super.update(self, dt, t, ui_renderer, render_settings, input_service)
 	local player = Managers.player:local_player(1)
 	if player and player:unit_is_alive() then

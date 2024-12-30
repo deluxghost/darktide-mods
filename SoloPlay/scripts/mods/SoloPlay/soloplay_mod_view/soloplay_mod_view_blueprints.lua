@@ -26,7 +26,7 @@ modifier_slider_template[#modifier_slider_template+1] = {
 	},
 }
 
-local slider_init_function = function(parent, widget, entry, callback_name)
+local slider_init_function = function (parent, widget, entry, callback_name)
 	local view = parent
 	if parent.__class_name == "ViewElementGrid" then
 		view = parent._parent
@@ -65,7 +65,7 @@ local slider_init_function = function(parent, widget, entry, callback_name)
 	end
 end
 
-local slider_update_function = function(parent, widget, input_service, dt, t)
+local slider_update_function = function (parent, widget, input_service, dt, t)
 	local view = parent
 	if parent.__class_name == "ViewElementGrid" then
 		view = parent._parent
@@ -174,7 +174,7 @@ local slider_update_function = function(parent, widget, input_service, dt, t)
 	return pass_input
 end
 
-local havoc_badge_pass_function = function(rank)
+local havoc_badge_pass_function = function (rank)
 	local rank_badges = view_settings.havoc_rank_badges
 	local letter_size = {
 		40.95,
@@ -258,7 +258,7 @@ local blueprints = {
 		}
 	},
 	settings_dropdown = {
-		update = function(parent, widget, input_service, dt, t)
+		update = function (parent, widget, input_service, dt, t)
 			local content = widget.content
 			local entry = content.entry
 

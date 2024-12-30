@@ -16,11 +16,11 @@ mod:io_dofile("SoloPlay/scripts/mods/SoloPlay/havoc")
 local HOST_TYPES = MatchmakingConstants.HOST_TYPES
 local DISTRIBUTION_TYPES = PickupSettings.distribution_types
 
-mod.on_all_mods_loaded = function()
+mod.on_all_mods_loaded = function ()
 	mod.load_package("packages/ui/views/end_player_view/end_player_view")
 end
 
-mod.is_soloplay = function()
+mod.is_soloplay = function ()
 	if not Managers.state.game_mode then
 		return false
 	end
@@ -35,13 +35,13 @@ mod.is_soloplay = function()
 	return host_type == HOST_TYPES.singleplay
 end
 
-mod.load_package = function(package_name)
+mod.load_package = function (package_name)
 	if not Managers.package:is_loading(package_name) and not Managers.package:has_loaded(package_name) then
 		Managers.package:load(package_name, "solo_play", nil, true)
 	end
 end
 
-mod.gen_normal_mission_context = function()
+mod.gen_normal_mission_context = function ()
 	local mission_name = mod:get("choose_mission")
 	local resistance = DangerSettings.by_index[mod:get("choose_difficulty")].expected_resistance
 	local mission_context = {
@@ -65,7 +65,7 @@ mod.gen_normal_mission_context = function()
 	return mission_context
 end
 
-mod.gen_havoc_mission_context = function()
+mod.gen_havoc_mission_context = function ()
 	local rank = mod:get("havoc_difficulty")
 	local challenge, resistance
 	if rank <= 10 then
@@ -130,7 +130,7 @@ mod.gen_havoc_mission_context = function()
 	return mission_context
 end
 
-mod:hook_require("scripts/ui/views/system_view/system_view_content_list", function(instance)
+mod:hook_require("scripts/ui/views/system_view/system_view_content_list", function (instance)
 	local leave_mission_occur = 1
 	for _, item in ipairs(instance.default) do
 		if item.text == "loc_exit_to_main_menu_display_name" then
@@ -208,7 +208,7 @@ mod:hook_require("scripts/ui/views/system_view/system_view_content_list", functi
 end)
 
 -- HACK: allow starting game without modifiers
-mod:hook(HavocManager, "_initialize_modifiers", function(func, self, havoc_data)
+mod:hook(HavocManager, "_initialize_modifiers", function (func, self, havoc_data)
 	local havoc_modifiers = havoc_data.modifiers
 	if not havoc_modifiers or #havoc_modifiers < 1 or havoc_modifiers[1].level == nil then
 		Log.info("HavocManager", "No modifiers found")
@@ -217,7 +217,7 @@ mod:hook(HavocManager, "_initialize_modifiers", function(func, self, havoc_data)
 	return func(self, havoc_data)
 end)
 
-mod:hook(DifficultyManager, "friendly_fire_enabled", function(func, self, target_is_player, target_is_minion)
+mod:hook(DifficultyManager, "friendly_fire_enabled", function (func, self, target_is_player, target_is_minion)
 	local ret = func(self, target_is_player, target_is_minion)
 	if mod.is_soloplay() and mod:get("friendly_fire_enabled") then
 		return true
@@ -225,7 +225,7 @@ mod:hook(DifficultyManager, "friendly_fire_enabled", function(func, self, target
 	return ret
 end)
 
-mod:hook(GameModeManager, "hotkey_settings", function(func, self)
+mod:hook(GameModeManager, "hotkey_settings", function (func, self)
 	local ret = table.clone(func(self))
 	if self:game_mode_name() == "coop_complete_objective" and mod.is_soloplay() then
 		ret.hotkeys["hotkey_inventory"] = "inventory_background_view"
@@ -234,7 +234,7 @@ mod:hook(GameModeManager, "hotkey_settings", function(func, self)
 	return ret
 end)
 
-mod:hook(PickupSystem, "_spawn_spread_pickups", function(func, self, distribution_type, pickup_pool, seed)
+mod:hook(PickupSystem, "_spawn_spread_pickups", function (func, self, distribution_type, pickup_pool, seed)
 	if distribution_type == DISTRIBUTION_TYPES.side_mission and mod:get("random_side_mission_seed") then
 		self._seed = func(self, distribution_type, pickup_pool, self._seed)
 		return self._seed
@@ -244,7 +244,7 @@ end)
 
 local main_menu_want_solo_play = nil
 
-mod:hook(CLASS.StateMainMenu, "update", function(func, self, main_dt, main_t)
+mod:hook(CLASS.StateMainMenu, "update", function (func, self, main_dt, main_t)
 	if self._continue and not self:_waiting_for_profile_synchronization() then
 		if main_menu_want_solo_play then
 			local mode = main_menu_want_solo_play
@@ -289,14 +289,14 @@ local function on_main_menu()
 	return Managers.ui:view_active("main_menu_view")
 end
 
-mod.can_start_game = function()
+mod.can_start_game = function ()
 	if in_hub_or_psykhanium() or mod.is_soloplay() or on_main_menu() then
 		return true
 	end
 	return false
 end
 
-mod.start_game = function(mode)
+mod.start_game = function (mode)
 	if not mod.can_start_game() then
 		mod:notify(mod:localize("msg_not_in_hub_or_mission"))
 		return
@@ -320,12 +320,12 @@ mod.start_game = function(mode)
 	Managers.multiplayer_session:reset("Hosting SoloPlay session")
 	Managers.multiplayer_session:boot_singleplayer_session()
 
-	Promise.until_true(function()
+	Promise.until_true(function ()
 		if not Managers.multiplayer_session._session_boot or not Managers.multiplayer_session._session_boot.leaving_game_session then
 			return false
 		end
 		return true
-	end):next(function()
+	end):next(function ()
 		Managers.mechanism:change_mechanism(mechanism_name, mission_context)
 		Managers.mechanism:trigger_event("all_players_ready")
 	end)
@@ -335,7 +335,7 @@ mod:add_require_path("SoloPlay/scripts/mods/SoloPlay/soloplay_mod_view/soloplay_
 mod:register_view({
 	view_name = "soloplay_mod_view",
 	view_settings = {
-		init_view_function = function(ingame_ui_context)
+		init_view_function = function (ingame_ui_context)
 			return true
 		end,
 		state_bound = true,
@@ -367,18 +367,18 @@ mod:register_view({
 	},
 })
 
-mod.open_solo_view = function()
+mod.open_solo_view = function ()
 	if not Managers.ui:view_instance("soloplay_mod_view") then
 		Managers.ui:open_view("soloplay_mod_view", nil, nil, nil, nil, {})
 	end
 end
 
-mod.keybind_open_solo_view = function()
+mod.keybind_open_solo_view = function ()
 	if not Managers.ui:chat_using_input() then
 		mod.open_solo_view()
 	end
 end
 
-mod:command("solo", mod:localize("solo_command_desc"), function()
+mod:command("solo", mod:localize("solo_command_desc"), function ()
 	mod.open_solo_view()
 end)

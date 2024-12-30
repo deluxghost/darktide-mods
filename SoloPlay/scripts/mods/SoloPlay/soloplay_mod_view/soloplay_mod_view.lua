@@ -16,7 +16,7 @@ local view_settings = mod:io_dofile("SoloPlay/scripts/mods/SoloPlay/soloplay_mod
 
 SoloPlayModView = class("SoloPlayModView", "BaseView")
 
-SoloPlayModView.init = function(self, settings)
+SoloPlayModView.init = function (self, settings)
 	self._selected_setting = nil
 	self._close_selected_setting = false
 
@@ -40,30 +40,30 @@ SoloPlayModView.init = function(self, settings)
 	SoloPlayModView.super.init(self, definitions, settings)
 end
 
-SoloPlayModView._build_dropdown_definition = function(self, id)
+SoloPlayModView._build_dropdown_definition = function (self, id)
 	local related_ids = view_settings.dropdown_related_ids[id] or {}
 	return {
 		id = id,
 		pivot = id,
 		display_name = "",
 		widget_type = "dropdown",
-		on_activated = function(value, entry)
+		on_activated = function (value, entry)
 			self._current[id] = value
 			mod:set(view_settings.dropdown_setting_keys[id], value)
 			for _, related_id in ipairs(related_ids) do
 				self:_recreate_dropdown(related_id)
 			end
 		end,
-		get_function = function(entry)
+		get_function = function (entry)
 			return self._current[id]
 		end,
-		options_function = function(...)
+		options_function = function (...)
 			return self._options[id]
 		end,
 	}
 end
 
-SoloPlayModView.on_enter = function(self)
+SoloPlayModView.on_enter = function (self)
 	SoloPlayModView.super.on_enter(self)
 
 	self:_setup_input_legend()
@@ -88,7 +88,7 @@ SoloPlayModView.on_enter = function(self)
 	self:_update_modifiers_lock()
 end
 
-SoloPlayModView._recreate_dropdown = function(self, id)
+SoloPlayModView._recreate_dropdown = function (self, id)
 	self._options[id] = make_options[id](self._current)
 	self._current[id] = self:_load_dropdown_selection(
 		view_settings.dropdown_setting_keys[id],
@@ -99,7 +99,7 @@ SoloPlayModView._recreate_dropdown = function(self, id)
 	self._dropdown_widgets[id] = self:_setup_dropdown(self:_build_dropdown_definition(id))
 end
 
-SoloPlayModView._load_dropdown_selection = function(self, setting_name, lookup, default)
+SoloPlayModView._load_dropdown_selection = function (self, setting_name, lookup, default)
 	local value = mod:get(setting_name)
 	if not value then
 		if type(default) == "number" then
@@ -124,7 +124,7 @@ SoloPlayModView._load_dropdown_selection = function(self, setting_name, lookup, 
 	return nil
 end
 
-SoloPlayModView._load_modifier_selection = function(self, modifier_name)
+SoloPlayModView._load_modifier_selection = function (self, modifier_name)
 	local key = "havoc_modifier_" .. modifier_name
 	local value = mod:get(key) or 0
 	local max = SoloPlaySettings.lookup.havoc_modifiers_max_level[modifier_name]
@@ -135,7 +135,7 @@ SoloPlayModView._load_modifier_selection = function(self, modifier_name)
 	return value
 end
 
-SoloPlayModView._setup_normal_difficulty = function(self)
+SoloPlayModView._setup_normal_difficulty = function (self)
 	self._widgets_by_name.normal_difficulty.content.min_danger = 1
 	self._widgets_by_name.normal_difficulty.content.max_danger = 5
 	self._widgets_by_name.normal_difficulty.content.danger = mod:get("choose_difficulty") or 3
@@ -143,7 +143,7 @@ SoloPlayModView._setup_normal_difficulty = function(self)
 	mod:set("choose_difficulty", self._widgets_by_name.normal_difficulty.content.danger)
 end
 
-SoloPlayModView._setup_havoc_difficulty = function(self)
+SoloPlayModView._setup_havoc_difficulty = function (self)
 	local previous_havoc_diffculty = mod:get("havoc_difficulty")
 	self._current_havoc_difficulty = previous_havoc_diffculty or 16
 	mod:set("havoc_difficulty", self._current_havoc_difficulty)
@@ -167,19 +167,19 @@ SoloPlayModView._setup_havoc_difficulty = function(self)
 			exploded_value = math.round(exploded_value / step_size) * step_size
 			return exploded_value
 		end,
-		format_value_function = function(value)
+		format_value_function = function (value)
 			return value
 		end,
-		on_drag_value = function(value, entry)
+		on_drag_value = function (value, entry)
 			self:_setup_havoc_badge(value)
 		end,
-		on_activated = function(value, entry)
+		on_activated = function (value, entry)
 			self._current_havoc_difficulty = value
 			mod:set("havoc_difficulty", value)
 			self:_setup_havoc_badge(value)
 			self:_refresh_modifiers()
 		end,
-		get_function = function(entry)
+		get_function = function (entry)
 			return self._current_havoc_difficulty
 		end,
 	}
@@ -188,13 +188,13 @@ SoloPlayModView._setup_havoc_difficulty = function(self)
 	self:_setup_havoc_badge()
 end
 
-SoloPlayModView._setup_havoc_badge = function(self, rank)
+SoloPlayModView._setup_havoc_badge = function (self, rank)
 	local widget_definition = UIWidget.create_definition(blueprints.havoc_badge.pass_template_function(rank), "havoc_difficulty_badge", nil, view_settings.havoc_badge_size)
 	local widget = self:_create_widget("havoc_difficulty_badge", widget_definition)
 	self._havoc_difficulty_badge_widget = widget
 end
 
-SoloPlayModView._setup_dropdown = function(self, entry)
+SoloPlayModView._setup_dropdown = function (self, entry)
 	local size = view_settings.dropdown_size
 	local options = entry.options or entry.options_function and entry.options_function()
 	local num_options = #options
@@ -233,7 +233,7 @@ SoloPlayModView._setup_dropdown = function(self, entry)
 	return widget
 end
 
-SoloPlayModView._setup_modifier_grid = function(self)
+SoloPlayModView._setup_modifier_grid = function (self)
 	self._modifier_grid = self:_add_element(ViewElementGrid, "modifier_grid", 80, view_settings.grid_settings, "havoc_modifiers_grid")
 	self._modifier_grid:set_visibility(true)
 	self._modifier_grid:present_grid_layout({}, {})
@@ -255,14 +255,14 @@ SoloPlayModView._setup_modifier_grid = function(self)
 				exploded_value = math.round(exploded_value / step_size) * step_size
 				return exploded_value
 			end,
-			format_value_function = function(value)
+			format_value_function = function (value)
 				return value
 			end,
-			on_activated = function(value, entry)
+			on_activated = function (value, entry)
 				self._current_modifier[modifier_name] = value
 				mod:set("havoc_modifier_" .. modifier_name, value)
 			end,
-			get_function = function(entry)
+			get_function = function (entry)
 				return self._current_modifier[modifier_name]
 			end,
 		}
@@ -279,7 +279,7 @@ SoloPlayModView._setup_modifier_grid = function(self)
 	self._modifier_grid:present_grid_layout(layout, blueprints, on_pressed_callback)
 end
 
-SoloPlayModView._setup_input_legend = function(self)
+SoloPlayModView._setup_input_legend = function (self)
 	self._input_legend_element = self:_add_element(ViewElementInputLegend, "input_legend", 100)
 	local legend_inputs = self._definitions.legend_inputs
 
@@ -297,12 +297,12 @@ SoloPlayModView._setup_input_legend = function(self)
 	end
 end
 
-SoloPlayModView._get_modifier_display_name = function(self, name, level)
+SoloPlayModView._get_modifier_display_name = function (self, name, level)
 	local level_loc = SoloPlaySettings.loc.havoc_modifiers[name] or {}
 	return level_loc[level] or "n/a"
 end
 
-SoloPlayModView._set_exclusive_focus_on_setting = function(self, widget_name)
+SoloPlayModView._set_exclusive_focus_on_setting = function (self, widget_name)
 	local widgets = {}
 	for name in pairs(self._dropdown_widgets) do
 		widgets[#widgets+1] = self._dropdown_widgets[name]
@@ -378,7 +378,7 @@ SoloPlayModView._set_exclusive_focus_on_setting = function(self, widget_name)
 	end
 end
 
-SoloPlayModView._update_modifiers_lock = function(self)
+SoloPlayModView._update_modifiers_lock = function (self)
 	for _, widget in ipairs(self._modifier_grid._grid_widgets) do
 		if widget.content.hotspot then
 			widget.content.hotspot.disabled = not self._modifier_customizable
@@ -392,13 +392,13 @@ SoloPlayModView._update_modifiers_lock = function(self)
 	self._widgets_by_name.havoc_modifier_lock.content.original_text = mod:localize("button_modifier_customizable") .. button_icon
 end
 
-SoloPlayModView._refresh_modifiers = function(self)
+SoloPlayModView._refresh_modifiers = function (self)
 	if not self._modifier_customizable then
 		self:_apply_modifiers(Havoc.parse_data(Havoc.generate_havoc_data(self._current_havoc_difficulty)).modifiers)
 	end
 end
 
-SoloPlayModView._apply_modifiers = function(self, modifier_data)
+SoloPlayModView._apply_modifiers = function (self, modifier_data)
 	modifier_data = modifier_data or {}
 	local data_map = {}
 	for _, data in ipairs(modifier_data) do
@@ -411,7 +411,7 @@ SoloPlayModView._apply_modifiers = function(self, modifier_data)
 	end
 end
 
-SoloPlayModView._regen_havoc = function(self)
+SoloPlayModView._regen_havoc = function (self)
 	local havoc = mod.gen_havoc_data(self._current_havoc_difficulty)
 	for _, setting in ipairs(view_settings.regen_havoc_settings) do
 		self._current[setting.id] = havoc[setting.data]
@@ -422,11 +422,11 @@ SoloPlayModView._regen_havoc = function(self)
 	self:_apply_modifiers(havoc.modifiers)
 end
 
-SoloPlayModView.cb_on_normal_difficulty_changed = function(self)
+SoloPlayModView.cb_on_normal_difficulty_changed = function (self)
 	mod:set("choose_difficulty", self._widgets_by_name.normal_difficulty.content.danger)
 end
 
-SoloPlayModView.cb_on_dropdown_pressed = function(self, widget, entry)
+SoloPlayModView.cb_on_dropdown_pressed = function (self, widget, entry)
 	local pressed_function = entry.pressed_function
 	self:_set_exclusive_focus_on_setting(entry.id)
 	if pressed_function then
@@ -434,51 +434,51 @@ SoloPlayModView.cb_on_dropdown_pressed = function(self, widget, entry)
 	end
 end
 
-SoloPlayModView.cb_on_slider_pressed = function(self, widget, entry)
+SoloPlayModView.cb_on_slider_pressed = function (self, widget, entry)
 	local pressed_function = entry.pressed_function
 	if pressed_function then
 		pressed_function(self, widget, entry)
 	end
 end
 
-SoloPlayModView.cb_on_havoc_modifier_lock = function(self, widget, entry)
+SoloPlayModView.cb_on_havoc_modifier_lock = function (self, widget, entry)
 	self._modifier_customizable = not self._modifier_customizable
 	mod:set("havoc_modifiers_customizable", self._modifier_customizable)
 	self:_refresh_modifiers()
 	self:_update_modifiers_lock()
 end
 
-SoloPlayModView._start_game = function(self, mode)
+SoloPlayModView._start_game = function (self, mode)
 	if not mod.can_start_game() then
 		return
 	end
 	self:_play_sound(UISoundEvents.mission_board_start_mission)
 	Managers.ui:close_view(self.view_name)
 
-	Promise.until_true(function()
+	Promise.until_true(function ()
 		return not Managers.ui:view_active(self.view_name)
-	end):next(function()
+	end):next(function ()
 		mod.start_game(mode)
 	end)
 end
 
-SoloPlayModView.cb_on_normal_start = function(self, widget, entry)
+SoloPlayModView.cb_on_normal_start = function (self, widget, entry)
 	self:_start_game("normal")
 end
 
-SoloPlayModView.cb_on_havoc_randomize = function(self, widget, entry)
+SoloPlayModView.cb_on_havoc_randomize = function (self, widget, entry)
 	self:_regen_havoc()
 end
 
-SoloPlayModView.cb_on_havoc_start = function(self, widget, entry)
+SoloPlayModView.cb_on_havoc_start = function (self, widget, entry)
 	self:_start_game("havoc")
 end
 
-SoloPlayModView._on_back_pressed = function(self)
+SoloPlayModView._on_back_pressed = function (self)
 	Managers.ui:close_view(self.view_name)
 end
 
-SoloPlayModView._handle_input = function(self, input_service, dt, t)
+SoloPlayModView._handle_input = function (self, input_service, dt, t)
 	if self._selected_setting then
 		local close_selected_setting = false
 		if input_service:get("left_pressed") or input_service:get("confirm_pressed") or input_service:get("back") then
@@ -488,11 +488,11 @@ SoloPlayModView._handle_input = function(self, input_service, dt, t)
 	end
 end
 
-SoloPlayModView.ui_renderer = function(self)
+SoloPlayModView.ui_renderer = function (self)
 	return self._ui_renderer
 end
 
-SoloPlayModView._destroy_renderer = function(self)
+SoloPlayModView._destroy_renderer = function (self)
 	if self._offscreen_renderer then
 		self._offscreen_renderer = nil
 	end
@@ -507,7 +507,7 @@ SoloPlayModView._destroy_renderer = function(self)
 	end
 end
 
-SoloPlayModView.update = function(self, dt, t, input_service)
+SoloPlayModView.update = function (self, dt, t, input_service)
 	for _, widget in pairs(self._dropdown_widgets) do
 		if widget then
 			blueprints.settings_dropdown.update(self, widget, input_service, dt, t)
@@ -536,7 +536,7 @@ SoloPlayModView.update = function(self, dt, t, input_service)
 	return SoloPlayModView.super.update(self, dt, t, input_service)
 end
 
-SoloPlayModView.draw = function(self, dt, t, input_service, layer)
+SoloPlayModView.draw = function (self, dt, t, input_service, layer)
 	SoloPlayModView.super.draw(self, dt, t, input_service, layer)
 
 	local ui_renderer = self._modifier_grid._ui_grid_renderer
@@ -549,7 +549,7 @@ SoloPlayModView.draw = function(self, dt, t, input_service, layer)
 	UIRenderer.end_pass(ui_renderer)
 end
 
-SoloPlayModView._draw_widgets = function(self, dt, t, input_service, ui_renderer, render_settings)
+SoloPlayModView._draw_widgets = function (self, dt, t, input_service, ui_renderer, render_settings)
 	if self._havoc_difficulty_slider_widget then
 		UIWidget.draw(self._havoc_difficulty_slider_widget, ui_renderer)
 	end
@@ -559,7 +559,7 @@ SoloPlayModView._draw_widgets = function(self, dt, t, input_service, ui_renderer
 	SoloPlayModView.super._draw_widgets(self, dt, t, input_service, ui_renderer, render_settings)
 end
 
-SoloPlayModView.on_exit = function(self)
+SoloPlayModView.on_exit = function (self)
 	SoloPlayModView.super.on_exit(self)
 	self:_destroy_renderer()
 end

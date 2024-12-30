@@ -12,14 +12,14 @@ local function update_color(settings)
 	end
 end
 
-mod.on_enabled = function()
+mod.on_enabled = function ()
 	update_color(DangerSettings)
 end
 
-mod.on_setting_changed = function(setting_id)
+mod.on_setting_changed = function (setting_id)
 	update_color(DangerSettings)
 end
 
-mod:hook_require("scripts/settings/difficulty/danger_settings", function(settings)
+mod:hook_require("scripts/settings/difficulty/danger_settings", function (settings)
 	update_color(settings)
 end)

@@ -14,7 +14,7 @@ function mod.on_game_state_changed(status, state_name)
 	end
 end
 
-mod.retry_func = function()
+mod.retry_func = function ()
 	if not memory.in_game then
 		mod:echo(mod:localize("err_not_in_game"))
 		return
@@ -41,17 +41,17 @@ mod.retry_func = function()
 	Managers.multiplayer_session:leave("pong_timeout")
 end
 
-mod.retry_keybind_func = function()
+mod.retry_keybind_func = function ()
 	if not Managers.ui:chat_using_input() then
 		mod:retry_func()
 	end
 end
 
-mod:command("retry", mod:localize("retry_description"), function()
+mod:command("retry", mod:localize("retry_description"), function ()
 	mod:retry_func()
 end)
 
-mod:hook(StateMainMenu, "_show_reconnect_popup", function(func, self)
+mod:hook(StateMainMenu, "_show_reconnect_popup", function (func, self)
 	local handle_rejoin_popup = mod:get("handle_rejoin_popup")
 	if handle_rejoin_popup == "rejoin" then
 		self._reconnect_pressed = true
@@ -64,7 +64,7 @@ mod:hook(StateMainMenu, "_show_reconnect_popup", function(func, self)
 	return func(self)
 end)
 
-mod:hook(MechanismHub, "_show_retry_popup", function(func, self)
+mod:hook(MechanismHub, "_show_retry_popup", function (func, self)
 	local handle_rejoin_popup = mod:get("handle_rejoin_popup")
 	if handle_rejoin_popup == "rejoin" then
 		self:_retry_join()

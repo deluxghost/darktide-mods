@@ -9,7 +9,7 @@ local templates = {
 		locales = {
 			"zh-cn",
 		},
-		handle_func = function(locale, value)
+		handle_func = function (locale, value)
 			-- compatible with Mark9
 			return string.gsub(string.gsub(value, "VIII", "III"), "8", "3")
 		end,

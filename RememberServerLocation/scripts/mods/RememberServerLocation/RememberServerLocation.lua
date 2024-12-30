@@ -15,12 +15,12 @@ local function save_region()
 end
 
 local function fetch_regions()
-	Promise.until_true(function()
+	Promise.until_true(function ()
 		return Managers.backend:authenticated()
-	end):next(function()
+	end):next(function ()
 		mod:info("start fetching regions")
 		local region_promise = Managers.backend.interfaces.region_latency:get_region_latencies()
-		region_promise:next(function(regions_data)
+		region_promise:next(function (regions_data)
 			local prefered_region_promise = Managers.backend.interfaces.region_latency:get_preferred_reef()
 			prefered_region_promise:next(function (prefered_region)
 				local prefered_mission_region = prefered_region or regions_data[1].reefs[1] or ""
@@ -44,7 +44,7 @@ local function fetch_regions()
 	end)
 end
 
-mod.on_all_mods_loaded = function()
+mod.on_all_mods_loaded = function ()
 	local saved_server_location = mod:get("saved_server_location") or ""
 	if not RegionLocalizationMappings[saved_server_location] then
 		mod:info("clear unknown server region " .. saved_server_location)
@@ -57,22 +57,22 @@ mod.on_all_mods_loaded = function()
 	end
 end
 
-mod:hook_safe(MissionBoardView, "on_exit", function(self)
+mod:hook_safe(MissionBoardView, "on_exit", function (self)
 	mod:info("exit mission board")
 	save_region()
 end)
 
-mod:hook_safe(MissionBoardView, "_callback_close_options", function(self)
+mod:hook_safe(MissionBoardView, "_callback_close_options", function (self)
 	mod:info("exit mission board options")
 	save_region()
 end)
 
-mod:hook_safe(StoryMissionPlayView, "on_exit", function(self)
+mod:hook_safe(StoryMissionPlayView, "on_exit", function (self)
 	mod:info("exit story view")
 	save_region()
 end)
 
-mod:hook_safe(StoryMissionPlayView, "_callback_close_options", function(self)
+mod:hook_safe(StoryMissionPlayView, "_callback_close_options", function (self)
 	mod:info("exit story view options")
 	save_region()
 end)

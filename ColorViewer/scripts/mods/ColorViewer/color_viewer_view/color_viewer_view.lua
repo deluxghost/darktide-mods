@@ -6,11 +6,11 @@ local definitions = mod:io_dofile("ColorViewer/scripts/mods/ColorViewer/color_vi
 
 ColorViewerView = class("ColorViewerView", "BaseView")
 
-ColorViewerView.init = function(self, settings)
+ColorViewerView.init = function (self, settings)
 	ColorViewerView.super.init(self, definitions, settings)
 end
 
-ColorViewerView.on_enter = function(self)
+ColorViewerView.on_enter = function (self)
 	ColorViewerView.super.on_enter(self)
 	self:_setup_input_legend()
 	self:_setup_color_table_grid()
@@ -18,7 +18,7 @@ ColorViewerView.on_enter = function(self)
 	self:_setup_control_grid()
 end
 
-ColorViewerView._setup_input_legend = function(self)
+ColorViewerView._setup_input_legend = function (self)
 	self._input_legend_element = self:_add_element(ViewElementInputLegend, "input_legend", 100)
 	local legend_inputs = self._definitions.legend_inputs
 
@@ -36,7 +36,7 @@ ColorViewerView._setup_input_legend = function(self)
 	end
 end
 
-ColorViewerView.present_grid_layout = function(self, layout)
+ColorViewerView.present_grid_layout = function (self, layout)
 	local layout_copy = table.clone(layout)
 	local spacing_entry = {
 		widget_type = "color_table_spacing_vertical"
@@ -48,7 +48,7 @@ ColorViewerView.present_grid_layout = function(self, layout)
 	self._color_table_element:present_grid_layout(layout_copy, definitions.blueprints, left_click_callback)
 end
 
-ColorViewerView._setup_color_table_grid = function(self)
+ColorViewerView._setup_color_table_grid = function (self)
 	self._color_table_element = self:_add_element(ViewElementGrid, "color_table", 103, definitions.color_table_grid_settings, "color_table_pivot")
 	self._color_table_element:set_visibility(true)
 	self._color_table_element:present_grid_layout({}, {})
@@ -66,7 +66,7 @@ ColorViewerView._setup_color_table_grid = function(self)
 		}
 	end
 
-	table.sort(layout, function(a, b)
+	table.sort(layout, function (a, b)
 		return a.color_name < b.color_name
 	end)
 	self._layout = layout
@@ -74,7 +74,7 @@ ColorViewerView._setup_color_table_grid = function(self)
 	self:present_grid_layout(layout)
 end
 
-ColorViewerView._setup_color_table_sort_options = function(self)
+ColorViewerView._setup_color_table_sort_options = function (self)
 	self._sort_options = {
 		{
 			display_name = mod:localize("sort_option_name_asc"),
@@ -119,7 +119,7 @@ ColorViewerView._setup_color_table_sort_options = function(self)
 	end
 end
 
-ColorViewerView.cb_on_sort_button_pressed = function(self, option)
+ColorViewerView.cb_on_sort_button_pressed = function (self, option)
 	local option_sort_index
 	local sort_options = self._sort_options
 
@@ -140,7 +140,7 @@ ColorViewerView.cb_on_sort_button_pressed = function(self, option)
 	end
 end
 
-ColorViewerView._sort_grid_layout = function(self, sort_function)
+ColorViewerView._sort_grid_layout = function (self, sort_function)
 	local layout = table.clone(self._layout)
 
 	if sort_function and #layout > 1 then
@@ -159,13 +159,13 @@ ColorViewerView._sort_grid_layout = function(self, sort_function)
 	self._color_table_element:scroll_to_grid_index(selected_widget_index, true)
 end
 
-ColorViewerView._setup_control_grid = function(self)
+ColorViewerView._setup_control_grid = function (self)
 	self._control_element = self:_add_element(ViewElementGrid, "control", 103, definitions.control_grid_settings, "control_pivot")
 	self._control_element:set_visibility(false)
 	self._control_element:present_grid_layout({}, {})
 end
 
-ColorViewerView._update_control_grid = function(self, color_name)
+ColorViewerView._update_control_grid = function (self, color_name)
 	local color = Color[color_name](nil, true)
 	local layout = {
 		{
@@ -200,24 +200,24 @@ ColorViewerView._update_control_grid = function(self, color_name)
 	self._control_element:set_visibility(true)
 end
 
-ColorViewerView.cb_on_color_left_pressed = function(self, widget, element)
+ColorViewerView.cb_on_color_left_pressed = function (self, widget, element)
 	if widget and widget.content and widget.content.color_codename then
 		self:_update_control_grid(widget.content.color_codename)
 	end
 end
 
-ColorViewerView.cb_on_copy_left_pressed = function(self, widget, element)
+ColorViewerView.cb_on_copy_left_pressed = function (self, widget, element)
 	if widget and widget.content and widget.content.text_to_copy and widget.content.copy_type then
 		Clipboard.put(widget.content.text_to_copy)
 		mod:notify(mod:localize("msg_copied", widget.content.copy_type))
 	end
 end
 
-ColorViewerView._on_back_pressed = function(self)
+ColorViewerView._on_back_pressed = function (self)
 	Managers.ui:close_view(self.view_name)
 end
 
-ColorViewerView._destroy_renderer = function(self)
+ColorViewerView._destroy_renderer = function (self)
 	if self._offscreen_renderer then
 		self._offscreen_renderer = nil
 	end
@@ -233,19 +233,19 @@ ColorViewerView._destroy_renderer = function(self)
 	end
 end
 
-ColorViewerView.update = function(self, dt, t, input_service)
+ColorViewerView.update = function (self, dt, t, input_service)
 	return ColorViewerView.super.update(self, dt, t, input_service)
 end
 
-ColorViewerView.draw = function(self, dt, t, input_service, layer)
+ColorViewerView.draw = function (self, dt, t, input_service, layer)
 	ColorViewerView.super.draw(self, dt, t, input_service, layer)
 end
 
-ColorViewerView._draw_widgets = function(self, dt, t, input_service, ui_renderer, render_settings)
+ColorViewerView._draw_widgets = function (self, dt, t, input_service, ui_renderer, render_settings)
 	ColorViewerView.super._draw_widgets(self, dt, t, input_service, ui_renderer, render_settings)
 end
 
-ColorViewerView.on_exit = function(self)
+ColorViewerView.on_exit = function (self)
 	ColorViewerView.super.on_exit(self)
 
 	self:_destroy_renderer()

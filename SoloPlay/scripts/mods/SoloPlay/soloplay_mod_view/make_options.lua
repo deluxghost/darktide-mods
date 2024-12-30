@@ -3,7 +3,7 @@ local SoloPlaySettings = mod:io_dofile("SoloPlay/scripts/mods/SoloPlay/SoloPlayS
 
 local make_options = {}
 
-make_options.normal_mission = function(current)
+make_options.normal_mission = function (current)
 	local options = {}
 	for _, mission_name in ipairs(SoloPlaySettings.order.missions) do
 		local option = {
@@ -17,7 +17,7 @@ make_options.normal_mission = function(current)
 	return options
 end
 
-make_options.normal_side_mission = function(current)
+make_options.normal_side_mission = function (current)
 	local options = {
 		{
 			ignore_localization = true,
@@ -38,7 +38,7 @@ make_options.normal_side_mission = function(current)
 	return options
 end
 
-make_options.normal_circumstance = function(current)
+make_options.normal_circumstance = function (current)
 	local options = {
 		{
 			ignore_localization = true,
@@ -62,7 +62,7 @@ make_options.normal_circumstance = function(current)
 	return options
 end
 
-make_options.normal_mission_giver = function(current)
+make_options.normal_mission_giver = function (current)
 	local options = {
 		{
 			ignore_localization = true,
@@ -86,7 +86,7 @@ make_options.normal_mission_giver = function(current)
 	return options
 end
 
-make_options.havoc_mission = function(current)
+make_options.havoc_mission = function (current)
 	local options = {}
 	for _, mission_name in ipairs(SoloPlaySettings.order.missions) do
 		if SoloPlaySettings.lookup.theme_circumstances_of_havoc_missions[mission_name] then
@@ -102,7 +102,7 @@ make_options.havoc_mission = function(current)
 	return options
 end
 
-make_options.havoc_faction = function(current)
+make_options.havoc_faction = function (current)
 	local options = {}
 	for _, faction_name in ipairs(SoloPlaySettings.order.havoc_factions) do
 		local option = {
@@ -116,7 +116,7 @@ make_options.havoc_faction = function(current)
 	return options
 end
 
-make_options.havoc_mission_giver = function(current)
+make_options.havoc_mission_giver = function (current)
 	local options = {
 		{
 			ignore_localization = true,
@@ -140,7 +140,7 @@ make_options.havoc_mission_giver = function(current)
 	return options
 end
 
-local havoc_circumstance = function(current, with_default)
+local havoc_circumstance = function (current, with_default)
 	local options = {}
 	if with_default then
 		options[#options+1] = {
@@ -162,15 +162,15 @@ local havoc_circumstance = function(current, with_default)
 	return options
 end
 
-make_options.havoc_circumstance1 = function(current)
+make_options.havoc_circumstance1 = function (current)
 	return havoc_circumstance(current, false)
 end
 
-make_options.havoc_circumstance2 = function(current)
+make_options.havoc_circumstance2 = function (current)
 	return havoc_circumstance(current, true)
 end
 
-make_options.havoc_theme_circumstance = function(current)
+make_options.havoc_theme_circumstance = function (current)
 	local options = {
 		{
 			ignore_localization = true,
@@ -193,7 +193,7 @@ make_options.havoc_theme_circumstance = function(current)
 	return options
 end
 
-make_options.havoc_difficulty_circumstance = function(current)
+make_options.havoc_difficulty_circumstance = function (current)
 	local options = {
 		{
 			ignore_localization = true,

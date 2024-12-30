@@ -27,17 +27,17 @@ end
 
 PrivateCharMapView = class("PrivateCharMapView", "BaseView")
 
-PrivateCharMapView.init = function(self, settings)
+PrivateCharMapView.init = function (self, settings)
 	PrivateCharMapView.super.init(self, definitions, settings)
 end
 
-PrivateCharMapView.on_enter = function(self)
+PrivateCharMapView.on_enter = function (self)
 	PrivateCharMapView.super.on_enter(self)
 	self:_setup_input_legend()
 	self:_setup_grid()
 end
 
-PrivateCharMapView._setup_input_legend = function(self)
+PrivateCharMapView._setup_input_legend = function (self)
 	self._input_legend_element = self:_add_element(ViewElementInputLegend, "input_legend", 100)
 	local legend_inputs = self._definitions.legend_inputs
 
@@ -55,7 +55,7 @@ PrivateCharMapView._setup_input_legend = function(self)
 	end
 end
 
-PrivateCharMapView._setup_grid = function(self)
+PrivateCharMapView._setup_grid = function (self)
 	self._char_table_element = self:_add_element(ViewElementGrid, "char_table", 103, definitions.grid_settings, "char_table_pivot")
 	self._char_table_element:set_visibility(true)
 	self._char_table_element:present_grid_layout({}, {})
@@ -82,18 +82,18 @@ PrivateCharMapView._setup_grid = function(self)
 	self._char_table_element:present_grid_layout(layout, definitions.blueprints, left_click_callback)
 end
 
-PrivateCharMapView.cb_on_char_left_pressed = function(self, widget, element)
+PrivateCharMapView.cb_on_char_left_pressed = function (self, widget, element)
 	if widget and widget.content and widget.content.char_pos and widget.content.char_text then
 		Clipboard.put(widget.content.char_text)
 		mod:notify(mod:localize("msg_copied_char", widget.content.char_text, widget.content.char_pos))
 	end
 end
 
-PrivateCharMapView._on_back_pressed = function(self)
+PrivateCharMapView._on_back_pressed = function (self)
 	Managers.ui:close_view(self.view_name)
 end
 
-PrivateCharMapView._destroy_renderer = function(self)
+PrivateCharMapView._destroy_renderer = function (self)
 	if self._offscreen_renderer then
 		self._offscreen_renderer = nil
 	end
@@ -109,19 +109,19 @@ PrivateCharMapView._destroy_renderer = function(self)
 	end
 end
 
-PrivateCharMapView.update = function(self, dt, t, input_service)
+PrivateCharMapView.update = function (self, dt, t, input_service)
 	return PrivateCharMapView.super.update(self, dt, t, input_service)
 end
 
-PrivateCharMapView.draw = function(self, dt, t, input_service, layer)
+PrivateCharMapView.draw = function (self, dt, t, input_service, layer)
 	PrivateCharMapView.super.draw(self, dt, t, input_service, layer)
 end
 
-PrivateCharMapView._draw_widgets = function(self, dt, t, input_service, ui_renderer, render_settings)
+PrivateCharMapView._draw_widgets = function (self, dt, t, input_service, ui_renderer, render_settings)
 	PrivateCharMapView.super._draw_widgets(self, dt, t, input_service, ui_renderer, render_settings)
 end
 
-PrivateCharMapView.on_exit = function(self)
+PrivateCharMapView.on_exit = function (self)
 	PrivateCharMapView.super.on_exit(self)
 
 	self:_destroy_renderer()

@@ -4,7 +4,7 @@ local InputDevice = require("scripts/managers/input/input_device")
 
 local chat_scroll_multiplier = 1.0
 
-mod.on_enabled = function()
+mod.on_enabled = function ()
 	local inactivity_timeout = mod:get("chat_inactivity_timeout")
 	if not inactivity_timeout then
 		inactivity_timeout = 10
@@ -12,7 +12,7 @@ mod.on_enabled = function()
 	ChatSettings.inactivity_timeout = inactivity_timeout
 end
 
-mod.on_setting_changed = function(setting_id)
+mod.on_setting_changed = function (setting_id)
 	local inactivity_timeout = mod:get("chat_inactivity_timeout")
 	if not inactivity_timeout then
 		inactivity_timeout = 10
@@ -21,18 +21,18 @@ mod.on_setting_changed = function(setting_id)
 	chat_scroll_multiplier = mod:get("chat_scroll_multiplier") or 1.0
 end
 
-mod.on_disabled = function()
+mod.on_disabled = function ()
 	ChatSettings.inactivity_timeout = 5
 end
 
-mod:hook("ConstantElementChat", "_add_notification", function(func, self, message, channel_tag)
+mod:hook("ConstantElementChat", "_add_notification", function (func, self, message, channel_tag)
 	if mod:get("chat_join_leave_fix") then
 		self._time_since_last_update = 0
 	end
 	return func(self, message, channel_tag)
 end)
 
-mod:hook_origin("ConstantElementChat", "_update_scrollbar", function(self, render_settings)
+mod:hook_origin("ConstantElementChat", "_update_scrollbar", function (self, render_settings)
 	-- copied from _update_scrollbar
 	local messages = self._messages
 	local total_num_messages = #messages

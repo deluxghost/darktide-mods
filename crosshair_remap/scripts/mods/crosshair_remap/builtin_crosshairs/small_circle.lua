@@ -26,7 +26,7 @@ local template = {
 					color = UIHudSettings.color_tint_main_1, -- HACK
 					text_color = UIHudSettings.color_tint_main_1,
 				},
-				visibility_function = function(content, style)
+				visibility_function = function (content, style)
 					if style.color then
 						style.text_color = style.color
 					end

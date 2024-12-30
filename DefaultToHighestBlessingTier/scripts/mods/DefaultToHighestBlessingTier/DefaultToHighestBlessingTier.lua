@@ -1,7 +1,7 @@
 local mod = get_mod("DefaultToHighestBlessingTier")
 local ViewElementTraitInventory = require("scripts/ui/view_elements/view_element_trait_inventory/view_element_trait_inventory")
 
-mod:hook(ViewElementTraitInventory, "present_inventory", function(func, self, sticker_book, ingredients, external_left_click_callback, do_animation)
+mod:hook(ViewElementTraitInventory, "present_inventory", function (func, self, sticker_book, ingredients, external_left_click_callback, do_animation)
     self._sticker_book = sticker_book
 	self._ingredients = ingredients
 	self._external_left_click_callback = external_left_click_callback

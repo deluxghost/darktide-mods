@@ -22,10 +22,10 @@ local function item_equipped_in_loadout(loadout, item)
 	return false
 end
 
-mod:hook_require("scripts/ui/pass_templates/item_pass_templates", function(instance)
+mod:hook_require("scripts/ui/pass_templates/item_pass_templates", function (instance)
 	for _, v in ipairs(instance.item) do
 		if v.style_id == "equipped_icon" then
-			v.visibility_function = function(content, style)
+			v.visibility_function = function (content, style)
 				if not content then
 					return false
 				end

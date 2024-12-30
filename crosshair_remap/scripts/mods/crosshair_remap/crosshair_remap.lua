@@ -25,21 +25,21 @@ local function collect_settings()
 	end
 end
 
-mod.load_package = function(package_name)
+mod.load_package = function (package_name)
 	if not Managers.package:is_loading(package_name) and not Managers.package:has_loaded(package_name) then
 		Managers.package:load(package_name, "crosshair_remap", nil, true)
 	end
 end
 
-mod.on_enabled = function()
+mod.on_enabled = function ()
 	collect_settings()
 end
 
-mod.on_setting_changed = function()
+mod.on_setting_changed = function ()
 	collect_settings()
 end
 
-mod.on_all_mods_loaded = function()
+mod.on_all_mods_loaded = function ()
 	mod.load_package("packages/ui/views/mission_board_view/mission_board_view")
 end
 
@@ -186,7 +186,7 @@ local altfire_action_kinds = {
 	flamer_gas = true,
 }
 
-mod:hook_origin("HudElementCrosshair", "_get_current_crosshair_type", function(self)
+mod:hook_origin("HudElementCrosshair", "_get_current_crosshair_type", function (self)
 	if is_in_hub() then
 		return "none"
 	end
@@ -275,7 +275,7 @@ mod:hook_origin("HudElementCrosshair", "_get_current_crosshair_type", function(s
 end)
 
 -- Inject custom crosshairs
-mod:hook_safe("HudElementCrosshair", "init", function(self, ...)
+mod:hook_safe("HudElementCrosshair", "init", function (self, ...)
 	local scenegraph_id = "pivot"
 	for _, template in ipairs(mod.builtin_crosshair_templates) do
 		self._crosshair_templates[template.name] = template
@@ -289,7 +289,7 @@ mod:hook_safe("HudElementCrosshair", "init", function(self, ...)
 	end
 end)
 
-mod:hook("HudElementCrosshair", "_crosshair_settings", function(func, self)
+mod:hook("HudElementCrosshair", "_crosshair_settings", function (func, self)
 	local crosshair_settings = func(self)
 	return crosshair_settings or {
 		crosshair_type = "none",
@@ -297,7 +297,7 @@ mod:hook("HudElementCrosshair", "_crosshair_settings", function(func, self)
 end)
 
 -- Provide default spread for melee weapons
-mod:hook("HudElementCrosshair", "_spread_yaw_pitch", function(func, self)
+mod:hook("HudElementCrosshair", "_spread_yaw_pitch", function (func, self)
 	local yaw, pitch = func(self)
 
 	local parent = self._parent

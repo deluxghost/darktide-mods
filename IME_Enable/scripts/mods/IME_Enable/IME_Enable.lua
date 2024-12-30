@@ -11,7 +11,7 @@ local function set_ime(value)
 	Window.set_ime_enabled(value)
 end
 
-mod:hook_safe(UIWidget, "draw", function(widget, ui_renderer)
+mod:hook_safe(UIWidget, "draw", function (widget, ui_renderer)
 	local passes = widget.passes
 	local content = widget.content
 	local writing = false

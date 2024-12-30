@@ -56,14 +56,14 @@ local function cmd_get_talents()
 	local profile = player:profile()
 	local profile_archetype = profile.archetype
 	local archetype_name = profile_archetype.name
-	Managers.backend.interfaces.characters:get_talents_v2(character_id):next(function(code)
+	Managers.backend.interfaces.characters:get_talents_v2(character_id):next(function (code)
 		if not code or string.sub(code, -1) == ";" then
 			mod:echo(mod:localize("err_invalid_talents"))
 			return
 		end
 		Clipboard.put(string.format("/usetalents %s %s", archetype_name, code))
 		mod:echo(mod:localize("msg_code_copied"))
-	end):catch(function(err)
+	end):catch(function (err)
 		mod:dump({err = err}, "share_talents_err", 4)
 		mod:echo(mod:localize("err_unknown"))
 	end)
@@ -115,7 +115,7 @@ local function set_talents(view, arch, talents)
 
 	local talents_data = TalentLayoutParser.pack_backend_data(active_layout, points_spent_on_nodes)
 	local promise = Managers.backend.interfaces.characters:set_talents_v2(character_id, talents_data)
-	promise:next(function(data)
+	promise:next(function (data)
 		if active_profile_preset_id then
 			ProfileUtils.save_talent_nodes_for_profile_preset(active_profile_preset_id, points_spent_on_nodes, active_layout_version)
 		end
@@ -149,7 +149,7 @@ local button_def_table = {
 			size = { 200, 40 },
 			position = { -16, -25, 20 }
 		},
-		pressed_callback = function(self, widget)
+		pressed_callback = function (self, widget)
 			local layout = self:get_active_layout()
 			local archetype_name = layout.archetype_name
 			local code = TalentLayoutParser.pack_backend_data(self:get_active_layout(), self._points_spent_on_node_widgets)
@@ -166,7 +166,7 @@ local button_def_table = {
 			size = { 200, 40 },
 			position = { 0, 50, 20 }
 		},
-		pressed_callback = function(self, widget)
+		pressed_callback = function (self, widget)
 			local clip_archetype, clip_code = clipboard_get_code()
 			if not clip_archetype or not clip_code then
 				mod:notify(mod:localize("err_clipboard_notfound"))
@@ -177,7 +177,7 @@ local button_def_table = {
   	},
 }
 
-mod:hook_require("scripts/ui/views/talent_builder_view/talent_builder_view_definitions", function(definitions)
+mod:hook_require("scripts/ui/views/talent_builder_view/talent_builder_view_definitions", function (definitions)
 	for name, button_def in pairs(button_def_table) do
 		local button = UIWidget.create_definition(ButtonPassTemplates.terminal_button_small, name, {
 			text = mod:localize("widget" .. name),
@@ -188,18 +188,18 @@ mod:hook_require("scripts/ui/views/talent_builder_view/talent_builder_view_defin
 	end
 end)
 
-mod:hook_safe(TalentBuilderView, "on_enter", function(self)
+mod:hook_safe(TalentBuilderView, "on_enter", function (self)
 	for name, button_def in pairs(button_def_table) do
 		local widget = self._widgets_by_name[name]
 		if widget then
-			widget.content.hotspot.pressed_callback = function()
+			widget.content.hotspot.pressed_callback = function ()
 				button_def.pressed_callback(self, widget)
 			end
 		end
 	end
 end)
 
-mod:hook(TalentBuilderView, "_allowed_node_input", function(func, self)
+mod:hook(TalentBuilderView, "_allowed_node_input", function (func, self)
 	local ret = func(self)
 	for name, button_def in pairs(button_def_table) do
 		local widget = self._widgets_by_name[name]
@@ -212,7 +212,7 @@ mod:hook(TalentBuilderView, "_allowed_node_input", function(func, self)
 	return ret
 end)
 
-mod:hook_safe(TalentBuilderView, "_update_button_statuses", function(self, dt, t)
+mod:hook_safe(TalentBuilderView, "_update_button_statuses", function (self, dt, t)
 	for name, button_def in pairs(button_def_table) do
 		local widget = self._widgets_by_name[name]
 		if widget then
@@ -225,11 +225,11 @@ mod:hook_safe(TalentBuilderView, "_update_button_statuses", function(self, dt, t
 	end
 end)
 
-mod:command("sharetalents", mod:localize("cmd_share"), function()
+mod:command("sharetalents", mod:localize("cmd_share"), function ()
 	cmd_get_talents()
 end)
 
-mod:command("usetalents", mod:localize("cmd_use"), function(arch, talents)
+mod:command("usetalents", mod:localize("cmd_use"), function (arch, talents)
 	if not arch or not talents then
 		mod:echo(mod:localize("err_argument"))
 		return

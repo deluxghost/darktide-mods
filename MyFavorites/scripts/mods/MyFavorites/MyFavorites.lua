@@ -20,25 +20,25 @@ local function set_item_cache(item_list)
 	mod:set("favorite_item_list", item_cache.favorites)
 end
 
-mod.on_enabled = function()
+mod.on_enabled = function ()
 	local favorite_item_list = mod:get("favorite_item_list") or {}
 	set_item_cache(favorite_item_list)
 end
 
-mod.on_setting_changed = function(setting_id)
+mod.on_setting_changed = function (setting_id)
 	if setting_id == "favorite_item_list" then
 		local favorite_item_list = mod:get("favorite_item_list") or {}
 		set_item_cache(favorite_item_list)
 	end
 end
 
-mod.load_package = function(package_name)
+mod.load_package = function (package_name)
 	if not Managers.package:is_loading(package_name) and not Managers.package:has_loaded(package_name) then
 		Managers.package:load(package_name, "my_favorites", nil, true)
 	end
 end
 
-mod.on_all_mods_loaded = function()
+mod.on_all_mods_loaded = function ()
 	mod.load_package("packages/ui/views/inventory_background_view/inventory_background_view")
 end
 
@@ -103,9 +103,9 @@ local function switch_to_official()
 	if mod:get("switch_to_official_done_fix") then
 		return
 	end
-	Promise.until_true(function()
+	Promise.until_true(function ()
 		return (not not get_save_data()) and Managers.save:state() == "idle"
-	end):next(function()
+	end):next(function ()
 		local favorite_item_list = get_item_cache()
 		local account_data = get_save_data()
 		if not account_data then
@@ -143,7 +143,7 @@ local function switch_to_official()
 	end)
 end
 
-mod.on_game_state_changed = function(status, state_name)
+mod.on_game_state_changed = function (status, state_name)
 	if state_name ~= "StateMainMenu" then
 		return
 	end
@@ -153,7 +153,7 @@ mod.on_game_state_changed = function(status, state_name)
 	switch_to_official()
 end
 
-mod:hook_safe(Items, "set_item_id_as_favorite", function(item_gear_id, state)
+mod:hook_safe(Items, "set_item_id_as_favorite", function (item_gear_id, state)
 	if not state then
 		clear_item_group(item_gear_id)
 	end
@@ -207,7 +207,7 @@ local item_definitions = {
 			default_color = Color.white(255, true),
 			size = { 32, 32 },
 		},
-		visibility_function = function(content, style)
+		visibility_function = function (content, style)
 			if not content.favorite then
 				return false
 			end
@@ -237,7 +237,7 @@ local item_definitions = {
 	},
 }
 
-mod:hook_require("scripts/ui/pass_templates/item_pass_templates", function(instance)
+mod:hook_require("scripts/ui/pass_templates/item_pass_templates", function (instance)
 	local ui_renderer_instance = Managers.ui:ui_constant_elements():ui_renderer()
 	local fav_w, fav_h = UIRenderer.text_size(ui_renderer_instance, string.format("%s %s", "", Localize("loc_inventory_menu_favorite_item")), "proxima_nova_bold", 18)
 	for name, def in pairs(item_definitions) do
@@ -261,7 +261,7 @@ mod:hook_require("scripts/ui/pass_templates/item_pass_templates", function(insta
 	for _, v in ipairs(instance.item) do
 		if v.style_id == "favorite_icon" then
 			v.value_id = "favorite_icon"
-			v.visibility_function = function(content, style)
+			v.visibility_function = function (content, style)
 				if not content.favorite then
 					return false
 				end
@@ -300,8 +300,8 @@ mod:hook_require("scripts/ui/pass_templates/item_pass_templates", function(insta
 	end
 end)
 
-mod:hook_safe("ViewElementGrid", "init", function(self)
-	self.__myfav_cb_main_pressed = function(self, widget)
+mod:hook_safe("ViewElementGrid", "init", function (self)
+	self.__myfav_cb_main_pressed = function (self, widget)
 		local content = widget.content
 		if not content then
 			return
@@ -317,14 +317,14 @@ mod:hook_safe("ViewElementGrid", "init", function(self)
 		end
 		switch_item_group(item_id)
 	end
-	self.__myfav_cb_extra_pressed = function(self, widget)
+	self.__myfav_cb_extra_pressed = function (self, widget)
 		if mod:get("show_extra_icon") then
 			self.__myfav_cb_main_pressed(self, widget)
 		end
 	end
 end)
 
-mod:hook("ViewElementGrid", "_create_entry_widget_from_config", function(func, self, config, suffix, callback_name, secondary_callback_name, double_click_callback_name)
+mod:hook("ViewElementGrid", "_create_entry_widget_from_config", function (func, self, config, suffix, callback_name, secondary_callback_name, double_click_callback_name)
 	local widget, alignment_widget = func(
 		self, config, suffix, callback_name, secondary_callback_name, double_click_callback_name
 	)

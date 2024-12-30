@@ -10,7 +10,7 @@ local function _random(...)
 	return value
 end
 
-mod.gen_havoc_data = function(havoc_rank)
+mod.gen_havoc_data = function (havoc_rank)
 	local seed = math.random(23062419930608, 2023062419930608)
 	SEED = seed
 

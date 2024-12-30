@@ -16,22 +16,22 @@ local function is_force_sword(template)
 	return false
 end
 
-mod:hook(ForceWeaponBlockEffects, "_update_vfx", function(func, self)
+mod:hook(ForceWeaponBlockEffects, "_update_vfx", function (func, self)
 	if not mod:get("remove_blocking_effect") then
 		return func(self)
 	end
 	self:_destroy_vfx()
 end)
 
-mod:hook(ForceWeaponBlockEffects, "_update_sfx", function(func, self)
+mod:hook(ForceWeaponBlockEffects, "_update_sfx", function (func, self)
 	if not mod:get("remove_blocking_sound") then
 		return func(self)
 	end
 	self:_stop_sfx()
 end)
 
-mod:hook_require("scripts/extension_systems/weapon/actions/action_damage_target", function(ActionDamageTarget)
-	mod:hook(ActionDamageTarget, "_play_particles", function(func, self)
+mod:hook_require("scripts/extension_systems/weapon/actions/action_damage_target", function (ActionDamageTarget)
+	mod:hook(ActionDamageTarget, "_play_particles", function (func, self)
 		if not mod:get("remove_push_attack_effect") then
 			return func(self)
 		end
@@ -42,8 +42,8 @@ mod:hook_require("scripts/extension_systems/weapon/actions/action_damage_target"
 	end)
 end)
 
-mod:hook_require("scripts/extension_systems/weapon/actions/action_push", function(ActionPush)
-	mod:hook(ActionPush, "_play_push_particles", function(func, self)
+mod:hook_require("scripts/extension_systems/weapon/actions/action_push", function (ActionPush)
+	mod:hook(ActionPush, "_play_push_particles", function (func, self)
 		if not mod:get("remove_pushing_effect") then
 			return func(self)
 		end

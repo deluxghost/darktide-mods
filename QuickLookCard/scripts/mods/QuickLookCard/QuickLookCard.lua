@@ -820,7 +820,7 @@ local item_definitions = {
 	},
 }
 
-mod:hook_require("scripts/ui/pass_templates/item_pass_templates", function(instance)
+mod:hook_require("scripts/ui/pass_templates/item_pass_templates", function (instance)
 	for _, def in ipairs(item_definitions) do
 		local idx = nil
 		for i, v in ipairs(instance.item) do
@@ -970,7 +970,7 @@ local function update_compatibility_fields(widget, item)
 	end
 end
 
-mod:hook("ViewElementGrid", "_create_entry_widget_from_config", function(func, self, config, suffix, callback_name, secondary_callback_name, double_click_callback_name)
+mod:hook("ViewElementGrid", "_create_entry_widget_from_config", function (func, self, config, suffix, callback_name, secondary_callback_name, double_click_callback_name)
 	local widget, alignment_widget = func(
 		self, config, suffix, callback_name, secondary_callback_name, double_click_callback_name
 	)

@@ -14,14 +14,14 @@ mod.on_all_mods_loaded = function ()
 	recolor_mod = get_mod("RecolorStimms")
 end
 
-mod.on_enabled = function()
+mod.on_enabled = function ()
 	settings.use_recolor_stimms_mod = mod:get("use_recolor_stimms_mod")
 	settings.show_pickup_color = mod:get("show_pickup_color")
 	settings.show_team_panel_color = mod:get("show_team_panel_color")
 	settings.show_self_weapon_color = mod:get("show_self_weapon_color")
 end
 
-mod.on_setting_changed = function(setting_id)
+mod.on_setting_changed = function (setting_id)
 	settings.use_recolor_stimms_mod = mod:get("use_recolor_stimms_mod")
 	settings.show_pickup_color = mod:get("show_pickup_color")
 	settings.show_team_panel_color = mod:get("show_team_panel_color")
@@ -113,7 +113,7 @@ mod:hook_safe(CLASS.HudElementWorldMarkers, "event_add_world_marker_unit", funct
 	end
 end)
 
-mod:hook_safe("HudElementTeamPlayerPanel", "_update_player_features", function(self, dt, t, player, ui_renderer)
+mod:hook_safe("HudElementTeamPlayerPanel", "_update_player_features", function (self, dt, t, player, ui_renderer)
 	if not settings.show_team_panel_color then
 		return
 	end
@@ -135,7 +135,7 @@ mod:hook_safe("HudElementTeamPlayerPanel", "_update_player_features", function(s
 	end
 end)
 
-mod:hook_safe("HudElementPlayerWeapon", "update", function(self, dt, t, ui_renderer)
+mod:hook_safe("HudElementPlayerWeapon", "update", function (self, dt, t, ui_renderer)
 	if not settings.show_self_weapon_color then
 		return
 	end

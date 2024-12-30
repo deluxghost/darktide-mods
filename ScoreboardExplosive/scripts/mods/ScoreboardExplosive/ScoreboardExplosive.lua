@@ -2,9 +2,9 @@ local mod = get_mod("ScoreboardExplosive")
 local scoreboard = get_mod("scoreboard")
 local TextUtilities = require("scripts/utilities/ui/text")
 
-mod.on_all_mods_loaded = function()
+mod.on_all_mods_loaded = function ()
 	if not scoreboard then
-		mod:hook(CLASS.HudElementCombatFeed, "event_combat_feed_kill", function(func, self, attacking_unit, attacked_unit, ...)
+		mod:hook(CLASS.HudElementCombatFeed, "event_combat_feed_kill", function (func, self, attacking_unit, attacked_unit, ...)
 			if type(attacked_unit) == "string" then
 				local message = attacked_unit
 				local color_name = self:_get_unit_presentation_name(attacking_unit) or "NONE"
@@ -16,7 +16,7 @@ mod.on_all_mods_loaded = function()
 	end
 end
 
-mod.on_enabled = function()
+mod.on_enabled = function ()
 	if mod:get("option_explosive_detonated") == false then
 		mod:set("option_explosive_ignited", false, false)
 	elseif mod:get("option_explosive_detonated") == nil and mod:get("explosive_ignited") == false then
@@ -92,7 +92,7 @@ local function handle_attack(account_id, damage_profile, attacking_unit, attacke
 	end
 end
 
-mod:hook(CLASS.AttackReportManager, "add_attack_result", function(
+mod:hook(CLASS.AttackReportManager, "add_attack_result", function (
 		func, self, damage_profile, attacked_unit, attacking_unit, attack_direction, hit_world_position, hit_weakspot,
 		damage, attack_result, attack_type, damage_efficiency, ...
 	)

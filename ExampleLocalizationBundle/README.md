@@ -50,7 +50,7 @@ A template looks like this:
     locales = {
         "zh-cn",
     },
-    handle_func = function(locale, value)
+    handle_func = function (locale, value)
         return string.gsub(value, ": ", ":")
     end,
 },

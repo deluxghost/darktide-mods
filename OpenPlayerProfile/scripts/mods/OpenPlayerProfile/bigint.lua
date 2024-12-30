@@ -30,10 +30,10 @@ function bigint.new(num)
     end
 
     setmetatable(self, {
-        __add = function(lhs, rhs)
+        __add = function (lhs, rhs)
             return bigint.add(lhs, rhs)
         end,
-        __unm = function()
+        __unm = function ()
             if (self.sign == "+") then
                 self.sign = "-"
             else
@@ -41,20 +41,20 @@ function bigint.new(num)
             end
             return self
         end,
-        __sub = function(lhs, rhs)
+        __sub = function (lhs, rhs)
             return bigint.subtract(lhs, rhs)
         end,
-        __mul = function(lhs, rhs)
+        __mul = function (lhs, rhs)
             return bigint.multiply(lhs, rhs)
         end,
-        __div = function(lhs, rhs)
+        __div = function (lhs, rhs)
             return bigint.divide(lhs, rhs)
         end,
-        __mod = function(lhs, rhs)
+        __mod = function (lhs, rhs)
             local result, remainder = bigint.divide(lhs, rhs)
             return result
         end,
-        __pow = function(lhs, rhs)
+        __pow = function (lhs, rhs)
             return bigint.exponentiate(lhs, rhs)
         end
     })

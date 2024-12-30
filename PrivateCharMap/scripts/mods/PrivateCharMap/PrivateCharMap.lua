@@ -6,7 +6,7 @@ mod:add_require_path("PrivateCharMap/scripts/mods/PrivateCharMap/private_char_ma
 mod:register_view({
 	view_name = "private_char_map_view",
 	view_settings = {
-		init_view_function = function(ingame_ui_context)
+		init_view_function = function (ingame_ui_context)
 			return true
 		end,
 		state_bound = true,
@@ -38,7 +38,7 @@ mod:register_view({
 	},
 })
 
-mod:command("charmap", mod:localize("cmd_open_char_map"), function()
+mod:command("charmap", mod:localize("cmd_open_char_map"), function ()
 	if not Managers.ui:view_instance("private_char_map_view") then
 		Managers.ui:open_view("private_char_map_view", nil, nil, nil, nil, {})
 	end
