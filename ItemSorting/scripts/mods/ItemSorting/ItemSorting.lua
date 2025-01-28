@@ -66,12 +66,12 @@ local __isort_extra_keys = {
 	"__isort_type_myfav",
 }
 
-local function fill_items_extra(view, layout_field)
-	local new_items = get_valid_new_items() or nil
-	if not layout_field then
-		layout_field = "_filtered_offer_items_layout"
+local function fill_items_extra(view, inv_items_layout)
+	if not inv_items_layout then
+		return
 	end
-	local inv_items_layout = view and view[layout_field] or {}
+
+	local new_items = get_valid_new_items() or nil
 	local presets = ProfileUtils.get_profile_presets()
 	local current_preset_id = ProfileUtils.get_active_profile_preset_id()
 	local MyFavorites = get_mod("MyFavorites")
@@ -163,24 +163,23 @@ mod.on_enabled = function ()
 	end
 end
 
-local function sort_grid_layout(func, self, sort_function)
-	if not self._filtered_offer_items_layout then
-		return
-	end
-	fill_items_extra(self)
-	func(self, sort_function)
+local function sort_grid_layout(func, self, sort_function, optional_filter_layout)
+	local layout = optional_filter_layout or self._item_grid_layout or self._item_grid._visible_grid_layout
+	fill_items_extra(self, layout)
+	fill_items_extra(self, self._offer_items_layout)
+	func(self, sort_function, optional_filter_layout)
 end
 
-mod:hook(InventoryWeaponsView, "_sort_grid_layout", function (func, self, sort_function)
-	sort_grid_layout(func, self, sort_function)
+mod:hook(InventoryWeaponsView, "_sort_grid_layout", function (func, self, sort_function, optional_filter_layout)
+	sort_grid_layout(func, self, sort_function, optional_filter_layout)
 end)
 
-mod:hook(CraftingMechanicusModifyView, "_sort_grid_layout", function (func, self, sort_function)
-	sort_grid_layout(func, self, sort_function)
+mod:hook(CraftingMechanicusModifyView, "_sort_grid_layout", function (func, self, sort_function, optional_filter_layout)
+	sort_grid_layout(func, self, sort_function, optional_filter_layout)
 end)
 
-mod:hook(CraftingMechanicusBarterItemsView, "_sort_grid_layout", function (func, self, sort_function)
-	sort_grid_layout(func, self, sort_function)
+mod:hook(CraftingMechanicusBarterItemsView, "_sort_grid_layout", function (func, self, sort_function, optional_filter_layout)
+	sort_grid_layout(func, self, sort_function, optional_filter_layout)
 end)
 
 local function setup_sort_options(self, view_type)

@@ -2,6 +2,31 @@ local mod = get_mod("ItemSorting")
 local ItemUtils = require("scripts/utilities/items")
 local ItemSortingUtils = {}
 
+function ItemSortingUtils.sort_element_key_comparator(definitions)
+	return function (a, b)
+		for i = 1, #definitions, 3 do
+			local order, key, func = definitions[i], definitions[i + 1], definitions[i + 2]
+
+			local a_value, b_value = key and a[key], key and b[key]
+			if not a_value or not b_value then
+				return nil
+			end
+
+			local is_lt = func(a_value, b_value)
+			if is_lt ~= nil then
+				if order == "<" or order == "true" then
+					return is_lt
+				else
+					return not is_lt
+				end
+			end
+		end
+
+		return nil
+	end
+end
+
+
 function ItemSortingUtils.get_trait_category(item)
 	if item.item_type == "GADGET" then
 		if item.traits and #item.traits > 0 then

@@ -10,7 +10,7 @@ local definitions = {
 				display_name = Localize("loc_inventory_item_grid_sort_title_format_high_low", true, {
 					sort_name = Localize("loc_inventory_item_grid_sort_title_item_power")
 				}),
-				sort_function = ItemUtils.sort_element_key_comparator({
+				sort_function = ItemSortingUtils.sort_element_key_comparator({
 					"<", "item", ItemSortingUtils.compare_item_new,
 					"<", "item", ItemSortingUtils.compare_item_equipped,
 					"<", "item", ItemSortingUtils.compare_item_myfav,
@@ -25,7 +25,7 @@ local definitions = {
 				display_name = Localize("loc_inventory_item_grid_sort_title_format_low_high", true, {
 					sort_name = Localize("loc_inventory_item_grid_sort_title_item_power")
 				}),
-				sort_function = ItemUtils.sort_element_key_comparator({
+				sort_function = ItemSortingUtils.sort_element_key_comparator({
 					"<", "item", ItemSortingUtils.compare_item_new,
 					"<", "item", ItemSortingUtils.compare_item_equipped,
 					"<", "item", ItemSortingUtils.compare_item_myfav,
@@ -40,7 +40,7 @@ local definitions = {
 				display_name = Localize("loc_inventory_item_grid_sort_title_format_high_low", true, {
 					sort_name = Localize("loc_inventory_item_grid_sort_title_rarity")
 				}),
-				sort_function = ItemUtils.sort_element_key_comparator({
+				sort_function = ItemSortingUtils.sort_element_key_comparator({
 					"<", "item", ItemSortingUtils.compare_item_new,
 					"<", "item", ItemSortingUtils.compare_item_equipped,
 					"<", "item", ItemSortingUtils.compare_item_myfav,
@@ -55,7 +55,7 @@ local definitions = {
 				display_name = Localize("loc_inventory_item_grid_sort_title_format_low_high", true, {
 					sort_name = Localize("loc_inventory_item_grid_sort_title_rarity")
 				}),
-				sort_function = ItemUtils.sort_element_key_comparator({
+				sort_function = ItemSortingUtils.sort_element_key_comparator({
 					"<", "item", ItemSortingUtils.compare_item_new,
 					"<", "item", ItemSortingUtils.compare_item_equipped,
 					"<", "item", ItemSortingUtils.compare_item_myfav,
@@ -70,7 +70,7 @@ local definitions = {
 				display_name = Localize("loc_inventory_item_grid_sort_title_format_increasing_letters", true, {
 					sort_name = Localize("loc_inventory_item_grid_sort_title_name")
 				}),
-				sort_function = ItemUtils.sort_element_key_comparator({
+				sort_function = ItemSortingUtils.sort_element_key_comparator({
 					"<", "item", ItemSortingUtils.compare_item_new,
 					"<", "item", ItemSortingUtils.compare_item_equipped,
 					"<", "item", ItemSortingUtils.compare_item_myfav,
@@ -85,7 +85,7 @@ local definitions = {
 				display_name = Localize("loc_inventory_item_grid_sort_title_format_decreasing_letters", true, {
 					sort_name = Localize("loc_inventory_item_grid_sort_title_name")
 				}),
-				sort_function = ItemUtils.sort_element_key_comparator({
+				sort_function = ItemSortingUtils.sort_element_key_comparator({
 					"<", "item", ItemSortingUtils.compare_item_new,
 					"<", "item", ItemSortingUtils.compare_item_equipped,
 					"<", "item", ItemSortingUtils.compare_item_myfav,
@@ -102,7 +102,7 @@ local definitions = {
 				display_name = Localize("loc_inventory_item_grid_sort_title_format_high_low", true, {
 					sort_name = Localize("loc_inventory_item_grid_sort_title_item_power")
 				}),
-				sort_function = ItemUtils.sort_element_key_comparator({
+				sort_function = ItemSortingUtils.sort_element_key_comparator({
 					">", "offer", ItemSortingUtils.compare_offer_owned,
 					"<", "item", ItemSortingUtils.compare_item_top_curios,
 					">", "item", ItemUtils.compare_item_level,
@@ -116,7 +116,7 @@ local definitions = {
 				display_name = Localize("loc_inventory_item_grid_sort_title_format_low_high", true, {
 					sort_name = Localize("loc_inventory_item_grid_sort_title_item_power")
 				}),
-				sort_function = ItemUtils.sort_element_key_comparator({
+				sort_function = ItemSortingUtils.sort_element_key_comparator({
 					">", "offer", ItemSortingUtils.compare_offer_owned,
 					"<", "item", ItemSortingUtils.compare_item_top_curios,
 					"<", "item", ItemUtils.compare_item_level,
@@ -130,7 +130,7 @@ local definitions = {
 				display_name = Localize("loc_inventory_item_grid_sort_title_format_high_low", true, {
 					sort_name = Localize("loc_inventory_item_grid_sort_title_rarity")
 				}),
-				sort_function = ItemUtils.sort_element_key_comparator({
+				sort_function = ItemSortingUtils.sort_element_key_comparator({
 					">", "offer", ItemSortingUtils.compare_offer_owned,
 					"<", "item", ItemSortingUtils.compare_item_top_curios,
 					">", "item", ItemUtils.compare_item_rarity,
@@ -144,7 +144,7 @@ local definitions = {
 				display_name = Localize("loc_inventory_item_grid_sort_title_format_low_high", true, {
 					sort_name = Localize("loc_inventory_item_grid_sort_title_rarity")
 				}),
-				sort_function = ItemUtils.sort_element_key_comparator({
+				sort_function = ItemSortingUtils.sort_element_key_comparator({
 					">", "offer", ItemSortingUtils.compare_offer_owned,
 					"<", "item", ItemSortingUtils.compare_item_top_curios,
 					"<", "item", ItemUtils.compare_item_rarity,
@@ -158,7 +158,7 @@ local definitions = {
 				display_name = Localize("loc_inventory_item_grid_sort_title_format_low_high", true, {
 					sort_name = Localize("loc_inventory_item_grid_sort_title_item_price")
 				}),
-				sort_function = ItemUtils.sort_element_key_comparator({
+				sort_function = ItemSortingUtils.sort_element_key_comparator({
 					">", "offer", ItemSortingUtils.compare_offer_owned,
 					"<", "item", ItemSortingUtils.compare_item_top_curios,
 					"<", "offer", ItemUtils.compare_offer_price,
@@ -173,7 +173,7 @@ local definitions = {
 				display_name = Localize("loc_inventory_item_grid_sort_title_format_high_low", true, {
 					sort_name = Localize("loc_inventory_item_grid_sort_title_item_price")
 				}),
-				sort_function = ItemUtils.sort_element_key_comparator({
+				sort_function = ItemSortingUtils.sort_element_key_comparator({
 					">", "offer", ItemSortingUtils.compare_offer_owned,
 					"<", "item", ItemSortingUtils.compare_item_top_curios,
 					">", "offer", ItemUtils.compare_offer_price,
@@ -188,7 +188,7 @@ local definitions = {
 				display_name = Localize("loc_inventory_item_grid_sort_title_format_increasing_letters", true, {
 					sort_name = Localize("loc_inventory_item_grid_sort_title_name")
 				}),
-				sort_function = ItemUtils.sort_element_key_comparator({
+				sort_function = ItemSortingUtils.sort_element_key_comparator({
 					">", "offer", ItemSortingUtils.compare_offer_owned,
 					"<", "item", ItemSortingUtils.compare_item_top_curios,
 					"<", "item", ItemUtils.compare_item_name,
@@ -202,7 +202,7 @@ local definitions = {
 				display_name = Localize("loc_inventory_item_grid_sort_title_format_decreasing_letters", true, {
 					sort_name = Localize("loc_inventory_item_grid_sort_title_name")
 				}),
-				sort_function = ItemUtils.sort_element_key_comparator({
+				sort_function = ItemSortingUtils.sort_element_key_comparator({
 					">", "offer", ItemSortingUtils.compare_offer_owned,
 					"<", "item", ItemSortingUtils.compare_item_top_curios,
 					">", "item", ItemUtils.compare_item_name,
@@ -218,7 +218,7 @@ local definitions = {
 			{
 				id = "category",
 				display_name = mod:localize("custom_sort_category"),
-				sort_function = ItemUtils.sort_element_key_comparator({
+				sort_function = ItemSortingUtils.sort_element_key_comparator({
 					"<", "item", ItemSortingUtils.compare_item_type_new,
 					"<", "item", ItemSortingUtils.compare_item_type_equipped,
 					"<", "item", ItemSortingUtils.compare_item_type_myfav,
@@ -233,7 +233,7 @@ local definitions = {
 			{
 				id = "category_mark",
 				display_name = mod:localize("custom_sort_category_mark"),
-				sort_function = ItemUtils.sort_element_key_comparator({
+				sort_function = ItemSortingUtils.sort_element_key_comparator({
 					"<", "item", ItemSortingUtils.compare_item_type_new,
 					"<", "item", ItemSortingUtils.compare_item_type_equipped,
 					"<", "item", ItemSortingUtils.compare_item_type_myfav,
@@ -251,7 +251,7 @@ local definitions = {
 				display_name = Localize("loc_inventory_item_grid_sort_title_format_high_low", true, {
 					sort_name = Localize("loc_weapon_stats_display_base_rating")
 				}),
-				sort_function = ItemUtils.sort_element_key_comparator({
+				sort_function = ItemSortingUtils.sort_element_key_comparator({
 					"<", "item", ItemSortingUtils.compare_item_new,
 					"<", "item", ItemSortingUtils.compare_item_equipped,
 					"<", "item", ItemSortingUtils.compare_item_myfav,
@@ -266,7 +266,7 @@ local definitions = {
 				display_name = Localize("loc_inventory_item_grid_sort_title_format_low_high", true, {
 					sort_name = Localize("loc_weapon_stats_display_base_rating")
 				}),
-				sort_function = ItemUtils.sort_element_key_comparator({
+				sort_function = ItemSortingUtils.sort_element_key_comparator({
 					"<", "item", ItemSortingUtils.compare_item_new,
 					"<", "item", ItemSortingUtils.compare_item_equipped,
 					"<", "item", ItemSortingUtils.compare_item_myfav,
@@ -281,7 +281,7 @@ local definitions = {
 			{
 				id = "category",
 				display_name = mod:localize("custom_sort_category"),
-				sort_function = ItemUtils.sort_element_key_comparator({
+				sort_function = ItemSortingUtils.sort_element_key_comparator({
 					">", "offer", ItemSortingUtils.compare_offer_owned,
 					"<", "item", ItemSortingUtils.compare_item_top_curios,
 					"<", "item", ItemSortingUtils.compare_item_category,
@@ -294,7 +294,7 @@ local definitions = {
 			{
 				id = "category_mark",
 				display_name = mod:localize("custom_sort_category_mark"),
-				sort_function = ItemUtils.sort_element_key_comparator({
+				sort_function = ItemSortingUtils.sort_element_key_comparator({
 					">", "offer", ItemSortingUtils.compare_offer_owned,
 					"<", "item", ItemSortingUtils.compare_item_top_curios,
 					"<", "item", ItemSortingUtils.compare_item_category,
@@ -310,7 +310,7 @@ local definitions = {
 				display_name = Localize("loc_inventory_item_grid_sort_title_format_high_low", true, {
 					sort_name = Localize("loc_weapon_stats_display_base_rating")
 				}),
-				sort_function = ItemUtils.sort_element_key_comparator({
+				sort_function = ItemSortingUtils.sort_element_key_comparator({
 					">", "offer", ItemSortingUtils.compare_offer_owned,
 					"<", "item", ItemSortingUtils.compare_item_top_curios,
 					">", "item", ItemSortingUtils.compare_item_base_level,
@@ -324,7 +324,7 @@ local definitions = {
 				display_name = Localize("loc_inventory_item_grid_sort_title_format_low_high", true, {
 					sort_name = Localize("loc_weapon_stats_display_base_rating")
 				}),
-				sort_function = ItemUtils.sort_element_key_comparator({
+				sort_function = ItemSortingUtils.sort_element_key_comparator({
 					">", "offer", ItemSortingUtils.compare_offer_owned,
 					"<", "item", ItemSortingUtils.compare_item_top_curios,
 					"<", "item", ItemSortingUtils.compare_item_base_level,
