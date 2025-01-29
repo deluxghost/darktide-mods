@@ -9,7 +9,7 @@ mod:hook(ViewElementTraitInventory, "present_inventory", function (func, self, s
     local highest = 1
     for _, book in pairs(sticker_book) do
         for i, state in ipairs(book) do
-            if state == "seen" then
+            if state == "seen" and i > highest then
                 highest = i
             end
         end
