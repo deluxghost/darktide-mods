@@ -11,6 +11,18 @@ local TextUtilities = require("scripts/utilities/ui/text")
 local BuffSettings = require("scripts/settings/buff/buff_settings")
 local stat_buff_types = BuffSettings.stat_buff_types
 
+mod.on_enabled = function ()
+	TalentBuilderViewSettings.settings_by_node_type.stat.sort_order = mod:get("show_stats_on_top") and 0 or 10
+end
+
+mod.on_disabled = function ()
+	TalentBuilderViewSettings.settings_by_node_type.stat.sort_order = 10
+end
+
+mod.on_setting_changed = function (setting_id)
+	TalentBuilderViewSettings.settings_by_node_type.stat.sort_order = mod:get("show_stats_on_top") and 0 or 10
+end
+
 local function get_buff_name(config)
 	if not config.find_value then
 		return ""
