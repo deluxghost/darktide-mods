@@ -195,13 +195,6 @@ local function all_member_ready()
 		if myself:presence_name() ~= "hub" and myself:presence_name() ~= "training_grounds" and myself:presence_name() ~= "main_menu" then
 			return false
 		end
-
-		-- let's just assume other members don't have psych_ward while we can't actually detect that
-		for _, member in ipairs(Managers.party_immaterium._other_members) do
-			if member:presence_name() ~= "hub" and member:presence_name() ~= "training_grounds" then
-				return false
-			end
-		end
 		return true
 	end
 
