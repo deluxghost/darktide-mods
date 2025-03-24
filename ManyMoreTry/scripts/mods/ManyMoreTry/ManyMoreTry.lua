@@ -426,5 +426,6 @@ mod:command("mmtclear", mod:localize("cmd_clear"), function (hour_str)
 end)
 
 mod:command("mmtget", mod:localize("cmd_get"), function ()
-	Application.open_url_in_browser("https://maelstroom.net/")
+	local lang = Managers.localization and Managers.localization._language
+	Application.open_url_in_browser("https://darktide-mission.otwako.dev/" .. lang)
 end)
