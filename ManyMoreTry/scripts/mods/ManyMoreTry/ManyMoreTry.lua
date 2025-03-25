@@ -109,7 +109,7 @@ local function get_mission_name(mission, name_key, circumstance_key)
 		table.insert(name_parts, category_name)
 	end
 
-	local danger_settings = DangerSettings.by_index[mission.challenge]
+	local danger_settings = DangerSettings[mission.challenge]
 	table.insert(name_parts, Localize(danger_settings.display_name))
 
 	local circumstance_name = nil

@@ -2,7 +2,7 @@ local mod = get_mod("DifficultyColor")
 local DangerSettings = require("scripts/settings/difficulty/danger_settings")
 
 local function update_color(settings)
-	for i, danger in ipairs(settings.by_index) do
+	for i, danger in ipairs(settings) do
 		local r = mod:get("opt_color_" .. tostring(i) .. "_r")
 		local g = mod:get("opt_color_" .. tostring(i) .. "_g")
 		local b = mod:get("opt_color_" .. tostring(i) .. "_b")

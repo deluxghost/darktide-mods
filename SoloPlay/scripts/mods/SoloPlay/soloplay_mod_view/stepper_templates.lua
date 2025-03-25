@@ -23,7 +23,7 @@ local function _make_difficulty_picker_rect_change_function(index)
 		local min_danger = content.min_danger or MIN_DANGER
 		local max_danger = content.max_danger or MAX_DANGER
 		local current_danger = content.hover_danger or content.danger
-		local danger_color = DangerSettings.by_index[current_danger] and DangerSettings.by_index[current_danger].color or DangerSettings.by_index[1].color
+		local danger_color = DangerSettings[current_danger] and DangerSettings[current_danger].color or DangerSettings[1].color
 
 		ColorUtilities.color_copy(danger_color, style.color, true)
 
@@ -89,7 +89,7 @@ StepperTemplates.difficulty_stepper = {
 				end
 
 				if content.last_danger ~= danger then
-					local danger_settings = DangerSettings.by_index[danger]
+					local danger_settings = DangerSettings[danger]
 
 					content.difficulty_text = Localize(danger_settings.display_name)
 					content.last_danger = danger

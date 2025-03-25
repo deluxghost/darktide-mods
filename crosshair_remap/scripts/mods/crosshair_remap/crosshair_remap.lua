@@ -1,5 +1,5 @@
 local mod = get_mod("crosshair_remap")
-local Action = require("scripts/utilities/weapon/action")
+local Action = require("scripts/utilities/action/action")
 local WeaponTemplate = require("scripts/utilities/weapon/weapon_template")
 local PlayerCharacterConstants = require("scripts/settings/player_character/player_character_constants")
 local slot_configuration = PlayerCharacterConstants.slot_configuration
