@@ -11,18 +11,25 @@ mod:hook_safe(TrainingGroundsOptionsView, "_setup_info", function (self)
 end)
 
 mod:hook_safe(TrainingGroundsOptionsView, "on_enter", function (self)
-	if mod:get("interact_psykanium_option") >= 3 then
+	if mod:get("auto_select") == "shootingrange_skip" then
 		local play_button = self._widgets_by_name.play_button
 		play_button.content.hotspot.pressed_callback()
 	end
 end)
 
 mod:hook_safe(TrainingGroundsView, "on_enter", function (self)
-	if mod:get("interact_psykanium_option") >= 2 then
-		local shooting_range_button = self._widgets_by_name.option_button_3
-		if shooting_range_button.content.hotspot.disabled then
+	local auto_select = mod:get("auto_select")
+	if auto_select == "horde" then
+		local button = self._widgets_by_name.option_button_1
+		if button.content.hotspot.disabled then
 			return
 		end
-		shooting_range_button.content.hotspot.pressed_callback()
+		button.content.hotspot.pressed_callback()
+	elseif auto_select == "shootingrange" or auto_select == "shootingrange_skip" then
+		local button = self._widgets_by_name.option_button_4
+		if button.content.hotspot.disabled then
+			return
+		end
+		button.content.hotspot.pressed_callback()
 	end
 end)

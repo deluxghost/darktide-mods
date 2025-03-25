@@ -14,24 +14,23 @@ return {
 		["zh-cn"] = "默认难度",
 		ru = "Сложность по умолчанию",
 	},
-	interact_psykanium_option = {
-		en = "When interacting with Psykhanium...",
-		["zh-cn"] = "与灵能室交互时...",
-		ru = "При взаимодействии с Псайканиумом…",
+	auto_select = {
+		en = "Auto select when interacting with Psykhanium",
+		["zh-cn"] = "与灵能室交互时自动选择",
 	},
-	opt_no_auto_join = {
+	opt_no_auto_select = {
 		en = "Do nothing",
 		["zh-cn"] = "不做任何事",
 		ru = "Ничего не делать",
 	},
-	opt_auto_choose = {
-		en = "Choose Meat Grinder (difficulty selection view)",
-		["zh-cn"] = "选择绞肉机（难度选择界面）",
-		ru = "Выбрать Мясорубку (показать выбор сложности)",
+	opt_auto_horde = {
+		en = Localize("loc_horde_psykanium_horde_button"),
 	},
-	opt_auto_join = {
-		en = "Enter Meat Grinder directly",
-		["zh-cn"] = "直接进入绞肉机",
-		ru = "Войти в Мясорубку сразу",
+	opt_auto_shootingrange = {
+		en = Localize("loc_training_grounds_view_shooting_range_text"),
+	},
+	opt_auto_shootingrange_skip = {
+		en = Localize("loc_training_grounds_view_shooting_range_text") .. " (Skip difficulty selection)",
+		["zh-cn"] = Localize("loc_training_grounds_view_shooting_range_text") .. "（跳过难度选择）",
 	},
 }

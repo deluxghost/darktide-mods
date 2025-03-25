@@ -13,13 +13,14 @@ return {
 				range = {1, 5},
 			},
 			{
-				setting_id = "interact_psykanium_option",
+				setting_id = "auto_select",
 				type = "dropdown",
-				default_value = 1,
+				default_value = "none",
 				options = {
-					{text = "opt_no_auto_join", value = 1, show_widgets = {}},
-					{text = "opt_auto_choose", value = 2, show_widgets = {}},
-					{text = "opt_auto_join", value = 3, show_widgets = {}},
+					{text = "opt_no_auto_select", value = "none", show_widgets = {}},
+					{text = "opt_auto_horde", value = "horde", show_widgets = {}},
+					{text = "opt_auto_shootingrange", value = "shootingrange", show_widgets = {}},
+					{text = "opt_auto_shootingrange_skip", value = "shootingrange_skip", show_widgets = {}},
 				}
 			},
 		}
