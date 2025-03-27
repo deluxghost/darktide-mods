@@ -123,15 +123,18 @@ local function determine_ranged_weapon_class(weapon_template_name, weapon_templa
 		end
 		weapon_class = weapon_template.crosshair.crosshair_type == "shotgun" and "kickback_class" or "rumbler_class"
 	elseif weapon_class == "combat_shotguns" then
-		if not weapon_template.crosshair then
+		if not weapon_template.actions or not weapon_template.actions.action_shoot_hip or not weapon_template.actions.action_shoot_hip.fire_configuration then
 			return weapon_class
 		end
-		if weapon_template.crosshair.crosshair_type_special_active == "shotgun_wide" then
-			weapon_class = "shotgun_lawbringer_class"
-		elseif weapon_template.crosshair.crosshair_type_special_active == "bfg" then
-			weapon_class = "shotgun_agripinaa_class"
-		else
-			weapon_class = "shotgun_kantrael_class"
+		if weapon_template.actions.action_shoot_hip.fire_configuration.shotshell_special then
+			local shotshell_template = weapon_template.actions.action_shoot_hip.fire_configuration.shotshell_special
+			if shotshell_template.name == "shotgun_cleaving_special" then
+				weapon_class = "shotgun_lawbringer_class"
+			elseif shotshell_template.name == "shotgun_slug_special" then
+				weapon_class = "shotgun_agripinaa_class"
+			else
+				weapon_class = "shotgun_kantrael_class"
+			end
 		end
 	elseif weapon_class == "revolver_class" then
 		if not weapon_template.crosshair then
