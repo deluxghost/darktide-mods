@@ -5,6 +5,9 @@ local DangerSettings = require("scripts/settings/difficulty/danger_settings")
 local MatchmakingConstants = require("scripts/settings/network/matchmaking_constants")
 local DifficultyManager = require("scripts/managers/difficulty/difficulty_manager")
 local GameModeManager = require("scripts/managers/game_mode/game_mode_manager")
+local PacingManager = require("scripts/managers/pacing/pacing_manager")
+local PacingTemplates = require("scripts/managers/pacing/pacing_templates")
+local RoamerPacing = require("scripts/managers/pacing/roamer_pacing/roamer_pacing")
 local PickupSystem = require("scripts/extension_systems/pickups/pickup_system")
 local PickupSettings = require("scripts/settings/pickup/pickup_settings")
 local UISoundEvents = require("scripts/settings/ui/ui_sound_events")
@@ -227,11 +230,31 @@ end)
 
 mod:hook(GameModeManager, "hotkey_settings", function (func, self)
 	local ret = table.clone(func(self))
-	if self:game_mode_name() == "coop_complete_objective" and mod.is_soloplay() then
+	local game_mode_name = self:game_mode_name()
+	if (game_mode_name == "coop_complete_objective" or game_mode_name == "survival") and mod.is_soloplay() then
 		ret.hotkeys["hotkey_inventory"] = "inventory_background_view"
 		ret.lookup["inventory_background_view"] = "hotkey_inventory"
 	end
 	return ret
+end)
+
+mod:hook(PacingManager, "init", function (func, self, world, nav_world, level_seed, pacing_control)
+	func(self, world, nav_world, level_seed, pacing_control)
+	local is_havoc = Managers.state.difficulty:get_parsed_havoc_data()
+	if not is_havoc then
+		if Managers.mechanism and Managers.mechanism._mechanism and Managers.mechanism._mechanism._mechanism_data then
+			local mechanism_data = Managers.mechanism._mechanism._mechanism_data
+			local pacing_override = SoloPlaySettings.pacing_override[mechanism_data.mission_name]
+			if pacing_override and PacingTemplates[pacing_override] then
+				local template = PacingTemplates[pacing_override]
+				local game_mode_settings = Managers.state.game_mode:settings()
+				local side_sub_faction_types = game_mode_settings.side_sub_faction_types
+				local sub_faction_types = side_sub_faction_types[self._side_name]
+				self._template = template
+				self._roamer_pacing = RoamerPacing:new(nav_world, template.roamer_pacing_template, level_seed, sub_faction_types)
+			end
+		end
+	end
 end)
 
 mod:hook(PickupSystem, "_spawn_spread_pickups", function (func, self, distribution_type, pickup_pool, seed)

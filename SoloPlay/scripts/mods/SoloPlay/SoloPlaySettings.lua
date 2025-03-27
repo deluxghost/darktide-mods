@@ -41,6 +41,9 @@ local settings = {
 			},
 		},
 	},
+	pacing_override = {
+		psykhanium = "terror_events_only",
+	},
 	loc = {
 		missions = {},
 		side_missions = {},
