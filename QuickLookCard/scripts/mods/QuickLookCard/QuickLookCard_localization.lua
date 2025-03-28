@@ -32,6 +32,7 @@ return {
 		en = "Highlight lowest modifier stat",
 		["zh-cn"] = "高亮显示五维短板",
 		ja = "最も値の低い補正値をハイライトする",
+		ru = "Подсвечивать самое низкое значение модификаторов",
 	},
 	opt_group_toggles = {
 		en = "Toggles",
