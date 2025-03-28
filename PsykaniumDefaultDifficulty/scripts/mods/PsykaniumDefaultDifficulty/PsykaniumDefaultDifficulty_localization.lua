@@ -7,7 +7,7 @@ return {
 	mod_description = {
 		en = "Let you set the default difficulty of the Psykhanium, and enter Psykhanium quickly.",
 		["zh-cn"] = "允许你设置灵能室默认难度，以及快速进入灵能室。",
-		ru = "Позволяет вам установить сложность Псайканиума по умолчанию и быстро войти в него.",
+		ru = "Psykhanium Default Difficulty - Позволяет вам установить сложность Псайканиума по умолчанию и быстро войти в него.",
 	},
 	default_difficulty = {
 		en = "Default difficulty",
@@ -17,6 +17,7 @@ return {
 	auto_select = {
 		en = "Auto select when interacting with Psykhanium",
 		["zh-cn"] = "与灵能室交互时自动选择",
+		ru = "Автовыбор при активации меню Псайканиума",
 	},
 	opt_no_auto_select = {
 		en = "Do nothing",
@@ -28,9 +29,11 @@ return {
 	},
 	opt_auto_shootingrange = {
 		en = Localize("loc_training_grounds_view_shooting_range_text"),
+		ru = "Стрельбище",
 	},
 	opt_auto_shootingrange_skip = {
 		en = Localize("loc_training_grounds_view_shooting_range_text") .. " (Skip difficulty selection)",
+		ru = "Стрельбище (пропуск выбора сложности)",
 		["zh-cn"] = Localize("loc_training_grounds_view_shooting_range_text") .. "（跳过难度选择）",
 	},
 }
