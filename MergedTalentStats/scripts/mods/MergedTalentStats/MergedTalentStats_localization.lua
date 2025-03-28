@@ -12,5 +12,6 @@ return {
 	show_stats_on_top = {
 		en = "Show [Operative Modifier] stats on top",
 		["zh-cn"] = "置顶显示「特工修正」数据",
+		ru = "Показывать [Модификаторы оперативника] сверху",
 	},
 }
