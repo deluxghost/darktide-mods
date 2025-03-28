@@ -12,9 +12,9 @@ local PickupSystem = require("scripts/extension_systems/pickups/pickup_system")
 local PickupSettings = require("scripts/settings/pickup/pickup_settings")
 local UISoundEvents = require("scripts/settings/ui/ui_sound_events")
 local WwiseGameSyncSettings = require("scripts/settings/wwise_game_sync/wwise_game_sync_settings")
-local HavocManager = require("scripts/managers/havoc/havoc_manager")
 local SoloPlaySettings = mod:io_dofile("SoloPlay/scripts/mods/SoloPlay/SoloPlaySettings")
 mod:io_dofile("SoloPlay/scripts/mods/SoloPlay/havoc")
+mod:io_dofile("SoloPlay/scripts/mods/SoloPlay/workaround")
 
 local HOST_TYPES = MatchmakingConstants.HOST_TYPES
 local DISTRIBUTION_TYPES = PickupSettings.distribution_types
@@ -208,16 +208,6 @@ mod:hook_require("scripts/ui/views/system_view/system_view_content_list", functi
 			leave_mission_occur = leave_mission_occur + 1
 		end
 	end
-end)
-
--- HACK: allow starting game without modifiers
-mod:hook(HavocManager, "_initialize_modifiers", function (func, self, havoc_data)
-	local havoc_modifiers = havoc_data.modifiers
-	if not havoc_modifiers or #havoc_modifiers < 1 or havoc_modifiers[1].level == nil then
-		Log.info("HavocManager", "No modifiers found")
-		return
-	end
-	return func(self, havoc_data)
 end)
 
 mod:hook(DifficultyManager, "friendly_fire_enabled", function (func, self, target_is_player, target_is_minion)
