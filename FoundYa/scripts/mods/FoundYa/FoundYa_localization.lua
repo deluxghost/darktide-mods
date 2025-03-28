@@ -37,6 +37,7 @@ return {
 	alter_skull_icon = {
 		en = "Alternative Martyr's Skull icon",
 		["zh-cn"] = "改版殉道者头骨图标",
+		ru = "Альтернативный значок черепа мученика",
 	},
 	max_distance_material = {
 		en = "Forge materials",
@@ -51,6 +52,7 @@ return {
 	max_distance_penance = {
 		en = "Penance collectibles",
 		["zh-cn"] = "苦修收集物",
+		ru = "Предметы, собираемые для Искуплений",
 	},
 	max_distance_supply = {
 		en = "Supplies",
