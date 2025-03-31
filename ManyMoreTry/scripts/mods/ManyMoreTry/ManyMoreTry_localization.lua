@@ -69,7 +69,6 @@ return {
 		["zh-cn"] = "未保存任务",
 		ru = "Нет сохранённых миссий",
 		["zh-tw"] = "沒有儲存的任務",
-		["zh-tw"] = "沒有儲存的任務",
 	},
 	msg_saved_mission = {
 		en = "Saved missions:",

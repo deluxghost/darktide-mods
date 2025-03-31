@@ -8,7 +8,8 @@ return {
 	mod_description = {
 		en = "Play offline solo mission by /solo command. You can't get any rewards or progression in offline game.",
 		["zh-cn"] = "输入 /solo 命令玩离线单人任务。你无法从离线游戏中获得任何奖励或进度。",
-		ru = "Solo Play - Играйте в офлайн-соло-миссию командой /solo. В офлайн-игре вы не получаете никаких наград или прогресса.",
+		ru =
+		"Solo Play - Играйте в офлайн-соло-миссию командой /solo. В офлайн-игре вы не получаете никаких наград или прогресса.",
 		["zh-tw"] = "使用 /solo 指令進行離線單人任務。你無法在離線遊戲中獲得任何獎勵或進度。",
 	},
 	default_text = {
@@ -110,7 +111,7 @@ return {
 		en = "Normal Mode",
 		["zh-cn"] = "常规模式",
 		ru = "Обычный режим",
-    	["zh-tw"] = "一般模式",
+		["zh-tw"] = "一般模式",
 	},
 	title_havoc_mode = {
 		en = "Havoc Mode",
@@ -128,7 +129,7 @@ return {
 		en = "Side Mission",
 		["zh-cn"] = "次要目标",
 		ru = "Дополнительная миссия",
-    	["zh-tw"] = "次要任務",
+		["zh-tw"] = "次要任務",
 	},
 	label_circumstance = {
 		en = "Special Condition",
@@ -184,29 +185,30 @@ return {
 			.. "You can't get any rewards or progression in offline game.",
 		["zh-cn"] = "离线游戏主要用于测试，其体验可能与在线游戏不同。\n"
 			.. "你无法从离线游戏中获得任何奖励或进度。",
-		ru = "Офлайн-игра предназначена в основном для тестирования, впечатления от неё могут отличаться от онлайн-игры.\n"
+		ru =
+			"Офлайн-игра предназначена в основном для тестирования, впечатления от неё могут отличаться от онлайн-игры.\n"
 			.. "В офлайн-игре вы не сможете получить никаких наград или прогресса.",
-    	["zh-tw"] = "離線遊戲主要用於測試，其體驗可能與在線遊戲有所不同。\n"
-        	.. "你無法在離線遊戲中獲得任何獎勵或進度。",
+		["zh-tw"] = "離線遊戲主要用於測試，其體驗可能與在線遊戲有所不同。\n"
+			.. "你無法在離線遊戲中獲得任何獎勵或進度。",
 	},
 	tip_invalid_combination = {
 		en = "Note: some options may not be supported, have no effect, or cause crashes.",
 		["zh-cn"] = "注意：某些选项可能不受支持、不生效或导致崩溃。",
 		ru = "Примечание: некоторые параметры могут не поддерживаться, не иметь эффекта или вызывать вылеты!",
-    	["zh-tw"] = "注意：某些選項可能不受支援、無效或導致遊戲崩潰。",
+		["zh-tw"] = "注意：某些選項可能不受支援、無效或導致遊戲崩潰。",
 	},
 	msg_not_available = {
 		en = "Solo Play is currently unavailable",
 		["zh-cn"] = "单人游戏目前不可用",
 		ru = "В настоящее время режим соло-игры недоступен",
-    	["zh-tw"] = "單人遊戲目前不可用",
+		["zh-tw"] = "單人遊戲目前不可用",
 	},
 
 	havoc_faction_mixed = {
 		en = "Mixed",
 		["zh-cn"] = "混合",
 		ru = "Смешанный",
-    	["zh-tw"] = "混合",
+		["zh-tw"] = "混合",
 	},
 	havoc_faction_renegade = {
 		en = "Scab",
