@@ -49,6 +49,10 @@ return {
 		["zh-cn"] = "次要目标（圣经和魔法书）",
 		ru = "Второстепенные задачи (писания и гримуары)",
 	},
+	max_distance_device = {
+		en = "Secondary objectives (devices)",
+		["zh-cn"] = "次要目标（设备）",
+	},
 	max_distance_penance = {
 		en = "Penance collectibles",
 		["zh-cn"] = "苦修收集物",

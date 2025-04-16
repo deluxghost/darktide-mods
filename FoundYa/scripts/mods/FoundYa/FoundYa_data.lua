@@ -55,6 +55,12 @@ return {
 						range = {10, 80},
 					},
 					{
+						setting_id = "max_distance_device",
+						type = "numeric",
+						default_value = 15,
+						range = {10, 80},
+					},
+					{
 						setting_id = "max_distance_penance",
 						type = "numeric",
 						default_value = 15,

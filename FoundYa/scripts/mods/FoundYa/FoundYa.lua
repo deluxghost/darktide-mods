@@ -43,6 +43,9 @@ local interaction_types = {
 	forge_material = "material",
 	penance_collectible = "penance",
 	pocketable = function (pickup_data)
+		if pickup_data.name == "communications_hack_device" then
+			return "device"
+		end
 		if pickup_data.is_side_mission_pickup then
 			return "book"
 		end
