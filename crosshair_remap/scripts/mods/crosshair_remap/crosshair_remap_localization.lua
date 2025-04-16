@@ -60,6 +60,10 @@ local builtin_crosshairs_localization = {
 		en = "Wider Charge Up + Chevron",
 		["zh-cn"] = "宽充能 + 倒 V 形",
 	},
+	charge_up_ads_t_shape_dot_crosshair = {
+		en = "Wider Charge Up + T Shape + " .. Localize("loc_setting_crosshair_type_override_dot"),
+		["zh-cn"] = "宽充能 + T 形 + " .. Localize("loc_setting_crosshair_type_override_dot"),
+	},
 }
 
 local localization = {
