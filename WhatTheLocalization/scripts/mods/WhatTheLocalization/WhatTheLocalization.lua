@@ -62,16 +62,15 @@ mod.on_disabled = function ()
 	table.clear(registered_fixes)
 end
 
-mod:hook(LocalizationManager, "_lookup", function (func, self, key)
-	local ret = func(self, key)
+mod:hook(LocalizationManager, "_process_string", function (func, self, key, raw_str, context)
 	local fixes = registered_fixes[key]
-	if not fixes then
-		return ret
+	if fixes then
+		for _, handle_func in ipairs(fixes) do
+			raw_str = handle_func(Managers.localization._language, raw_str, context)
+		end
 	end
-	for _, handle_func in ipairs(fixes) do
-		ret = handle_func(Managers.localization._language, ret)
-	end
-	return ret
+	context = context or {}
+	return func(self, key, raw_str, context)
 end)
 
 mod.toggle_debug_mode = function ()

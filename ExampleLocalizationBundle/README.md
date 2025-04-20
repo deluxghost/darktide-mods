@@ -50,7 +50,7 @@ A template looks like this:
     locales = {
         "zh-cn",
     },
-    handle_func = function (locale, value)
+    handle_func = function (locale, value, context)
         return string.gsub(value, ": ", ":")
     end,
 },
@@ -59,7 +59,7 @@ A template looks like this:
 - `id`: A name for this fix
 - `loc_keys`: Which localization key(s) you want to fix, could be multiple if the `handle_func` can fix them all
 - `locale`: The target locale(s), could be multiple if the `handle_func` can fix them all, could omit if the `handle_func` can fix for all locales
-- `handle_func`: How to fix the localization. Argument `locale` is the current locale, `value` is the official translation string. You need to return your new translation as string value
+- `handle_func`: How to fix the localization. Argument `locale` is the current locale, `value` is the official translation string. You need to return your new translation as string value. `context` is actual params values in the locale string, e.g. you can modify the value of `{stacks:%s}` by changing `context.stacks`.
 
 Add as many templates as you need until the work is finished
 
