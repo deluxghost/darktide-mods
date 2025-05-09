@@ -81,7 +81,7 @@ local settings = {
 -- missions
 local missions_loc_array = {}
 for name, mission in pairs(MissionTemplates) do
-	if (not mission.objectives) or (not table.array_contains(objectives_denylist, mission.objectives)) then
+	if (not mission.objectives) or (not table.array_contains(objectives_denylist, mission.objectives)) or name == "tg_shooting_range" then
 		local display = Localize(mission.mission_name)
 		if string.starts_with(display, "<") then
 			display = name
@@ -262,6 +262,14 @@ for _, circumstances in pairs(HavocSettings.circumstances_per_theme) do
 end
 
 -- theme_circumstances_of_havoc_missions
+settings.lookup.theme_circumstances_of_havoc_missions["tg_shooting_range"] = {}
+for theme in pairs(HavocSettings.missions) do
+	if theme ~= "default" then
+		for _, theme_circumstance in ipairs(HavocSettings.circumstances_per_theme[theme]) do
+			settings.lookup.theme_circumstances_of_havoc_missions["tg_shooting_range"][theme_circumstance] = true
+		end
+	end
+end
 for theme, missions in pairs(HavocSettings.missions) do
 	for _, mission_name in ipairs(missions) do
 		settings.lookup.theme_circumstances_of_havoc_missions[mission_name] = settings.lookup.theme_circumstances_of_havoc_missions[mission_name] or {}
