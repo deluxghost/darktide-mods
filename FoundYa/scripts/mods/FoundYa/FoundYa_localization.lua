@@ -58,6 +58,10 @@ return {
 		["zh-cn"] = "苦修收集物",
 		ru = "Предметы, собираемые для Искуплений",
 	},
+	max_distance_event = {
+		en = "Event collectibles",
+		["zh-cn"] = "活动收集物",
+	},
 	max_distance_supply = {
 		en = "Supplies",
 		["zh-cn"] = "补给品",

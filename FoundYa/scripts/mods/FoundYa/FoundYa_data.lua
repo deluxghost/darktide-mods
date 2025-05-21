@@ -67,6 +67,12 @@ return {
 						range = {10, 80},
 					},
 					{
+						setting_id = "max_distance_event",
+						type = "numeric",
+						default_value = 15,
+						range = {10, 80},
+					},
+					{
 						setting_id = "max_distance_supply",
 						type = "numeric",
 						default_value = 15,
