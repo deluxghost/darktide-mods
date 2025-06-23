@@ -867,7 +867,7 @@ local function fill_weapon_base_stats(content, style, item)
 			end
 		end
 	end
-	content["qlc_baseLevel"] = tostring(item.baseItemLevel)
+	content["qlc_baseLevel"] = item.baseItemLevel and tostring(item.baseItemLevel) or ""
 
 	-- fill values
 	if num_stats > 0 then

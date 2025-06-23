@@ -8,6 +8,8 @@ local DialogueSpeakerVoiceSettings = require("scripts/settings/dialogue/dialogue
 local HavocSettings = require("scripts/settings/havoc_settings")
 local havoc_modifier_template = mod:io_dofile("SoloPlay/scripts/mods/SoloPlay/havoc_modifier_template")
 
+local TRAINING_GROUND = "tg_shooting_range"
+
 local objectives_denylist = {
 	"hub",
 	"onboarding",
@@ -15,7 +17,6 @@ local objectives_denylist = {
 }
 local circumstance_denylist = {
 	"dummy",
-	"mutator_havoc_duplicating_enemies",
 }
 local circumstance_prefer_list = {
 	loc_circumstance_hunting_grounds_title = "hunting_grounds_01",
@@ -81,10 +82,13 @@ local settings = {
 -- missions
 local missions_loc_array = {}
 for name, mission in pairs(MissionTemplates) do
-	if (not mission.objectives) or (not table.array_contains(objectives_denylist, mission.objectives)) or name == "tg_shooting_range" then
+	if (not mission.objectives) or (not table.array_contains(objectives_denylist, mission.objectives)) or name == TRAINING_GROUND then
 		local display = Localize(mission.mission_name)
 		if string.starts_with(display, "<") then
 			display = name
+		end
+		if name == TRAINING_GROUND then
+			display = " " .. Localize("loc_training_grounds_view_display_name") .. " - " .. Localize("loc_training_grounds_view_shooting_range_text")
 		end
 		missions_loc_array[#missions_loc_array+1] = {
 			data = name,
@@ -100,7 +104,15 @@ for name, mission in pairs(MissionTemplates) do
 		end
 	end
 end
-table.sort(missions_loc_array, mod.sort_function_localized)
+local mission_sort_function = function (a, b)
+	if a.data == TRAINING_GROUND and b.data ~= TRAINING_GROUND then
+		return true
+	elseif a.data ~= TRAINING_GROUND and b.data == TRAINING_GROUND then
+		return false
+	end
+	return mod.sort_function_localized(a, b)
+end
+table.sort(missions_loc_array, mission_sort_function)
 for index, mission_loc in ipairs(missions_loc_array) do
 	settings.loc.missions[mission_loc.data] = mission_loc.localized
 	settings.order.missions[index] = mission_loc.data
@@ -262,11 +274,11 @@ for _, circumstances in pairs(HavocSettings.circumstances_per_theme) do
 end
 
 -- theme_circumstances_of_havoc_missions
-settings.lookup.theme_circumstances_of_havoc_missions["tg_shooting_range"] = {}
+settings.lookup.theme_circumstances_of_havoc_missions[TRAINING_GROUND] = {}
 for theme in pairs(HavocSettings.missions) do
 	if theme ~= "default" then
 		for _, theme_circumstance in ipairs(HavocSettings.circumstances_per_theme[theme]) do
-			settings.lookup.theme_circumstances_of_havoc_missions["tg_shooting_range"][theme_circumstance] = true
+			settings.lookup.theme_circumstances_of_havoc_missions[TRAINING_GROUND][theme_circumstance] = true
 		end
 	end
 end

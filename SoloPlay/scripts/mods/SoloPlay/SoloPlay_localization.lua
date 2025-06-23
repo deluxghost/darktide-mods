@@ -24,9 +24,9 @@ return {
 		["zh-tw"] = "無",
 	},
 	format_auric = {
-		en = Localize("loc_mission_board_type_auric") .. " %s",
-		["zh-cn"] = Localize("loc_mission_board_type_auric") .. "%s",
-		["zh-tw"] = Localize("loc_mission_board_type_auric") .. "%s",
+		en = Localize("loc_group_finder_difficulty_auric") .. " %s",
+		["zh-cn"] = Localize("loc_group_finder_difficulty_auric") .. "%s",
+		["zh-tw"] = Localize("loc_group_finder_difficulty_auric") .. "%s",
 	},
 
 	solo_keybind = {

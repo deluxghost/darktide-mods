@@ -69,7 +69,8 @@ local keywords_to_class = {
 	stub_pistol = "revolver_class",
 	shotgun = {
 		p1 = "combat_shotguns",
-		p2 = "assault_shotgun_class"
+		p2 = "assault_shotgun_class",
+		p4 = "exterminator_shotguns",
 	},
 	grenadier_gauntlet = "grenadier_gauntlet_class",
 	heavystubber = {
@@ -78,10 +79,19 @@ local keywords_to_class = {
 	},
 	rippergun = "ripper_gun_class",
 	shotgun_grenade = "thumpers_kickback_or_rumbler",
+	shotpistol_shield = "shotpistol_shield_class",
 }
 
 local template_name_to_class = {
 	psyker_chain_lightning = "psyker_chain_lightning_class",
+}
+
+local special_shotgun_class = {
+	"shotgun_lawbringer_class",
+	"shotgun_agripinaa_class",
+	"shotgun_kantrael_class",
+	"exterminator_shotgun_stun_class",
+	"exterminator_shotgun_rending_class",
 }
 
 local function determine_ranged_weapon_class(weapon_template_name, weapon_template)
@@ -119,23 +129,42 @@ local function determine_ranged_weapon_class(weapon_template_name, weapon_templa
 
 	if weapon_class == "thumpers_kickback_or_rumbler" then
 		if not weapon_template.crosshair then
-			return weapon_class
+			return nil
 		end
-		weapon_class = weapon_template.crosshair.crosshair_type == "shotgun" and "kickback_class" or "rumbler_class"
+		if weapon_template.name == "ogryn_thumper_p1_m1" then
+			return "kickback_class"
+		elseif weapon_template.name == "ogryn_thumper_p1_m2" then
+			return "rumbler_class"
+		end
+		return nil
 	elseif weapon_class == "combat_shotguns" then
 		if not weapon_template.actions or not weapon_template.actions.action_shoot_hip or not weapon_template.actions.action_shoot_hip.fire_configuration then
-			return weapon_class
+			return nil
 		end
 		if weapon_template.actions.action_shoot_hip.fire_configuration.shotshell_special then
 			local shotshell_template = weapon_template.actions.action_shoot_hip.fire_configuration.shotshell_special
 			if shotshell_template.name == "shotgun_cleaving_special" then
-				weapon_class = "shotgun_lawbringer_class"
+				return "shotgun_lawbringer_class"
 			elseif shotshell_template.name == "shotgun_slug_special" then
-				weapon_class = "shotgun_agripinaa_class"
-			else
-				weapon_class = "shotgun_kantrael_class"
+				return "shotgun_agripinaa_class"
+			elseif shotshell_template.name == "shotgun_burninating_special" then
+				return "shotgun_kantrael_class"
 			end
 		end
+		return nil
+	elseif weapon_class == "exterminator_shotguns" then
+		if not weapon_template.actions or not weapon_template.actions.action_shoot_hip or not weapon_template.actions.action_shoot_hip.fire_configuration then
+			return nil
+		end
+		if weapon_template.actions.action_shoot_hip.fire_configuration.shotshell_special then
+			local shotshell_template = weapon_template.actions.action_shoot_hip.fire_configuration.shotshell_special
+			if shotshell_template.name == "shotgun_p4_m1_hip_special" or shotshell_template.name == "shotgun_p4_m3_hip_special" then
+				return "exterminator_shotgun_stun_class"
+			elseif shotshell_template.name == "shotgun_p4_m2_hip_special" then
+				return "exterminator_shotgun_rending_class"
+			end
+		end
+		return nil
 	elseif weapon_class == "revolver_class" then
 		if not weapon_template.crosshair then
 			return weapon_class
@@ -246,13 +275,23 @@ mod:hook_origin("HudElementCrosshair", "_get_current_crosshair_type", function (
 					end
 					local in_alt_fire = altfire_action_kinds[action_kind] or alternate_fire_component.is_active
 
-					if string.starts_with(weapon_class, "shotgun_") then
-						local inventory_comp = unit_data_extension:read_component("inventory")
-						local wielded_slot = inventory_comp.wielded_slot
-						local slot_type = slot_configuration[wielded_slot].slot_type
+					local inventory_component = unit_data_extension:read_component("inventory")
+					local wielded_slot = inventory_component.wielded_slot
+					local slot_type = slot_configuration[wielded_slot].slot_type
+					local inventory_slot_component
+					if slot_type == "weapon" then
+						inventory_slot_component = unit_data_extension:read_component(wielded_slot)
+					end
+
+					if weapon_class == "shotpistol_shield_class" then
+						if inventory_slot_component and inventory_slot_component.current_ammunition_clip == 0 then
+							return mod.settings["melee_class"]
+						end
+					end
+
+					if table.array_contains(special_shotgun_class, weapon_class) then
 						local in_special = false
-						if slot_type == "weapon" then
-							local inventory_slot_component = unit_data_extension:read_component(wielded_slot)
+						if inventory_slot_component then
 							in_special = inventory_slot_component.special_active
 						end
 						return retrieve_ranged_weapon_setting(weapon_class, in_alt_fire, in_special)

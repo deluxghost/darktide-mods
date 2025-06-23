@@ -1,4 +1,4 @@
-return {
+local loc = {
 	mod_name = {
 		en = "Quick Look Card",
 		["zh-cn"] = "快速信息卡",
@@ -738,3 +738,7 @@ return {
 		["zh-tw"] = "體力", -- 使用武器時增加體力
 	},
 }
+
+loc.stat_loc_stats_display_power_output_powermaul_shield_p1 = loc.stat_loc_stats_display_power_output
+
+return loc

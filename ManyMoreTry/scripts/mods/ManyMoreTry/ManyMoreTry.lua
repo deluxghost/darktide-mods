@@ -1,5 +1,5 @@
 local mod = get_mod("ManyMoreTry")
-local MissionBoardViewDefinitions = require("scripts/ui/views/mission_board_view/mission_board_view_definitions")
+local MissionBoardViewDefinitions = require("scripts/ui/views/mission_board_view_pj/mission_board_view_definitions")
 local MissionTemplates = require("scripts/settings/mission/mission_templates")
 local CircumstanceTemplates = require("scripts/settings/circumstance/circumstance_templates")
 local MissionObjectiveTemplates = require("scripts/settings/mission_objective/mission_objective_templates")
@@ -49,7 +49,7 @@ mod.on_enabled = function ()
 			display_name = "loc_mod_mmt_save",
 			alignment = "right_alignment",
 			visibility_function = function (mission_board_view)
-				if mission_board_view._selected_mission then
+				if mission_board_view._selected_mission_id and mission_board_view._selected_mission_id ~= "qp_mission_widget" then
 					return true
 				end
 				return false
@@ -85,6 +85,15 @@ local function get_start(start)
 	return tonumber(start_str)
 end
 
+local function get_mission_difficulty(mission)
+	for _, difficulty in ipairs(DangerSettings) do
+		if difficulty.challenge == mission.challenge and difficulty.resistance == mission.resistance then
+			return difficulty
+		end
+	end
+	return nil
+end
+
 local function get_mission_name(mission, name_key, circumstance_key)
 	local name_parts = {}
 	if mission[name_key] then
@@ -102,15 +111,21 @@ local function get_mission_name(mission, name_key, circumstance_key)
 	local category_name = nil
 	if mission.category == "narrative" then
 		category_name = Localize("loc_story_mission_menu_access_button_text")
-	elseif mission.category == "auric" then
-		category_name = Localize("loc_mission_board_type_auric")
+	end
+	if mission.category == "story" then
+		category_name = Localize("loc_player_journey_campaign")
+	end
+	if mission.category == "event" then
+		category_name = Localize("loc_event_category_label")
 	end
 	if category_name then
 		table.insert(name_parts, category_name)
 	end
 
-	local danger_settings = DangerSettings[mission.challenge]
-	table.insert(name_parts, Localize(danger_settings.display_name))
+	local danger_settings = get_mission_difficulty(mission)
+	if danger_settings then
+		table.insert(name_parts, Localize(danger_settings.display_name))
+	end
 
 	local circumstance_name = nil
 	if mission[circumstance_key] and mission[circumstance_key] ~= "default" then
@@ -166,10 +181,17 @@ end
 mod:hook_safe("MissionBoardView", "init", function (self, settings)
 	self.__mod_mmt_save_callback = function (self)
 		local saved_mission = mod:get("_saved_mission") or {}
-		local name = get_mission_name(self._selected_mission, "map", "circumstance")
+		if self._selected_mission_id == "qp_mission_widget" then
+			return
+		end
+		local selected_mission = self:_mission(self._selected_mission_id)
+		if not selected_mission then
+			return
+		end
+		local name = get_mission_name(selected_mission, "map", "circumstance")
 		local exist = false
 		for _, mission in ipairs(saved_mission) do
-			if mission.id == self._selected_mission.id then
+			if mission.id == self._selected_mission_id then
 				exist = true
 				break
 			end
@@ -179,9 +201,9 @@ mod:hook_safe("MissionBoardView", "init", function (self, settings)
 			return
 		end
 		table.insert(saved_mission, {
-			id = self._selected_mission.id,
+			id = self._selected_mission_id,
 			display_name = name,
-			start = get_start(self._selected_mission.start)
+			start = get_start(selected_mission.start)
 		})
 		mod:set("_saved_mission", saved_mission, false)
 		mod:notify(mod:localize("msg_saved") .. "\n" .. name)

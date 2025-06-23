@@ -217,6 +217,17 @@ local localization = {
 	assault_shotgun_class = {
 		en = Localize("loc_weapon_family_shotgun_p2_m1"),
 	},
+	exterminator_shotgun_stun_class = {
+		en = Localize("loc_weapon_family_shotgun_p4_m1") .. " (Electric)",
+		["zh-cn"] = Localize("loc_weapon_family_shotgun_p4_m1") .. "（电击弹）",
+	},
+	exterminator_shotgun_rending_class = {
+		en = Localize("loc_weapon_family_shotgun_p4_m2") .. " (Rending)",
+		["zh-cn"] = Localize("loc_weapon_family_shotgun_p4_m2") .. "（脆弱弹）",
+	},
+	shotpistol_shield_class = {
+		en = Localize("loc_weapon_family_shotpistol_shield_p1_m1"),
+	},
 	grenadier_gauntlet_class = {
 		en = Localize("loc_weapon_family_ogryn_gauntlet_p1_m1"),
 	},
