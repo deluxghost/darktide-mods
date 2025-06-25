@@ -46,11 +46,11 @@ end
 
 mod.gen_normal_mission_context = function ()
 	local mission_name = mod:get("choose_mission")
-	local resistance = DangerSettings[mod:get("choose_difficulty")].expected_resistance
+	local difficulty = DangerSettings[mod:get("choose_difficulty")]
 	local mission_context = {
 		mission_name = mission_name,
-		challenge = mod:get("choose_difficulty"),
-		resistance = resistance,
+		challenge = difficulty.challenge,
+		resistance = difficulty.resistance,
 		circumstance_name = mod:get("choose_circumstance"),
 		side_mission = mod:get("choose_side_mission"),
 	}
