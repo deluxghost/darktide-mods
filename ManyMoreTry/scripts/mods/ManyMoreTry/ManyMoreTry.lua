@@ -223,7 +223,25 @@ local function all_member_ready()
 	return Managers.party_immaterium:are_all_members_in_hub()
 end
 
-local function go_match(mission_id, mission_name, required_level)
+local function get_private_option(category)
+	local save_manager = Managers.save
+	if not save_manager then
+		return nil
+	end
+	if category == "horde" then
+		local save_data = save_manager:account_data()
+		local mission_board = save_data.mission_board or {}
+		return mission_board.private_matchmaking or false
+	end
+	local player_manager = Managers.player
+	local player = player_manager and player_manager:local_player(1)
+	local character_id = player and player:character_id()
+	local save_data = character_id and save_manager:character_data(character_id)
+	local mission_board = save_data.mission_board or {}
+	return mission_board.private_match or false
+end
+
+local function go_match(mission_id, mission_name, category, required_level)
 	local player = Managers.player:local_player(1)
 	local profile = player:profile()
 	local current_level = profile.current_level or 0
@@ -236,9 +254,11 @@ local function go_match(mission_id, mission_name, required_level)
 		return
 	end
 
-	local save_data = Managers.save:account_data()
-	local mission_board = save_data.mission_board or {}
-	local private = mission_board.private_matchmaking or false
+	local private = get_private_option(category)
+	if private == nil then
+		mod:echo(mod:localize("msg_unknown_err"))
+		return
+	end
 	if private then
 		local num_members = 0
 		if GameParameters.prod_like_backend then
@@ -311,7 +331,8 @@ local function mmt_main_command(idx_str)
 		end
 		local mission_name = get_mission_name(data.mission, "map", "circumstance")
 		local required_level = data.mission.requiredLevel or 0
-		go_match(mission_id, mission_name, required_level)
+		local category = data.mission.category or "common"
+		go_match(mission_id, mission_name, category, required_level)
 		locks.match = nil
 	end):catch(function (e)
 		mod:dump(e, "mmt_fetch_error", 3)
