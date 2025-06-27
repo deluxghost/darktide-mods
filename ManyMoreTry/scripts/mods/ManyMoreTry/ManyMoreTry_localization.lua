@@ -17,10 +17,10 @@ return {
 		["zh-tw"] = "繼續再來更多局",
 	},
 	mod_description = {
-		en = "Mission ID saving/sharing mod. Check commands with '/mmt' prefix for details.\nNote: Fatshark claims they will nerf the mission expire time eventually.",
-		["zh-cn"] = "任务 ID 保存/分享模组。用法详见带有“/mmt”前缀的命令。\n注意：肥鲨声称会在将来缩短任务过期时间。",
-		ru = "Many More Try - Мод позволяет сохранять и передавать идентификатор миссии. Для получения подробной информации проверьте команды с префиксом «/mmt».\nПримечание: Fatshark утверждает, что со временем они уменьшат время завершения миссии.",
-		["zh-tw"] = "任務 ID 儲存/分享模組，使用「/mmt」開頭的指令以查看詳情。\n注意：Fatshark 表示未來可能會縮短任務的過期時間。",
+		en = "Mission ID saving/sharing mod. Check commands with '/mmt' prefix for details.",
+		["zh-cn"] = "任务 ID 保存/分享模组。用法详见带有“/mmt”前缀的命令。",
+		ru = "Many More Try - Мод позволяет сохранять и передавать идентификатор миссии. Для получения подробной информации проверьте команды с префиксом «/mmt».",
+		["zh-tw"] = "任務 ID 儲存/分享模組，使用「/mmt」開頭的指令以查看詳情。",
 	},
 	text_expired = {
 		en = "Expired",
