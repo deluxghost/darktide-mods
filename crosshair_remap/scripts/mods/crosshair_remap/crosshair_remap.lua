@@ -200,7 +200,8 @@ local melee_action_kinds = {
 	sweep = true,
 	push = true,
 	melee_explosivve = true,
-	block = true, -- No ranged has this action
+	block = true,
+	-- block_aiming = true,
 }
 
 local reload_action_kinds = {
@@ -264,16 +265,12 @@ mod:hook_origin("HudElementCrosshair", "_get_current_crosshair_type", function (
 						return mod.settings["melee_class"]
 					end
 
-					-- -- changing crosshair while reloading is weird
-					-- if reload_action_kinds[action_kind] then
-					-- 	return mod.settings["none_class"]
-					-- end
-
 					local weapon_class = determine_ranged_weapon_class(weapon_template_name, weapon_template)
 					if not weapon_class then
 						goto unchanged
 					end
 					local in_alt_fire = altfire_action_kinds[action_kind] or alternate_fire_component.is_active
+					local in_reload = reload_action_kinds[action_kind] and true
 
 					local inventory_component = unit_data_extension:read_component("inventory")
 					local wielded_slot = inventory_component.wielded_slot
@@ -283,8 +280,12 @@ mod:hook_origin("HudElementCrosshair", "_get_current_crosshair_type", function (
 						inventory_slot_component = unit_data_extension:read_component(wielded_slot)
 					end
 
-					if weapon_class == "shotpistol_shield_class" then
-						if inventory_slot_component and inventory_slot_component.current_ammunition_clip == 0 then
+					if weapon_class == "shotpistol_shield_class" and inventory_slot_component and not in_reload then
+						local current_ammo = inventory_slot_component.current_ammunition_reserve + inventory_slot_component.current_ammunition_clip
+						if not in_alt_fire and current_ammo == 0 then
+							return mod.settings["melee_class"]
+						end
+						if in_alt_fire and inventory_slot_component.current_ammunition_clip == 0 then
 							return mod.settings["melee_class"]
 						end
 					end
