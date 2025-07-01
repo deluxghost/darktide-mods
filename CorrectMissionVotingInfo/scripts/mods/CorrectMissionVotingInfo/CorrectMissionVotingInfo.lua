@@ -12,16 +12,13 @@ local AURIC_DANGER = DangerSettings[5]
 mod:hook_safe(MissionVotingView, "_set_mission_data", function (self, mission_data)
 	mod:dump(mission_data, "mission_data", 3)
 	local auric = mission_data.challenge == AURIC_DANGER.challenge and mission_data.resistance == AURIC_DANGER.resistance
-	local special = mission_data.category == "narrative"
 	local story = mission_data.category == "story"
 	local event = mission_data.category == "event"
 	local has_flash_mission = not not mission_data.flags.flash
 
-	self._widgets_by_name.title_bar_bottom.visible = has_flash_mission or special or event or story
+	self._widgets_by_name.title_bar_bottom.visible = has_flash_mission or event or story
 	local text = ""
-	if special then
-		text = Localize("loc_story_mission_menu_access_button_text")
-	elseif event then
+	if event then
 		text = Localize("loc_event_category_label")
 	elseif story then
 		text = Localize("loc_player_journey_campaign")

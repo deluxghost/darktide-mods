@@ -109,9 +109,6 @@ local function get_mission_name(mission, name_key, circumstance_key)
 	end
 
 	local category_name = nil
-	if mission.category == "narrative" then
-		category_name = Localize("loc_story_mission_menu_access_button_text")
-	end
 	if mission.category == "story" then
 		category_name = Localize("loc_player_journey_campaign")
 	end
