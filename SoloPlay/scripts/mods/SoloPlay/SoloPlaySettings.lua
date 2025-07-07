@@ -24,6 +24,7 @@ local circumstance_prefer_list = {
 	loc_circumstance_dummy_less_resistance_title = "less_resistance_01",
 	loc_circumstance_nurgle_manifestation_title = "heretical_disruption_01",
 	loc_circumstance_waves_of_specials_more_resistance_title = "waves_of_specials_more_resistance_01",
+	loc_havoc_enemies_corrupted_name = "mutator_havoc_enemies_corrupted",
 }
 local circumstance_format_group = {
 	high_flash_mission = "format_auric"
