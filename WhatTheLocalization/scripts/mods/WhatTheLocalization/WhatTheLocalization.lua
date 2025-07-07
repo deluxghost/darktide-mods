@@ -23,7 +23,7 @@ local function load_templates(templates, lang)
 		if lang_match then
 			if fix.loc_keys then
 				for _, loc_key in ipairs(fix.loc_keys) do
-					if loc_key then
+					if loc_key and fix.handle_func then
 						registered_fixes[loc_key] = registered_fixes[loc_key] or {}
 						table.insert(registered_fixes[loc_key], fix.handle_func)
 					end

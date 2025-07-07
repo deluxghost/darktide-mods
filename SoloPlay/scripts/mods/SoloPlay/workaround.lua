@@ -39,4 +39,3 @@ mod:hook_safe(MutatorMonsterSpawner, "init", function (self, ...)
 	self._dirty_spawn_locations = self._dirty_spawn_locations or {}
 	self._num_to_spawn = self._num_to_spawn or 0
 end)
-
