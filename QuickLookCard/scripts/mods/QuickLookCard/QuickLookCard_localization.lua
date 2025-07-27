@@ -134,7 +134,7 @@ local loc = {
 		["zh-tw"] = "彈藥", -- 彈藥
 	},
 	stat_loc_stats_display_ap_stat = {
-		en = "PNT", -- Penetration
+		en = "PEN", -- Penetration
 		["zh-cn"] = "穿透", -- 穿透
 		ja = "貫通", -- 貫通力
 		ru = "ПРОБ", -- Пробивная сила
@@ -155,14 +155,14 @@ local loc = {
 		["zh-tw"] = "充能", -- 充能速度
 	},
 	stat_loc_stats_display_cleave_damage_stat = {
-		en = "CDMG", -- Cleave Damage
+		en = "CLVD", -- Cleave Damage
 		["zh-cn"] = "劈伤", -- 劈裂伤害
 		ja = "斬威", -- 斬撃ダメージ
 		ru = "РАСУ", -- Урон рассечением
 		["zh-tw"] = "劈傷", -- 順劈傷害
 	},
 	stat_loc_stats_display_cleave_targets_stat = {
-		en = "CTGT", -- Cleave Targets
+		en = "CLVT", -- Cleave Targets
 		["zh-cn"] = "劈数", -- 劈裂目标数
 		ja = "斬数", -- 斬撃ターゲット数
 		ru = "РАСЦ", -- Рассечение целей
@@ -204,14 +204,14 @@ local loc = {
 		["zh-tw"] = "防禦", -- 防禦
 	},
 	stat_loc_stats_display_explosion_ap_stat = {
-		en = "PNTB", -- Penetration (Blast)
+		en = "PENB", -- Penetration (Blast)
 		["zh-cn"] = "爆穿", -- 穿透（爆炸）
 		ja = "爆貫", -- 貫通力 (爆発)
 		ru = "ПВЗР", -- Пробивная сила (Взрыв)
 		["zh-tw"] = "爆穿", -- 穿透（爆炸）
 	},
 	stat_loc_stats_display_explosion_damage_stat = {
-		en = "BLST", -- Blast Damage
+		en = "BLSD", -- Blast Damage
 		["zh-cn"] = "爆伤", -- 爆炸伤害
 		ja = "爆威", -- 爆発ダメージ
 		ru = "УВЗР", -- Взрывной урон
@@ -225,21 +225,21 @@ local loc = {
 		["zh-tw"] = "爆距", -- 爆炸範圍
 	},
 	stat_loc_stats_display_finesse_stat = {
-		en = "FNS", -- Finesse
+		en = "FIN", -- Finesse
 		["zh-cn"] = "娴熟", -- 武器娴熟
 		ja = "策謀", -- 策謀
 		ru = "ТОЧН", -- Точность
 		["zh-tw"] = "技巧", -- 武器技巧
 	},
 	stat_loc_stats_display_first_saw_damage = {
-		en = "SRD", -- Shredder
+		en = "SHRD", -- Shredder
 		["zh-cn"] = "撕裂", -- 撕裂
 		ja = "断裂", -- シュレッダー
 		ru = "КРОШ", -- Крошитель
 		["zh-tw"] = "撕裂", -- 撕裂
 	},
 	stat_loc_stats_display_first_target_stat = {
-		en = "FTGT", -- First Target
+		en = "FRST", -- First Target
 		["zh-cn"] = "首个", -- 首个目标
 		ja = "第一", -- 第一ターゲット
 		ru = "ПЕРВ", -- Первоочередная цель
@@ -367,7 +367,7 @@ local loc = {
 		["zh-tw"] = "自爆", -- 對瘟疫爆者的傷害抗性
 	},
 	trait_gadget_damage_reduction_vs_hounds = {
-		en = "HOND", -- Damage Resistance (Pox Hounds)
+		en = "HOUN", -- Damage Resistance (Pox Hounds)
 		["zh-cn"] = "猎犬", -- 伤害抗性（瘟疫猎犬）
 		ja = "疫犬", -- ダメージ耐性 (ポックスハウンド)
 		ru = "СУЧГ", -- Сопротивление урону (Чумные гончие)
@@ -388,14 +388,14 @@ local loc = {
 		["zh-tw"] = "不屈", -- 對不屈敵人的傷害
 	},
 	trait_weapon_trait_melee_common_wield_increased_disgustingly_resilient_damage = {
-		en = "IFST", -- Damage (Infested Enemies)
+		en = "INFS", -- Damage (Infested Enemies)
 		["zh-cn"] = "感染", -- 伤害（感染敌人）
 		ja = "感染", -- ダメージ (感染した敵)
 		ru = "УЗВР", -- Урон (Заражённые враги)
 		["zh-tw"] = "感染", -- 對感染敵人的傷害
 	},
 	trait_weapon_trait_melee_common_wield_increased_unarmored_damage = {
-		en = "UAMR", -- Damage (Unarmoured Enemies)
+		en = "UNAR", -- Damage (Unarmoured Enemies)
 		["zh-cn"] = "无甲", -- 伤害（无甲敌人）
 		ja = "未装", -- ダメージ (アーマー未装着の敵)
 		ru = "УВББ", -- Урон (Враги без брони)
@@ -409,7 +409,7 @@ local loc = {
 		["zh-tw"] = "狂人", -- 對狂人敵人的傷害
 	},
 	trait_weapon_trait_melee_common_wield_increased_super_armor_damage = {
-		en = "CRPC", -- Damage (Carapace Armoured Enemies)
+		en = "CARA", -- Damage (Carapace Armoured Enemies)
 		["zh-cn"] = "硬壳", -- 伤害（硬壳装甲敌人）
 		ja = "重装", -- ダメージ (カラペース・アーマー装着の敵)
 		ru = "УВПБ", -- Урон (Враги с панцирной бронёй)
@@ -430,14 +430,14 @@ local loc = {
 		["zh-tw"] = "不屈", -- (遠程) 對不屈敵人的傷害
 	},
 	trait_weapon_trait_ranged_common_wield_increased_disgustingly_resilient_damage = {
-		en = "IFST", -- Damage (Infested Enemies)
+		en = "INFS", -- Damage (Infested Enemies)
 		["zh-cn"] = "感染", -- 伤害（感染敌人）
 		ja = "感染", -- ダメージ (感染した敵)
 		ru = "УЗВР", -- Урон (Заражённые враги)
 		["zh-tw"] = "感染", -- (遠程) 對感染敵人的傷害
 	},
 	trait_weapon_trait_ranged_common_wield_increased_unarmored_damage = {
-		en = "UAMR", -- Damage (Unarmoured Enemies)
+		en = "UNAR", -- Damage (Unarmoured Enemies)
 		["zh-cn"] = "无甲", -- 伤害（无甲敌人）
 		ja = "未装", -- ダメージ (アーマー未装着の敵)
 		ru = "УВББ", -- Урон (Враги без брони)
@@ -451,7 +451,7 @@ local loc = {
 		["zh-tw"] = "狂人", -- (遠程) 對狂人敵人的傷害
 	},
 	trait_weapon_trait_ranged_common_wield_increased_super_armor_damage = {
-		en = "CRPC", -- Damage (Carapace Armoured Enemies)
+		en = "CARA", -- Damage (Carapace Armoured Enemies)
 		["zh-cn"] = "硬壳", -- 伤害（硬壳装甲敌人）
 		ja = "重装", -- ダメージ (カラペース・アーマー装着の敵)
 		ru = "УВПБ", -- Урон (Враги с панцирной бронёй)
@@ -465,21 +465,21 @@ local loc = {
 		["zh-tw"] = "防彈", -- (遠程) 對防彈裝甲敵人的傷害
 	},
 	trait_weapon_trait_increase_stamina = {
-		en = "STAM", -- Stamina
+		en = "STM", -- Stamina
 		["zh-cn"] = "体力", -- 体力
 		ja = "活力", -- スタミナ
 		ru = "ВНСЛ", -- Выносливость
 		["zh-tw"] = "耐力", -- 耐力
 	},
 	trait_gadget_stamina_regeneration = {
-		en = "STRG", -- Stamina Regeneration
+		en = "STMR", -- Stamina Regeneration
 		["zh-cn"] = "体回", -- 体力恢复
 		ja = "活回", -- スタミナ回復
 		ru = "ВВЫН", -- Восстановление выносливости
 		["zh-tw"] = "體回", -- 體力恢復
 	},
 	trait_gadget_cooldown_reduction = {
-		en = "ABRG", -- Combat Ability Regeneration
+		en = "ULTR", -- Combat Ability Regeneration
 		["zh-cn"] = "技回", -- 作战技能恢复
 		ja = "能回", -- 戦闘アビリティ回復
 		ru = "ВОБС", -- Восстановление боевых способностей
@@ -500,7 +500,7 @@ local loc = {
 		["zh-tw"] = "救援", -- 復活隊友速度
 	},
 	trait_gadget_mission_credits_increase = {
-		en = "ODKT", -- Ordo Dockets (Mission Rewards)
+		en = "ORDO", -- Ordo Dockets (Mission Rewards)
 		["zh-cn"] = "金币", -- 审判庭双子币（任务奖励）
 		ja = "貨幣", -- オルドドケット (ミッション報酬)
 		ru = "ЯОНЗ", -- Ярлыки Ордо (награды за задание)
@@ -514,7 +514,7 @@ local loc = {
 		["zh-tw"] = "珍品", -- 有機會獲得飾品替代武器作為任務獎勵
 	},
 	trait_gadget_stamina_increase = {
-		en = "STAM", -- Max Stamina
+		en = "STM", -- Max Stamina
 		["zh-cn"] = "体力", -- 最大体力
 		ja = "活力", -- 最大スタミナ
 		ru = "ВНСЛ", -- Выносливость
@@ -549,7 +549,7 @@ local loc = {
 		["zh-tw"] = "格擋", -- 格擋效益
 	},
 	trait_weapon_trait_increase_finesse = {
-		en = "FNS", -- Finesse
+		en = "FIN", -- Finesse
 		["zh-cn"] = "娴熟", -- 武器娴熟
 		ja = "策謀", -- 策謀
 		ru = "ТОЧН", -- Точность
@@ -647,14 +647,14 @@ local loc = {
 		["zh-tw"] = "攻速", -- 近戰攻擊速度
 	},
 	trait_weapon_trait_increase_crit_damage = {
-		en = "CRDM", -- Melee Critical Hit Damage
+		en = "CRTD", -- Melee Critical Hit Damage
 		["zh-cn"] = "暴伤", -- 近战暴击伤害
 		ja = "致威", -- 近接クリティカルダメージ
 		ru = "КУББ", -- Критический урон атак ближнего боя
 		["zh-tw"] = "爆傷", -- 近戰爆擊傷害
 	},
 	trait_weapon_trait_increase_crit_chance = {
-		en = "CRCH", -- Melee Critical Hit Chance
+		en = "CRTC", -- Melee Critical Hit Chance
 		["zh-cn"] = "暴率", -- 近战暴击几率
 		ja = "致率", -- 近接クリティカルヒット率
 		ru = "ВКББ", -- Вероятность критического удара от атак ближнего боя
@@ -696,14 +696,14 @@ local loc = {
 		["zh-tw"] = "弱點", -- 遠程弱點傷害
 	},
 	trait_weapon_trait_ranged_increase_crit_damage = {
-		en = "CRDM", -- Ranged Critical Hit Damage
+		en = "CRTD", -- Ranged Critical Hit Damage
 		["zh-cn"] = "暴伤", -- 远程暴击伤害
 		ja = "致威", -- 遠隔クリティカルダメージ
 		ru = "КУДБ", -- Критический урон атак дальнего боя
 		["zh-tw"] = "爆傷", -- 遠程爆擊傷害
 	},
 	trait_weapon_trait_ranged_increase_crit_chance = {
-		en = "CRCH", -- Increase Ranged Critical Strike Chance
+		en = "CRTC", -- Increase Ranged Critical Strike Chance
 		["zh-cn"] = "暴率", -- 远程暴击几率增加
 		ja = "致率", -- 遠隔攻撃のクリティカル率が増加する
 		ru = "ВКДБ", -- Вероятность критического удара от атак дальнего боя
@@ -731,7 +731,7 @@ local loc = {
 		["zh-tw"] = "韌回", -- 韌性恢復速度
 	},
 	trait_weapon_trait_ranged_increase_stamina = {
-		en = "STAM", -- Stamina (Weapon is Active)
+		en = "STM", -- Stamina (Weapon is Active)
 		["zh-cn"] = "体力", -- （使用武器时）体力
 		ja = "活力", -- スタミナ (武器使用時)
 		ru = "ВСАО", -- Выносливость (с активным оружием)
