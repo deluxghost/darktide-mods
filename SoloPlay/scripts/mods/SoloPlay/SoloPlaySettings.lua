@@ -34,7 +34,7 @@ local settings = {
 	context_override = {
 		km_enforcer_twins = {
 			circumstance_name = {
-				value = "toxic_gas_twins_01",
+				value = "player_journey_010",
 			},
 			pacing_control = {
 				value = {
