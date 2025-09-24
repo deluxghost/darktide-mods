@@ -19,7 +19,7 @@ mod:hook_safe(MissionVotingView, "_set_mission_data", function (self, mission_da
 	self._widgets_by_name.title_bar_bottom.visible = has_flash_mission or event or story
 	local text = ""
 	if event then
-		text = Localize("loc_event_category_label")
+		text = Localize("loc_mission_board_mission_category_event")
 	elseif story then
 		text = Localize("loc_player_journey_campaign")
 		local display_order = Managers.data_service.mission_board:index_in_campaign("mission", mission_data.map, mission_data.category, "player-journey")

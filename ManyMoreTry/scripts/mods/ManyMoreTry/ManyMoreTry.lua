@@ -1,5 +1,5 @@
 local mod = get_mod("ManyMoreTry")
-local MissionBoardViewDefinitions = require("scripts/ui/views/mission_board_view_pj/mission_board_view_definitions")
+local MissionBoardViewSettings = require("scripts/ui/views/mission_board_view_pj/mission_board_view_settings")
 local MissionTemplates = require("scripts/settings/mission/mission_templates")
 local CircumstanceTemplates = require("scripts/settings/circumstance/circumstance_templates")
 local MissionObjectiveTemplates = require("scripts/settings/mission_objective/mission_objective_templates")
@@ -36,18 +36,18 @@ end
 
 mod.on_enabled = function ()
 	local exist = false
-	for _, value in ipairs(MissionBoardViewDefinitions.legend_inputs) do
+	for _, value in ipairs(MissionBoardViewSettings.view_elements.input_legend.context.legend_inputs) do
 		if value.input_action == "mmt_save_mission" then
 			exist = true
 			break
 		end
 	end
 	if not exist then
-		table.insert(MissionBoardViewDefinitions.legend_inputs, {
+		table.insert(MissionBoardViewSettings.view_elements.input_legend.context.legend_inputs, {
 			on_pressed_callback = "__mod_mmt_save_callback",
 			input_action = "mmt_save_mission",
 			display_name = "loc_mod_mmt_save",
-			alignment = "right_alignment",
+			alignment = "left_alignment",
 			visibility_function = function (mission_board_view)
 				if mission_board_view._selected_mission_id and mission_board_view._selected_mission_id ~= "qp_mission_widget" then
 					return true
@@ -59,7 +59,7 @@ mod.on_enabled = function ()
 end
 
 mod.on_disabled = function ()
-	table.array_remove_if(MissionBoardViewDefinitions.legend_inputs, function (v)
+	table.array_remove_if(MissionBoardViewSettings.view_elements.input_legend.context.legend_inputs, function (v)
 		return v.input_action == "mmt_save_mission"
 	end)
 end
@@ -113,7 +113,7 @@ local function get_mission_name(mission, name_key, circumstance_key)
 		category_name = Localize("loc_player_journey_campaign")
 	end
 	if mission.category == "event" then
-		category_name = Localize("loc_event_category_label")
+		category_name = Localize("loc_mission_board_mission_category_event")
 	end
 	if category_name then
 		table.insert(name_parts, category_name)
@@ -181,7 +181,7 @@ mod:hook_safe("MissionBoardView", "init", function (self, settings)
 		if self._selected_mission_id == "qp_mission_widget" then
 			return
 		end
-		local selected_mission = self:_mission(self._selected_mission_id)
+		local selected_mission = self:_mission(self._selected_mission_id, true)
 		if not selected_mission then
 			return
 		end

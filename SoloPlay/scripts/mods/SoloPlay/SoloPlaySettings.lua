@@ -6,9 +6,11 @@ local MissionObjectiveTemplates = require("scripts/settings/mission_objective/mi
 local MissionGiverVoSettings = require("scripts/settings/dialogue/mission_giver_vo_settings")
 local DialogueSpeakerVoiceSettings = require("scripts/settings/dialogue/dialogue_speaker_voice_settings")
 local HavocSettings = require("scripts/settings/havoc_settings")
+local HordesModeSettings = require("scripts/settings/hordes_mode_settings")
 local havoc_modifier_template = mod:io_dofile("SoloPlay/scripts/mods/SoloPlay/havoc_modifier_template")
 
 local TRAINING_GROUND = "tg_shooting_range"
+local MORTIS_TRIALS = "psykhanium"
 
 local objectives_denylist = {
 	"hub",
@@ -76,23 +78,40 @@ local settings = {
 		theme_circumstances_of_havoc_missions = {},
 		havoc_modifiers_max_level = havoc_modifier_template.max_level,
 	},
+	custom_params_handlers = {
+		[MORTIS_TRIALS] = function (mission_name, params)
+			mod:set("_horde_selected_island", params)
+		end,
+	},
 }
 
 -- missions
 local missions_loc_array = {}
+local produce_mission_loc_entries = function (name, mission)
+	local display = Localize(mission.mission_name)
+	if string.starts_with(display, "<") then
+		display = name
+	end
+	if name == MORTIS_TRIALS then
+		for _, island_name in ipairs(HordesModeSettings.island_names) do
+			local sub_name = name .. "|" .. island_name
+			local sub_display = display .. " • " .. Localize(string.format("loc_horde_%s_name", island_name))
+			missions_loc_array[#missions_loc_array+1] = {
+				data = sub_name,
+				localized = sub_display,
+			}
+		end
+	elseif name == TRAINING_GROUND then
+		display = " " .. Localize("loc_training_grounds_view_display_name") .. " • " .. Localize("loc_training_grounds_view_shooting_range_text")
+	end
+	missions_loc_array[#missions_loc_array+1] = {
+		data = name,
+		localized = display,
+	}
+end
 for name, mission in pairs(MissionTemplates) do
 	if (not mission.objectives) or (not table.array_contains(objectives_denylist, mission.objectives)) or name == TRAINING_GROUND then
-		local display = Localize(mission.mission_name)
-		if string.starts_with(display, "<") then
-			display = name
-		end
-		if name == TRAINING_GROUND then
-			display = " " .. Localize("loc_training_grounds_view_display_name") .. " - " .. Localize("loc_training_grounds_view_shooting_range_text")
-		end
-		missions_loc_array[#missions_loc_array+1] = {
-			data = name,
-			localized = display,
-		}
+		produce_mission_loc_entries(name, mission)
 
 		local mission_brief_vo = mission.mission_brief_vo
 		if mission_brief_vo and mission_brief_vo.mission_giver_packs then

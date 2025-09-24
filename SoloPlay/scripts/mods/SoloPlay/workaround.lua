@@ -1,16 +1,15 @@
 local mod = get_mod("SoloPlay")
-local HavocManager = require("scripts/managers/havoc/havoc_manager")
+local GameModeExtensionHavoc = require("scripts/managers/game_mode/game_mode_extensions/game_mode_extension_havoc")
 local MechanismOnboarding = require("scripts/managers/mechanism/mechanisms/mechanism_onboarding")
 local MutatorMonsterSpawner = require("scripts/managers/mutator/mutators/mutator_monster_spawner")
 
 -- allow starting havoc game without any modifiers
-mod:hook(HavocManager, "_initialize_modifiers", function (func, self, havoc_data)
-	local havoc_modifiers = havoc_data.modifiers
+mod:hook(GameModeExtensionHavoc, "_initialize_modifiers", function (func, self, havoc_modifiers)
 	if not havoc_modifiers or #havoc_modifiers < 1 or havoc_modifiers[1].level == nil then
-		Log.info("HavocManager", "No modifiers found")
+		Log.info("GameModeExtensionHavoc", "No modifiers found")
 		return
 	end
-	return func(self, havoc_data)
+	return func(self, havoc_modifiers)
 end)
 
 -- when a colored outline is adding to an invalid unit, the game crashes

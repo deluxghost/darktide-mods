@@ -4,6 +4,7 @@ local MissionTemplates = require("scripts/settings/mission/mission_templates")
 local DangerSettings = require("scripts/settings/difficulty/danger_settings")
 local MatchmakingConstants = require("scripts/settings/network/matchmaking_constants")
 local DifficultyManager = require("scripts/managers/difficulty/difficulty_manager")
+local GameModeSurvival = require("scripts/managers/game_mode/game_modes/game_mode_survival")
 local GameModeManager = require("scripts/managers/game_mode/game_mode_manager")
 local PacingManager = require("scripts/managers/pacing/pacing_manager")
 local PacingTemplates = require("scripts/managers/pacing/pacing_templates")
@@ -44,8 +45,16 @@ mod.load_package = function (package_name)
 	end
 end
 
+mod.parse_mission_params = function (mission_name_value)
+	local parts = string.split(mission_name_value, "|")
+	if #parts < 2 then
+		return parts[1], ""
+	end
+	return parts[1], parts[2]
+end
+
 mod.gen_normal_mission_context = function ()
-	local mission_name = mod:get("choose_mission")
+	local mission_name, params = mod.parse_mission_params(mod:get("choose_mission"))
 	local difficulty = DangerSettings[mod:get("choose_difficulty")]
 	local mission_context = {
 		mission_name = mission_name,
@@ -53,6 +62,7 @@ mod.gen_normal_mission_context = function ()
 		resistance = difficulty.resistance,
 		circumstance_name = mod:get("choose_circumstance"),
 		side_mission = mod:get("choose_side_mission"),
+		custom_params = params,
 	}
 	local mission_giver = mod:get("choose_mission_giver")
 	if mission_giver ~= "default" then
@@ -85,7 +95,7 @@ mod.gen_havoc_mission_context = function ()
 		resistance = 5
 	end
 
-	local mission = mod:get("havoc_mission")
+	local mission, params = mod.parse_mission_params(mod:get("havoc_mission"))
 	local faction = mod:get("havoc_faction")
 	local circumstance1 = mod:get("havoc_circumstance1")
 	local circumstance2 = mod:get("havoc_circumstance2")
@@ -125,6 +135,7 @@ mod.gen_havoc_mission_context = function ()
 		challenge = challenge,
 		resistance = resistance,
 		havoc_data = data,
+		custom_params = params,
 	}
 	local mission_giver = mod:get("havoc_mission_giver")
 	if mission_giver ~= "default" then
@@ -228,6 +239,31 @@ mod:hook(GameModeManager, "hotkey_settings", function (func, self)
 	return ret
 end)
 
+mod:hook(GameModeSurvival, "select_random_island", function (func, self)
+	local selected_island_name = mod:get("_horde_selected_island")
+	if not selected_island_name then
+		return func(self)
+	end
+
+	if not self._is_server then
+		return
+	end
+
+	self._island_selected = selected_island_name
+	Log.info("GameModeSurvival", "Server selected Island to play: %s", selected_island_name)
+
+	local level = Managers.state.mission:mission_level()
+	local game_mode_name = Managers.state.game_mode and Managers.state.game_mode:game_mode_name()
+
+	if game_mode_name and level then
+		local island_selected_level_event_name = "horde_mode_" .. selected_island_name .. "_selected"
+		Level.trigger_event(level, island_selected_level_event_name)
+	end
+
+	local island_name_id = NetworkLookup.hordes_island_names[selected_island_name]
+	Managers.state.game_session:send_rpc_clients("rpc_client_hordes_set_selected_island", island_name_id)
+end)
+
 mod:hook(PacingManager, "init", function (func, self, world, nav_world, level_seed, pacing_control)
 	func(self, world, nav_world, level_seed, pacing_control)
 	local is_havoc = Managers.state.difficulty:get_parsed_havoc_data()
@@ -247,7 +283,7 @@ mod:hook(PacingManager, "init", function (func, self, world, nav_world, level_se
 	end
 end)
 
-mod:hook(PickupSystem, "_spawn_spread_pickups", function (func, self, distribution_type, pickup_pool, seed)
+mod:hook(PickupSystem, "spawn_spread_pickups", function (func, self, distribution_type, pickup_pool, seed)
 	if distribution_type == DISTRIBUTION_TYPES.side_mission and mod:get("random_side_mission_seed") then
 		self._seed = func(self, distribution_type, pickup_pool, self._seed)
 		return self._seed
@@ -329,6 +365,10 @@ mod.start_game = function (mode)
 	end
 	local mission_settings = MissionTemplates[mission_context.mission_name]
 	local mechanism_name = mission_settings.mechanism_name
+
+	if mission_context.custom_params and SoloPlaySettings.custom_params_handlers[mission_context.mission_name] then
+		SoloPlaySettings.custom_params_handlers[mission_context.mission_name](mission_context.mission_name, mission_context.custom_params)
+	end
 
 	Managers.multiplayer_session:reset("Hosting SoloPlay session")
 	Managers.multiplayer_session:boot_singleplayer_session()
