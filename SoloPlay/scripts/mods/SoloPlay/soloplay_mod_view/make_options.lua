@@ -1,6 +1,8 @@
 local mod = get_mod("SoloPlay")
 local SoloPlaySettings = mod:io_dofile("SoloPlay/scripts/mods/SoloPlay/SoloPlaySettings")
 
+local HAVOC_LOC = Localize("loc_havoc_name")
+
 local make_options = {}
 
 make_options.normal_mission = function (current)
@@ -50,9 +52,13 @@ make_options.normal_circumstance = function (current)
 	local allow_list = SoloPlaySettings.lookup.circumstances_of_missions[current.normal_mission]
 	for _, circumstance_name in ipairs(SoloPlaySettings.order.circumstances) do
 		if not allow_list or allow_list[circumstance_name] then
+			local final_display_name = SoloPlaySettings.loc.circumstances[circumstance_name]
+			if SoloPlaySettings.lookup.havoc_circumstances[circumstance_name] or table.array_contains(SoloPlaySettings.order.havoc_difficulty_circumstances, circumstance_name) then
+				final_display_name = string.format("%s: %s", HAVOC_LOC, final_display_name)
+			end
 			local option = {
 				ignore_localization = true,
-				display_name = SoloPlaySettings.loc.circumstances[circumstance_name],
+				display_name = final_display_name,
 				id = circumstance_name,
 				value = circumstance_name,
 			}
