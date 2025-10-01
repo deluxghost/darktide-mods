@@ -294,7 +294,7 @@ end)
 local main_menu_want_solo_play = nil
 
 mod:hook(CLASS.StateMainMenu, "update", function (func, self, main_dt, main_t)
-	if self._continue and not self:_waiting_for_profile_synchronization() then
+	if self._continue and not self:_waiting_for_synchronizations() then
 		if main_menu_want_solo_play then
 			local mode = main_menu_want_solo_play
 			main_menu_want_solo_play = nil
