@@ -241,7 +241,7 @@ end)
 
 mod:hook(GameModeSurvival, "select_random_island", function (func, self)
 	local selected_island_name = mod:get("_horde_selected_island")
-	if not selected_island_name then
+	if not selected_island_name or selected_island_name == "" then
 		return func(self)
 	end
 
@@ -307,6 +307,10 @@ mod:hook(CLASS.StateMainMenu, "update", function (func, self, main_dt, main_t)
 			end
 			local mission_settings = MissionTemplates[mission_context.mission_name]
 			local mechanism_name = mission_settings.mechanism_name
+
+			if mission_context.custom_params and SoloPlaySettings.custom_params_handlers[mission_context.mission_name] then
+				SoloPlaySettings.custom_params_handlers[mission_context.mission_name](mission_context.mission_name, mission_context.custom_params)
+			end
 
 			Managers.multiplayer_session:boot_singleplayer_session()
 			Managers.mechanism:change_mechanism(mechanism_name, mission_context)
