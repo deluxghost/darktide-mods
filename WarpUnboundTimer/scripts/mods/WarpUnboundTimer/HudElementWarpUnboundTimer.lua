@@ -3,17 +3,17 @@ local UIWorkspaceSettings = require("scripts/settings/ui/ui_workspace_settings")
 local UIWidget = require("scripts/managers/ui/ui_widget")
 
 local definitions = {
-  	scenegraph_definition = {
+	scenegraph_definition = {
 		screen = UIWorkspaceSettings.screen,
-		timer_area  = {
+		timer_area = {
 			parent = "screen",
 			size = { 200, 100 },
 			vertical_alignment = "center",
 			horizontal_alignment = "center",
 			position = { 0, -190, 5 }
 		}
-  	},
-  	widget_definitions = {
+	},
+	widget_definitions = {
 		timer_text = UIWidget.create_definition({
 			{
 				pass_type = "text",
@@ -31,13 +31,13 @@ local definitions = {
 				}
 			}
 		}, "timer_area")
-  	}
+	}
 }
 
 HudElementWarpUnboundTimer = class("HudElementWarpUnboundTimer", "HudElementBase")
 
 function HudElementWarpUnboundTimer:init(parent, draw_layer, start_scale)
-  	HudElementWarpUnboundTimer.super.init(self, parent, draw_layer, start_scale, definitions)
+	HudElementWarpUnboundTimer.super.init(self, parent, draw_layer, start_scale, definitions)
 end
 
 HudElementWarpUnboundTimer.update = function (self, dt, t, ui_renderer, render_settings, input_service)

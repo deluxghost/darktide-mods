@@ -35,26 +35,26 @@ local grid_settings = {
 }
 
 local function item_change_function(content, style)
-    local hotspot = content.hotspot
-    local is_selected = hotspot.is_selected
-    local is_focused = hotspot.is_focused
-    local is_hover = hotspot.is_hover
-    local default_color = style.default_color
-    local selected_color = style.selected_color
-    local hover_color = style.hover_color
-    local color
+	local hotspot = content.hotspot
+	local is_selected = hotspot.is_selected
+	local is_focused = hotspot.is_focused
+	local is_hover = hotspot.is_hover
+	local default_color = style.default_color
+	local selected_color = style.selected_color
+	local hover_color = style.hover_color
+	local color
 
-    if is_selected or is_focused then
-        color = selected_color
-    elseif is_hover then
-        color = hover_color
-    else
-        color = default_color
-    end
+	if is_selected or is_focused then
+		color = selected_color
+	elseif is_hover then
+		color = hover_color
+	else
+		color = default_color
+	end
 
-    local progress = math.max(math.max(hotspot.anim_hover_progress or 0, hotspot.anim_select_progress or 0), hotspot.anim_focus_progress or 0)
+	local progress = math.max(math.max(hotspot.anim_hover_progress or 0, hotspot.anim_select_progress or 0), hotspot.anim_focus_progress or 0)
 
-    ColorUtilities.color_lerp(default_color, color, progress, style.color)
+	ColorUtilities.color_lerp(default_color, color, progress, style.color)
 end
 
 local blueprints = {

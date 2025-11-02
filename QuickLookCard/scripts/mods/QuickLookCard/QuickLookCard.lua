@@ -905,7 +905,7 @@ local function fill_weapon_base_stats(content, style, item)
 				end
 			end
 		end
-		if mod:get("opt_highlight_dump_stat") and  not all_same then
+		if mod:get("opt_highlight_dump_stat") and not all_same then
 			style["qlc_stats_title_" .. tostring(min_idx)].text_color = QLColor.highlight
 		end
 	end
