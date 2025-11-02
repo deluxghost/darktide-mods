@@ -29,6 +29,10 @@ return {
 		["zh-tw"] = Localize("loc_group_finder_difficulty_auric") .. "%s",
 	},
 
+	group_keybinds = {
+		en = "Keybinds",
+		["zh-cn"] = "快捷键",
+	},
 	solo_keybind = {
 		en = "Open Solo Play view",
 		["zh-cn"] = "打开单人游戏界面",
@@ -40,6 +44,9 @@ return {
 		["zh-cn"] = "单人游戏界面也可以通过“/solo”命令打开。",
 		ru = "Режим соло-игры также можно открыть с помощью команды \"/solo\".",
 		["zh-tw"] = "單人遊戲界面也可以通過「/solo」指令開啟。",
+	},
+	inventory_keybind = {
+		en = Localize("loc_alias_view_hotkey_inventory"),
 	},
 	group_modifiers = {
 		en = "Modifiers",

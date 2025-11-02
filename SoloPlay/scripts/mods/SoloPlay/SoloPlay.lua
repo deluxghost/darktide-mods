@@ -229,16 +229,6 @@ mod:hook(DifficultyManager, "friendly_fire_enabled", function (func, self, targe
 	return ret
 end)
 
-mod:hook(GameModeManager, "hotkey_settings", function (func, self)
-	local ret = table.clone(func(self))
-	local game_mode_name = self:game_mode_name()
-	if (game_mode_name == "coop_complete_objective" or game_mode_name == "survival") and mod.is_soloplay() then
-		ret.hotkeys["hotkey_inventory"] = "inventory_background_view"
-		ret.lookup["inventory_background_view"] = "hotkey_inventory"
-	end
-	return ret
-end)
-
 mod:hook(GameModeSurvival, "select_random_island", function (func, self)
 	local selected_island_name = mod:get("_horde_selected_island")
 	if not selected_island_name or selected_island_name == "" then
@@ -434,6 +424,26 @@ mod.keybind_open_solo_view = function ()
 	if not Managers.ui:chat_using_input() then
 		mod.open_solo_view()
 	end
+end
+
+mod.keybind_open_inventory = function()
+	if Managers.ui:chat_using_input() then
+		return
+	end
+	if not mod.is_soloplay() then
+		return
+	end
+	local active = false
+	local active_views = Managers.ui:active_views()
+	for _, active_view in pairs(active_views) do
+		if active_view == "inventory_background_view" then
+			active = true
+		end
+	end
+	if active then
+		return
+	end
+	Managers.ui:open_view("inventory_background_view", nil, nil, nil, nil, nil)
 end
 
 mod:command("solo", mod:localize("solo_command_desc"), function ()
