@@ -141,13 +141,13 @@ local function clipboard_get_code()
 end
 
 local button_def_table = {
-  	__share_talents_copy = {
+	__share_talents_copy = {
 		scenegraph_definition = {
-			parent = "canvas",
-			vertical_alignment = "center",
-			horizontal_alignment = "right",
-			size = { 200, 40 },
-			position = { -16, -25, 20 }
+			parent = "info_banner",
+			vertical_alignment = "bottom",
+			horizontal_alignment = "center",
+			size = { 200, 36 },
+			position = { 0, 38, 20 }
 		},
 		pressed_callback = function (self, widget)
 			local layout = self:get_active_layout()
@@ -157,14 +157,14 @@ local button_def_table = {
 			mod:notify(mod:localize("msg_view_copied"))
 		end,
 		allow_readonly = true,
-  	},
-  	__share_talents_paste = {
+	},
+	__share_talents_paste = {
 		scenegraph_definition = {
 			parent = "__share_talents_copy",
 			vertical_alignment = "top",
 			horizontal_alignment = "right",
-			size = { 200, 40 },
-			position = { 0, 50, 20 }
+			size = { 200, 36 },
+			position = { 0, 42, 20 }
 		},
 		pressed_callback = function (self, widget)
 			local clip_archetype, clip_code = clipboard_get_code()
@@ -174,7 +174,7 @@ local button_def_table = {
 			end
 			set_talents(self, clip_archetype, clip_code)
 		end
-  	},
+	},
 }
 
 mod:hook_require("scripts/ui/views/talent_builder_view/talent_builder_view_definitions", function (definitions)
