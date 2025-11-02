@@ -94,16 +94,14 @@ end
 
 make_options.havoc_mission = function (current)
 	local options = {}
-	for _, mission_name in ipairs(SoloPlaySettings.order.missions) do
-		if SoloPlaySettings.lookup.theme_circumstances_of_havoc_missions[mission_name] then
-			local option = {
-				ignore_localization = true,
-				display_name = SoloPlaySettings.loc.missions[mission_name],
-				id = mission_name,
-				value = mission_name,
-			}
-			options[#options+1] = option
-		end
+	for _, mission_name in ipairs(SoloPlaySettings.order.havoc_missions) do
+		local option = {
+			ignore_localization = true,
+			display_name = SoloPlaySettings.loc.missions[mission_name],
+			id = mission_name,
+			value = mission_name,
+		}
+		options[#options+1] = option
 	end
 	return options
 end
@@ -186,15 +184,13 @@ make_options.havoc_theme_circumstance = function (current)
 		},
 	}
 	for _, circumstance_name in ipairs(SoloPlaySettings.order.havoc_theme_circumstances) do
-		if SoloPlaySettings.lookup.theme_circumstances_of_havoc_missions[current.havoc_mission][circumstance_name] then
-			local option = {
-				ignore_localization = true,
-				display_name = SoloPlaySettings.loc.circumstances[circumstance_name],
-				id = circumstance_name,
-				value = circumstance_name,
-			}
-			options[#options+1] = option
-		end
+		local option = {
+			ignore_localization = true,
+			display_name = SoloPlaySettings.loc.circumstances[circumstance_name],
+			id = circumstance_name,
+			value = circumstance_name,
+		}
+		options[#options+1] = option
 	end
 	return options
 end

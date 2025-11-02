@@ -11,6 +11,7 @@ local havoc_modifier_template = mod:io_dofile("SoloPlay/scripts/mods/SoloPlay/ha
 
 local TRAINING_GROUND = "tg_shooting_range"
 local MORTIS_TRIALS = "psykhanium"
+local TWINS_MISSION = "km_enforcer_twins"
 local CAMPAIGN_LOC = Localize("loc_player_journey_campaign")
 
 local objectives_denylist = {
@@ -20,6 +21,9 @@ local objectives_denylist = {
 }
 local circumstance_denylist = {
 	"dummy",
+}
+local havoc_mission_denylist = {
+	TWINS_MISSION,
 }
 local circumstance_prefer_list = {
 	loc_circumstance_hunting_grounds_title = "hunting_grounds_01",
@@ -54,7 +58,7 @@ local campaign_circumstances = {
 
 local settings = {
 	context_override = {
-		km_enforcer_twins = {
+		[TWINS_MISSION] = {
 			circumstance_name = {
 				value = "player_journey_010",
 			},
@@ -78,6 +82,7 @@ local settings = {
 		side_missions = {},
 		circumstances = {},
 		mission_givers = {},
+		havoc_missions = {},
 		havoc_factions = {},
 		havoc_circumstances = {},
 		havoc_theme_circumstances = {},
@@ -90,7 +95,7 @@ local settings = {
 	lookup = {
 		-- use all circumstances if nil
 		circumstances_of_missions = {
-			km_enforcer_twins = {},
+			[TWINS_MISSION] = {},
 		},
 		-- use all mission givers if nil
 		mission_givers_of_missions = {},
@@ -108,6 +113,7 @@ local settings = {
 
 -- missions
 local missions_loc_array = {}
+local havoc_missions_loc_array = {}
 local produce_mission_loc_entries = function (name, mission)
 	local display = Localize(mission.mission_name)
 	if string.starts_with(display, "<") then
@@ -129,6 +135,13 @@ local produce_mission_loc_entries = function (name, mission)
 		data = name,
 		localized = display,
 	}
+	local is_adventure = mission.mechanism_name == "adventure" and mission.game_mode_name == "coop_complete_objective" and mission.mission_type ~= "operations"
+	if name == TRAINING_GROUND or (is_adventure and not table.array_contains(havoc_mission_denylist, name)) then
+		havoc_missions_loc_array[#havoc_missions_loc_array+1] = {
+			data = name,
+			localized = display,
+		}
+	end
 end
 for name, mission in pairs(MissionTemplates) do
 	if (not mission.objectives) or (not table.array_contains(objectives_denylist, mission.objectives)) or name == TRAINING_GROUND then
@@ -156,9 +169,13 @@ local mission_sort_function = function (a, b)
 	return mod.sort_function_localized(a, b)
 end
 table.sort(missions_loc_array, mission_sort_function)
+table.sort(havoc_missions_loc_array, mission_sort_function)
 for index, mission_loc in ipairs(missions_loc_array) do
 	settings.loc.missions[mission_loc.data] = mission_loc.localized
 	settings.order.missions[index] = mission_loc.data
+end
+for index, mission_loc in ipairs(havoc_missions_loc_array) do
+	settings.order.havoc_missions[index] = mission_loc.data
 end
 
 -- side_missions
@@ -344,14 +361,6 @@ for _, circumstances in pairs(HavocSettings.circumstances_per_theme) do
 end
 
 -- theme_circumstances_of_havoc_missions
-settings.lookup.theme_circumstances_of_havoc_missions[TRAINING_GROUND] = {}
-for theme in pairs(HavocSettings.missions) do
-	if theme ~= "default" then
-		for _, theme_circumstance in ipairs(HavocSettings.circumstances_per_theme[theme]) do
-			settings.lookup.theme_circumstances_of_havoc_missions[TRAINING_GROUND][theme_circumstance] = true
-		end
-	end
-end
 for theme, missions in pairs(HavocSettings.missions) do
 	for _, mission_name in ipairs(missions) do
 		settings.lookup.theme_circumstances_of_havoc_missions[mission_name] = settings.lookup.theme_circumstances_of_havoc_missions[mission_name] or {}
