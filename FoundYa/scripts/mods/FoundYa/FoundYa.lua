@@ -43,6 +43,8 @@ local interaction_types = {
 	forge_material = "material",
 	penance_collectible = "penance",
 	tainted_skull = "event",
+	objective_pickup_hidden_hold = "button",
+	saints_pickup = "event",
 	pocketable = function (pickup_data)
 		if pickup_data.name == "communications_hack_device" then
 			return "device"

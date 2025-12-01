@@ -2,7 +2,7 @@ local mod = get_mod("SoloPlay")
 local UIWidget = require("scripts/managers/ui/ui_widget")
 local UIFontSettings = require("scripts/managers/ui/ui_font_settings")
 local ButtonPassTemplates = require("scripts/ui/pass_templates/button_pass_templates")
-local MissionBoardViewStyles = require("scripts/ui/views/mission_board_view_pj/mission_board_view_styles")
+local MissionBoardViewStyles = require("scripts/ui/views/mission_board_view/mission_board_view_styles")
 local view_settings = mod:io_dofile("SoloPlay/scripts/mods/SoloPlay/soloplay_mod_view/soloplay_mod_view_settings")
 local stepper_templates = mod:io_dofile("SoloPlay/scripts/mods/SoloPlay/soloplay_mod_view/stepper_templates")
 

@@ -135,6 +135,10 @@ local localization = {
 		en = "Combat Ability in Progress",
 		["zh-cn"] = "主动技能进行时",
 	},
+	missile_launcher_class = {
+		en = "Mission Launcher",
+		["zh-cn"] = "导弹发射器",
+	},
 	psyker_smite_class = {
 		en = Localize("loc_class_psyker_title") .. " " .. Localize("loc_ability_psyker_smite"),
 		["zh-cn"] = Localize("loc_class_psyker_title") .. Localize("loc_ability_psyker_smite"),
@@ -245,6 +249,15 @@ local localization = {
 	},
 	rumbler_class = {
 		en = Localize("loc_weapon_family_ogryn_thumper_p1_m2"),
+	},
+	dual_autopistols_class = {
+		en = Localize("loc_weapon_family_dual_autopistols_p1_m1"),
+	},
+	dual_stubpistols_class = {
+		en = Localize("loc_weapon_family_dual_stubpistols_p1_m1"),
+	},
+	needlepistol_class = {
+		en = Localize("loc_weapon_family_needlepistol_p1_m1"),
 	},
 
 	primary = {

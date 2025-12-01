@@ -12,7 +12,6 @@ local havoc_modifier_template = mod:io_dofile("SoloPlay/scripts/mods/SoloPlay/ha
 local TRAINING_GROUND = "tg_shooting_range"
 local MORTIS_TRIALS = "psykhanium"
 local TWINS_MISSION = "km_enforcer_twins"
-local CAMPAIGN_LOC = Localize("loc_player_journey_campaign")
 
 local objectives_denylist = {
 	"hub",
@@ -36,25 +35,44 @@ local circumstance_prefer_list = {
 local circumstance_format_group = {
 	high_flash_mission = "format_auric"
 }
-local campaign_circumstances = {
-	player_journey_01 = 1,
-	player_journey_02 = 2,
-	player_journey_03 = 3,
-	player_journey_04 = 4,
-	player_journey_05 = 5,
-	player_journey_06_B = 6,
-	player_journey_06_A = 7,
-	player_journey_07_B = 8,
-	player_journey_07_A = 9,
-	player_journey_08 = 10,
-	player_journey_09 = 11,
-	player_journey_010 = 12,
-	player_journey_011_A = 13,
-	player_journey_012_A = 14,
-	player_journey_011_B = 15,
-	player_journey_013_A = 16,
-	player_journey_014 = 17,
+local campaign_names = {
+	player_journey = Localize("loc_player_journey_battle"),
+	nomansland = Localize("loc_nomansland_display_name"),
 }
+local campaign_circumstances = {
+	player_journey = {
+		player_journey_01 = 1,
+		player_journey_02 = 2,
+		player_journey_03 = 3,
+		player_journey_04 = 4,
+		player_journey_05 = 5,
+		player_journey_06_B = 6,
+		player_journey_06_A = 7,
+		player_journey_07_B = 8,
+		player_journey_07_A = 9,
+		player_journey_08 = 10,
+		player_journey_09 = 11,
+		player_journey_010 = 12,
+		player_journey_011_A = 13,
+		player_journey_012_A = 14,
+		player_journey_011_B = 15,
+		player_journey_013_A = 16,
+		player_journey_014 = 17,
+	},
+	nomansland = {
+		story_nomansland_01 = 1,
+		story_nomansland_02 = 2,
+		story_nomansland_03 = 3,
+	},
+}
+local function get_journey(name)
+	for journey, names in pairs(campaign_circumstances) do
+		if names[name] ~= nil then
+			return journey
+		end
+	end
+	return nil
+end
 
 local settings = {
 	context_override = {
@@ -234,15 +252,17 @@ for name, circumstance in pairs(CircumstanceTemplates) do
 			end
 		end
 		local display_name = circumstance.ui.display_name
+		local journey = get_journey(name)
 		if havoc_circumstances_loc_fallback[name] then
 			display_name = havoc_circumstances_loc_fallback[name]
-		elseif string.starts_with(name, "player_journey_") then
-			local campaign_order = campaign_circumstances[name] or 0
+		elseif journey ~= nil then
+			local journey_display = campaign_names[journey]
+			local campaign_order = campaign_circumstances[journey][name] or 0
 			display_name = Localize(display_name)
 			if campaign_order > 0 then
-				display_name = string.format("%s %02d: %s", CAMPAIGN_LOC, campaign_order, display_name)
+				display_name = string.format("%s %02d: %s", journey_display, campaign_order, display_name)
 			else
-				display_name = string.format("%s: %s", CAMPAIGN_LOC, display_name)
+				display_name = string.format("%s: %s", journey_display, display_name)
 			end
 		end
 		if not deny and not format_key then

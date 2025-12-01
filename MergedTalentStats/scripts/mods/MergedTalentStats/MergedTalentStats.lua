@@ -266,7 +266,6 @@ end
 mod:hook(CLASS.TalentBuilderView, "_setup_talents_summary_grid", function (func, self)
 	mod:pcall(function ()
 		local definitions = self._definitions
-
 		if not self._summary_grid then
 			local grid_scenegraph_id = "summary_grid"
 			local scenegraph_definition = definitions.scenegraph_definition
@@ -274,24 +273,25 @@ mod:hook(CLASS.TalentBuilderView, "_setup_talents_summary_grid", function (func,
 			local grid_size = grid_scenegraph.size
 			local mask_padding_size = 0
 			local grid_settings = {
-				scrollbar_width = 7,
-				hide_dividers = true,
-				widget_icon_load_margin = 0,
 				enable_gamepad_scrolling = true,
-				title_height = 0,
-				scrollbar_horizontal_offset = 18,
 				hide_background = true,
+				hide_dividers = true,
+				scrollbar_horizontal_offset = 18,
+				scrollbar_width = 7,
+				title_height = 0,
+				widget_icon_load_margin = 0,
 				grid_spacing = {
 					0,
-					0
+					0,
 				},
 				grid_size = grid_size,
 				mask_size = {
 					grid_size[1] + 20,
-					grid_size[2] + mask_padding_size
-				}
+					grid_size[2] + mask_padding_size,
+				},
 			}
 			local layer = (self._draw_layer or 0) + 10
+
 			self._summary_grid = self:_add_element(ViewElementGrid, "summary_grid", layer, grid_settings, grid_scenegraph_id)
 
 			self:_update_element_position("summary_grid", self._summary_grid)
@@ -309,63 +309,66 @@ mod:hook(CLASS.TalentBuilderView, "_setup_talents_summary_grid", function (func,
 				widget_type = "dynamic_spacing",
 				size = {
 					500,
-					25
-				}
+					25,
+				},
 			}
-			local points_spent_on_node_widgets = self._points_spent_on_node_widgets
+
+			local node_widget_tiers = self._node_widget_tiers
 			local nodes_to_present = {}
-			local ability_added = false
-			local blitz_added = false
-			local aura_added = false
+			local ability_added, blitz_added, aura_added = false, false, false
 
+			-- # CHANGE START
 			local talent_stats_adder = {}
-			for node_name, points_spent in pairs(points_spent_on_node_widgets) do
-				if points_spent > 0 then
-					local node = self:_node_by_name(node_name)
+			-- # CHANGE END
+			for node_name in pairs(node_widget_tiers) do
+				local node = self:_node_by_name(node_name)
 
-					if node then
-						local talent_name = node.talent
-						local talent = archetype.talents[talent_name]
+				if node then
+					local talent_name = node.talent
+					local talent = archetype.talents[talent_name]
 
-						if talent then
-							local node_type = node.type
+					if talent then
+						local node_type = node.type
 
-							if node_type == "stat" then
-								local adder_key = get_talent_compare_key(talent)
-								talent_stats_adder[adder_key] = talent_stats_adder[adder_key] or {}
-								local adder = talent_stats_adder[adder_key]
+						-- # CHANGE START
+						if node_type == "stat" then
+							local adder_key = get_talent_compare_key(talent)
+							talent_stats_adder[adder_key] = talent_stats_adder[adder_key] or {}
+							local adder = talent_stats_adder[adder_key]
+							-- placeholders
+							adder.widget_name = adder.widget_name or node.widget_name
+							adder.type = "stat"
+							adder.talent = adder.talent or talent
+							adder.icon = adder.icon or node.icon
 
-								-- placeholders
-								adder.widget_name = adder.widget_name or node.widget_name
-								adder.type = "stat"
-								adder.talent = adder.talent or talent
-								adder.icon = adder.icon or node.icon
+							adder.merge_talents = adder.merge_talents or {}
+							adder.merge_talents[talent_name] = adder.merge_talents[talent_name] or {}
+							adder.merge_talents[talent_name].talent = talent
+							adder.merge_talents[talent_name].count = adder.merge_talents[talent_name].count or 0
+							adder.merge_talents[talent_name].count = adder.merge_talents[talent_name].count + 1
+						else
+							nodes_to_present[#nodes_to_present + 1] = {
+								widget_name = node.widget_name,
+								type = node_type,
+								talent = talent,
+								icon = node.icon,
+								cost = node.cost,
+							}
+						end
+						-- # CHANGE END
 
-								adder.merge_talents = adder.merge_talents or {}
-								adder.merge_talents[talent_name] = adder.merge_talents[talent_name] or {}
-								adder.merge_talents[talent_name].talent = talent
-								adder.merge_talents[talent_name].count = adder.merge_talents[talent_name].count or 0
-								adder.merge_talents[talent_name].count = adder.merge_talents[talent_name].count + 1
-							else
-								nodes_to_present[#nodes_to_present + 1] = {
-									widget_name = node.widget_name,
-									type = node_type,
-									talent = talent,
-									icon = node.icon
-								}
-							end
-
-							if node_type == "ability" then
-								ability_added = true
-							elseif node_type == "tactical" then
-								blitz_added = true
-							elseif node_type == "aura" then
-								aura_added = true
-							end
+						if node_type == "ability" then
+							ability_added = true
+						elseif node_type == "tactical" then
+							blitz_added = true
+						elseif node_type == "aura" then
+							aura_added = true
 						end
 					end
 				end
 			end
+
+			-- # CHANGE START
 			for _, talent_stat in pairs(talent_stats_adder) do
 				nodes_to_present[#nodes_to_present + 1] = {
 					widget_name = talent_stat.widget_name,
@@ -375,11 +378,12 @@ mod:hook(CLASS.TalentBuilderView, "_setup_talents_summary_grid", function (func,
 					merge_talents = talent_stat.merge_talents,
 				}
 			end
+			-- # CHANGE END
 
 			local base_class_loadout = {
 				ability = {},
 				blitz = {},
-				aura = {}
+				aura = {},
 			}
 			local player = self._preview_player
 			local profile = player and player:profile()
@@ -388,31 +392,34 @@ mod:hook(CLASS.TalentBuilderView, "_setup_talents_summary_grid", function (func,
 
 			if not ability_added then
 				local talent = base_class_loadout.ability.talent
+
 				nodes_to_present[#nodes_to_present + 1] = {
 					points_spent = 1,
 					type = "ability",
 					talent = talent,
-					icon = base_class_loadout.ability.icon
+					icon = base_class_loadout.ability.icon,
 				}
 			end
 
 			if not blitz_added then
 				local talent = base_class_loadout.blitz.talent
+
 				nodes_to_present[#nodes_to_present + 1] = {
 					points_spent = 1,
 					type = "tactical",
 					talent = talent,
-					icon = base_class_loadout.blitz.icon
+					icon = base_class_loadout.blitz.icon,
 				}
 			end
 
 			if not aura_added then
 				local talent = base_class_loadout.aura.talent
+
 				nodes_to_present[#nodes_to_present + 1] = {
 					points_spent = 1,
 					type = "aura",
 					talent = talent,
-					icon = base_class_loadout.aura.icon
+					icon = base_class_loadout.aura.icon,
 				}
 			end
 
@@ -436,35 +443,38 @@ mod:hook(CLASS.TalentBuilderView, "_setup_talents_summary_grid", function (func,
 
 			for index, data in ipairs(nodes_to_present) do
 				local widget_name = data.widget_name
-				local points_spent = data.points_spent or points_spent_on_node_widgets[widget_name] or 0
+				local points_spent = data.points_spent or (node_widget_tiers[widget_name] or 0) * (data.cost or 0)
 				local talent = type(data.talent) == "table" and data.talent
 
 				if not talent then
 					local talent_name = data.talent
+
 					talent = talent_name and archetype.talents[talent_name]
 				end
 
-				local description, display_name = nil
+				local description, display_name
 				local add = false
 
 				if talent then
-					display_name = talent.display_name
+					display_name = TalentLayoutParser.talent_title(talent, points_spent, Color.ui_terminal(255, true))
+					-- # CHANGE START
 					if data.merge_talents then
 						description = get_stat_talent_desc(data.merge_talents, Color.ui_terminal(255, true))
 					else
 						description = TalentLayoutParser.talent_description(talent, points_spent, Color.ui_terminal(255, true))
 					end
+					-- # CHANGE END
 					add = true
 				elseif data.base_talent then
 					description = data.description
-					display_name = data.display_name
+					display_name = TalentLayoutParser.talent_title(data, points_spent, Color.ui_terminal(255, true))
 					add = true
 				end
 
 				if add then
 					local node_type = data.type
 					local icon = data.icon
-					local gradient_map, frame, icon_mask = nil
+					local gradient_map, frame, icon_mask
 					local settings_by_node_type = TalentBuilderViewSettings.settings_by_node_type[node_type]
 
 					if settings_by_node_type then
@@ -483,14 +493,14 @@ mod:hook(CLASS.TalentBuilderView, "_setup_talents_summary_grid", function (func,
 					if not presented_node_type_headers[node_type] then
 						layout[#layout + 1] = {
 							widget_type = "header",
-							text = Localize(settings_by_node_type.display_name)
+							text = Localize(settings_by_node_type.display_name),
 						}
 						layout[#layout + 1] = {
 							widget_type = "dynamic_spacing",
 							size = {
 								500,
-								10
-							}
+								10,
+							},
 						}
 						presented_node_type_headers[node_type] = true
 					end
@@ -504,7 +514,7 @@ mod:hook(CLASS.TalentBuilderView, "_setup_talents_summary_grid", function (func,
 						icon = icon,
 						frame = frame,
 						icon_mask = icon_mask,
-						node_type = node_type
+						node_type = node_type,
 					}
 
 					if node_type ~= "stat" then
@@ -512,8 +522,8 @@ mod:hook(CLASS.TalentBuilderView, "_setup_talents_summary_grid", function (func,
 							widget_type = "dynamic_spacing",
 							size = {
 								500,
-								25
-							}
+								25,
+							},
 						}
 					end
 				end
@@ -523,8 +533,8 @@ mod:hook(CLASS.TalentBuilderView, "_setup_talents_summary_grid", function (func,
 				widget_type = "dynamic_spacing",
 				size = {
 					500,
-					25
-				}
+					25,
+				},
 			}
 		end
 

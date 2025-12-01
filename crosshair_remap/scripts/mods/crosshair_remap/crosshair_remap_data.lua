@@ -53,6 +53,7 @@ return {
 			make_dropdown("none_class", "none"),
 			make_dropdown("melee_class", "dot"),
 			make_dropdown("ability_class", "dot"),
+			make_dropdown("missile_launcher_class", "bfg"),
 			make_dropdown("psyker_smite_class", "charge_up"),
 			make_dropdown("psyker_throwing_knives_class", "dot"),
 			make_group("psyker_chain_lightning_class", "dot", "charge_up"),
@@ -87,6 +88,9 @@ return {
 			make_group("ripper_gun_class", "shotgun", "spray_n_pray"),
 			make_group("kickback_class", "shotgun", "shotgun"),
 			make_group("rumbler_class", "projectile_drop", "ironsight"),
+			make_group("dual_autopistols_class", "assault", "assault"),
+			make_group("dual_stubpistols_class", "assault", "assault"),
+			make_group("needlepistol_class", "assault", "ironsight"),
 		}
 	}
 }

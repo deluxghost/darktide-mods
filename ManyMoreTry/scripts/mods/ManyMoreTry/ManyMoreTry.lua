@@ -1,5 +1,5 @@
 local mod = get_mod("ManyMoreTry")
-local MissionBoardViewSettings = require("scripts/ui/views/mission_board_view_pj/mission_board_view_settings")
+local MissionBoardViewSettings = require("scripts/ui/views/mission_board_view/mission_board_view_settings")
 local MissionTemplates = require("scripts/settings/mission/mission_templates")
 local CircumstanceTemplates = require("scripts/settings/circumstance/circumstance_templates")
 local MissionObjectiveTemplates = require("scripts/settings/mission_objective/mission_objective_templates")

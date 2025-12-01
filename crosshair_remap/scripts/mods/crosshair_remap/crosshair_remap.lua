@@ -43,48 +43,114 @@ mod.on_all_mods_loaded = function ()
 	mod.load_package("packages/ui/views/mission_board_view/mission_board_view")
 end
 
-local keywords_to_class = {
-	autogun = {
-		p1 = "autogun_infantry_class",
-		p2 = "autogun_braced_class",
-		p3 = "autogun_headhunter_class",
+local weapon_class_filter = {
+	autogun_infantry_class = {
+		keywords = { "autogun", "p1" },
 	},
-	autopistol = "autopistol_class",
-	bolter = "boltgun_class",
-	boltpistol = "boltpistal_class",
-	flamer = "flamer_class",
-	force_staff = {
-		p1 = "force_staff_trauma_class",
-		p2 = "force_staff_purgatus_class",
-		p3 = "force_staff_surge_class",
-		p4 = "force_staff_voidstrike_class",
+	autogun_braced_class = {
+		keywords = { "autogun", "p2" },
 	},
-	lasgun = {
-		p1 = "lasgun_infantry_class",
-		p2 = "lasgun_helbore_class",
-		p3 = "lasgun_recon_class",
+	autogun_headhunter_class = {
+		keywords = { "autogun", "p3" },
 	},
-	laspistol = "laspistol_class",
-	plasma_rifle = "plasma_gun_class",
-	stub_pistol = "revolver_class",
-	shotgun = {
-		p1 = "combat_shotguns",
-		p2 = "assault_shotgun_class",
-		p4 = "exterminator_shotguns",
+	autopistol_class = {
+		keywords = { "autopistol" },
 	},
-	grenadier_gauntlet = "grenadier_gauntlet_class",
-	heavystubber = {
-		p1 = "heavy_stubber_class",
-		p2 = "heavy_stubber_single_barrel_class",
+	boltgun_class = {
+		keywords = { "bolter" },
 	},
-	rippergun = "ripper_gun_class",
-	shotgun_grenade = "thumpers_kickback_or_rumbler",
-	shotpistol_shield = "shotpistol_shield_class",
+	boltpistal_class = {
+		keywords = { "boltpistol" },
+	},
+	flamer_class = {
+		keywords = { "flamer" },
+	},
+	psyker_chain_lightning_class = {
+		name = "psyker_chain_lightning",
+	},
+	force_staff_trauma_class = {
+		keywords = { "force_staff", "p1" },
+	},
+	force_staff_purgatus_class = {
+		keywords = { "force_staff", "p2" },
+	},
+	force_staff_surge_class = {
+		keywords = { "force_staff", "p3" },
+	},
+	force_staff_voidstrike_class = {
+		keywords = { "force_staff", "p4" },
+	},
+	lasgun_infantry_class = {
+		keywords = { "lasgun", "p1" },
+	},
+	lasgun_helbore_class = {
+		keywords = { "lasgun", "p2" },
+	},
+	lasgun_recon_class = {
+		keywords = { "lasgun", "p3" },
+	},
+	laspistol_class = {
+		keywords = { "laspistol" },
+	},
+	plasma_gun_class = {
+		keywords = { "plasma_rifle" },
+	},
+	revolver_class = {
+		keywords = { "stub_pistol" },
+	},
+	combat_shotguns = {
+		keywords = { "shotgun", "p1" },
+	},
+	assault_shotgun_class = {
+		keywords = { "shotgun", "p2" },
+	},
+	exterminator_shotguns = {
+		keywords = { "shotgun", "p4" },
+	},
+	grenadier_gauntlet_class = {
+		keywords = { "grenadier_gauntlet" },
+	},
+	heavy_stubber_class = {
+		keywords = { "heavystubber", "p1" },
+	},
+	heavy_stubber_single_barrel_class = {
+		keywords = { "heavystubber", "p2" },
+	},
+	ripper_gun_class = {
+		keywords = { "rippergun" },
+	},
+	kickback_class = {
+		name = "ogryn_thumper_p1_m1",
+	},
+	rumbler_class = {
+		name = "ogryn_thumper_p1_m2",
+	},
+	shotpistol_shield_class = {
+		keywords = { "shotpistol_shield" },
+	},
+	dual_autopistols_class = {
+		name_prefix = "dual_autopistols_",
+	},
+	dual_stubpistols_class = {
+		name_prefix = "dual_stubpistols_",
+	},
+	needlepistol_class = {
+		keywords = { "needlepistol" },
+	},
 }
+local class_name_filter = {}
+local class_name_prefix_filter = {}
+local class_keyword_filter = {}
 
-local template_name_to_class = {
-	psyker_chain_lightning = "psyker_chain_lightning_class",
-}
+for key, value in pairs(weapon_class_filter) do
+	if value.name ~= nil then
+		class_name_filter[key] = value
+	elseif value.name_prefix ~= nil then
+		class_name_prefix_filter[key] = value
+	else
+		class_keyword_filter[key] = value
+	end
+end
 
 local special_shotgun_class = {
 	"shotgun_lawbringer_class",
@@ -94,50 +160,40 @@ local special_shotgun_class = {
 	"exterminator_shotgun_rending_class",
 }
 
-local function determine_ranged_weapon_class(weapon_template_name, weapon_template)
-	for k, v in pairs(template_name_to_class) do
-		if weapon_template_name == k then
-			return v
-		end
-	end
-
+local function get_filtered_weapon_class(weapon_template_name, weapon_template)
 	local function has_keyword(keyword)
 		return WeaponTemplate.has_keyword(weapon_template, keyword)
 	end
-
-	local weapon_class = nil
-
-	for k, v in pairs(keywords_to_class) do
-		if has_keyword(k) then
-			if type(v) == "string" then
-				weapon_class = v
-			else
-				for k2, v2 in pairs(v) do
-					if has_keyword(k2) then
-						weapon_class = v2
-						break
-					end
-				end
-			end
-			break
+	for class, filter in pairs(class_name_filter) do
+		if weapon_template_name == filter.name then
+			return class
 		end
 	end
+	for class, filter in pairs(class_name_prefix_filter) do
+		if string.starts_with(weapon_template_name, filter.name_prefix) then
+			return class
+		end
+	end
+	for class, filter in pairs(class_keyword_filter) do
+		local total = #filter.keywords
+		for _, keyword in ipairs(filter.keywords) do
+			if has_keyword(keyword) then
+				total = total - 1
+			end
+			if total == 0 then
+				return class
+			end
+		end
+	end
+end
 
+local function determine_ranged_weapon_class(weapon_template_name, weapon_template)
+	local weapon_class = get_filtered_weapon_class(weapon_template_name, weapon_template)
 	if weapon_class == nil then
 		return nil
 	end
 
-	if weapon_class == "thumpers_kickback_or_rumbler" then
-		if not weapon_template.crosshair then
-			return nil
-		end
-		if weapon_template.name == "ogryn_thumper_p1_m1" then
-			return "kickback_class"
-		elseif weapon_template.name == "ogryn_thumper_p1_m2" then
-			return "rumbler_class"
-		end
-		return nil
-	elseif weapon_class == "combat_shotguns" then
+	if weapon_class == "combat_shotguns" then
 		if not weapon_template.actions or not weapon_template.actions.action_shoot_hip or not weapon_template.actions.action_shoot_hip.fire_configuration then
 			return nil
 		end
@@ -254,6 +310,8 @@ mod:hook_origin("HudElementCrosshair", "_get_current_crosshair_type", function (
 					return mod.settings["psyker_smite_class"]
 				elseif weapon_template_name == "psyker_throwing_knives" then
 					return mod.settings["psyker_throwing_knives_class"]
+				elseif weapon_template_name == "missile_launcher" then
+					return mod.settings["missile_launcher_class"]
 				end
 
 				if WeaponTemplate.is_melee(weapon_template) then
@@ -262,7 +320,11 @@ mod:hook_origin("HudElementCrosshair", "_get_current_crosshair_type", function (
 
 				if WeaponTemplate.is_ranged(weapon_template) or weapon_template.psyker_smite then
 					if melee_action_kinds[action_kind] then
-						return mod.settings["melee_class"]
+						-- TODO: cleanup
+						if string.starts_with(weapon_template_name, "dual_stubpistols_") and action_kind == "windup" then
+						else
+							return mod.settings["melee_class"]
+						end
 					end
 
 					local weapon_class = determine_ranged_weapon_class(weapon_template_name, weapon_template)
@@ -281,11 +343,12 @@ mod:hook_origin("HudElementCrosshair", "_get_current_crosshair_type", function (
 					end
 
 					if weapon_class == "shotpistol_shield_class" and inventory_slot_component and not in_reload then
-						local current_ammo = inventory_slot_component.current_ammunition_reserve + inventory_slot_component.current_ammunition_clip
+						local current_ammunition_clip = inventory_slot_component.current_ammunition_clip[1] or 0
+						local current_ammo = inventory_slot_component.current_ammunition_reserve + current_ammunition_clip
 						if not in_alt_fire and current_ammo == 0 then
 							return mod.settings["melee_class"]
 						end
-						if in_alt_fire and inventory_slot_component.current_ammunition_clip == 0 then
+						if in_alt_fire and current_ammunition_clip == 0 then
 							return mod.settings["melee_class"]
 						end
 					end

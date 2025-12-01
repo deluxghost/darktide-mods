@@ -1,5 +1,5 @@
 local mod = get_mod("RememberServerLocation")
-local MissionBoardView = require("scripts/ui/views/mission_board_view_pj/mission_board_view")
+local MissionBoardView = require("scripts/ui/views/mission_board_view/mission_board_view")
 local HordePlayView = require("scripts/ui/views/horde_play_view/horde_play_view")
 local BackendUtilities = require("scripts/foundation/managers/backend/utilities/backend_utilities")
 local Promise = require("scripts/foundation/utilities/promise")
