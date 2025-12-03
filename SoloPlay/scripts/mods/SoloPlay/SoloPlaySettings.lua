@@ -6,6 +6,7 @@ local MissionObjectiveTemplates = require("scripts/settings/mission_objective/mi
 local MissionGiverVoSettings = require("scripts/settings/dialogue/mission_giver_vo_settings")
 local DialogueSpeakerVoiceSettings = require("scripts/settings/dialogue/dialogue_speaker_voice_settings")
 local HavocSettings = require("scripts/settings/havoc_settings")
+local CampaignSettings = require("scripts/settings/campaign/campaign_settings")
 local HordesModeSettings = require("scripts/settings/hordes_mode_settings")
 local havoc_modifier_template = mod:io_dofile("SoloPlay/scripts/mods/SoloPlay/havoc_modifier_template")
 
@@ -35,12 +36,8 @@ local circumstance_prefer_list = {
 local circumstance_format_group = {
 	high_flash_mission = "format_auric"
 }
-local campaign_names = {
-	player_journey = Localize("loc_player_journey_battle"),
-	nomansland = Localize("loc_nomansland_display_name"),
-}
 local campaign_circumstances = {
-	player_journey = {
+	["player-journey"] = {
 		player_journey_01 = 1,
 		player_journey_02 = 2,
 		player_journey_03 = 3,
@@ -59,16 +56,16 @@ local campaign_circumstances = {
 		player_journey_013_A = 16,
 		player_journey_014 = 17,
 	},
-	nomansland = {
+	["no-mans-land"] = {
 		story_nomansland_01 = 1,
 		story_nomansland_02 = 2,
 		story_nomansland_03 = 3,
 	},
 }
-local function get_journey(name)
-	for journey, names in pairs(campaign_circumstances) do
+local function get_campaign(name)
+	for campaign, names in pairs(campaign_circumstances) do
 		if names[name] ~= nil then
-			return journey
+			return campaign
 		end
 	end
 	return nil
@@ -252,17 +249,17 @@ for name, circumstance in pairs(CircumstanceTemplates) do
 			end
 		end
 		local display_name = circumstance.ui.display_name
-		local journey = get_journey(name)
+		local campaign = get_campaign(name)
 		if havoc_circumstances_loc_fallback[name] then
 			display_name = havoc_circumstances_loc_fallback[name]
-		elseif journey ~= nil then
-			local journey_display = campaign_names[journey]
-			local campaign_order = campaign_circumstances[journey][name] or 0
+		elseif campaign ~= nil then
+			local campaign_display = Localize(CampaignSettings[campaign].display_name)
+			local campaign_order = campaign_circumstances[campaign][name] or 0
 			display_name = Localize(display_name)
 			if campaign_order > 0 then
-				display_name = string.format("%s %02d: %s", journey_display, campaign_order, display_name)
+				display_name = string.format("%s %02d: %s", campaign_display, campaign_order, display_name)
 			else
-				display_name = string.format("%s: %s", journey_display, display_name)
+				display_name = string.format("%s: %s", campaign_display, display_name)
 			end
 		end
 		if not deny and not format_key then
