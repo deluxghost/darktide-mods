@@ -4,6 +4,7 @@ local TextUtilities = require("scripts/utilities/ui/text")
 local UIFonts = require("scripts/managers/ui/ui_fonts")
 local UIRenderer = require("scripts/managers/ui/ui_renderer")
 local UIFontSettings = require("scripts/managers/ui/ui_font_settings")
+local CampaignSettings = require("scripts/settings/campaign/campaign_settings")
 local MissionVotingView = require("scripts/ui/views/mission_voting_view/mission_voting_view")
 local MissionDetailsBlueprints = require("scripts/ui/views/mission_voting_view/mission_voting_view_blueprints")
 
@@ -15,6 +16,7 @@ mod:hook_safe(MissionVotingView, "_set_mission_data", function (self, mission_da
 	local story = mission_data.category == "story"
 	local event = mission_data.category == "event"
 	local has_flash_mission = not not mission_data.flags.flash
+	local campaigns_data = Managers.data_service.mission_board:get_campaigns_data()
 
 	self._widgets_by_name.title_bar_bottom.visible = has_flash_mission or event or story
 	local text = ""
@@ -22,10 +24,23 @@ mod:hook_safe(MissionVotingView, "_set_mission_data", function (self, mission_da
 		text = Localize("loc_mission_board_mission_category_event")
 	elseif story then
 		text = Localize("loc_player_journey_campaign")
-		local display_order = Managers.data_service.mission_board:index_in_campaign("mission", mission_data.map, mission_data.category, "player-journey")
+		local campaign_name, found = "player-journey", false
+		for _, campaign in ipairs(campaigns_data) do
+			for _, mission in ipairs(campaign.missions) do
+				if mission.mission == mission_data.map then
+					campaign_name, found = mission.campaign, true
+					break
+				end
+			end
+			if found then
+				break
+			end
+		end
+		local campaign_display_name = Localize(CampaignSettings[campaign_name].display_name)
+		local display_order = Managers.data_service.mission_board:index_in_campaign("mission", mission_data.map, mission_data.category, campaign_name)
 		if display_order and display_order ~= "" then
 			local roman_numaral = TextUtilities.convert_to_roman_numerals(display_order)
-			text = string.format("%s %s", text, roman_numaral)
+			text = string.format("%s %s %s", text, campaign_display_name, roman_numaral)
 		end
 	elseif auric and has_flash_mission then
 		text = Localize("loc_group_finder_difficulty_auric") .. " " .. Localize("loc_mission_board_maelstrom_header")
