@@ -136,7 +136,7 @@ local localization = {
 		["zh-cn"] = "主动技能进行时",
 	},
 	missile_launcher_class = {
-		en = "Mission Launcher",
+		en = "Missile Launcher",
 		["zh-cn"] = "导弹发射器",
 	},
 	psyker_smite_class = {
