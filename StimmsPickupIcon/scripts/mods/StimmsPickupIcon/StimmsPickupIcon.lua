@@ -9,6 +9,7 @@ local STIMM_COLORS = {
 	syringe_ability_boost_pocketable = { 255, 230, 192, 13 },
 	syringe_power_boost_pocketable = { 255, 205, 51, 26 },
 	syringe_speed_boost_pocketable = { 255, 0, 127, 218 },
+	syringe_broker_pocketable = { 255, 208, 69, 255 },
 }
 
 mod.on_all_mods_loaded = function ()
