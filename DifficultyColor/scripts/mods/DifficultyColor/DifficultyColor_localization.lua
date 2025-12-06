@@ -25,19 +25,19 @@ local loc = {
 		ru = "Синий",
 	},
 	opt_color_1 = {
-		en = Localize("loc_mission_board_danger_lowest"),
-	},
-	opt_color_2 = {
 		en = Localize("loc_mission_board_danger_low"),
 	},
-	opt_color_3 = {
+	opt_color_2 = {
 		en = Localize("loc_mission_board_danger_medium"),
 	},
-	opt_color_4 = {
+	opt_color_3 = {
 		en = Localize("loc_mission_board_danger_high"),
 	},
-	opt_color_5 = {
+	opt_color_4 = {
 		en = Localize("loc_mission_board_danger_highest"),
+	},
+	opt_color_5 = {
+		en = Localize("loc_group_finder_difficulty_auric"),
 	},
 }
 

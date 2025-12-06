@@ -157,10 +157,10 @@ local blueprints = {
 			},
 			{
 				pass_type = "text",
-				value = "",
+				value = "",
 				style = {
 					text_vertical_alignment = "center",
-					text_horizontal_alignment = "left",
+					text_horizontal_alignment = "center",
 					text_color = { 255, 204, 204, 204 },
 					drop_shadow = false,
 					font_type = "proxima_nova_bold",
@@ -170,8 +170,8 @@ local blueprints = {
 						70,
 					},
 					offset = {
-						11,
-						7,
+						5,
+						4,
 						6,
 					},
 				},
@@ -284,10 +284,10 @@ local blueprints = {
 			},
 			{
 				pass_type = "text",
-				value = "",
+				value = "",
 				style = {
 					text_vertical_alignment = "center",
-					text_horizontal_alignment = "left",
+					text_horizontal_alignment = "center",
 					text_color = { 255, 204, 204, 204 },
 					drop_shadow = false,
 					font_type = "proxima_nova_bold",
@@ -297,8 +297,8 @@ local blueprints = {
 						70,
 					},
 					offset = {
-						11,
-						7,
+						5,
+						4,
 						6,
 					},
 				},

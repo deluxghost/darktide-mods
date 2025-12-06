@@ -1,29 +1,49 @@
 local mod = get_mod("CorrectMissionVotingInfo")
+local DangerSettings = require("scripts/settings/difficulty/danger_settings")
+local TextUtilities = require("scripts/utilities/ui/text")
 local UIFonts = require("scripts/managers/ui/ui_fonts")
 local UIRenderer = require("scripts/managers/ui/ui_renderer")
 local UIFontSettings = require("scripts/managers/ui/ui_font_settings")
+local CampaignSettings = require("scripts/settings/campaign/campaign_settings")
 local MissionVotingView = require("scripts/ui/views/mission_voting_view/mission_voting_view")
 local MissionDetailsBlueprints = require("scripts/ui/views/mission_voting_view/mission_voting_view_blueprints")
 
-mod:hook_safe(MissionVotingView, "_populate_quickplay_data", function (self)
-	local auric = string.ends_with(self._backend_mission_id, "|auric")
-	self._widgets_by_name.title_bar_bottom.visible = auric
-	self._widgets_by_name.title_bar_bottom.content.text = auric and Localize("loc_mission_board_type_auric") or ""
-end)
+local AURIC_DANGER = DangerSettings[5]
 
 mod:hook_safe(MissionVotingView, "_set_mission_data", function (self, mission_data)
-	local auric = mission_data.category == "auric"
-	local special = mission_data.category == "narrative"
+	mod:dump(mission_data, "mission_data", 3)
+	local auric = mission_data.challenge == AURIC_DANGER.challenge and mission_data.resistance == AURIC_DANGER.resistance
+	local story = mission_data.category == "story"
+	local event = mission_data.category == "event"
 	local has_flash_mission = not not mission_data.flags.flash
+	local campaigns_data = Managers.data_service.mission_board:get_campaigns_data()
 
-	self._widgets_by_name.title_bar_bottom.visible = has_flash_mission or auric
+	self._widgets_by_name.title_bar_bottom.visible = has_flash_mission or event or story
 	local text = ""
-	if special then
-		text = Localize("loc_story_mission_menu_access_button_text")
+	if event then
+		text = Localize("loc_mission_board_mission_category_event")
+	elseif story then
+		text = Localize("loc_player_journey_campaign")
+		local campaign_name, found = "player-journey", false
+		for _, campaign in ipairs(campaigns_data) do
+			for _, mission in ipairs(campaign.missions) do
+				if mission.mission == mission_data.map then
+					campaign_name, found = mission.campaign, true
+					break
+				end
+			end
+			if found then
+				break
+			end
+		end
+		local campaign_display_name = Localize(CampaignSettings[campaign_name].display_name)
+		local display_order = Managers.data_service.mission_board:index_in_campaign("mission", mission_data.map, mission_data.category, campaign_name)
+		if display_order and display_order ~= "" then
+			local roman_numaral = TextUtilities.convert_to_roman_numerals(display_order)
+			text = string.format("%s %s %s", text, campaign_display_name, roman_numaral)
+		end
 	elseif auric and has_flash_mission then
-		text = Localize("loc_mission_board_type_auric") .. " " .. Localize("loc_mission_board_maelstrom_header")
-	elseif auric then
-		text = Localize("loc_mission_board_type_auric")
+		text = Localize("loc_group_finder_difficulty_auric") .. " " .. Localize("loc_mission_board_maelstrom_header")
 	elseif has_flash_mission then
 		text = Localize("loc_mission_board_maelstrom_header")
 	end

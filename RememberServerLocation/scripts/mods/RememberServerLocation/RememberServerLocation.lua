@@ -1,6 +1,5 @@
 local mod = get_mod("RememberServerLocation")
 local MissionBoardView = require("scripts/ui/views/mission_board_view/mission_board_view")
-local StoryMissionPlayView = require("scripts/ui/views/story_mission_play_view/story_mission_play_view")
 local HordePlayView = require("scripts/ui/views/horde_play_view/horde_play_view")
 local BackendUtilities = require("scripts/foundation/managers/backend/utilities/backend_utilities")
 local Promise = require("scripts/foundation/utilities/promise")
@@ -56,6 +55,22 @@ mod.on_all_mods_loaded = function ()
 	if not mod.memory.regions_latency then
 		fetch_regions()
 	end
+
+	local mod_loading = true
+	mod:hook_require("scripts/ui/views/havoc_play_view/havoc_play_view", function (HavocPlayView)
+		if mod_loading then
+			mod:hook_safe(HavocPlayView, "on_exit", function (self)
+				mod:info("exit havoc view")
+				save_region()
+			end)
+
+			mod:hook_safe(HavocPlayView, "_callback_close_options", function (self)
+				mod:info("exit havoc view options")
+				save_region()
+			end)
+			mod_loading = false
+		end
+	end)
 end
 
 mod:hook_safe(MissionBoardView, "on_exit", function (self)
@@ -63,18 +78,8 @@ mod:hook_safe(MissionBoardView, "on_exit", function (self)
 	save_region()
 end)
 
-mod:hook_safe(MissionBoardView, "_callback_close_options", function (self)
+mod:hook_safe(MissionBoardView, "_destroy_options_element", function (self)
 	mod:info("exit mission board options")
-	save_region()
-end)
-
-mod:hook_safe(StoryMissionPlayView, "on_exit", function (self)
-	mod:info("exit story view")
-	save_region()
-end)
-
-mod:hook_safe(StoryMissionPlayView, "_callback_close_options", function (self)
-	mod:info("exit story view options")
 	save_region()
 end)
 

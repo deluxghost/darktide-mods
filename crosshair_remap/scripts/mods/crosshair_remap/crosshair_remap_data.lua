@@ -53,6 +53,7 @@ return {
 			make_dropdown("none_class", "none"),
 			make_dropdown("melee_class", "dot"),
 			make_dropdown("ability_class", "dot"),
+			make_dropdown("missile_launcher_class", "bfg"),
 			make_dropdown("psyker_smite_class", "charge_up"),
 			make_dropdown("psyker_throwing_knives_class", "dot"),
 			make_group("psyker_chain_lightning_class", "dot", "charge_up"),
@@ -78,12 +79,18 @@ return {
 			make_group("shotgun_agripinaa_class", "shotgun", "ironsight", "bfg"),
 			make_group("shotgun_kantrael_class", "shotgun", "ironsight", "flamer"),
 			make_group("assault_shotgun_class", "shotgun", "shotgun"),
+			make_group("exterminator_shotgun_stun_class", "shotgun_wide", "shotgun_wide", "shotgun_wide"),
+			make_group("exterminator_shotgun_rending_class", "shotgun", "shotgun", "shotgun"),
+			make_group("shotpistol_shield_class", "shotgun", "shotgun"),
 			make_group("grenadier_gauntlet_class", "dot", "projectile_drop"),
 			make_group("heavy_stubber_single_barrel_class", "assault", "cross"),
 			make_group("heavy_stubber_class", "spray_n_pray", "spray_n_pray"),
 			make_group("ripper_gun_class", "shotgun", "spray_n_pray"),
 			make_group("kickback_class", "shotgun", "shotgun"),
 			make_group("rumbler_class", "projectile_drop", "ironsight"),
+			make_group("dual_autopistols_class", "assault", "assault"),
+			make_group("dual_stubpistols_class", "assault", "assault"),
+			make_group("needlepistol_class", "assault", "ironsight"),
 		}
 	}
 }

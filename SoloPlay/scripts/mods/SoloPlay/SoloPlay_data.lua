@@ -7,12 +7,26 @@ return {
 	options = {
 		widgets = {
 			{
-				setting_id = "solo_keybind",
-				type = "keybind",
-				default_value = {},
-				keybind_trigger = "pressed",
-				keybind_type = "function_call",
-				function_name = "keybind_open_solo_view",
+				setting_id = "group_keybinds",
+				type = "group",
+				sub_widgets = {
+					{
+						setting_id = "solo_keybind",
+						type = "keybind",
+						default_value = {},
+						keybind_trigger = "pressed",
+						keybind_type = "function_call",
+						function_name = "keybind_open_solo_view",
+					},
+					{
+						setting_id = "inventory_keybind",
+						type = "keybind",
+						default_value = { "i" },
+						keybind_trigger = "pressed",
+						keybind_type = "function_call",
+						function_name = "keybind_open_inventory",
+					},
+				},
 			},
 			{
 				setting_id = "group_modifiers",

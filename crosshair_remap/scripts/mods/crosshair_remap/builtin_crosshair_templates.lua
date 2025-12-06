@@ -14,6 +14,7 @@ local crosshairs = {
 	"charge_up_ads_dot",
 	"charge_up_ads_cross",
 	"charge_up_ads_chevron",
+	"charge_up_ads_t_shape_dot",
 }
 
 local templates = {}

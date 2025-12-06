@@ -8,7 +8,7 @@ return {
 	mod_description = {
 		en = "Play offline solo mission by /solo command. You can't get any rewards or progression in offline game.",
 		["zh-cn"] = "输入 /solo 命令玩离线单人任务。你无法从离线游戏中获得任何奖励或进度。",
-		ru ="Solo Play - Играйте в офлайн-соло-миссию командой /solo. В офлайн-игре вы не получаете никаких наград или прогресса.",
+		ru = "Solo Play - Играйте в офлайн-соло-миссию командой /solo. В офлайн-игре вы не получаете никаких наград или прогресса.",
 		["zh-tw"] = "使用 /solo 指令進行離線單人任務。你無法在離線遊戲中獲得任何獎勵或進度。",
 	},
 	default_text = {
@@ -24,11 +24,15 @@ return {
 		["zh-tw"] = "無",
 	},
 	format_auric = {
-		en = Localize("loc_mission_board_type_auric") .. " %s",
-		["zh-cn"] = Localize("loc_mission_board_type_auric") .. "%s",
-		["zh-tw"] = Localize("loc_mission_board_type_auric") .. "%s",
+		en = Localize("loc_group_finder_difficulty_auric") .. " %s",
+		["zh-cn"] = Localize("loc_group_finder_difficulty_auric") .. "%s",
+		["zh-tw"] = Localize("loc_group_finder_difficulty_auric") .. "%s",
 	},
 
+	group_keybinds = {
+		en = "Keybinds",
+		["zh-cn"] = "快捷键",
+	},
 	solo_keybind = {
 		en = "Open Solo Play view",
 		["zh-cn"] = "打开单人游戏界面",
@@ -40,6 +44,9 @@ return {
 		["zh-cn"] = "单人游戏界面也可以通过“/solo”命令打开。",
 		ru = "Режим соло-игры также можно открыть с помощью команды \"/solo\".",
 		["zh-tw"] = "單人遊戲界面也可以通過「/solo」指令開啟。",
+	},
+	inventory_keybind = {
+		en = Localize("loc_alias_view_hotkey_inventory"),
 	},
 	group_modifiers = {
 		en = "Modifiers",

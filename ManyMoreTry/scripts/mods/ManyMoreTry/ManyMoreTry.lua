@@ -1,5 +1,5 @@
 local mod = get_mod("ManyMoreTry")
-local MissionBoardViewDefinitions = require("scripts/ui/views/mission_board_view/mission_board_view_definitions")
+local MissionBoardViewSettings = require("scripts/ui/views/mission_board_view/mission_board_view_settings")
 local MissionTemplates = require("scripts/settings/mission/mission_templates")
 local CircumstanceTemplates = require("scripts/settings/circumstance/circumstance_templates")
 local MissionObjectiveTemplates = require("scripts/settings/mission_objective/mission_objective_templates")
@@ -36,20 +36,20 @@ end
 
 mod.on_enabled = function ()
 	local exist = false
-	for _, value in ipairs(MissionBoardViewDefinitions.legend_inputs) do
+	for _, value in ipairs(MissionBoardViewSettings.view_elements.input_legend.context.legend_inputs) do
 		if value.input_action == "mmt_save_mission" then
 			exist = true
 			break
 		end
 	end
 	if not exist then
-		table.insert(MissionBoardViewDefinitions.legend_inputs, {
+		table.insert(MissionBoardViewSettings.view_elements.input_legend.context.legend_inputs, {
 			on_pressed_callback = "__mod_mmt_save_callback",
 			input_action = "mmt_save_mission",
 			display_name = "loc_mod_mmt_save",
-			alignment = "right_alignment",
+			alignment = "left_alignment",
 			visibility_function = function (mission_board_view)
-				if mission_board_view._selected_mission then
+				if mission_board_view._selected_mission_id and mission_board_view._selected_mission_id ~= "qp_mission_widget" then
 					return true
 				end
 				return false
@@ -59,7 +59,7 @@ mod.on_enabled = function ()
 end
 
 mod.on_disabled = function ()
-	table.array_remove_if(MissionBoardViewDefinitions.legend_inputs, function (v)
+	table.array_remove_if(MissionBoardViewSettings.view_elements.input_legend.context.legend_inputs, function (v)
 		return v.input_action == "mmt_save_mission"
 	end)
 end
@@ -85,6 +85,15 @@ local function get_start(start)
 	return tonumber(start_str)
 end
 
+local function get_mission_difficulty(mission)
+	for _, difficulty in ipairs(DangerSettings) do
+		if difficulty.challenge == mission.challenge and difficulty.resistance == mission.resistance then
+			return difficulty
+		end
+	end
+	return nil
+end
+
 local function get_mission_name(mission, name_key, circumstance_key)
 	local name_parts = {}
 	if mission[name_key] then
@@ -100,17 +109,20 @@ local function get_mission_name(mission, name_key, circumstance_key)
 	end
 
 	local category_name = nil
-	if mission.category == "narrative" then
-		category_name = Localize("loc_story_mission_menu_access_button_text")
-	elseif mission.category == "auric" then
-		category_name = Localize("loc_mission_board_type_auric")
+	if mission.category == "story" then
+		category_name = Localize("loc_player_journey_campaign")
+	end
+	if mission.category == "event" then
+		category_name = Localize("loc_mission_board_mission_category_event")
 	end
 	if category_name then
 		table.insert(name_parts, category_name)
 	end
 
-	local danger_settings = DangerSettings[mission.challenge]
-	table.insert(name_parts, Localize(danger_settings.display_name))
+	local danger_settings = get_mission_difficulty(mission)
+	if danger_settings then
+		table.insert(name_parts, Localize(danger_settings.display_name))
+	end
 
 	local circumstance_name = nil
 	if mission[circumstance_key] and mission[circumstance_key] ~= "default" then
@@ -166,10 +178,17 @@ end
 mod:hook_safe("MissionBoardView", "init", function (self, settings)
 	self.__mod_mmt_save_callback = function (self)
 		local saved_mission = mod:get("_saved_mission") or {}
-		local name = get_mission_name(self._selected_mission, "map", "circumstance")
+		if self._selected_mission_id == "qp_mission_widget" then
+			return
+		end
+		local selected_mission = self:_mission(self._selected_mission_id, true)
+		if not selected_mission then
+			return
+		end
+		local name = get_mission_name(selected_mission, "map", "circumstance")
 		local exist = false
 		for _, mission in ipairs(saved_mission) do
-			if mission.id == self._selected_mission.id then
+			if mission.id == self._selected_mission_id then
 				exist = true
 				break
 			end
@@ -179,9 +198,9 @@ mod:hook_safe("MissionBoardView", "init", function (self, settings)
 			return
 		end
 		table.insert(saved_mission, {
-			id = self._selected_mission.id,
+			id = self._selected_mission_id,
 			display_name = name,
-			start = get_start(self._selected_mission.start)
+			start = get_start(selected_mission.start)
 		})
 		mod:set("_saved_mission", saved_mission, false)
 		mod:notify(mod:localize("msg_saved") .. "\n" .. name)
@@ -201,7 +220,25 @@ local function all_member_ready()
 	return Managers.party_immaterium:are_all_members_in_hub()
 end
 
-local function go_match(mission_id, mission_name, required_level)
+local function get_private_option(category)
+	local save_manager = Managers.save
+	if not save_manager then
+		return nil
+	end
+	if category == "horde" then
+		local save_data = save_manager:account_data()
+		local mission_board = save_data.mission_board or {}
+		return mission_board.private_matchmaking or false
+	end
+	local player_manager = Managers.player
+	local player = player_manager and player_manager:local_player(1)
+	local character_id = player and player:character_id()
+	local save_data = character_id and save_manager:character_data(character_id)
+	local mission_board = save_data.mission_board or {}
+	return mission_board.private_match or false
+end
+
+local function go_match(mission_id, mission_name, category, required_level)
 	local player = Managers.player:local_player(1)
 	local profile = player:profile()
 	local current_level = profile.current_level or 0
@@ -214,9 +251,11 @@ local function go_match(mission_id, mission_name, required_level)
 		return
 	end
 
-	local save_data = Managers.save:account_data()
-	local mission_board = save_data.mission_board or {}
-	local private = mission_board.private_matchmaking or false
+	local private = get_private_option(category)
+	if private == nil then
+		mod:echo(mod:localize("msg_unknown_err"))
+		return
+	end
 	if private then
 		local num_members = 0
 		if GameParameters.prod_like_backend then
@@ -289,7 +328,8 @@ local function mmt_main_command(idx_str)
 		end
 		local mission_name = get_mission_name(data.mission, "map", "circumstance")
 		local required_level = data.mission.requiredLevel or 0
-		go_match(mission_id, mission_name, required_level)
+		local category = data.mission.category or "common"
+		go_match(mission_id, mission_name, category, required_level)
 		locks.match = nil
 	end):catch(function (e)
 		mod:dump(e, "mmt_fetch_error", 3)

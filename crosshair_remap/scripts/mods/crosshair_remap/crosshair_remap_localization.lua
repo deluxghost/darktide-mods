@@ -60,6 +60,10 @@ local builtin_crosshairs_localization = {
 		en = "Wider Charge Up + Chevron",
 		["zh-cn"] = "宽充能 + 倒 V 形",
 	},
+	charge_up_ads_t_shape_dot_crosshair = {
+		en = "Wider Charge Up + T Shape + " .. Localize("loc_setting_crosshair_type_override_dot"),
+		["zh-cn"] = "宽充能 + T 形 + " .. Localize("loc_setting_crosshair_type_override_dot"),
+	},
 }
 
 local localization = {
@@ -130,6 +134,10 @@ local localization = {
 	ability_class = {
 		en = "Combat Ability in Progress",
 		["zh-cn"] = "主动技能进行时",
+	},
+	missile_launcher_class = {
+		en = "Missile Launcher",
+		["zh-cn"] = "导弹发射器",
 	},
 	psyker_smite_class = {
 		en = Localize("loc_class_psyker_title") .. " " .. Localize("loc_ability_psyker_smite"),
@@ -213,6 +221,17 @@ local localization = {
 	assault_shotgun_class = {
 		en = Localize("loc_weapon_family_shotgun_p2_m1"),
 	},
+	exterminator_shotgun_stun_class = {
+		en = Localize("loc_weapon_family_shotgun_p4_m1") .. " (Electric)",
+		["zh-cn"] = Localize("loc_weapon_family_shotgun_p4_m1") .. "（电击弹）",
+	},
+	exterminator_shotgun_rending_class = {
+		en = Localize("loc_weapon_family_shotgun_p4_m2") .. " (Rending)",
+		["zh-cn"] = Localize("loc_weapon_family_shotgun_p4_m2") .. "（脆弱弹）",
+	},
+	shotpistol_shield_class = {
+		en = Localize("loc_weapon_family_shotpistol_shield_p1_m1"),
+	},
 	grenadier_gauntlet_class = {
 		en = Localize("loc_weapon_family_ogryn_gauntlet_p1_m1"),
 	},
@@ -230,6 +249,15 @@ local localization = {
 	},
 	rumbler_class = {
 		en = Localize("loc_weapon_family_ogryn_thumper_p1_m2"),
+	},
+	dual_autopistols_class = {
+		en = Localize("loc_weapon_family_dual_autopistols_p1_m1"),
+	},
+	dual_stubpistols_class = {
+		en = Localize("loc_weapon_family_dual_stubpistols_p1_m1"),
+	},
+	needlepistol_class = {
+		en = Localize("loc_weapon_family_needlepistol_p1_m1"),
 	},
 
 	primary = {

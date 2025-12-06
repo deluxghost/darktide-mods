@@ -42,7 +42,13 @@ local interaction_types = {
 	side_mission = "book",
 	forge_material = "material",
 	penance_collectible = "penance",
+	tainted_skull = "event",
+	objective_pickup_hidden_hold = "button",
+	saints_pickup = "event",
 	pocketable = function (pickup_data)
+		if pickup_data.name == "communications_hack_device" then
+			return "device"
+		end
 		if pickup_data.is_side_mission_pickup then
 			return "book"
 		end
@@ -51,7 +57,7 @@ local interaction_types = {
 }
 
 local all_categories = {
-	"unknown", "supply", "chest", "button", "station", "luggable", "vendor", "book", "material", "penance",
+	"unknown", "supply", "chest", "button", "station", "luggable", "vendor", "book", "material", "penance", "event",
 }
 
 mod.load_package = function (self, package_name)

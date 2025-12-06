@@ -4,6 +4,7 @@ local MissionTemplates = require("scripts/settings/mission/mission_templates")
 local DangerSettings = require("scripts/settings/difficulty/danger_settings")
 local MatchmakingConstants = require("scripts/settings/network/matchmaking_constants")
 local DifficultyManager = require("scripts/managers/difficulty/difficulty_manager")
+local GameModeSurvival = require("scripts/managers/game_mode/game_modes/game_mode_survival")
 local GameModeManager = require("scripts/managers/game_mode/game_mode_manager")
 local PacingManager = require("scripts/managers/pacing/pacing_manager")
 local PacingTemplates = require("scripts/managers/pacing/pacing_templates")
@@ -44,15 +45,24 @@ mod.load_package = function (package_name)
 	end
 end
 
+mod.parse_mission_params = function (mission_name_value)
+	local parts = string.split(mission_name_value, "|")
+	if #parts < 2 then
+		return parts[1], ""
+	end
+	return parts[1], parts[2]
+end
+
 mod.gen_normal_mission_context = function ()
-	local mission_name = mod:get("choose_mission")
-	local resistance = DangerSettings[mod:get("choose_difficulty")].expected_resistance
+	local mission_name, params = mod.parse_mission_params(mod:get("choose_mission"))
+	local difficulty = DangerSettings[mod:get("choose_difficulty")]
 	local mission_context = {
 		mission_name = mission_name,
-		challenge = mod:get("choose_difficulty"),
-		resistance = resistance,
+		challenge = difficulty.challenge,
+		resistance = difficulty.resistance,
 		circumstance_name = mod:get("choose_circumstance"),
 		side_mission = mod:get("choose_side_mission"),
+		custom_params = params,
 	}
 	local mission_giver = mod:get("choose_mission_giver")
 	if mission_giver ~= "default" then
@@ -85,7 +95,7 @@ mod.gen_havoc_mission_context = function ()
 		resistance = 5
 	end
 
-	local mission = mod:get("havoc_mission")
+	local mission, params = mod.parse_mission_params(mod:get("havoc_mission"))
 	local faction = mod:get("havoc_faction")
 	local circumstance1 = mod:get("havoc_circumstance1")
 	local circumstance2 = mod:get("havoc_circumstance2")
@@ -125,6 +135,7 @@ mod.gen_havoc_mission_context = function ()
 		challenge = challenge,
 		resistance = resistance,
 		havoc_data = data,
+		custom_params = params,
 	}
 	local mission_giver = mod:get("havoc_mission_giver")
 	if mission_giver ~= "default" then
@@ -218,14 +229,29 @@ mod:hook(DifficultyManager, "friendly_fire_enabled", function (func, self, targe
 	return ret
 end)
 
-mod:hook(GameModeManager, "hotkey_settings", function (func, self)
-	local ret = table.clone(func(self))
-	local game_mode_name = self:game_mode_name()
-	if (game_mode_name == "coop_complete_objective" or game_mode_name == "survival") and mod.is_soloplay() then
-		ret.hotkeys["hotkey_inventory"] = "inventory_background_view"
-		ret.lookup["inventory_background_view"] = "hotkey_inventory"
+mod:hook(GameModeSurvival, "select_random_island", function (func, self)
+	local selected_island_name = mod:get("_horde_selected_island")
+	if not selected_island_name or selected_island_name == "" then
+		return func(self)
 	end
-	return ret
+
+	if not self._is_server then
+		return
+	end
+
+	self._island_selected = selected_island_name
+	Log.info("GameModeSurvival", "Server selected Island to play: %s", selected_island_name)
+
+	local level = Managers.state.mission:mission_level()
+	local game_mode_name = Managers.state.game_mode and Managers.state.game_mode:game_mode_name()
+
+	if game_mode_name and level then
+		local island_selected_level_event_name = "horde_mode_" .. selected_island_name .. "_selected"
+		Level.trigger_event(level, island_selected_level_event_name)
+	end
+
+	local island_name_id = NetworkLookup.hordes_island_names[selected_island_name]
+	Managers.state.game_session:send_rpc_clients("rpc_client_hordes_set_selected_island", island_name_id)
 end)
 
 mod:hook(PacingManager, "init", function (func, self, world, nav_world, level_seed, pacing_control)
@@ -247,7 +273,7 @@ mod:hook(PacingManager, "init", function (func, self, world, nav_world, level_se
 	end
 end)
 
-mod:hook(PickupSystem, "_spawn_spread_pickups", function (func, self, distribution_type, pickup_pool, seed)
+mod:hook(PickupSystem, "spawn_spread_pickups", function (func, self, distribution_type, pickup_pool, seed)
 	if distribution_type == DISTRIBUTION_TYPES.side_mission and mod:get("random_side_mission_seed") then
 		self._seed = func(self, distribution_type, pickup_pool, self._seed)
 		return self._seed
@@ -258,7 +284,7 @@ end)
 local main_menu_want_solo_play = nil
 
 mod:hook(CLASS.StateMainMenu, "update", function (func, self, main_dt, main_t)
-	if self._continue and not self:_waiting_for_profile_synchronization() then
+	if self._continue and not self:_waiting_for_synchronizations() then
 		if main_menu_want_solo_play then
 			local mode = main_menu_want_solo_play
 			main_menu_want_solo_play = nil
@@ -271,6 +297,10 @@ mod:hook(CLASS.StateMainMenu, "update", function (func, self, main_dt, main_t)
 			end
 			local mission_settings = MissionTemplates[mission_context.mission_name]
 			local mechanism_name = mission_settings.mechanism_name
+
+			if mission_context.custom_params and SoloPlaySettings.custom_params_handlers[mission_context.mission_name] then
+				SoloPlaySettings.custom_params_handlers[mission_context.mission_name](mission_context.mission_name, mission_context.custom_params)
+			end
 
 			Managers.multiplayer_session:boot_singleplayer_session()
 			Managers.mechanism:change_mechanism(mechanism_name, mission_context)
@@ -329,6 +359,10 @@ mod.start_game = function (mode)
 	end
 	local mission_settings = MissionTemplates[mission_context.mission_name]
 	local mechanism_name = mission_settings.mechanism_name
+
+	if mission_context.custom_params and SoloPlaySettings.custom_params_handlers[mission_context.mission_name] then
+		SoloPlaySettings.custom_params_handlers[mission_context.mission_name](mission_context.mission_name, mission_context.custom_params)
+	end
 
 	Managers.multiplayer_session:reset("Hosting SoloPlay session")
 	Managers.multiplayer_session:boot_singleplayer_session()
@@ -390,6 +424,26 @@ mod.keybind_open_solo_view = function ()
 	if not Managers.ui:chat_using_input() then
 		mod.open_solo_view()
 	end
+end
+
+mod.keybind_open_inventory = function()
+	if Managers.ui:chat_using_input() then
+		return
+	end
+	if not mod.is_soloplay() then
+		return
+	end
+	local active = false
+	local active_views = Managers.ui:active_views()
+	for _, active_view in pairs(active_views) do
+		if active_view == "inventory_background_view" then
+			active = true
+		end
+	end
+	if active then
+		return
+	end
+	Managers.ui:open_view("inventory_background_view", nil, nil, nil, nil, nil)
 end
 
 mod:command("solo", mod:localize("solo_command_desc"), function ()

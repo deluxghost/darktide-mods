@@ -17,12 +17,12 @@ return {
 				}
 			},
 			{
-				setting_id      = "retry_keybind",
-				type            = "keybind",
-				default_value   = {},
+				setting_id = "retry_keybind",
+				type = "keybind",
+				default_value = {},
 				keybind_trigger = "pressed",
-				keybind_type    = "function_call",
-				function_name   = "retry_keybind_func",
+				keybind_type = "function_call",
+				function_name = "retry_keybind_func",
 			},
 		}
 	}

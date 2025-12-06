@@ -10,7 +10,7 @@ mod.on_disabled = function ()
 end
 
 local prefixes = {
-	"MK[%. ]", "Mk[%. ]", "MG[%. ]", "Мод%. ", "мод%. ",
+	"MK[%. ]", "Mk[%. ]", "MG[%. ]", "Мод%. ", "мод%. ", "MK", "Mk"
 }
 local numbers = {
 	I = "1", II = "2", III = "3", IV = "4", V = "5",
