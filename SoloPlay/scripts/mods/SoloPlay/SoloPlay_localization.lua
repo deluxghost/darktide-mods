@@ -32,6 +32,7 @@ return {
 	group_keybinds = {
 		en = "Keybinds",
 		["zh-cn"] = "快捷键",
+		["zh-tw"] = "快捷鍵",
 	},
 	solo_keybind = {
 		en = "Open Solo Play view",
