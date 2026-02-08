@@ -108,5 +108,4 @@ mod:hook_require("scripts/settings/buff/havoc_buff_templates", function(template
 			_on_rotten_armor_death(template_data, template_context)
 		end
 	end
-
 end)

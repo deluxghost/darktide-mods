@@ -1,4 +1,5 @@
 local mod = get_mod("SoloPlay")
+local MutatorTemplates = require("scripts/settings/mutator/mutator_templates")
 local MissionTemplates = require("scripts/settings/mission/mission_templates")
 local CircumstanceTemplates = require("scripts/settings/circumstance/circumstance_templates")
 local HavocCircumstanceTemplate = require("scripts/settings/circumstance/templates/havoc_circumstance_template")
@@ -124,6 +125,7 @@ local settings = {
 			mod:set("_horde_selected_island", params)
 		end,
 	},
+	invalid_circumstances = {}
 }
 
 -- missions
@@ -213,10 +215,22 @@ for index, side_mission_loc in ipairs(side_missions_loc_array) do
 	settings.order.side_missions[index] = side_mission_loc.data
 end
 
+-- circumstance validation
+for name, circumstance in pairs(CircumstanceTemplates) do
+	local mutators = circumstance.mutators
+	if mutators then
+		for _, mutator_name in ipairs(mutators) do
+			if not MutatorTemplates[mutator_name] then
+				settings.invalid_circumstances[name] = true
+			end
+		end
+	end
+end
+
 -- pre-process havoc circumstances
 local havoc_circumstances_loc_fallback = {}
 local havoc_circumstances_lookup_unfiltered = {}
-for circumstance_name in pairs(HavocCircumstanceTemplate) do
+for circumstance_name, circumstance in pairs(HavocCircumstanceTemplate) do
 	local loc_data = HavocSettings.ui_settings.circumstances[circumstance_name]
 	if loc_data then
 		havoc_circumstances_loc_fallback[circumstance_name] = loc_data.title
@@ -240,6 +254,9 @@ for name, circumstance in pairs(CircumstanceTemplates) do
 				deny = true
 				break
 			end
+		end
+		if settings.invalid_circumstances[name] then
+			deny = true
 		end
 		local format_key = nil
 		for pattern, loc_key in pairs(circumstance_format_group) do
