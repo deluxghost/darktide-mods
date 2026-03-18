@@ -8,8 +8,25 @@ local ViewElementWeaponInfo = require("scripts/ui/view_elements/view_element_wea
 
 local bar_width = 150
 
+-- reverse to pure lua implementation
+local function _table_clone(t)
+	local clone = {}
+
+	for key, value in pairs(t) do
+		if value == t then
+			clone[key] = clone
+		elseif type(value) == "table" then
+			clone[key] = _table_clone(value)
+		else
+			clone[key] = value
+		end
+	end
+
+	return clone
+end
+
 local function fake_item(item)
-	local clone = table.clone(item)
+	local clone = _table_clone(item)
 	setmetatable(clone, {
 		__index = function (t, field_name)
 			if field_name == "gear_id" then
