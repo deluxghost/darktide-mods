@@ -40,11 +40,20 @@ local interaction_types = {
 	cosmetics_vendor = "vendor",
 	moveable_platform = "button",
 	side_mission = "book",
-	forge_material = "material",
 	penance_collectible = "penance",
 	tainted_skull = "event",
+	objective_pickup = "button",
 	objective_pickup_hidden_hold = "button",
 	saints_pickup = "event",
+	expedition_loot_converter = "station",
+	expeditions_currency = "material",
+	expeditions_loot = "material",
+	forge_material = function (pickup_data)
+		if string.starts_with(pickup_data.name, "expedition_") then
+			return "supply"
+		end
+		return "material"
+	end,
 	pocketable = function (pickup_data)
 		if pickup_data.name == "communications_hack_device" then
 			return "device"
@@ -53,6 +62,12 @@ local interaction_types = {
 			return "book"
 		end
 		return "supply"
+	end,
+	pickup = function (pickup_data)
+		if string.starts_with(pickup_data.name, "expedition_") then
+			return "supply"
+		end
+		return "button"
 	end,
 }
 

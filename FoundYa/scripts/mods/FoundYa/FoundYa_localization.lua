@@ -40,8 +40,8 @@ return {
 		ru = "Альтернативный значок черепа мученика",
 	},
 	max_distance_material = {
-		en = "Forge materials",
-		["zh-cn"] = "锻造材料",
+		en = "Forge materials / Loots",
+		["zh-cn"] = "锻造材料 / 战利品",
 		ru = "Материалы кузницы",
 	},
 	max_distance_book = {
