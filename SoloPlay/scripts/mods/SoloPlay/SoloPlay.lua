@@ -4,6 +4,8 @@ local MissionTemplates = require("scripts/settings/mission/mission_templates")
 local DangerSettings = require("scripts/settings/difficulty/danger_settings")
 local MatchmakingConstants = require("scripts/settings/network/matchmaking_constants")
 local DifficultyManager = require("scripts/managers/difficulty/difficulty_manager")
+local PlayerMovement = require("scripts/utilities/player_movement")
+local NavQueries = require("scripts/utilities/nav_queries")
 local GameModeSurvival = require("scripts/managers/game_mode/game_modes/game_mode_survival")
 local GameModeManager = require("scripts/managers/game_mode/game_mode_manager")
 local PacingManager = require("scripts/managers/pacing/pacing_manager")
@@ -13,6 +15,7 @@ local PickupSystem = require("scripts/extension_systems/pickups/pickup_system")
 local PickupSettings = require("scripts/settings/pickup/pickup_settings")
 local UISoundEvents = require("scripts/settings/ui/ui_sound_events")
 local WwiseGameSyncSettings = require("scripts/settings/wwise_game_sync/wwise_game_sync_settings")
+local ExpeditionLevelsLoader = require("scripts/loading/loaders/expedition_levels_loader")
 local SoloPlaySettings = mod:io_dofile("SoloPlay/scripts/mods/SoloPlay/SoloPlaySettings")
 mod:io_dofile("SoloPlay/scripts/mods/SoloPlay/havoc")
 mod:io_dofile("SoloPlay/scripts/mods/SoloPlay/workaround")
@@ -254,8 +257,8 @@ mod:hook(GameModeSurvival, "select_random_island", function (func, self)
 	Managers.state.game_session:send_rpc_clients("rpc_client_hordes_set_selected_island", island_name_id)
 end)
 
-mod:hook(PacingManager, "init", function (func, self, world, nav_world, level_seed, pacing_control)
-	func(self, world, nav_world, level_seed, pacing_control)
+mod:hook(PacingManager, "init", function (func, self, world, nav_world, level_seed, pacing_control, pacing_template)
+	func(self, world, nav_world, level_seed, pacing_control, pacing_template)
 	local is_havoc = Managers.state.difficulty:get_parsed_havoc_data()
 	if not is_havoc then
 		if Managers.mechanism and Managers.mechanism._mechanism and Managers.mechanism._mechanism._mechanism_data then
@@ -281,9 +284,53 @@ mod:hook(PickupSystem, "spawn_spread_pickups", function (func, self, distributio
 	return func(self, distribution_type, pickup_pool, seed)
 end)
 
+mod:hook(ExpeditionLevelsLoader, "start_loading", function (func, self, context)
+	self._soloplay_pending_context = context
+
+	local mechanism_manager = Managers.mechanism
+	local mechanism_name = mechanism_manager and mechanism_manager:mechanism_name()
+	local mechanism = mechanism_manager and mechanism_manager:current_mechanism()
+	local levels_spawner = mechanism and mechanism.levels_spawner and mechanism:levels_spawner()
+
+	if mechanism_name == "expedition" and not levels_spawner then
+		self._nothing_loaded = false
+		self._levels_spawner_missing = false
+		return
+	end
+
+	return func(self, context)
+end)
+
+mod:hook(ExpeditionLevelsLoader, "is_loading_done", function (func, self)
+	if self._soloplay_pending_context and #self._level_loaders == 0 then
+		local mechanism_manager = Managers.mechanism
+		local mechanism = mechanism_manager and mechanism_manager:current_mechanism()
+		local levels_spawner = mechanism and mechanism.levels_spawner and mechanism:levels_spawner()
+
+		if levels_spawner then
+			local pending_context = self._soloplay_pending_context
+			self._soloplay_pending_context = nil
+			self._nothing_loaded = false
+			self._levels_spawner_missing = false
+			self:start_loading(pending_context)
+		end
+	end
+
+	return func(self)
+end)
+
 local main_menu_want_solo_play = nil
+local main_menu_waiting_transition = false
 
 mod:hook(CLASS.StateMainMenu, "update", function (func, self, main_dt, main_t)
+	if main_menu_waiting_transition then
+		local next_state, state_context = Managers.mechanism:wanted_transition()
+		if next_state then
+			main_menu_waiting_transition = false
+			return next_state, state_context
+		end
+	end
+
 	if self._continue and not self:_waiting_for_synchronizations() then
 		if main_menu_want_solo_play then
 			local mode = main_menu_want_solo_play
@@ -306,8 +353,13 @@ mod:hook(CLASS.StateMainMenu, "update", function (func, self, main_dt, main_t)
 			Managers.mechanism:change_mechanism(mechanism_name, mission_context)
 			Managers.mechanism:trigger_event("all_players_ready")
 
+			main_menu_waiting_transition = true
 			local next_state, state_context = Managers.mechanism:wanted_transition()
-			return next_state, state_context
+			if next_state then
+				main_menu_waiting_transition = false
+				return next_state, state_context
+			end
+			return
 		end
 	elseif self._continue then
 		self._continue = false

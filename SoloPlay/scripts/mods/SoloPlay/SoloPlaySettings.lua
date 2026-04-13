@@ -2,6 +2,7 @@ local mod = get_mod("SoloPlay")
 local MutatorTemplates = require("scripts/settings/mutator/mutator_templates")
 local MissionTemplates = require("scripts/settings/mission/mission_templates")
 local CircumstanceTemplates = require("scripts/settings/circumstance/circumstance_templates")
+local ExpeditionCircumstanceTemplate = require("scripts/settings/circumstance/templates/expeditions_circumstance_template")
 local HavocCircumstanceTemplate = require("scripts/settings/circumstance/templates/havoc_circumstance_template")
 local MissionObjectiveTemplates = require("scripts/settings/mission_objective/mission_objective_templates")
 local MissionGiverVoSettings = require("scripts/settings/dialogue/mission_giver_vo_settings")
@@ -35,8 +36,9 @@ local circumstance_prefer_list = {
 	loc_havoc_enemies_corrupted_name = "mutator_havoc_enemies_corrupted",
 }
 local circumstance_format_group = {
-	high_flash_mission = "format_auric"
+	high_flash_mission = "format_auric",
 }
+local expedition_circumstances = {}
 local campaign_circumstances = {
 	["player-journey"] = {
 		player_journey_01 = 1,
@@ -242,6 +244,9 @@ end
 for circumstance_name in pairs(HavocCircumstanceTemplate) do
 	havoc_circumstances_lookup_unfiltered[circumstance_name] = true
 end
+for circumstance_name in pairs(ExpeditionCircumstanceTemplate) do
+	expedition_circumstances[circumstance_name] = true
+end
 
 -- circumstances
 local circumstance_property_map = {}
@@ -265,10 +270,15 @@ for name, circumstance in pairs(CircumstanceTemplates) do
 				break
 			end
 		end
+		if expedition_circumstances[name] then
+			format_key = "format_expedition"
+		end
 		local display_name = circumstance.ui.display_name
+		local reverse_map_key = format_key and string.format("%s:%s", format_key, display_name) or display_name
 		local campaign = get_campaign(name)
 		if havoc_circumstances_loc_fallback[name] then
 			display_name = havoc_circumstances_loc_fallback[name]
+			reverse_map_key = format_key and string.format("%s:%s", format_key, display_name) or display_name
 		elseif campaign ~= nil then
 			local campaign_display = Localize(CampaignSettings[campaign].display_name)
 			local campaign_order = campaign_circumstances[campaign][name] or 0
@@ -278,15 +288,17 @@ for name, circumstance in pairs(CircumstanceTemplates) do
 			else
 				display_name = string.format("%s: %s", campaign_display, display_name)
 			end
+			reverse_map_key = display_name
 		end
-		if not deny and not format_key then
-			circumstance_reverse_map[display_name] = circumstance_reverse_map[display_name] or {}
-			table.insert(circumstance_reverse_map[display_name], name)
+		if not deny then
+			circumstance_reverse_map[reverse_map_key] = circumstance_reverse_map[reverse_map_key] or {}
+			table.insert(circumstance_reverse_map[reverse_map_key], name)
 		end
 		circumstance_property_map[name] = {
 			deny = deny,
 			format_key = format_key,
 			display_name = display_name,
+			reverse_map_key = reverse_map_key,
 		}
 	end
 end
@@ -298,8 +310,8 @@ for name, circumstance in pairs(CircumstanceTemplates) do
 			local display_name = property.display_name
 			local format_key = property.format_key
 			local no_loc = false
-			local names = circumstance_reverse_map[display_name] or {}
-			if not format_key and #names > 1 then
+			local names = circumstance_reverse_map[property.reverse_map_key] or {}
+			if #names > 1 then
 				if circumstance_prefer_list[display_name] ~= name then
 					no_loc = true
 				end

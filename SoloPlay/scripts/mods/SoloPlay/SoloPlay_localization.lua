@@ -28,6 +28,9 @@ return {
 		["zh-cn"] = Localize("loc_group_finder_difficulty_auric") .. "%s",
 		["zh-tw"] = Localize("loc_group_finder_difficulty_auric") .. "%s",
 	},
+	format_expedition = {
+		en = Localize("loc_zone_expeditions") .. ": %s",
+	},
 
 	group_keybinds = {
 		en = "Keybinds",
