@@ -15,6 +15,7 @@ mod:hook_safe(MissionVotingView, "_set_mission_data", function (self, mission_da
 	local auric = mission_data.challenge == AURIC_DANGER.challenge and mission_data.resistance == AURIC_DANGER.resistance
 	local story = mission_data.category == "story"
 	local event = mission_data.category == "event"
+	local expedition = mission_data.category == "expedition"
 	local has_flash_mission = not not mission_data.flags.flash
 	local campaigns_data = Managers.data_service.mission_board:get_campaigns_data()
 
@@ -22,6 +23,8 @@ mod:hook_safe(MissionVotingView, "_set_mission_data", function (self, mission_da
 	local text = ""
 	if event then
 		text = Localize("loc_mission_board_mission_category_event")
+	elseif expedition then
+		text = Localize("loc_zone_expeditions")
 	elseif story then
 		text = Localize("loc_player_journey_campaign")
 		local campaign_name, found = "player-journey", false
