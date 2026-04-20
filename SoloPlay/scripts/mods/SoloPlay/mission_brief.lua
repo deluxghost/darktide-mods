@@ -1,4 +1,5 @@
 local mod = get_mod("SoloPlay")
+local DMF = get_mod("DMF")
 local MatchmakingConstants = require("scripts/settings/network/matchmaking_constants")
 local MissionTemplates = require("scripts/settings/mission/mission_templates")
 local GameModeSettings = require("scripts/settings/game_mode/game_mode_settings")
@@ -81,7 +82,6 @@ local function _get_bot_config_identifier(challenge)
 	if challenge == nil then
 		return
 	end
-
 	if challenge >= 5 then
 		return "high"
 	elseif challenge == 3 or challenge == 4 then
@@ -89,6 +89,71 @@ local function _get_bot_config_identifier(challenge)
 	else
 		return "low"
 	end
+end
+
+local function get_Tertium4Or5()
+	local tertium4or5 = get_mod("Tertium4Or5")
+	if tertium4or5 and tertium4or5:is_enabled() then
+		return tertium4or5
+	end
+	return nil
+end
+
+local function _get_tertium4or5_profile(index)
+	local tertium4or5 = get_Tertium4Or5()
+	if not tertium4or5 then
+		return nil
+	end
+	local character_id = tertium4or5:get("character_" .. index)
+	if character_id == nil or character_id == "none" then
+		return nil
+	end
+	local profiles = tertium4or5:persistent_table("profiles")
+	return profiles and profiles[character_id]
+end
+
+local function _character_widget_count(widget)
+	local setting_id = widget.setting_id
+	local index = setting_id and string.match(setting_id, "^character_(%d+)$")
+	local count = index and tonumber(index) or 0
+	local sub_widgets = widget.sub_widgets
+
+	if sub_widgets then
+		for i = 1, #sub_widgets do
+			count = math.max(count, _character_widget_count(sub_widgets[i]))
+		end
+	end
+
+	return count
+end
+
+local function _get_tertium4or5_character_widget_count()
+	local options_widgets_data = DMF.options_widgets_data
+	if not options_widgets_data then
+		return nil
+	end
+
+	local count = 0
+	for _, mod_widget_data in ipairs(options_widgets_data) do
+		for _, widget in ipairs(mod_widget_data) do
+			if widget.mod_name == "Tertium4Or5" then
+				count = math.max(count, _character_widget_count(widget))
+			end
+		end
+	end
+	return count > 0 and count or nil
+end
+
+local function _get_tertium4or5_extra_bots()
+	local tertium4or5 = get_Tertium4Or5()
+	if not tertium4or5 then
+		return 0
+	end
+	if not tertium4or5:get("four_bots") then
+		return 0
+	end
+	local character_widget_count = _get_tertium4or5_character_widget_count()
+	return character_widget_count and math.max(character_widget_count - 3, 0) or 0
 end
 
 local function _initial_bot_profile_names(mechanism_data)
@@ -107,7 +172,7 @@ local function _initial_bot_profile_names(mechanism_data)
 	local max_players = GameParameters.max_players
 	local num_players = table.size(Managers.player:players())
 	local max_bots = settings.max_bots or 0
-	local desired_bot_count = math.clamp(max_players - num_players, 0, max_bots)
+	local desired_bot_count = math.clamp(max_players - num_players, 0, max_bots) + _get_tertium4or5_extra_bots()
 	if desired_bot_count <= 0 then
 		return
 	end
@@ -130,7 +195,8 @@ local function _initial_bot_profile_names(mechanism_data)
 
 	local profile_names = {}
 	for i = 1, desired_bot_count do
-		profile_names[i] = bot_config_identifier .. "_bot_" .. bot_ids[i]
+		local bot_id = bot_ids[i]
+		profile_names[i] = bot_id and bot_config_identifier .. "_bot_" .. bot_id or false
 	end
 
 	return profile_names
@@ -156,6 +222,20 @@ local function _fake_bot_player(profile, index)
 	}
 end
 
+local function _get_mission_brief_bot_profile(profile_name, index)
+	local tertium4or5_profile = _get_tertium4or5_profile(index)
+	if tertium4or5_profile then
+		return tertium4or5_profile
+	end
+	if not profile_name then
+		return nil
+	end
+
+	local profile = ProfileUtils.get_bot_profile(profile_name)
+	profile.identifier = profile_name
+	return profile
+end
+
 mod:hook_safe(MissionIntroView, "_assign_player_slots", function (self)
 	local mechanism_data = Managers.mechanism:mechanism_data()
 	local profile_names = _initial_bot_profile_names(mechanism_data)
@@ -165,17 +245,18 @@ mod:hook_safe(MissionIntroView, "_assign_player_slots", function (self)
 
 	for i = 1, #profile_names do
 		local profile_name = profile_names[i]
-		local profile = ProfileUtils.get_bot_profile(profile_name)
-		profile.identifier = profile_name
+		local profile = _get_mission_brief_bot_profile(profile_name, i)
 
-		local player = _fake_bot_player(profile, i)
-		local unique_id = player:unique_id()
-		local slot_id = self:_player_slot_id(unique_id)
-		if not slot_id then
-			slot_id = self:_get_free_slot_id(player)
-			local slot = self._spawn_slots[slot_id]
-			if slot then
-				self:_assign_player_to_slot(player, slot)
+		if profile then
+			local player = _fake_bot_player(profile, i)
+			local unique_id = player:unique_id()
+			local slot_id = self:_player_slot_id(unique_id)
+			if not slot_id then
+				slot_id = self:_get_free_slot_id(player)
+				local slot = self._spawn_slots[slot_id]
+				if slot then
+					self:_assign_player_to_slot(player, slot)
+				end
 			end
 		end
 	end
