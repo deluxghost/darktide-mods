@@ -4,10 +4,7 @@ local MissionTemplates = require("scripts/settings/mission/mission_templates")
 local DangerSettings = require("scripts/settings/difficulty/danger_settings")
 local MatchmakingConstants = require("scripts/settings/network/matchmaking_constants")
 local DifficultyManager = require("scripts/managers/difficulty/difficulty_manager")
-local PlayerMovement = require("scripts/utilities/player_movement")
-local NavQueries = require("scripts/utilities/nav_queries")
 local GameModeSurvival = require("scripts/managers/game_mode/game_modes/game_mode_survival")
-local GameModeManager = require("scripts/managers/game_mode/game_mode_manager")
 local PacingManager = require("scripts/managers/pacing/pacing_manager")
 local PacingTemplates = require("scripts/managers/pacing/pacing_templates")
 local RoamerPacing = require("scripts/managers/pacing/roamer_pacing/roamer_pacing")
@@ -18,6 +15,7 @@ local WwiseGameSyncSettings = require("scripts/settings/wwise_game_sync/wwise_ga
 local ExpeditionLevelsLoader = require("scripts/loading/loaders/expedition_levels_loader")
 local SoloPlaySettings = mod:io_dofile("SoloPlay/scripts/mods/SoloPlay/SoloPlaySettings")
 mod:io_dofile("SoloPlay/scripts/mods/SoloPlay/havoc")
+mod:io_dofile("SoloPlay/scripts/mods/SoloPlay/mission_brief")
 mod:io_dofile("SoloPlay/scripts/mods/SoloPlay/workaround")
 
 local HOST_TYPES = MatchmakingConstants.HOST_TYPES
@@ -56,6 +54,18 @@ mod.parse_mission_params = function (mission_name_value)
 	return parts[1], parts[2]
 end
 
+local function _mission_giver_vo_override(mission_name, selected_mission_giver)
+	if selected_mission_giver ~= "default" then
+		return selected_mission_giver
+	end
+	local mission = MissionTemplates[mission_name]
+	local mission_brief_vo = mission and mission.mission_brief_vo
+	if not mission_brief_vo then
+		return nil
+	end
+	return mission_brief_vo.vo_profile or "sergeant_a"
+end
+
 mod.gen_normal_mission_context = function ()
 	local mission_name, params = mod.parse_mission_params(mod:get("choose_mission"))
 	local difficulty = DangerSettings[mod:get("choose_difficulty")]
@@ -65,12 +75,9 @@ mod.gen_normal_mission_context = function ()
 		resistance = difficulty.resistance,
 		circumstance_name = mod:get("choose_circumstance"),
 		side_mission = mod:get("choose_side_mission"),
+		mission_giver_vo_override = _mission_giver_vo_override(mission_name, mod:get("choose_mission_giver")),
 		custom_params = params,
 	}
-	local mission_giver = mod:get("choose_mission_giver")
-	if mission_giver ~= "default" then
-		mission_context.mission_giver_vo_override = mission_giver
-	end
 	for map_name, override in pairs(SoloPlaySettings.context_override) do
 		if mission_context.mission_name == map_name then
 			for key, settings in pairs(override) do
@@ -137,13 +144,10 @@ mod.gen_havoc_mission_context = function ()
 		mission_name = mission,
 		challenge = challenge,
 		resistance = resistance,
+		mission_giver_vo_override = _mission_giver_vo_override(mission, mod:get("havoc_mission_giver")),
 		havoc_data = data,
 		custom_params = params,
 	}
-	local mission_giver = mod:get("havoc_mission_giver")
-	if mission_giver ~= "default" then
-		mission_context.mission_giver_vo_override = mission_giver
-	end
 	return mission_context
 end
 

@@ -33,6 +33,11 @@ return {
 				type = "group",
 				sub_widgets = {
 					{
+						setting_id = "mission_brief_enabled",
+						type = "checkbox",
+						default_value = false,
+					},
+					{
 						setting_id = "friendly_fire_enabled",
 						type = "checkbox",
 						default_value = false,

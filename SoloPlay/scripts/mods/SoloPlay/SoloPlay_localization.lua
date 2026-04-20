@@ -58,6 +58,10 @@ return {
 		ru = "Модификаторы",
 		["zh-tw"] = "修改項",
 	},
+	mission_brief_enabled = {
+		en = "Mission Brief",
+		["zh-cn"] = "任务简报",
+	},
 	friendly_fire_enabled = {
 		en = "Friendly fire",
 		["zh-cn"] = "友军伤害",
