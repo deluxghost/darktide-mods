@@ -110,9 +110,10 @@ local function _entry_sequence_color(sequence, dimmed)
 	return base_color
 end
 
-local function _weapon_template_from_pickup(pickup, pocketable)
+local function _icon_from_pickup(pickup, pocketable)
 	local item = pickup and pickup.inventory_item and MasterItems.get_item(pickup.inventory_item)
-	return WeaponTemplate.weapon_template_from_item(item) or WeaponTemplates[pocketable]
+	local weapon_template = WeaponTemplate.weapon_template_from_item(item) or WeaponTemplates[pocketable]
+	return weapon_template and weapon_template.hud_icon or item and item.hud_icon or pickup and pickup.interaction_icon or DEFAULT_ICON
 end
 
 local function _hud_entries()
@@ -124,9 +125,9 @@ local function _hud_entries()
 		local category = mod.templates.categories[template.category]
 		local pickup = Pickups.by_name[template.pocketable]
 		local name = mod:localize("loc_stratagem_" .. template.pocketable)
-		local weapon_template = _weapon_template_from_pickup(pickup, template.pocketable)
-		local icon = weapon_template and weapon_template.hud_icon or (pickup and pickup.interaction_icon or DEFAULT_ICON)
+		local icon = _icon_from_pickup(pickup, template.pocketable)
 		local icon_color = category and category.color or DEFAULT_ICON_COLOR
+		local icon_bg_color = category and category.bg_color or DEFAULT_ICON_BG_COLOR
 		local matched_prefix = _sequence_is_prefix(sequence, template.input_sequence)
 		local dimmed = #sequence > 0 and not matched_prefix
 
@@ -134,7 +135,7 @@ local function _hud_entries()
 			dimmed = dimmed,
 			icon = icon,
 			icon_color = icon_color,
-			icon_bg_color = DEFAULT_ICON_BG_COLOR,
+			icon_bg_color = icon_bg_color,
 			name_color = dimmed and _color_with_alpha(NAME_COLOR, DIMMED_ALPHA) or NAME_COLOR,
 			name = name,
 			sequence_plain = table.concat(template.input_display, ""),
@@ -193,7 +194,7 @@ local widget_definitions = {
 			value = mod:localize("stratagem_menu_title"),
 			visibility_function = mod.stratagem_menu_visible,
 			style = {
-				font_type = "machine_medium",
+				font_type = "proxima_nova_bold",
 				font_size = 20,
 				text_vertical_alignment = "center",
 				text_horizontal_alignment = "left",
@@ -262,7 +263,7 @@ local function _create_row_widget_definition(scenegraph_id)
 			value_id = "name",
 			visibility_function = _entry_visible,
 			style = {
-				font_type = "machine_medium",
+				font_type = "proxima_nova_bold",
 				font_size = 18,
 				text_vertical_alignment = "top",
 				text_horizontal_alignment = "left",
@@ -277,7 +278,7 @@ local function _create_row_widget_definition(scenegraph_id)
 			value_id = "sequence",
 			visibility_function = _entry_visible,
 			style = {
-				font_type = "machine_medium",
+				font_type = "proxima_nova_bold",
 				font_size = 18,
 				text_vertical_alignment = "bottom",
 				text_horizontal_alignment = "left",
