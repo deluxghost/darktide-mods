@@ -6,6 +6,7 @@ templates.UP = "^"
 templates.DOWN = "v"
 templates.LEFT = "<"
 templates.RIGHT = ">"
+templates.MAX_ACTIVE_STRATAGEMS = 6
 
 templates.categories = {
 	strike = {
@@ -47,8 +48,23 @@ templates.input_directions = {
 
 templates.stratagems = {
 	{
-		pocketable = "expedition_grenade_airstrike_pocketable",
-		input = "^>v>",
+		pocketable = "medical_crate_pocketable",
+		input = "vv^>",
+		category = "equipment",
+	},
+	{
+		pocketable = "ammo_cache_pocketable",
+		input = "v<v^^v",
+		category = "equipment",
+	},
+	{
+		pocketable = "expedition_grenade_big_pocketable",
+		input = "^>vvv",
+		category = "strike",
+	},
+	{
+		pocketable = "expedition_grenade_artillery_strike_pocketable",
+		input = ">>v<>v",
 		category = "strike",
 	},
 	{
@@ -56,6 +72,40 @@ templates.stratagems = {
 		input = "^>^<",
 		category = "strike",
 	},
+	{
+		pocketable = "expedition_grenade_airstrike_pocketable",
+		input = "^>v>",
+		category = "strike",
+	},
+	{
+		pocketable = "expedition_deployable_force_field_pocketable",
+		input = "vv<><>",
+		category = "emplacement",
+	},
+	{
+		pocketable = "motion_detection_mine_explosive_pocketable",
+		input = "v<^>",
+		category = "emplacement",
+	},
+	{
+		pocketable = "motion_detection_mine_fire_pocketable",
+		input = "v<<v",
+		category = "emplacement",
+	},
+	{
+		pocketable = "motion_detection_mine_shock_pocketable",
+		input = "v^>^<>",
+		category = "emplacement",
+	},
+}
+
+templates.default_stratagems = {
+	"medical_crate_pocketable",
+	"expedition_grenade_big_pocketable",
+	"expedition_grenade_artillery_strike_pocketable",
+	"expedition_grenade_valkyrie_hover_pocketable",
+	"expedition_deployable_force_field_pocketable",
+	"motion_detection_mine_explosive_pocketable",
 }
 
 templates.input_directions_by_action = {}

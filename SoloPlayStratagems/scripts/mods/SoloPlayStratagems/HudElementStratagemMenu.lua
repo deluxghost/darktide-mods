@@ -1,10 +1,10 @@
 local mod = get_mod("SoloPlayStratagems")
+local MasterItems = require("scripts/backend/master_items")
 local Pickups = require("scripts/settings/pickup/pickups")
 local UIWorkspaceSettings = require("scripts/settings/ui/ui_workspace_settings")
 local UIWidget = require("scripts/managers/ui/ui_widget")
+local WeaponTemplate = require("scripts/utilities/weapon/weapon_template")
 local WeaponTemplates = require("scripts/settings/equipment/weapon_templates/weapon_templates")
-
-local MAX_ACTIVE_ENTRIES = 6
 
 local PANEL_OFFSET_X = 40
 local PANEL_OFFSET_Y = 40
@@ -110,16 +110,22 @@ local function _entry_sequence_color(sequence, dimmed)
 	return base_color
 end
 
+local function _weapon_template_from_pickup(pickup, pocketable)
+	local item = pickup and pickup.inventory_item and MasterItems.get_item(pickup.inventory_item)
+	return WeaponTemplate.weapon_template_from_item(item) or WeaponTemplates[pocketable]
+end
+
 local function _hud_entries()
 	local entries = {}
 	local sequence = mod.state.sequence
+	local stratagems = mod.get_active_stratagems()
 
-	for _, template in ipairs(mod.templates.stratagems) do
+	for _, template in ipairs(stratagems) do
 		local category = mod.templates.categories[template.category]
 		local pickup = Pickups.by_name[template.pocketable]
-		local weapon_template = WeaponTemplates[template.pocketable]
-		local name = pickup and pickup.description and Localize(pickup.description) or template.pocketable
-		local icon = weapon_template and (weapon_template.hud_icon or weapon_template.hud_icon_small) or pickup and pickup.interaction_icon or DEFAULT_ICON
+		local name = mod:localize("loc_stratagem_" .. template.pocketable)
+		local weapon_template = _weapon_template_from_pickup(pickup, template.pocketable)
+		local icon = weapon_template and weapon_template.hud_icon or (pickup and pickup.interaction_icon or DEFAULT_ICON)
 		local icon_color = category and category.color or DEFAULT_ICON_COLOR
 		local matched_prefix = _sequence_is_prefix(sequence, template.input_sequence)
 		local dimmed = #sequence > 0 and not matched_prefix
@@ -283,7 +289,7 @@ local function _create_row_widget_definition(scenegraph_id)
 	}, scenegraph_id)
 end
 
-for i = 1, MAX_ACTIVE_ENTRIES do
+for i = 1, mod.templates.MAX_ACTIVE_STRATAGEMS do
 	local scenegraph_id = string.format("entry_%d", i)
 	local widget_id = string.format("entry_%d", i)
 
@@ -366,7 +372,7 @@ function HudElementStratagemMenu:_set_entry_layout(entry_count, ui_renderer, ent
 	self:_set_scenegraph_size("panel_content", content_width, content_height)
 	self:_set_scenegraph_size("title", content_width, HEADER_HEIGHT)
 
-	for index = 1, MAX_ACTIVE_ENTRIES do
+	for index = 1, mod.templates.MAX_ACTIVE_STRATAGEMS do
 		self:_set_scenegraph_size(string.format("entry_%d", index), content_width, ROW_HEIGHT)
 	end
 
@@ -374,7 +380,7 @@ function HudElementStratagemMenu:_set_entry_layout(entry_count, ui_renderer, ent
 	self._widgets_by_name.panel_background.style.background.size[1] = panel_width
 	self._widgets_by_name.panel_background.style.background.size[2] = panel_height
 
-	for index = 1, MAX_ACTIVE_ENTRIES do
+	for index = 1, mod.templates.MAX_ACTIVE_STRATAGEMS do
 		local widget = self._widgets_by_name[string.format("entry_%d", index)]
 		local text_width = math.max(content_width - TEXT_OFFSET_X, 0)
 
@@ -419,7 +425,7 @@ HudElementStratagemMenu.update = function (self, dt, t, ui_renderer, render_sett
 
 	self:_set_entry_layout(#entries, ui_renderer, entries)
 
-	for i = 1, MAX_ACTIVE_ENTRIES do
+	for i = 1, mod.templates.MAX_ACTIVE_STRATAGEMS do
 		self:_update_entry_widget(i, show_panel and entries[i] or nil)
 	end
 end

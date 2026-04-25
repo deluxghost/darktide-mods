@@ -11,6 +11,7 @@ mod.state.sequence = mod.state.sequence or {}
 mod.state.direction_key_down = mod.state.direction_key_down or {}
 mod.state.pending_stratagem_name = mod.state.pending_stratagem_name or nil
 mod.state.pending_action_name = mod.state.pending_action_name or nil
+mod.state.active_stratagems = mod.state.active_stratagems or nil
 
 local function _clear_sequence()
 	table.clear(mod.state.sequence)
@@ -28,6 +29,7 @@ mod.stratagem_menu_set_visible = function (visible, close_sound_event)
 
 	mod.state.visible = visible
 	if visible then
+		mod.refresh_active_stratagems()
 		mod.play_sound(SOUND_MENU_OPEN)
 	else
 		_clear_pending_match()
@@ -88,8 +90,9 @@ local function _has_pending_match()
 end
 
 local function _match_sequence(sequence)
+	local stratagems = mod.get_active_stratagems()
 	local has_prefix = false
-	for _, template in ipairs(mod.templates.stratagems) do
+	for _, template in ipairs(stratagems) do
 		local pattern = template.input_sequence
 		if #sequence <= #pattern then
 			local matched = true

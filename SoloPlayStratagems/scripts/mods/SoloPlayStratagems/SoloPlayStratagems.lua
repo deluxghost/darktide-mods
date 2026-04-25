@@ -8,7 +8,6 @@ local MatchmakingConstants = require("scripts/settings/network/matchmaking_const
 local HOST_TYPES = MatchmakingConstants.HOST_TYPES
 
 mod.state = mod.state or mod:persistent_table("state")
-mod.templates = mod:io_dofile("SoloPlayStratagems/scripts/mods/SoloPlayStratagems/templates")
 mod:io_dofile("SoloPlayStratagems/scripts/mods/SoloPlayStratagems/airstrike")
 mod:io_dofile("SoloPlayStratagems/scripts/mods/SoloPlayStratagems/stratagem_menu_state")
 
@@ -37,6 +36,7 @@ mod.on_all_mods_loaded = function ()
 	for i = 1, #PACKAGES do
 		mod.load_package(PACKAGES[i])
 	end
+	mod.refresh_active_stratagems()
 end
 
 mod.is_server = function ()
@@ -87,6 +87,38 @@ mod.play_sound = function (event_name)
 
 	ui_manager:play_2d_sound(event_name)
 	return true
+end
+
+local function _find_template_by_pocketable(pocketable)
+	for _, template in ipairs(mod.templates.stratagems) do
+		if template.pocketable == pocketable then
+			return template
+		end
+	end
+	return nil
+end
+
+mod.refresh_active_stratagems = function ()
+	local active_stratagems = {}
+	local seen = {}
+
+	for idx = 1, mod.templates.MAX_ACTIVE_STRATAGEMS do
+		local pocketable = mod:get("stratagem_slot_" .. tostring(idx))
+		if pocketable ~= "" and pocketable ~= "none" and not seen[pocketable] then
+			local template = _find_template_by_pocketable(pocketable)
+			if template then
+				seen[pocketable] = true
+				active_stratagems[#active_stratagems + 1] = template
+			end
+		end
+	end
+
+	mod.state.active_stratagems = active_stratagems
+	return active_stratagems
+end
+
+mod.get_active_stratagems = function ()
+	return mod.state.active_stratagems or mod.refresh_active_stratagems()
 end
 
 mod.trigger_stratagem = function (name)
