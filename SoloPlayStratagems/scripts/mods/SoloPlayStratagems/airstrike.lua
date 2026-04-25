@@ -20,8 +20,7 @@ state.airstrike_supply_spawning = state.airstrike_supply_spawning or {}
 
 mod.airstrike_register_events = function ()
 	local event_manager = Managers.event
-
-	if not event_manager then
+	if not event_manager or not mod.is_server() then
 		return
 	end
 
@@ -239,6 +238,10 @@ mod.airstrike_drop_supply = function (self, origin_unit)
 end
 
 mod.airstrike_done = function (self, level)
+	if not mod.is_server() then
+		return
+	end
+
 	if level then
 		state.airstrike_levels_to_despawn[level] = true
 	end
