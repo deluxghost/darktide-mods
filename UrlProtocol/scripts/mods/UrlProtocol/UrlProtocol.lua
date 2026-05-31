@@ -77,12 +77,12 @@ local function dispatch_event(event_json)
 	end
 
 	instances.bridge.DarktideLink_ActivateWindow()
-	local payload = {
+	local context = {
 		raw_url = event.raw_url,
 		path = path,
 		query = event.query,
 	}
-	handler(payload)
+	handler(context)
 end
 
 local function poll_bridge()
@@ -187,8 +187,8 @@ mod.update = function()
 	update_social_find()
 end
 
-register_handler(INTERNAL_NAMESPACE, "/social/find", function(payload)
-	local code = payload.query.code
+register_handler(INTERNAL_NAMESPACE, "/social/find", function(context)
+	local code = context.query.code
 	if type(code) ~= "string" or not string.match(code, "^%d%d%d%d%d%d%d%d%d%d$") then
 		mod:error(mod:localize("err_invalid_friend_code"))
 		return
