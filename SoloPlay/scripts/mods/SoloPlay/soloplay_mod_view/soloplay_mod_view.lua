@@ -480,8 +480,12 @@ end
 
 SoloPlayModView._handle_input = function (self, input_service, dt, t)
 	if self._selected_setting then
+		local content = self._selected_setting.content
+		local scrollbar_hotspot = content.scrollbar_hotspot
+		local scrollbar_active = content.drag_active or (scrollbar_hotspot and scrollbar_hotspot.is_hover)
+		local close_pressed = (input_service:get("left_pressed") and not scrollbar_active) or input_service:get("confirm_pressed") or input_service:get("back")
 		local close_selected_setting = false
-		if input_service:get("left_pressed") or input_service:get("confirm_pressed") or input_service:get("back") then
+		if close_pressed then
 			close_selected_setting = true
 		end
 		self._close_selected_setting = close_selected_setting

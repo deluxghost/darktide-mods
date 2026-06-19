@@ -431,8 +431,10 @@ local blueprints = {
 
 			local scrollbar_hotspot = content.scrollbar_hotspot
 			local scrollbar_hovered = scrollbar_hotspot.is_hover
+			local scrollbar_active = scrollbar_hovered or content.drag_active
+			local close_pressed = (input_service:get("left_pressed") and not scrollbar_active) or input_service:get("confirm_pressed") or input_service:get("back")
 
-			if (input_service:get("left_pressed") or input_service:get("confirm_pressed") or input_service:get("back")) and content.exclusive_focus and not content.wait_next_frame then
+			if close_pressed and content.exclusive_focus and not content.wait_next_frame then
 				content.wait_next_frame = true
 				return
 			end
