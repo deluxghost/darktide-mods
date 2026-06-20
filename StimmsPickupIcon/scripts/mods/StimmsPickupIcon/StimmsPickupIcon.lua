@@ -13,6 +13,10 @@ local STIMM_COLORS = {
 }
 local STIMM_COOLDOWN_COLOR = { 255, 128, 128, 128 }
 
+local function clone_color(color)
+	return color and { color[1], color[2], color[3], color[4] }
+end
+
 mod.on_all_mods_loaded = function ()
 	recolor_mod = get_mod("RecolorStimms")
 end
@@ -32,13 +36,13 @@ mod.on_setting_changed = function (setting_id)
 end
 
 local get_stimm_colors = function (stimm_name, override_color)
-	local main_color = override_color
+	local main_color = clone_color(override_color
 		or settings.use_recolor_stimms_mod
 		and recolor_mod
 		and recolor_mod:is_enabled()
 		and recolor_mod.get_stimm_argb_255
 		and recolor_mod.get_stimm_argb_255(stimm_name)
-		or STIMM_COLORS[stimm_name]
+		or STIMM_COLORS[stimm_name])
 	if not main_color then
 		return nil, nil, nil
 	end
