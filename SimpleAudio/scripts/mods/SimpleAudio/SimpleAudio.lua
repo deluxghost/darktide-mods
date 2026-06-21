@@ -3,6 +3,7 @@ local ffi = Mods.lua.ffi
 
 local AUDIO_DLL_PATH = "../mods/SimpleAudio/bin/darktide-audio.dll"
 local ERROR_BUFFER_SIZE = 1024
+local GLOB_BUFFER_SIZE = 32768
 local MAX_DISTANCE = 100
 local DECAY = 0.01
 local SOUND_TYPE = {
@@ -31,11 +32,13 @@ if instances.audio == nil then
 	ffi.cdef([[
 		int DarktideAudio_Init();
 		int DarktideAudio_PlayFile(const char* audio_path, int volume, double left_volume, double right_volume);
+		int DarktideAudio_Glob(const char* base_path, const char* pattern, char* buffer, int buffer_size);
 		int DarktideAudio_Shutdown();
 		int DarktideAudio_LastError(char* buffer, int buffer_size);
 	]])
 	instances.audio = ffi.load(AUDIO_DLL_PATH)
 	instances.error_buffer = ffi.new("char[?]", ERROR_BUFFER_SIZE)
+	instances.glob_buffer = ffi.new("char[?]", GLOB_BUFFER_SIZE)
 end
 
 local function audio_error()
@@ -92,8 +95,12 @@ local function caller_mod_name()
 	return highest_non_library_mod_in_stack or highest_mod_in_stack or "unknown"
 end
 
+local function normalize_audio_path(audio_path)
+	return audio_path:gsub("\\", "/"):gsub("^/", "")
+end
+
 local function resolve_audio_path(audio_path)
-	local normalized_path = audio_path:gsub("\\", "/"):gsub("^/", "")
+	local normalized_path = normalize_audio_path(audio_path)
 
 	if normalized_path:match("^%a:/") then
 		return normalized_path
@@ -110,6 +117,81 @@ local function resolve_audio_path(audio_path)
 	end
 
 	return "../mods/" .. caller_name .. "/audio/" .. normalized_path
+end
+
+local function split_glob_path(audio_path)
+	local first_glob = audio_path:find("[*?%[]")
+	local search_end = first_glob and first_glob - 1 or #audio_path
+	local prefix_end = 0
+
+	for i = search_end, 1, -1 do
+		if audio_path:sub(i, i) == "/" then
+			prefix_end = i
+			break
+		end
+	end
+
+	return audio_path:sub(1, prefix_end), audio_path:sub(prefix_end + 1)
+end
+
+local function copy_list(list)
+	local copy = {}
+
+	for i = 1, #list do
+		copy[i] = list[i]
+	end
+
+	return copy
+end
+
+local function glob_files(pattern)
+	local normalized_pattern = normalize_audio_path(pattern)
+	local caller_base_path, relative_pattern = split_glob_path(normalized_pattern)
+	local resolved_base_path = resolve_audio_path(caller_base_path)
+	local result = instances.audio.DarktideAudio_Glob(resolved_base_path, relative_pattern, instances.glob_buffer, GLOB_BUFFER_SIZE)
+
+	if result < 0 then
+		error(string.format("Failed to glob audio files for %s: %s", normalized_pattern, audio_error()))
+	end
+
+	local files = {}
+	local result_text = ffi.string(instances.glob_buffer)
+
+	for relative_path in result_text:gmatch("[^\n]+") do
+		files[#files + 1] = caller_base_path .. relative_path
+	end
+
+	if #files == 0 then
+		error(string.format("No audio files matched pattern: %s", normalized_pattern))
+	end
+
+	return normalized_pattern, files
+end
+
+local GlobResult = {}
+GlobResult.__index = GlobResult
+
+function GlobResult:count()
+	return #self._files
+end
+
+function GlobResult:list()
+	return copy_list(self._files)
+end
+
+function GlobResult:random()
+	local files = self._files
+	local count = #files
+
+	if count == 0 then
+		error(string.format("No audio files matched pattern: %s", self._pattern))
+	end
+
+	return files[math.random(1, count)]
+end
+
+function GlobResult:play(playback_settings, unit_or_position)
+	return mod.play_file(self:random(), playback_settings, unit_or_position)
 end
 
 local function listener_position_rotation()
@@ -227,6 +309,19 @@ mod.play_file = function(audio_path, playback_settings, unit_or_position)
 	local volume, left_volume, right_volume = spatial_mix(unit_or_position)
 
 	return play_with_mix(resolve_audio_path(audio_path), playback_settings, volume, left_volume, right_volume)
+end
+
+mod.glob = function(pattern)
+	if type(pattern) ~= "string" then
+		error(string.format("Audio glob pattern must be a string, got %s", type(pattern)))
+	end
+
+	local normalized_pattern, files = glob_files(pattern)
+
+	return setmetatable({
+		_pattern = normalized_pattern,
+		_files = files,
+	}, GlobResult)
 end
 
 mod.hook_sound = function(pattern, callback)
