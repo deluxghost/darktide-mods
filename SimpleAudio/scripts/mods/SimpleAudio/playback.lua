@@ -51,7 +51,43 @@ local function volume_adjustment(audio_type)
 	return master_volume * type_volume()
 end
 
-local function spatial_mix(unit_or_position)
+local function append_filter(filters, playback_settings, key)
+	local value = playback_settings[key]
+
+	if value ~= nil and value ~= false then
+		filters[#filters + 1] = key .. "=" .. tostring(value)
+	end
+end
+
+local function filter_argument(left_volume, right_volume, playback_settings)
+	local filters = {
+		string.format(
+			"pan=stereo|c0=%s*c0|c1=%s*c1",
+			tostring(left_volume or 1),
+			tostring(right_volume or 1)
+		),
+	}
+
+	append_filter(filters, playback_settings, "adelay")
+	append_filter(filters, playback_settings, "aecho")
+	append_filter(filters, playback_settings, "afade")
+	append_filter(filters, playback_settings, "atempo")
+	append_filter(filters, playback_settings, "chorus")
+	append_filter(filters, playback_settings, "silenceremove")
+	append_filter(filters, playback_settings, "speechnorm")
+	append_filter(filters, playback_settings, "stereotools")
+
+	return table.concat(filters, ",")
+end
+
+local function append_option(arguments, option, value)
+	if value ~= nil and value ~= false then
+		arguments[#arguments + 1] = option
+		arguments[#arguments + 1] = tostring(value)
+	end
+end
+
+local function spatial_mix(unit_or_position, decay, min_distance, max_distance, override_position, override_rotation)
 	if not Managers.ui or Managers.ui:get_current_sub_state_name() ~= "GameplayStateRun" then
 		return 100, 1, 1
 	end
@@ -63,10 +99,31 @@ local function spatial_mix(unit_or_position)
 	end
 
 	local position = input_type == "Unit" and Unit.local_position(unit_or_position, 1) or unit_or_position
-	local listener_position, listener_rotation = listener_position_rotation()
+	local current_listener_position, current_listener_rotation
+
+	if not override_position or not override_rotation then
+		current_listener_position, current_listener_rotation = listener_position_rotation()
+	end
+
+	local listener_position = override_position or current_listener_position
+	local listener_rotation = override_rotation or current_listener_rotation
+	decay = decay or DECAY
+	min_distance = min_distance or 0
+	max_distance = max_distance or MAX_DISTANCE
+
 	local distance = Vector3.distance(position, listener_position)
-	local ratio = 1 - math.clamp(distance / MAX_DISTANCE, 0, 1)
-	local volume = math.clamp(100 * (ratio - distance * DECAY), 0, 100)
+	local volume
+
+	if distance < min_distance then
+		volume = 100
+	elseif distance > max_distance then
+		volume = 0
+	else
+		local ratio = 1 - math.clamp((distance - min_distance) / (max_distance - min_distance), 0, 1)
+
+		volume = math.clamp(100 * (ratio - (distance - min_distance) * decay), 0, 100)
+	end
+
 	local direction = position - listener_position
 	local local_direction = Quaternion.rotate(Quaternion.inverse(listener_rotation), direction)
 	local normalized_direction = Vector3.normalize(local_direction)
@@ -91,38 +148,59 @@ local function spatial_mix(unit_or_position)
 	return volume, left_volume, right_volume
 end
 
-playback.play_file = function(audio_path, playback_settings, unit_or_position)
+playback.play_file = function(
+	audio_path,
+	playback_settings,
+	unit_or_position,
+	decay,
+	min_distance,
+	max_distance,
+	override_position,
+	override_rotation
+)
 	playback_settings = playback_settings or {}
 
-	local volume, left_volume, right_volume = spatial_mix(unit_or_position)
-	local resolved_path = paths.resolve_audio_path(audio_path)
-	local final_volume = math.round((volume or 100) * volume_adjustment(playback_settings.audio_type))
-	local filter = string.format(
-		"volume=%s,pan=stereo|c0=%s*c0|c1=%s*c1",
-		tostring(final_volume / 100),
-		tostring(left_volume or 1),
-		tostring(right_volume or 1)
+	local volume, left_volume, right_volume = spatial_mix(
+		unit_or_position,
+		decay,
+		min_distance,
+		max_distance,
+		override_position,
+		override_rotation
 	)
-	local success, error_message = platform.start_process(FFPLAY_PATH, {
+	local resolved_path = paths.resolve_audio_path(audio_path)
+	local volume_multiplier = playback_settings.volume and playback_settings.volume / 100 or 1
+	local final_volume = math.round((volume or 100) * volume_adjustment(playback_settings.audio_type) * volume_multiplier)
+	local filter = filter_argument(left_volume, right_volume, playback_settings)
+	local arguments = {
 		"-i",
 		resolved_path,
+		"-volume",
+		tostring(final_volume),
 		"-af",
 		filter,
-		"-fast",
-		"-nodisp",
-		"-autoexit",
-		"-loglevel",
-		"quiet",
-		"-hide_banner",
-	}, resolved_path)
+	}
 
-	if not success then
+	append_option(arguments, "-loop", playback_settings.loop)
+	append_option(arguments, "-ss", playback_settings.pos)
+	append_option(arguments, "-t", playback_settings.duration)
+
+	arguments[#arguments + 1] = "-fast"
+	arguments[#arguments + 1] = "-nodisp"
+	arguments[#arguments + 1] = "-autoexit"
+	arguments[#arguments + 1] = "-loglevel"
+	arguments[#arguments + 1] = "quiet"
+	arguments[#arguments + 1] = "-hide_banner"
+
+	local play_file_id, error_message = platform.start_process(FFPLAY_PATH, arguments, resolved_path)
+
+	if not play_file_id then
 		mod:error(mod:localize("play_failed", resolved_path, error_message))
 
 		return false
 	end
 
-	return true
+	return play_file_id
 end
 
 return playback

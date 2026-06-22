@@ -28,8 +28,25 @@ function GlobResult:random()
 	return files[math.random(1, count)]
 end
 
-function GlobResult:play(playback_settings, unit_or_position)
-	return mod.play_file(self:random(), playback_settings, unit_or_position)
+function GlobResult:play(
+	playback_settings,
+	unit_or_position,
+	decay,
+	min_distance,
+	max_distance,
+	override_position,
+	override_rotation
+)
+	return mod.play_file(
+		self:random(),
+		playback_settings,
+		unit_or_position,
+		decay,
+		min_distance,
+		max_distance,
+		override_position,
+		override_rotation
+	)
 end
 
 audio_files.glob = function(pattern)

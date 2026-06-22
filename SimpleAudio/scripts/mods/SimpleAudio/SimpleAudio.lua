@@ -6,6 +6,7 @@ local platform = mod:io_dofile("SimpleAudio/scripts/mods/SimpleAudio/platform")
 local wwise_hooks = mod:io_dofile("SimpleAudio/scripts/mods/SimpleAudio/wwise_hooks")
 
 mod.play_file = playback.play_file
+mod.stop_file = platform.stop_process
 mod.glob = audio_files.glob
 mod.hook_sound = wwise_hooks.hook_sound
 

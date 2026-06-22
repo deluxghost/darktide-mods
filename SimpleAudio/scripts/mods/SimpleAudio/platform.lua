@@ -186,6 +186,39 @@ local function close_process_handle(id, process)
 	instances.processes[id] = nil
 end
 
+local function should_close_process(process)
+	local wait_result = tonumber(instances.kernel32.WaitForSingleObject(process.handle, 0))
+
+	if wait_result == WAIT_TIMEOUT then
+		return false
+	end
+
+	if wait_result == WAIT_OBJECT_0 then
+		return true
+	end
+
+	if wait_result == WAIT_FAILED then
+		mod:error(string.format("Failed to query audio process for %s: Windows error %d", process.path, last_windows_error()))
+	else
+		mod:error(string.format("Unexpected audio process wait result for %s: %d", process.path, wait_result))
+	end
+
+	return true
+end
+
+local function collect_active_processes()
+	local active_processes = {}
+
+	for id, process in pairs(instances.processes) do
+		active_processes[#active_processes + 1] = {
+			id = id,
+			process = process,
+		}
+	end
+
+	return active_processes
+end
+
 local function has_file_attribute(attributes, attribute)
 	return math.floor(attributes / attribute) % 2 == 1
 end
@@ -268,27 +301,14 @@ platform.start_process = function(executable_path, arguments, audio_path)
 		mod:error(string.format("Failed to close audio process thread handle for %s: Windows error %d", audio_path, last_windows_error()))
 	end
 
-	return true
+	return instances.process_id
 end
 
 platform.cleanup_finished_processes = function()
 	local finished_processes = {}
 
 	for id, process in pairs(instances.processes) do
-		local wait_result = tonumber(instances.kernel32.WaitForSingleObject(process.handle, 0))
-		local should_close = wait_result == WAIT_OBJECT_0
-
-		if wait_result == WAIT_TIMEOUT then
-			-- Still playing.
-		elseif wait_result == WAIT_FAILED then
-			mod:error(string.format("Failed to query audio process for %s: Windows error %d", process.path, last_windows_error()))
-			should_close = true
-		elseif not should_close then
-			mod:error(string.format("Unexpected audio process wait result for %s: %d", process.path, wait_result))
-			should_close = true
-		end
-
-		if should_close then
+		if should_close_process(process) then
 			finished_processes[#finished_processes + 1] = {
 				id = id,
 				process = process,
@@ -303,17 +323,37 @@ platform.cleanup_finished_processes = function()
 	end
 end
 
+platform.stop_process = function(process_id)
+	if process_id == nil then
+		platform.terminate_active_processes()
+
+		return true
+	end
+
+	platform.cleanup_finished_processes()
+
+	local process = instances.processes[process_id]
+
+	if not process then
+		return false
+	end
+
+	if instances.kernel32.TerminateProcess(process.handle, 1) == 0 then
+		mod:error(string.format("Failed to terminate audio process for %s: Windows error %d", process.path, last_windows_error()))
+		close_process_handle(process_id, process)
+
+		return false
+	end
+
+	close_process_handle(process_id, process)
+
+	return true
+end
+
 platform.terminate_active_processes = function()
 	platform.cleanup_finished_processes()
 
-	local active_processes = {}
-
-	for id, process in pairs(instances.processes) do
-		active_processes[#active_processes + 1] = {
-			id = id,
-			process = process,
-		}
-	end
+	local active_processes = collect_active_processes()
 
 	for i = 1, #active_processes do
 		local item = active_processes[i]
