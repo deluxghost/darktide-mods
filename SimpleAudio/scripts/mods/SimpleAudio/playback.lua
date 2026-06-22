@@ -59,8 +59,9 @@ local function append_filter(filters, playback_settings, key)
 	end
 end
 
-local function filter_argument(left_volume, right_volume, playback_settings)
+local function filter_argument(volume_gain, left_volume, right_volume, playback_settings)
 	local filters = {
+		string.format("volume=%s", tostring(volume_gain)),
 		string.format(
 			"pan=stereo|c0=%s*c0|c1=%s*c1",
 			tostring(left_volume or 1),
@@ -170,13 +171,11 @@ playback.play_file = function(
 	)
 	local resolved_path = paths.resolve_audio_path(audio_path)
 	local volume_multiplier = playback_settings.volume and playback_settings.volume / 100 or 1
-	local final_volume = math.round((volume or 100) * volume_adjustment(playback_settings.audio_type) * volume_multiplier)
-	local filter = filter_argument(left_volume, right_volume, playback_settings)
+	local volume_gain = (volume or 100) / 100 * volume_adjustment(playback_settings.audio_type) * volume_multiplier
+	local filter = filter_argument(volume_gain, left_volume, right_volume, playback_settings)
 	local arguments = {
 		"-i",
 		resolved_path,
-		"-volume",
-		tostring(final_volume),
 		"-af",
 		filter,
 	}
