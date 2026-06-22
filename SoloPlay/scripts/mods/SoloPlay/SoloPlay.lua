@@ -16,7 +16,7 @@ local ExpeditionLevelsLoader = require("scripts/loading/loaders/expedition_level
 local SoloPlaySettings = mod:io_dofile("SoloPlay/scripts/mods/SoloPlay/SoloPlaySettings")
 mod:io_dofile("SoloPlay/scripts/mods/SoloPlay/havoc")
 mod:io_dofile("SoloPlay/scripts/mods/SoloPlay/mission_brief")
-mod:io_dofile("SoloPlay/scripts/mods/SoloPlay/workaround")
+mod:io_dofile("SoloPlay/scripts/mods/SoloPlay/workarounds/workarounds")
 
 local HOST_TYPES = MatchmakingConstants.HOST_TYPES
 local DISTRIBUTION_TYPES = PickupSettings.distribution_types
