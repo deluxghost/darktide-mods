@@ -137,6 +137,15 @@ local weapon_class_filter = {
 	needlepistol_class = {
 		keywords = { "needlepistol" },
 	},
+	arc_rifle_class = {
+		keywords = { "arc_rifle" },
+	},
+	galvanic_rifle_class = {
+		keywords = { "galvanic_rifle" },
+	},
+	phosphor_pistol_class = {
+		keywords = { "phosphor_pistol" },
+	},
 }
 local class_name_filter = {}
 local class_name_prefix_filter = {}
@@ -312,6 +321,8 @@ mod:hook_origin("HudElementCrosshair", "_get_current_crosshair_type", function (
 					return mod.settings["psyker_throwing_knives_class"]
 				elseif weapon_template_name == "missile_launcher" then
 					return mod.settings["missile_launcher_class"]
+				elseif weapon_template_name == "cryptic_servo_skull_order_point" then
+					return mod.settings["cryptic_servo_skull_class"]
 				end
 
 				if WeaponTemplate.is_melee(weapon_template) then

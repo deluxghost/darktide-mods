@@ -139,6 +139,9 @@ local localization = {
 		en = "Missile Launcher",
 		["zh-cn"] = "导弹发射器",
 	},
+	cryptic_servo_skull_class = {
+		en = Localize("loc_talent_cryptic_servo_skull"),
+	},
 	psyker_smite_class = {
 		en = Localize("loc_class_psyker_title") .. " " .. Localize("loc_ability_psyker_smite"),
 		["zh-cn"] = Localize("loc_class_psyker_title") .. Localize("loc_ability_psyker_smite"),
@@ -258,6 +261,15 @@ local localization = {
 	},
 	needlepistol_class = {
 		en = Localize("loc_weapon_family_needlepistol_p1_m1"),
+	},
+	arc_rifle_class = {
+		en = Localize("loc_weapon_family_arc_rifle_p1_m1"),
+	},
+	galvanic_rifle_class = {
+		en = Localize("loc_weapon_family_galvanic_rifle_p1_m1"),
+	},
+	phosphor_pistol_class = {
+		en = Localize("loc_weapon_family_phosphor_pistol_p1_m1"),
 	},
 
 	primary = {
