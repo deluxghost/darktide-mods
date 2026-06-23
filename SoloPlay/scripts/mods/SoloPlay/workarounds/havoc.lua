@@ -3,9 +3,6 @@ local GameModeExtensionHavoc = require("scripts/managers/game_mode/game_mode_ext
 local MechanismOnboarding = require("scripts/managers/mechanism/mechanisms/mechanism_onboarding")
 local MutatorSpawner = require("scripts/managers/mutator/mutators/mutator_spawner")
 local MutatorMonsterSpawner = require("scripts/managers/mutator/mutators/mutator_monster_spawner")
-local LiquidArea = require("scripts/extension_systems/liquid_area/utilities/liquid_area")
-local LiquidAreaTemplates = require("scripts/settings/liquid_area/liquid_area_templates")
-local HavocMutatorLocalSettings = require("scripts/settings/havoc/havoc_mutator_local_settings")
 
 -- allow starting havoc game without any modifiers
 mod:hook(GameModeExtensionHavoc, "_initialize_modifiers", function (func, self, havoc_modifiers)
@@ -62,33 +59,23 @@ mod:hook_require("scripts/settings/mutator/mutator_templates", function (templat
 	end
 end)
 
--- fix for rotten armour crash on exit
--- basically replaced the position check to avoid a UNIT_POSITION[] lookup fail. Update this function in future updates if the function changes
+-- avoid running death side effects while gameplay cleanup destroys minion buff extensions
+local function _skip_stop_on_extension_destroyed(templates, template_name)
+	local template = templates[template_name]
+	local stop_func = template.stop_func
 
-local rotten_armor_data = HavocMutatorLocalSettings.mutator_havoc_rotten_armor.buff_settings
+	template.stop_func = function (template_data, template_context, extension_destroyed)
+		if extension_destroyed then
+			return
+		end
 
-local function _on_rotten_armor_death(template_data, template_context)
-	local unit = template_context.unit
-	local nav_world = template_data.nav_world
-	local position = Unit.world_position(unit, 1)
-
-	if not position then
-		return
+		return stop_func(template_data, template_context, extension_destroyed)
 	end
-
-	local node_position = position + Vector3(0, 0, 0.25)
-	local fx_system = Managers.state.extension:system("fx_system")
-	local rotation = Unit.local_rotation(unit, 1)
-
-	fx_system:trigger_vfx(rotten_armor_data.vfx_name, node_position, rotation)
-	fx_system:trigger_wwise_event(rotten_armor_data.sfx_death_name, position)
-	LiquidArea.try_create(position, Vector3.down(), nav_world, LiquidAreaTemplates.rotten_armor, nil, nil, true)
 end
 
 mod:hook_require("scripts/settings/buff/havoc_buff_templates", function(templates)
-	templates.mutator_rotten_armor.stop_func = function (template_data, template_context)
-		if template_context.is_server then
-			_on_rotten_armor_death(template_data, template_context)
-		end
-	end
+	_skip_stop_on_extension_destroyed(templates, "havoc_bolstering")
+	_skip_stop_on_extension_destroyed(templates, "havoc_corrupted_enemies")
+	_skip_stop_on_extension_destroyed(templates, "havoc_sticky_poxburster")
+	_skip_stop_on_extension_destroyed(templates, "mutator_rotten_armor")
 end)
