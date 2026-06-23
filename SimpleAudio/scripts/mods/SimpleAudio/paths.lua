@@ -34,10 +34,6 @@ paths.normalize_audio_path = function(audio_path)
 	return audio_path:gsub("\\", "/"):gsub("^/", "")
 end
 
-paths.windows_path = function(path)
-	return path:gsub("/", "\\")
-end
-
 paths.join_audio_path = function(base_path, path)
 	if base_path == "" then
 		return path
