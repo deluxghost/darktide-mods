@@ -4,8 +4,11 @@ local HudElementWorldMarkers = require("scripts/ui/hud/elements/world_markers/hu
 local HUDElementInteractionSettings = require("scripts/ui/hud/elements/interaction/hud_element_interaction_settings")
 local HUDElementSmartTagging = require("scripts/ui/hud/elements/smart_tagging/hud_element_smart_tagging")
 local BaseInteraction = require("scripts/extension_systems/interaction/interactions/base_interaction")
+local CollectiblesManager = require("scripts/managers/collectibles/collectibles_manager")
+local DestructibleExtension = require("scripts/extension_systems/destructible/destructible_extension")
 local InteractionTemplates = require("scripts/settings/interaction/interaction_templates")
 local Pickups = require("scripts/settings/pickup/pickups")
+local heretical_idols = mod:io_dofile("FoundYa/scripts/mods/FoundYa/heretical_idols")
 
 local memory = mod:persistent_table("memory")
 
@@ -45,6 +48,7 @@ local interaction_types = {
 	objective_pickup = "button",
 	objective_pickup_hidden_hold = "button",
 	saints_pickup = "event",
+	leftover_pickup = "event",
 	expedition_loot_converter = "station",
 	expeditions_currency = "material",
 	expeditions_loot = "material",
@@ -56,7 +60,7 @@ local interaction_types = {
 	end,
 	pocketable = function (pickup_data)
 		if pickup_data.name == "communications_hack_device" then
-			return "device"
+			return "event"
 		end
 		if pickup_data.is_side_mission_pickup then
 			return "book"
@@ -146,6 +150,7 @@ mod.on_enabled = function ()
 		mod:set("max_distance", nil)
 	end
 	update_settings()
+	heretical_idols.sync_markers()
 end
 
 mod.on_setting_changed = function (setting_id)
@@ -153,6 +158,7 @@ mod.on_setting_changed = function (setting_id)
 end
 
 mod.on_disabled = function ()
+	heretical_idols.clear_markers()
 	HUDElementInteractionSettings.max_spawn_distance_sq = 1000
 	InteractionTemplates.chest.interaction_icon = DEFAULT_COMMON_ICON
 	InteractionTemplates.luggable.interaction_icon = DEFAULT_COMMON_ICON
@@ -229,6 +235,8 @@ local function post_update_marker(widget, marker, elem)
 			widget.content.icon = DEFAULT_COMMON_ICON
 		end
 	end
+
+	heretical_idols.update_marker(widget, marker)
 end
 
 mod:hook(WorldMarkerTemplateInteraction, "on_enter", function (func, widget, marker, self)
@@ -254,6 +262,30 @@ mod:hook(HudElementWorldMarkers, "_template_by_type", function (func, self, mark
 		return table.clone(self._marker_templates[marker_type])
 	end
 	return func(self, marker_type, clone)
+end)
+
+mod:hook_safe(HudElementWorldMarkers, "init", function ()
+	heretical_idols.sync_markers()
+end)
+
+mod:hook_safe(DestructibleExtension, "set_collectible_data", function (self, data)
+	if data and data.unit then
+		self._owner_system:enable_update_function(self.__class_name, "update", data.unit, self)
+	end
+
+	heretical_idols.sync_extension(self)
+end)
+
+mod:hook(DestructibleExtension, "update", function (func, self, unit, dt, t, ...)
+	heretical_idols.sync_extension(self)
+
+	if self._timer_to_despawn then
+		return func(self, unit, dt, t, ...)
+	end
+end)
+
+mod:hook_safe(CollectiblesManager, "collectible_destroyed", function (self, data)
+	heretical_idols.remove_marker(data)
 end)
 
 mod:hook(HUDElementSmartTagging, "_is_marker_valid_for_tagging", function (func, self, player_unit, marker, distance)
