@@ -27,8 +27,12 @@ local heretical_idol_interaction_data = {
 	end,
 }
 
+local function is_heretical_idol_marker_data(data)
+	return type(data) == "table" and rawget(data, "__foundya_heretical_idol") == true
+end
+
 heretical_idols.update_marker = function (widget, marker)
-	if marker.data and marker.data.__foundya_heretical_idol then
+	if is_heretical_idol_marker_data(marker.data) then
 		ColorUtilities.color_copy(HERETICAL_IDOL_ICON_COLOR, widget.style.icon.color)
 	end
 end
@@ -44,7 +48,7 @@ local function get_world_markers()
 end
 
 local function is_heretical_idol_marker(marker)
-	return marker.type == HERETICAL_IDOL_MARKER_TYPE and marker.data and marker.data.__foundya_heretical_idol
+	return marker.type == HERETICAL_IDOL_MARKER_TYPE and is_heretical_idol_marker_data(marker.data)
 end
 
 local function is_data_unit_valid(data)
