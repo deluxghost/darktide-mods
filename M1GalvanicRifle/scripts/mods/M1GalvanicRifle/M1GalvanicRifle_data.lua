@@ -36,7 +36,7 @@ return {
 			{
 				setting_id = "teammate_sound_volume",
 				type = "numeric",
-				default_value = 100,
+				default_value = 50,
 				range = {1, 200},
 			},
 		}
