@@ -321,6 +321,14 @@ local loc = {
 		ja = "熱制", -- 熱制御
 		["zh-tw"] = "熱量", -- 熱量管理
 	},
+	stat_loc_stats_display_arc_stat = {
+		en = "ARC", -- Arc Efficiency
+		["zh-cn"] = "电弧", -- 电弧效益
+	},
+	stat_loc_stats_display_cleave_damage_and_targets_stat = {
+		en = "CLVE", -- Cleave Efficiency
+		["zh-cn"] = "劈效", -- 劈裂效益
+	},
 
 	-- Perks or blessings
 	-- Some of them may not available in game yet
