@@ -28,6 +28,17 @@ return {
 				default_value = 100,
 				range = {1, 200},
 			},
+			{
+				setting_id = "replace_teammate_sounds",
+				type = "checkbox",
+				default_value = true,
+			},
+			{
+				setting_id = "teammate_sound_volume",
+				type = "numeric",
+				default_value = 100,
+				range = {1, 200},
+			},
 		}
 	}
 }

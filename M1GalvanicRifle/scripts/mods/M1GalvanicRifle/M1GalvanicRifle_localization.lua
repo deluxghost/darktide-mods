@@ -27,4 +27,12 @@ return {
 		en = "Reload sound volume",
 		["zh-cn"] = "换弹音效音量",
 	},
+	replace_teammate_sounds = {
+		en = "Replace teammate sounds",
+		["zh-cn"] = "替换队友音效",
+	},
+	teammate_sound_volume = {
+		en = "Teammate sound volume",
+		["zh-cn"] = "队友音效音量",
+	},
 }
