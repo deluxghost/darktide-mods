@@ -31,10 +31,6 @@ native.stop = function(play_id)
 	return mixer.stop(play_id)
 end
 
-native.file_status = function(play_id)
-	return mixer.file_status(play_id)
-end
-
 native.is_playing = function(play_id)
 	return mixer.is_playing(play_id)
 end

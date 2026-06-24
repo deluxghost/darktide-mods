@@ -22,7 +22,6 @@ local CALLBACK_NULL = 0
 local MMSYSERR_NOERROR = 0
 local WHDR_PREPARED = 0x00000002
 local WHDR_DONE = 0x00000001
-local PLAYING_STATUS = "playing"
 
 local instances = mod:persistent_table("instances")
 instances.simple_audio_mixer = instances.simple_audio_mixer or {}
@@ -554,10 +553,6 @@ mixer.stop = function(play_id)
 	state.played_files[play_id] = nil
 
 	return true
-end
-
-mixer.file_status = function(play_id)
-	return play_id ~= nil and state.played_files[play_id] and PLAYING_STATUS
 end
 
 mixer.is_playing = function(play_id)

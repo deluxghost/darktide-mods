@@ -7,7 +7,6 @@ local wwise_hooks = mod:io_dofile("SimpleAudio/scripts/mods/SimpleAudio/wwise_ho
 
 mod.play_file = playback.play_file
 mod.stop_file = native_backend.stop
-mod.file_status = native_backend.file_status
 mod.is_file_playing = native_backend.is_playing
 mod.glob = audio_files.glob
 mod.hook_sound = wwise_hooks.hook_sound
