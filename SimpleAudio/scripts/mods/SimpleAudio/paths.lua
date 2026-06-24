@@ -55,14 +55,14 @@ paths.resolve_audio_path = function(audio_path)
 		return normalized_path
 	end
 
+	if normalized_path:sub(1, 5) == "mods/" then
+		return "../" .. normalized_path
+	end
+
 	local caller_name = paths.caller_mod_name()
 
 	if normalized_path:sub(1, #caller_name + 1) == caller_name .. "/" then
 		return "../mods/" .. normalized_path
-	end
-
-	if normalized_path:sub(1, 6) == "audio/" then
-		return "../mods/" .. caller_name .. "/" .. normalized_path
 	end
 
 	return "../mods/" .. caller_name .. "/audio/" .. normalized_path
