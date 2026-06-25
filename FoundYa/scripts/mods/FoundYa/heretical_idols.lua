@@ -1,5 +1,7 @@
 local ColorUtilities = require("scripts/utilities/ui/colors")
 
+local mod = get_mod("FoundYa")
+
 local HERETICAL_IDOL_MARKER_TYPE = "interaction"
 local HERETICAL_IDOL_ICON = "content/ui/materials/hud/interactions/icons/enemy"
 local HERETICAL_IDOL_ICON_COLOR = { 255, 169, 255, 0 }
@@ -17,7 +19,7 @@ local heretical_idol_interaction_data = {
 		return HERETICAL_IDOL_INTERACTION_TYPE
 	end,
 	show_marker = function ()
-		return true
+		return mod:get("add_heretical_idol_icon") ~= false
 	end,
 	ui_interaction_type = function ()
 		return HERETICAL_IDOL_UI_INTERACTION_TYPE

@@ -36,6 +36,11 @@ return {
 						type = "checkbox",
 						default_value = true,
 					},
+					{
+						setting_id = "add_heretical_idol_icon",
+						type = "checkbox",
+						default_value = true,
+					},
 				},
 			},
 			{

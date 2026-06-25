@@ -39,6 +39,10 @@ return {
 		["zh-cn"] = "改版殉道者头骨图标",
 		ru = "Альтернативный значок черепа мученика",
 	},
+	add_heretical_idol_icon = {
+		en = "Add Heretical Idol icon",
+		["zh-cn"] = "添加异端雕像图标",
+	},
 	max_distance_material = {
 		en = "Forge materials / Loots",
 		["zh-cn"] = "锻造材料 / 战利品",
