@@ -3,6 +3,7 @@ local mod = get_mod("M1GalvanicRifle")
 local SimpleAudio
 local shot_sounds
 local ping_sounds
+local ping_drop_sounds
 local replacements = {}
 
 local function resolved_event_name(fx_extension, event_name, append_husk_to_event_name)
@@ -17,10 +18,11 @@ local function is_teammate(fx_extension)
 	return not fx_extension._is_local_unit
 end
 
-local function register_replacement(event_name, sounds, setting_id, volume_setting_id)
+local function register_replacement(event_name, sounds, setting_id, volume_setting_id, get_sounds)
 	local replacement = {
 		setting_id = setting_id,
 		sounds = sounds,
+		get_sounds = get_sounds,
 		volume_setting_id = volume_setting_id,
 	}
 
@@ -51,10 +53,16 @@ local function play_replacement(fx_extension, event_name, is_teammate)
 		volume = volume * mod:get("teammate_sound_volume") / 100
 	end
 
-	return replacement.sounds:play({
+	local sounds = replacement.get_sounds and replacement.get_sounds() or replacement.sounds
+
+	return sounds:play({
 		audio_type = "sfx",
 		volume = volume,
 	}, unit)
+end
+
+local function get_reload_sounds()
+	return mod:get("enable_clip_drop_sound") and ping_drop_sounds or ping_sounds
 end
 
 local function install_hooks()
@@ -90,8 +98,9 @@ mod.on_all_mods_loaded = function()
 		return
 	end
 
-	shot_sounds = SimpleAudio.glob("shot*.mp3")
-	ping_sounds = SimpleAudio.glob("ping*.mp3")
+	shot_sounds = SimpleAudio.glob("shot/*.mp3")
+	ping_sounds = SimpleAudio.glob("ping/*.mp3")
+	ping_drop_sounds = SimpleAudio.glob("ping_drop/*.mp3")
 
 	register_replacement(
 		"wwise/events/weapon/play_weapon_galvanic_rifle",
@@ -103,7 +112,8 @@ mod.on_all_mods_loaded = function()
 		"wwise/events/weapon/play_galvanic_rifle_reload_lever_release",
 		ping_sounds,
 		"replace_reload_sound",
-		"reload_sound_volume"
+		"reload_sound_volume",
+		get_reload_sounds
 	)
 
 	install_hooks()

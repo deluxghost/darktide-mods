@@ -23,6 +23,11 @@ return {
 				default_value = true,
 			},
 			{
+				setting_id = "enable_clip_drop_sound",
+				type = "checkbox",
+				default_value = true,
+			},
+			{
 				setting_id = "reload_sound_volume",
 				type = "numeric",
 				default_value = 100,

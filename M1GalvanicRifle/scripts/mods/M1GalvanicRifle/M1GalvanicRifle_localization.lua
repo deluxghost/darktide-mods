@@ -23,6 +23,10 @@ return {
 		en = "Replace reload sound",
 		["zh-cn"] = "替换换弹音效",
 	},
+	enable_clip_drop_sound = {
+		en = "Enable clip drop sound",
+		["zh-cn"] = "启用弹夹落地音效",
+	},
 	reload_sound_volume = {
 		en = "Reload sound volume",
 		["zh-cn"] = "换弹音效音量",
