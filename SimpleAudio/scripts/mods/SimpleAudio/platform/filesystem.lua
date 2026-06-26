@@ -1,7 +1,7 @@
 local mod = get_mod("SimpleAudio")
 local ffi = Mods.lua.ffi
 
-local windows = mod:io_dofile("SimpleAudio/scripts/mods/SimpleAudio/windows")
+local windows = mod:io_dofile("SimpleAudio/scripts/mods/SimpleAudio/platform/windows")
 
 local filesystem = {}
 

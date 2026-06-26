@@ -1,9 +1,9 @@
 local mod = get_mod("SimpleAudio")
 
 local native_backend = mod:io_dofile("SimpleAudio/scripts/mods/SimpleAudio/backend/native")
-local paths = mod:io_dofile("SimpleAudio/scripts/mods/SimpleAudio/paths")
-local playback_options = mod:io_dofile("SimpleAudio/scripts/mods/SimpleAudio/playback_options")
-local spatial_audio = mod:io_dofile("SimpleAudio/scripts/mods/SimpleAudio/spatial_audio")
+local paths = mod:io_dofile("SimpleAudio/scripts/mods/SimpleAudio/core/paths")
+local playback_options = mod:io_dofile("SimpleAudio/scripts/mods/SimpleAudio/playback/options")
+local spatial = mod:io_dofile("SimpleAudio/scripts/mods/SimpleAudio/playback/spatial")
 
 local playback = {}
 
@@ -19,7 +19,7 @@ playback.play_file = function(
 )
 	playback_settings = playback_settings or {}
 
-	local volume, left_volume, right_volume = spatial_audio.mix(
+	local volume, left_volume, right_volume = spatial.mix(
 		unit_or_position,
 		decay,
 		min_distance,

@@ -1,6 +1,6 @@
 # SimpleAudio
 
-`SimpleAudio` is a local audio playback library for other Darktide mods. The current public API covers local audio file playback, one-time spatial volume and stereo pan calculation, random file selection, playback stopping, active playback checks, and Wwise event hooks.
+`SimpleAudio` is a local audio playback library for other Darktide mods. The current public API covers local audio file playback, game Wwise event playback, dialogue playback, one-time spatial volume and stereo pan calculation, random file selection, playback stopping, active playback checks, Wwise event hooks, dialogue hooks, and sound silencing.
 
 Its API is similar to Audio Plugin, but not identical.
 
@@ -64,6 +64,35 @@ Windows absolute paths are used as-is:
 
 ```lua
 SimpleAudio.play_file("D:/Audio/shot.mp3")
+```
+
+## Playing Game Wwise Sounds
+
+`play` triggers game Wwise resources directly. It does not play local audio files.
+
+```lua
+local source_id = SimpleAudio.play(sound_name, unit_or_position_or_id, node_or_rotation_or_boolean)
+```
+
+Supported `sound_name` values:
+
+- `wwise/events/...`: Triggers the matching game Wwise event.
+- `loc_...`: Triggers the matching external dialogue line.
+- `wwise/externals/loc_...`: Triggers the matching external dialogue line.
+
+`unit_or_position_or_id` is optional:
+
+- `Unit`: Creates an auto source attached to the unit.
+- `Vector3`: Creates a manual source at the position.
+- `number`: Uses the number as an existing Wwise source id for dialogue playback.
+- `nil`: Uses the local player unit for dialogue playback.
+
+Examples:
+
+```lua
+SimpleAudio.play("wwise/events/ui/play_ui_eor_character_lvl_up")
+SimpleAudio.play("loc_ogryn_a__combat_pause_one_liner_07")
+SimpleAudio.play("wwise/events/cinematics/play_fatshark_splash", Vector3(10, 20, 30))
 ```
 
 ## Playing Files
@@ -217,9 +246,9 @@ end
 
 The object returned by `glob` stores the matched file list. Reusing the same object avoids repeated file scans and preload calls.
 
-## Hooking Wwise Events
+## Hooking Wwise And Dialogue Events
 
-`hook_sound` listens for final Wwise event names triggered by the game. The first argument is a Lua pattern, not a plain string match.
+`hook_sound` listens for final Wwise event names and external dialogue names triggered by the game. The first argument is a Lua pattern, not a plain string match.
 
 ```lua
 SimpleAudio.hook_sound(pattern, callback)
@@ -234,10 +263,10 @@ end
 
 Arguments:
 
-- `sound_type`: Type inferred from `position_or_unit_or_id`: `nil` -> `2d_sound`, `boolean` -> `start_stop_event`, `number` -> `source_sound`, `Vector3` -> `3d_sound`, and `Unit` -> `unit_sound`. Other values return their Lua type name.
-- `event_name`: The actual Wwise event name.
+- `sound_type`: Type inferred from `position_or_unit_or_id` for Wwise resource events: `nil` -> `2d_sound`, `boolean` -> `start_stop_event`, `number` -> `source_sound`, `Vector3` -> `3d_sound`, and `Unit` -> `unit_sound`. External dialogue events use `external_sound`.
+- `event_name`: The actual `wwise/events/...` name for Wwise resource events. For external dialogue events, this is the `loc_...` name without the `wwise/externals/` prefix.
 - `delta`: Seconds since the same pattern last matched. The first match is `nil`.
-- `position_or_unit_or_id`, `optional_a`, `optional_b`: The original extra arguments passed to `WwiseWorld.trigger_resource_event`.
+- `position_or_unit_or_id`, `optional_a`, `optional_b`: The original extra arguments passed to `WwiseWorld.trigger_resource_event`. For external dialogue events, these are `wwise_source_id`, `sound_event`, and `sound_source`.
 
 Note: if `position_or_unit_or_id` is a Wwise source id instead of a `Unit` or `Vector3`, `SimpleAudio` cannot resolve a world position from it. Passing that value to `play_file` results in 2D playback. Positional playback requires the caller to pass a `Unit` or `Vector3`.
 
@@ -283,6 +312,42 @@ SimpleAudio.hook_sound("play_grenade_surface_impact", function(sound_type, event
 	end
 end)
 ```
+
+Example: replace one dialogue line with another game dialogue line:
+
+```lua
+SimpleAudio.hook_sound("com_wheel_vo_need_health", function(sound_type, event_name, delta, wwise_source_id)
+	SimpleAudio.play("loc_zealot_female_c__com_wheel_vo_thank_you_01", wwise_source_id)
+
+	return false
+end)
+```
+
+## Silencing Game Sounds
+
+`silence_sounds` prevents matched game Wwise resource events or external dialogue events from playing. It accepts a Lua pattern string or a list of Lua pattern strings.
+
+```lua
+SimpleAudio.silence_sounds("wwise/events/ui/play")
+SimpleAudio.silence_sounds({
+	"play_weapon_lasgun",
+	"loc_tech_priest_a",
+})
+```
+
+Reverse silencing with the same pattern or list:
+
+```lua
+SimpleAudio.unsilence_sounds("wwise/events/ui/play")
+```
+
+Check whether a name is currently silenced:
+
+```lua
+local silenced = SimpleAudio.is_sound_silenced("wwise/events/ui/play_ui_eor_character_lvl_up")
+```
+
+For external dialogue, silencing checks both the stripped `loc_...` name and the full `wwise/externals/loc_...` path.
 
 ## Limitations
 

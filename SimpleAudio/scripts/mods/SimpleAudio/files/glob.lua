@@ -1,11 +1,11 @@
 local mod = get_mod("SimpleAudio")
 
 local native_backend = mod:io_dofile("SimpleAudio/scripts/mods/SimpleAudio/backend/native")
-local paths = mod:io_dofile("SimpleAudio/scripts/mods/SimpleAudio/paths")
-local filesystem = mod:io_dofile("SimpleAudio/scripts/mods/SimpleAudio/filesystem")
-local utilities = mod:io_dofile("SimpleAudio/scripts/mods/SimpleAudio/utilities")
+local paths = mod:io_dofile("SimpleAudio/scripts/mods/SimpleAudio/core/paths")
+local filesystem = mod:io_dofile("SimpleAudio/scripts/mods/SimpleAudio/platform/filesystem")
+local utilities = mod:io_dofile("SimpleAudio/scripts/mods/SimpleAudio/core/utilities")
 
-local audio_files = {}
+local glob = {}
 
 local GlobResult = {}
 GlobResult.__index = GlobResult
@@ -50,7 +50,7 @@ function GlobResult:play(
 	)
 end
 
-audio_files.glob = function(pattern)
+glob.glob = function(pattern)
 	if type(pattern) ~= "string" then
 		error(string.format("Audio glob pattern must be a string, got %s", type(pattern)))
 	end
@@ -74,4 +74,4 @@ audio_files.glob = function(pattern)
 	}, GlobResult)
 end
 
-return audio_files
+return glob

@@ -1,8 +1,8 @@
 local mod = get_mod("SimpleAudio")
 
-local utilities = mod:io_dofile("SimpleAudio/scripts/mods/SimpleAudio/utilities")
+local utilities = mod:io_dofile("SimpleAudio/scripts/mods/SimpleAudio/core/utilities")
 
-local spatial_audio = {}
+local spatial = {}
 
 local MAX_DISTANCE = 100
 local DECAY = 0.01
@@ -21,7 +21,7 @@ local function listener_position_rotation()
 	return listener_position, listener_rotation
 end
 
-spatial_audio.mix = function(unit_or_position, decay, min_distance, max_distance, override_position, override_rotation)
+spatial.mix = function(unit_or_position, decay, min_distance, max_distance, override_position, override_rotation)
 	if not Managers.ui or Managers.ui:get_current_sub_state_name() ~= "GameplayStateRun" then
 		return 100, 1, 1
 	end
@@ -82,4 +82,4 @@ spatial_audio.mix = function(unit_or_position, decay, min_distance, max_distance
 	return volume, left_volume, right_volume
 end
 
-return spatial_audio
+return spatial

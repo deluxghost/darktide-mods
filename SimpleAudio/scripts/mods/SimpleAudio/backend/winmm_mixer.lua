@@ -1,8 +1,8 @@
 local mod = get_mod("SimpleAudio")
 local ffi = Mods.lua.ffi
 
-local filesystem = mod:io_dofile("SimpleAudio/scripts/mods/SimpleAudio/filesystem")
-local windows = mod:io_dofile("SimpleAudio/scripts/mods/SimpleAudio/windows")
+local filesystem = mod:io_dofile("SimpleAudio/scripts/mods/SimpleAudio/platform/filesystem")
+local windows = mod:io_dofile("SimpleAudio/scripts/mods/SimpleAudio/platform/windows")
 
 local mixer = {}
 
