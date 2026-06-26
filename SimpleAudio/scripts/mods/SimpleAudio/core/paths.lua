@@ -1,34 +1,8 @@
+local mod = get_mod("SimpleAudio")
+
+local context = mod:io_dofile("SimpleAudio/scripts/mods/SimpleAudio/core/context")
+
 local paths = {}
-
-paths.caller_mod_name = function()
-	local highest_mod_in_stack
-	local highest_non_library_mod_in_stack
-
-	for i = 2, 32 do
-		local info = debug.getinfo(i, "S")
-
-		if not info then
-			break
-		end
-
-		local source = info.source:gsub("\\", "/")
-		local calling_mod_name = source:match("/mods/([^/]+)/scripts/")
-
-		if not calling_mod_name and i > 2 then
-			break
-		end
-
-		if calling_mod_name and calling_mod_name ~= "dmf" then
-			highest_mod_in_stack = calling_mod_name
-
-			if calling_mod_name ~= "SimpleAudio" then
-				highest_non_library_mod_in_stack = calling_mod_name
-			end
-		end
-	end
-
-	return highest_non_library_mod_in_stack or highest_mod_in_stack or "unknown"
-end
 
 paths.normalize_audio_path = function(audio_path)
 	return audio_path:gsub("\\", "/"):gsub("^/", "")
@@ -59,7 +33,7 @@ paths.resolve_audio_path = function(audio_path)
 		return "../" .. normalized_path
 	end
 
-	local caller_name = paths.caller_mod_name()
+	local caller_name = context.mod_name()
 
 	if normalized_path:sub(1, #caller_name + 1) == caller_name .. "/" then
 		return "../mods/" .. normalized_path

@@ -1,6 +1,6 @@
 local mod = get_mod("SimpleAudio")
 
-local utilities = mod:io_dofile("SimpleAudio/scripts/mods/SimpleAudio/core/utilities")
+local context = mod:io_dofile("SimpleAudio/scripts/mods/SimpleAudio/core/context")
 
 local spatial = {}
 
@@ -26,7 +26,7 @@ spatial.mix = function(unit_or_position, decay, min_distance, max_distance, over
 		return 100, 1, 1
 	end
 
-	local input_type = utilities.userdata_type(unit_or_position)
+	local input_type = context.userdata_type(unit_or_position)
 
 	if input_type ~= "Unit" and input_type ~= "Vector3" then
 		return 100, 1, 1

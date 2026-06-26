@@ -1,6 +1,6 @@
 local mod = get_mod("SimpleAudio")
 
-local utilities = mod:io_dofile("SimpleAudio/scripts/mods/SimpleAudio/core/utilities")
+local context = mod:io_dofile("SimpleAudio/scripts/mods/SimpleAudio/core/context")
 
 local playback = {}
 
@@ -8,6 +8,28 @@ local function current_wwise_world()
 	local world = Managers.ui:world()
 
 	return Managers.world:wwise_world(world)
+end
+
+local function trigger_resource_event(wwise_world, sound_name, unit_or_position_or_id, node_or_rotation_or_boolean)
+	if unit_or_position_or_id == nil then
+		return wwise_world:trigger_resource_event(sound_name)
+	end
+
+	local value_type = context.userdata_type(unit_or_position_or_id) or type(unit_or_position_or_id)
+
+	if value_type == "number" then
+		return wwise_world:trigger_resource_event(sound_name, unit_or_position_or_id)
+	end
+
+	if value_type == "boolean" or value_type == "Unit" or value_type == "Vector3" then
+		if node_or_rotation_or_boolean == nil then
+			return wwise_world:trigger_resource_event(sound_name, unit_or_position_or_id)
+		end
+
+		return wwise_world:trigger_resource_event(sound_name, unit_or_position_or_id, node_or_rotation_or_boolean)
+	end
+
+	error(string.format("Unsupported Wwise sound target: %s", tostring(value_type)))
 end
 
 local function source_id(wwise_world, unit_or_position_or_id, node_or_rotation_or_boolean)
@@ -25,7 +47,7 @@ local function source_id(wwise_world, unit_or_position_or_id, node_or_rotation_o
 		return nil
 	end
 
-	local value_type = utilities.userdata_type(unit_or_position_or_id)
+	local value_type = context.userdata_type(unit_or_position_or_id)
 
 	if value_type == "Unit" then
 		return wwise_world:make_auto_source(unit_or_position_or_id, node_or_rotation_or_boolean)
@@ -50,11 +72,7 @@ playback.play = function(sound_name, unit_or_position_or_id, node_or_rotation_or
 	local wwise_world = current_wwise_world()
 
 	if string.starts_with(sound_name, "wwise/events") then
-		return wwise_world:trigger_resource_event(
-			sound_name,
-			unit_or_position_or_id,
-			node_or_rotation_or_boolean
-		)
+		return trigger_resource_event(wwise_world, sound_name, unit_or_position_or_id, node_or_rotation_or_boolean)
 	end
 
 	local external_event = external_event_name(sound_name)

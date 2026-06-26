@@ -194,7 +194,7 @@ Return value:
 
 ## Random Files
 
-`glob` finds a group of files and can play a random match. Matches are preloaded when the glob is created.
+`glob` finds a group of files and can play a random match.
 
 ```lua
 local shots = SimpleAudio.glob("shot_*.mp3")
@@ -244,7 +244,7 @@ for _, file in ipairs(shots:list()) do
 end
 ```
 
-The object returned by `glob` stores the matched file list. Reusing the same object avoids repeated file scans and preload calls.
+The object returned by `glob` stores the matched file list. Reusing the same object avoids repeated file scans.
 
 ## Hooking Wwise And Dialogue Events
 
@@ -274,6 +274,8 @@ Return value:
 
 - Return `false` to stop the original Wwise event from playing.
 - Return `nil` or any other value to let the original Wwise event continue.
+
+All callbacks with matching patterns are called. If any callback returns `false`, the original Wwise event is not played. Registering the same pattern from the same calling mod replaces that mod's previous callback for that pattern.
 
 Example: replace one weapon firing event and suppress the original event:
 
@@ -351,8 +353,6 @@ For external dialogue, silencing checks both the stripped `loc_...` name and the
 
 ## Limitations
 
-- Audio is decoded to a 48 kHz, stereo, 16-bit PCM temporary cache and cleaned up when `SimpleAudio` unloads.
 - Supported input formats depend on the bundled FFmpeg DLLs.
 - Spatial audio is calculated once when playback starts. It does not keep tracking moving targets during playback.
-- `glob` preloads all matched files. Matching many long files can increase load time and temporary cache usage.
-- `hook_sound` calls only one callback for the first matching pattern. If multiple patterns or multiple mods match the same event, the selected callback is not guaranteed.
+- Finished and error notifications are queued by the native runtime and polled from Lua. Very large bursts of very short sounds can overflow the event queue, which can prevent some `on_finished` callbacks from running.

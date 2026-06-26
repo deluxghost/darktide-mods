@@ -1,9 +1,7 @@
 local mod = get_mod("SimpleAudio")
 
-local native_backend = mod:io_dofile("SimpleAudio/scripts/mods/SimpleAudio/backend/native")
 local paths = mod:io_dofile("SimpleAudio/scripts/mods/SimpleAudio/core/paths")
 local filesystem = mod:io_dofile("SimpleAudio/scripts/mods/SimpleAudio/platform/filesystem")
-local utilities = mod:io_dofile("SimpleAudio/scripts/mods/SimpleAudio/core/utilities")
 
 local glob = {}
 
@@ -15,7 +13,13 @@ function GlobResult:count()
 end
 
 function GlobResult:list()
-	return utilities.copy_list(self._files)
+	local copy = {}
+
+	for i = 1, #self._files do
+		copy[i] = self._files[i]
+	end
+
+	return copy
 end
 
 function GlobResult:random()
@@ -60,13 +64,10 @@ glob.glob = function(pattern)
 	local resolved_base_path = paths.resolve_audio_path(caller_base_path)
 	local search_pattern = paths.join_audio_path(resolved_base_path, relative_pattern)
 	local files = filesystem.find_files(search_pattern, caller_base_path)
-	local resolved_files = filesystem.find_files(search_pattern, resolved_base_path)
 
 	if not files or #files == 0 then
 		error(string.format("No audio files matched pattern: %s", normalized_pattern))
 	end
-
-	native_backend.preload(resolved_files)
 
 	return setmetatable({
 		_pattern = normalized_pattern,
