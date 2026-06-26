@@ -192,6 +192,25 @@ Return value:
 - Returns `true` while `play_id` is still tracked as active playback.
 - Returns `false` otherwise.
 
+## File Information
+
+`file_info` reads basic information from one local audio file.
+
+```lua
+local info = SimpleAudio.file_info("shot.mp3")
+```
+
+The same path rules as `play_file` apply.
+
+Return value:
+
+- `sample_rate`: Source audio stream sample rate.
+- `channels`: Source audio stream channel count.
+- `duration`: Source audio stream duration in seconds. The field is omitted when FFmpeg does not report one.
+- `bit_rate`: FFmpeg-reported source audio stream bit rate in bits per second. Returns `0` when FFmpeg does not report one.
+
+`file_info` errors if `audio_path` is not a string or the file cannot be opened as an audio file.
+
 ## Random Files
 
 `glob` finds a group of files and can play a random match.

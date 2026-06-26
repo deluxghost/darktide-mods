@@ -22,6 +22,7 @@ if not pcall(ffi.typeof, "SimpleAudioRuntime_CDEF") then
 
 		int SimpleAudioRuntime_Initialize(char* error_buffer, int error_buffer_size);
 		int SimpleAudioRuntime_Play(const char* path, double volume_gain, double left_gain, double right_gain, double pos, double duration, int loop_count, char* error_buffer, int error_buffer_size);
+		int SimpleAudioRuntime_FileInfo(const char* path, int* sample_rate, int* channels, double* duration, long long* bit_rate, char* error_buffer, int error_buffer_size);
 		int SimpleAudioRuntime_Stop(int play_id);
 		void SimpleAudioRuntime_StopAll(void);
 		int SimpleAudioRuntime_IsPlaying(int play_id);
@@ -141,6 +142,47 @@ native.play = function(path, options)
 	end
 
 	return tonumber(play_id)
+end
+
+native.file_info = function(path)
+	local runtime, load_error = load_runtime()
+
+	if not runtime then
+		return false, load_error
+	end
+
+	local sample_rate_buffer = ffi.new("int[1]")
+	local channels_buffer = ffi.new("int[1]")
+	local duration_buffer = ffi.new("double[1]")
+	local bit_rate_buffer = ffi.new("long long[1]")
+	local buffer = error_buffer()
+	local ok = runtime.SimpleAudioRuntime_FileInfo(
+		windows.path(path),
+		sample_rate_buffer,
+		channels_buffer,
+		duration_buffer,
+		bit_rate_buffer,
+		buffer,
+		ERROR_BUFFER_SIZE
+	)
+
+	if ok == 0 then
+		return false, buffer_string(buffer)
+	end
+
+	local info = {
+		sample_rate = tonumber(sample_rate_buffer[0]),
+		channels = tonumber(channels_buffer[0]),
+		bit_rate = tonumber(bit_rate_buffer[0]),
+	}
+
+	local duration = tonumber(duration_buffer[0])
+
+	if duration >= 0 then
+		info.duration = duration
+	end
+
+	return info
 end
 
 native.stop = function(play_id)

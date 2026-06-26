@@ -2,7 +2,7 @@ local mod = get_mod("SimpleAudio")
 
 local context = mod:io_dofile("SimpleAudio/scripts/mods/SimpleAudio/core/context")
 
-local hooks_api = {}
+local wwise_hooks = {}
 local registered_hooks = {}
 local silenced = {}
 
@@ -20,7 +20,7 @@ local function infer_sound_type(value)
 	return SOUND_TYPE[value_type] or value_type
 end
 
-hooks_api.hook_sound = function(pattern, callback)
+wwise_hooks.hook_sound = function(pattern, callback)
 	if not registered_hooks[pattern] then
 		registered_hooks[pattern] = {
 			callbacks = {},
@@ -30,7 +30,7 @@ hooks_api.hook_sound = function(pattern, callback)
 	registered_hooks[pattern].callbacks[context.mod_name()] = callback
 end
 
-hooks_api.silence_sounds = function(patterns)
+wwise_hooks.silence_sounds = function(patterns)
 	if type(patterns) == "string" then
 		silenced[patterns] = true
 
@@ -42,7 +42,7 @@ hooks_api.silence_sounds = function(patterns)
 	end
 end
 
-hooks_api.unsilence_sounds = function(patterns)
+wwise_hooks.unsilence_sounds = function(patterns)
 	if type(patterns) == "string" then
 		silenced[patterns] = nil
 
@@ -54,7 +54,7 @@ hooks_api.unsilence_sounds = function(patterns)
 	end
 end
 
-hooks_api.is_sound_silenced = function(event_name)
+wwise_hooks.is_sound_silenced = function(event_name)
 	for pattern in pairs(silenced) do
 		if event_name:match(pattern) then
 			return true
@@ -96,7 +96,7 @@ local function run_hooks(sound_type, event_name, position_or_unit_or_id, optiona
 	end
 end
 
-hooks_api.install = function()
+wwise_hooks.install = function()
 	mod:hook(WwiseWorld, "trigger_resource_event", function(func, wwise_world, event_name, ...)
 		local position_or_unit_or_id, optional_a, optional_b = ...
 		local hook_result = run_hooks(
@@ -107,7 +107,7 @@ hooks_api.install = function()
 			optional_b
 		)
 
-		if hook_result == false or hooks_api.is_sound_silenced(event_name) then
+		if hook_result == false or wwise_hooks.is_sound_silenced(event_name) then
 			return
 		end
 
@@ -119,8 +119,8 @@ hooks_api.install = function()
 		local hook_result = run_hooks("external_sound", event_name, wwise_source_id, sound_event, sound_source)
 
 		if hook_result == false
-			or hooks_api.is_sound_silenced(event_name)
-			or hooks_api.is_sound_silenced(file_path)
+			or wwise_hooks.is_sound_silenced(event_name)
+			or wwise_hooks.is_sound_silenced(file_path)
 		then
 			return
 		end
@@ -129,4 +129,4 @@ hooks_api.install = function()
 	end)
 end
 
-return hooks_api
+return wwise_hooks

@@ -2,7 +2,7 @@ local mod = get_mod("SimpleAudio")
 
 local context = mod:io_dofile("SimpleAudio/scripts/mods/SimpleAudio/core/context")
 
-local playback = {}
+local wwise_playback = {}
 
 local function current_wwise_world()
 	local world = Managers.ui:world()
@@ -64,7 +64,7 @@ local function external_event_name(sound_name)
 	end
 end
 
-playback.play = function(sound_name, unit_or_position_or_id, node_or_rotation_or_boolean)
+wwise_playback.play = function(sound_name, unit_or_position_or_id, node_or_rotation_or_boolean)
 	if type(sound_name) ~= "string" then
 		error(string.format("Wwise sound name must be a string, got %s", type(sound_name)))
 	end
@@ -90,4 +90,4 @@ playback.play = function(sound_name, unit_or_position_or_id, node_or_rotation_or
 	error(string.format("Unsupported Wwise sound name: %s", sound_name))
 end
 
-return playback
+return wwise_playback
