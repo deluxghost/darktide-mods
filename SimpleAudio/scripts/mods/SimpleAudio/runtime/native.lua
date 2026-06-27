@@ -18,9 +18,9 @@ state.play_callbacks = state.play_callbacks or {}
 state.play_options = state.play_options or {}
 state.update_callbacks = state.update_callbacks or {}
 
-if not pcall(ffi.typeof, "SimpleAudioRuntime_CDEF_V2") then
+if not pcall(ffi.typeof, "SimpleAudioRuntime_CDEF") then
 	ffi.cdef([[
-		typedef struct { int unused; } SimpleAudioRuntime_CDEF_V2;
+		typedef struct { int unused; } SimpleAudioRuntime_CDEF;
 
 		int SimpleAudioRuntime_Initialize(char* error_buffer, int error_buffer_size);
 		int SimpleAudioRuntime_Play(const char* path, const char* filters, double volume_gain, double pos, double duration, int loop_count, int spatial, double source_x, double source_y, double source_z, double listener_x, double listener_y, double listener_z, double listener_front_x, double listener_front_y, double listener_front_z, double listener_top_x, double listener_top_y, double listener_top_z, char* error_buffer, int error_buffer_size);
