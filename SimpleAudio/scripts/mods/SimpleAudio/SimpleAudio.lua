@@ -10,7 +10,9 @@ local wwise_hooks = mod:io_dofile("SimpleAudio/scripts/mods/SimpleAudio/wwise/ho
 local initialized, initialize_error = native_runtime.initialize()
 
 if not initialized then
-	error(string.format("Failed to initialize SimpleAudio runtime: %s", initialize_error))
+	local error_message = mod:localize("initialize_failed", initialize_error)
+	mod:error(error_message)
+	error(error_message)
 end
 
 mod.play = wwise_playback.play

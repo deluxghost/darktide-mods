@@ -21,7 +21,7 @@ if not pcall(ffi.typeof, "SimpleAudioRuntime_CDEF") then
 		typedef struct { int unused; } SimpleAudioRuntime_CDEF;
 
 		int SimpleAudioRuntime_Initialize(char* error_buffer, int error_buffer_size);
-		int SimpleAudioRuntime_Play(const char* path, double volume_gain, double left_gain, double right_gain, double pos, double duration, int loop_count, char* error_buffer, int error_buffer_size);
+		int SimpleAudioRuntime_Play(const char* path, const char* filters, double volume_gain, double left_gain, double right_gain, double pos, double duration, int loop_count, char* error_buffer, int error_buffer_size);
 		int SimpleAudioRuntime_FileInfo(const char* path, int* sample_rate, int* channels, double* duration, long long* bit_rate, char* error_buffer, int error_buffer_size);
 		int SimpleAudioRuntime_Stop(int play_id);
 		void SimpleAudioRuntime_StopAll(void);
@@ -123,6 +123,7 @@ native.play = function(path, options)
 	local buffer = error_buffer()
 	local play_id = runtime.SimpleAudioRuntime_Play(
 		windows.path(path),
+		options.filters,
 		options.volume_gain or 1,
 		options.left_gain or 1,
 		options.right_gain or 1,

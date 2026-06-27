@@ -34,6 +34,7 @@ playback_options.create = function(playback_settings, spatial_volume, left_volum
 	return {
 		audio_type = playback_settings.audio_type,
 		duration = playback_settings.duration,
+		filters = playback_settings.filters,
 		left_gain = left_volume or 1,
 		loop = playback_settings.loop,
 		on_finished = playback_settings.on_finished,

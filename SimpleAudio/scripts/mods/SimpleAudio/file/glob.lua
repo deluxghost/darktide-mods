@@ -4,30 +4,38 @@ local paths = mod:io_dofile("SimpleAudio/scripts/mods/SimpleAudio/core/paths")
 local filesystem = mod:io_dofile("SimpleAudio/scripts/mods/SimpleAudio/platform/filesystem")
 
 local glob = {}
+local glob_result_state = setmetatable({}, { __mode = "k" })
 
 local GlobResult = {}
 GlobResult.__index = GlobResult
+GlobResult.__metatable = false
+
+local function get_result_state(result)
+	return glob_result_state[result] or error("Invalid SimpleAudio glob result")
+end
 
 function GlobResult:count()
-	return #self._files
+	return #get_result_state(self).files
 end
 
 function GlobResult:list()
+	local files = get_result_state(self).files
 	local copy = {}
 
-	for i = 1, #self._files do
-		copy[i] = self._files[i]
+	for i = 1, #files do
+		copy[i] = files[i]
 	end
 
 	return copy
 end
 
 function GlobResult:random()
-	local files = self._files
+	local current_state = get_result_state(self)
+	local files = current_state.files
 	local count = #files
 
 	if count == 0 then
-		error(string.format("No audio files matched pattern: %s", self._pattern))
+		error(string.format("No audio files matched pattern: %s", current_state.pattern))
 	end
 
 	return files[math.random(1, count)]
@@ -69,10 +77,13 @@ glob.glob = function(pattern)
 		error(string.format("No audio files matched pattern: %s", normalized_pattern))
 	end
 
-	return setmetatable({
-		_pattern = normalized_pattern,
-		_files = files,
-	}, GlobResult)
+	local result = setmetatable({}, GlobResult)
+	glob_result_state[result] = {
+		pattern = normalized_pattern,
+		files = files,
+	}
+
+	return result
 end
 
 return glob

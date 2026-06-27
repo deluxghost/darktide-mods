@@ -119,6 +119,7 @@ Return value:
 
 - `audio_type`: Supported values are `sfx`, `music`, and `dialogue`. This connects playback volume to the matching in-game audio setting. If omitted, only master volume is applied.
 - `volume`: Percentage multiplier. `100` means original volume, and `200` means double volume.
+- `filters`: FFmpeg audio filter string applied to the decoded file before `SimpleAudio` applies `audio_type`, `volume`, and positional gains.
 - `pos`: Start position in seconds.
 - `duration`: Playback duration in seconds.
 - `loop`: `true` loops forever, a number sets the number of extra repeats, and `nil` or `false` disables looping.
