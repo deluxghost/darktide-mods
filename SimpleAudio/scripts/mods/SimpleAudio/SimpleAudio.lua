@@ -34,6 +34,10 @@ mod.update = function(dt)
 	native_runtime.update(dt)
 end
 
+mod.on_setting_changed = function(setting_name)
+	wwise_hooks.on_setting_changed(setting_name)
+end
+
 mod.on_unload = function()
 	native_runtime.shutdown()
 end
