@@ -15,14 +15,17 @@ instances.simple_audio_runtime = instances.simple_audio_runtime or {}
 
 local state = instances.simple_audio_runtime
 state.play_callbacks = state.play_callbacks or {}
+state.play_options = state.play_options or {}
+state.update_callbacks = state.update_callbacks or {}
 
-if not pcall(ffi.typeof, "SimpleAudioRuntime_CDEF") then
+if not pcall(ffi.typeof, "SimpleAudioRuntime_CDEF_V2") then
 	ffi.cdef([[
-		typedef struct { int unused; } SimpleAudioRuntime_CDEF;
+		typedef struct { int unused; } SimpleAudioRuntime_CDEF_V2;
 
 		int SimpleAudioRuntime_Initialize(char* error_buffer, int error_buffer_size);
-		int SimpleAudioRuntime_Play(const char* path, const char* filters, double volume_gain, double left_gain, double right_gain, double pos, double duration, int loop_count, char* error_buffer, int error_buffer_size);
+		int SimpleAudioRuntime_Play(const char* path, const char* filters, double volume_gain, double pos, double duration, int loop_count, int spatial, double source_x, double source_y, double source_z, double listener_x, double listener_y, double listener_z, double listener_front_x, double listener_front_y, double listener_front_z, double listener_top_x, double listener_top_y, double listener_top_z, char* error_buffer, int error_buffer_size);
 		int SimpleAudioRuntime_FileInfo(const char* path, int* sample_rate, int* channels, double* duration, long long* bit_rate, char* error_buffer, int error_buffer_size);
+		int SimpleAudioRuntime_SetPosition(int play_id, double volume_gain, double source_x, double source_y, double source_z, double listener_x, double listener_y, double listener_z, double listener_front_x, double listener_front_y, double listener_front_z, double listener_top_x, double listener_top_y, double listener_top_z, char* error_buffer, int error_buffer_size);
 		int SimpleAudioRuntime_Stop(int play_id);
 		void SimpleAudioRuntime_StopAll(void);
 		int SimpleAudioRuntime_IsPlaying(int play_id);
@@ -41,6 +44,10 @@ local event_message_buffer = error_buffer()
 
 local function buffer_string(buffer)
 	return ffi.string(buffer)
+end
+
+local function spatial_value(spatial_data, key)
+	return spatial_data and spatial_data[key] or 0
 end
 
 local function load_runtime()
@@ -121,15 +128,28 @@ native.play = function(path, options)
 	end
 
 	local buffer = error_buffer()
+	local spatial_data = options.spatial_data
+	local spatial_enabled = spatial_data and 1 or 0
 	local play_id = runtime.SimpleAudioRuntime_Play(
 		windows.path(path),
 		options.filters,
 		options.volume_gain or 1,
-		options.left_gain or 1,
-		options.right_gain or 1,
 		pos,
 		duration,
 		normalize_loop_count(options.loop),
+		spatial_enabled,
+		spatial_value(spatial_data, "source_x"),
+		spatial_value(spatial_data, "source_y"),
+		spatial_value(spatial_data, "source_z"),
+		spatial_value(spatial_data, "listener_x"),
+		spatial_value(spatial_data, "listener_y"),
+		spatial_value(spatial_data, "listener_z"),
+		spatial_value(spatial_data, "listener_front_x"),
+		spatial_value(spatial_data, "listener_front_y"),
+		spatial_value(spatial_data, "listener_front_z"),
+		spatial_value(spatial_data, "listener_top_x"),
+		spatial_value(spatial_data, "listener_top_y"),
+		spatial_value(spatial_data, "listener_top_z"),
 		buffer,
 		ERROR_BUFFER_SIZE
 	)
@@ -141,6 +161,13 @@ native.play = function(path, options)
 	if type(options.on_finished) == "function" then
 		state.play_callbacks[tonumber(play_id)] = options.on_finished
 	end
+	if type(options.on_update) == "function" then
+		state.update_callbacks[tonumber(play_id)] = options.on_update
+	end
+
+	state.play_options[tonumber(play_id)] = {
+		base_volume_gain = options.base_volume_gain or options.volume_gain or 1,
+	}
 
 	return tonumber(play_id)
 end
@@ -196,6 +223,8 @@ native.stop = function(play_id)
 	if play_id == nil then
 		runtime.SimpleAudioRuntime_StopAll()
 		state.play_callbacks = {}
+		state.play_options = {}
+		state.update_callbacks = {}
 
 		return true
 	end
@@ -204,9 +233,49 @@ native.stop = function(play_id)
 
 	if stopped then
 		state.play_callbacks[play_id] = nil
+		state.play_options[play_id] = nil
+		state.update_callbacks[play_id] = nil
 	end
 
 	return stopped
+end
+
+native.set_position = function(play_id, spatial_volume, spatial_data)
+	play_id = tonumber(play_id)
+
+	local runtime = state.runtime
+	local options = state.play_options[play_id]
+
+	if not runtime or not options then
+		return false
+	end
+
+	local volume_gain = (spatial_volume or 100) / 100 * options.base_volume_gain
+	local buffer = error_buffer()
+	local ok = runtime.SimpleAudioRuntime_SetPosition(
+		play_id,
+		volume_gain,
+		spatial_data.source_x,
+		spatial_data.source_y,
+		spatial_data.source_z,
+		spatial_data.listener_x,
+		spatial_data.listener_y,
+		spatial_data.listener_z,
+		spatial_data.listener_front_x,
+		spatial_data.listener_front_y,
+		spatial_data.listener_front_z,
+		spatial_data.listener_top_x,
+		spatial_data.listener_top_y,
+		spatial_data.listener_top_z,
+		buffer,
+		ERROR_BUFFER_SIZE
+	)
+
+	if ok == 0 then
+		return false, buffer_string(buffer)
+	end
+
+	return true
 end
 
 native.is_playing = function(play_id)
@@ -219,39 +288,63 @@ native.is_playing = function(play_id)
 	return runtime.SimpleAudioRuntime_IsPlaying(play_id) ~= 0
 end
 
-native.update = function()
-	local runtime = state.runtime
+local function clear_playback_state(play_id)
+	state.play_callbacks[play_id] = nil
+	state.play_options[play_id] = nil
+	state.update_callbacks[play_id] = nil
+end
 
-	if not runtime then
-		return
-	end
-
+local function poll_events(runtime)
 	while true do
 		local result = runtime.SimpleAudioRuntime_PollEvent(event_type_buffer, event_play_id_buffer, event_message_buffer, ERROR_BUFFER_SIZE)
 
 		if result == 0 then
-			return
+			return true
 		end
 		if result < 0 then
 			mod:error("Failed to poll SimpleAudio runtime event")
 
-			return
+			return false
 		end
 
 		local id = tonumber(event_play_id_buffer[0])
 
 		if event_type_buffer[0] == EVENT_FINISHED then
 			local callback = state.play_callbacks[id]
-			state.play_callbacks[id] = nil
+			clear_playback_state(id)
 
 			if callback then
-				callback()
+				callback(id)
 			end
 		elseif event_type_buffer[0] == EVENT_ERROR then
-			state.play_callbacks[id] = nil
+			clear_playback_state(id)
 			mod:error(buffer_string(event_message_buffer))
 		end
 	end
+end
+
+local function update_playbacks(dt)
+	for id, callback in pairs(state.update_callbacks) do
+		if state.update_callbacks[id] == callback and native.is_playing(id) then
+			callback(id, dt)
+		else
+			clear_playback_state(id)
+		end
+	end
+end
+
+native.update = function(dt)
+	local runtime = state.runtime
+
+	if not runtime then
+		return
+	end
+
+	if not poll_events(runtime) then
+		return
+	end
+
+	update_playbacks(dt)
 end
 
 native.shutdown = function()
@@ -262,6 +355,8 @@ native.shutdown = function()
 	end
 
 	state.play_callbacks = {}
+	state.play_options = {}
+	state.update_callbacks = {}
 	state.runtime = nil
 end
 

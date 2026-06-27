@@ -17,6 +17,7 @@ end
 
 mod.play = wwise_playback.play
 mod.play_file = file_playback.play_file
+mod.set_position = file_playback.set_position
 mod.stop_file = native_runtime.stop
 mod.is_file_playing = native_runtime.is_playing
 mod.glob = file_glob.glob

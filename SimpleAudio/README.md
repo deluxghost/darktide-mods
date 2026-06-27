@@ -1,6 +1,6 @@
 # SimpleAudio
 
-`SimpleAudio` is a local audio playback library for other Darktide mods. The current public API covers local audio file playback, game Wwise event playback, dialogue playback, one-time spatial volume and stereo pan calculation, random file selection, playback stopping, active playback checks, Wwise event hooks, dialogue hooks, and sound silencing.
+`SimpleAudio` is a local audio playback library for other Darktide mods. The current public API covers local audio file playback, game Wwise event playback, dialogue playback, XAudio2 spatial matrix playback, random file selection, playback stopping, active playback checks, Wwise event hooks, dialogue hooks, and sound silencing.
 
 Its API is similar to Audio Plugin, but not identical.
 
@@ -119,11 +119,12 @@ Return value:
 
 - `audio_type`: Supported values are `sfx`, `music`, and `dialogue`. This connects playback volume to the matching in-game audio setting. If omitted, only master volume is applied.
 - `volume`: Percentage multiplier. `100` means original volume, and `200` means double volume.
-- `filters`: FFmpeg audio filter string applied to the decoded file before `SimpleAudio` applies `audio_type`, `volume`, and positional gains.
+- `filters`: FFmpeg audio filter string applied to the decoded file before `SimpleAudio` applies `audio_type`, `volume`, and positional audio.
 - `pos`: Start position in seconds.
 - `duration`: Playback duration in seconds.
 - `loop`: `true` loops forever, a number sets the number of extra repeats, and `nil` or `false` disables looping.
-- `on_finished`: `function()` callback called with no arguments when playback ends naturally. It is not called when playback is stopped with `stop_file`.
+- `on_finished`: `function(play_id)` callback called when playback ends naturally. It is not called when playback is stopped with `stop_file`.
+- `on_update`: `function(play_id, dt)` callback called from `SimpleAudio`'s update loop while playback is active.
 
 `SimpleAudio` reads playback options from the `playback_settings` table passed to the current call.
 
@@ -159,6 +160,48 @@ Loop a file and keep the `play_id`:
 local loop_id = SimpleAudio.play_file("engine_loop.ogg", {
 	audio_type = "sfx",
 	loop = true,
+}, unit)
+```
+
+## Updating Position
+
+`set_position` updates the spatial mix of an active file playback.
+
+```lua
+local ok, error_message = SimpleAudio.set_position(
+	play_id,
+	unit_or_position,
+	decay,
+	min_distance,
+	max_distance,
+	override_position,
+	override_rotation
+)
+```
+
+Return value:
+
+- Returns `true` when the active playback was updated.
+- Returns `false` and an optional error message when the playback is not active or the runtime update fails.
+
+Example:
+
+```lua
+local update_delay = 0
+
+SimpleAudio.play_file("engine_loop.ogg", {
+	audio_type = "sfx",
+	loop = true,
+	on_update = function(play_id, dt)
+		update_delay = update_delay + dt
+
+		if update_delay < 0.05 then
+			return
+		end
+
+		update_delay = 0
+		SimpleAudio.set_position(play_id, unit)
+	end,
 }, unit)
 ```
 
@@ -374,5 +417,6 @@ For external dialogue, silencing checks both the stripped `loc_...` name and the
 ## Limitations
 
 - Supported input formats depend on the bundled FFmpeg DLLs.
-- Spatial audio is calculated once when playback starts. It does not keep tracking moving targets during playback.
+- File playback updates spatial audio only when `set_position` is called.
+- Doppler is not implemented.
 - Finished and error notifications are queued by the native runtime and polled from Lua. Very large bursts of very short sounds can overflow the event queue, which can prevent some `on_finished` callbacks from running.

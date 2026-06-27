@@ -23,13 +23,13 @@ end
 
 spatial.mix = function(unit_or_position, decay, min_distance, max_distance, override_position, override_rotation)
 	if not Managers.ui or Managers.ui:get_current_sub_state_name() ~= "GameplayStateRun" then
-		return 100, 1, 1
+		return 100
 	end
 
 	local input_type = context.userdata_type(unit_or_position)
 
 	if input_type ~= "Unit" and input_type ~= "Vector3" then
-		return 100, 1, 1
+		return 100
 	end
 
 	local position = input_type == "Unit" and Unit.local_position(unit_or_position, 1) or unit_or_position
@@ -60,26 +60,26 @@ spatial.mix = function(unit_or_position, decay, min_distance, max_distance, over
 
 	local direction = position - listener_position
 	local local_direction = Quaternion.rotate(Quaternion.inverse(listener_rotation), direction)
-	local normalized_direction = Vector3.normalize(local_direction)
-	local angle = math.atan2(normalized_direction.x, normalized_direction.y)
-	local pan
+	local source_position = Vector3(
+		Vector3.x(local_direction),
+		Vector3.z(local_direction),
+		Vector3.y(local_direction)
+	)
 
-	if angle > 0 then
-		if angle <= math.pi / 2 then
-			pan = angle / (math.pi / 2)
-		else
-			pan = 1 - (angle - math.pi / 2) / (math.pi / 2)
-		end
-	elseif angle >= -math.pi / 2 then
-		pan = angle / (math.pi / 2)
-	else
-		pan = -(1 + (angle + math.pi / 2) / (math.pi / 2))
-	end
-
-	local left_volume = pan > 0 and 1 - pan or 1
-	local right_volume = pan < 0 and 1 + pan or 1
-
-	return volume, left_volume, right_volume
+	return volume, {
+		listener_front_x = 0,
+		listener_front_y = 0,
+		listener_front_z = 1,
+		listener_top_x = 0,
+		listener_top_y = 1,
+		listener_top_z = 0,
+		listener_x = 0,
+		listener_y = 0,
+		listener_z = 0,
+		source_x = Vector3.x(source_position),
+		source_y = Vector3.y(source_position),
+		source_z = Vector3.z(source_position),
+	}
 end
 
 return spatial

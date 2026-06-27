@@ -19,7 +19,7 @@ file_playback.play_file = function(
 )
 	playback_settings = playback_settings or {}
 
-	local volume, left_volume, right_volume = spatial.mix(
+	local volume, spatial_data = spatial.mix(
 		unit_or_position,
 		decay,
 		min_distance,
@@ -28,7 +28,7 @@ file_playback.play_file = function(
 		override_rotation
 	)
 	local resolved_path = paths.resolve_audio_path(audio_path)
-	local options = playback_options.create(playback_settings, volume, left_volume, right_volume)
+	local options = playback_options.create(playback_settings, volume, spatial_data)
 	local play_file_id, error_message = native_runtime.play(resolved_path, options)
 
 	if not play_file_id then
@@ -38,6 +38,31 @@ file_playback.play_file = function(
 	end
 
 	return play_file_id
+end
+
+file_playback.set_position = function(
+	play_id,
+	unit_or_position,
+	decay,
+	min_distance,
+	max_distance,
+	override_position,
+	override_rotation
+)
+	local volume, spatial_data = spatial.mix(
+		unit_or_position,
+		decay,
+		min_distance,
+		max_distance,
+		override_position,
+		override_rotation
+	)
+
+	if not spatial_data then
+		return false
+	end
+
+	return native_runtime.set_position(play_id, volume, spatial_data)
 end
 
 return file_playback

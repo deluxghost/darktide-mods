@@ -28,19 +28,21 @@ local function volume_adjustment(audio_type)
 	return master_volume * type_volume()
 end
 
-playback_options.create = function(playback_settings, spatial_volume, left_volume, right_volume)
+playback_options.create = function(playback_settings, spatial_volume, spatial_data)
 	local volume_multiplier = playback_settings.volume and playback_settings.volume / 100 or 1
+	local base_volume_gain = volume_adjustment(playback_settings.audio_type) * volume_multiplier
 
 	return {
 		audio_type = playback_settings.audio_type,
+		base_volume_gain = base_volume_gain,
 		duration = playback_settings.duration,
 		filters = playback_settings.filters,
-		left_gain = left_volume or 1,
 		loop = playback_settings.loop,
 		on_finished = playback_settings.on_finished,
+		on_update = playback_settings.on_update,
 		pos = playback_settings.pos,
-		right_gain = right_volume or 1,
-		volume_gain = (spatial_volume or 100) / 100 * volume_adjustment(playback_settings.audio_type) * volume_multiplier,
+		spatial_data = spatial_data,
+		volume_gain = (spatial_volume or 100) / 100 * base_volume_gain,
 	}
 end
 
