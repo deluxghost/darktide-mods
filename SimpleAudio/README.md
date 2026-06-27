@@ -1,6 +1,6 @@
 # SimpleAudio
 
-`SimpleAudio` is a local audio playback library for other Darktide mods. The current public API covers local audio file playback, game Wwise event playback, dialogue playback, XAudio2 spatial matrix playback, random file selection, playback stopping, active playback checks, Wwise event hooks, dialogue hooks, and sound silencing.
+`SimpleAudio` is a local audio library for other Darktide mods. It can play audio files with spatial audio support, trigger game audio events, and provide helpers for file globbing, file metadata, event hooks, and sound silencing rules.
 
 Its API is similar to Audio Plugin, but not identical.
 
@@ -166,6 +166,10 @@ local loop_id = SimpleAudio.play_file("engine_loop.ogg", {
 ## Updating Position
 
 `set_position` updates the spatial mix of an active file playback.
+
+File playback does not automatically refresh listener-relative spatial data after playback starts.
+If the listener moves or rotates, or if the source moves, call `set_position` again to recompute the spatial mix.
+Passing the same `Vector3` is valid when only the listener changed.
 
 ```lua
 local ok, error_message = SimpleAudio.set_position(
