@@ -82,4 +82,18 @@ paths.resolve_asset_path = function(asset_path)
 	return paths.join_path(game_dir, "mods/" .. caller_name .. "/assets/" .. normalized_path)
 end
 
+paths.resolve_asset_dir_path = function(asset_dir_path)
+	if type(asset_dir_path) ~= "string" then
+		error(string.format("Asset path must be a string, got %s", type(asset_dir_path)))
+	end
+
+	local normalized_path = paths.normalize_asset_path(asset_dir_path)
+
+	if normalized_path == "" then
+		return paths.join_path(paths.get_game_dir(), "mods/" .. context.mod_name() .. "/assets")
+	end
+
+	return paths.resolve_asset_path(asset_dir_path)
+end
+
 return paths

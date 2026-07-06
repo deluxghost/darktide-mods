@@ -15,6 +15,28 @@ local state = instances.simple_assets_runtime
 if not pcall(ffi.typeof, "SimpleAssetsRuntime_CDEF") then
 	ffi.cdef([[
 		typedef struct { int unused; } SimpleAssetsRuntime_CDEF;
+		typedef void* SimpleAssets_HANDLE;
+		typedef unsigned long SimpleAssets_DWORD;
+		typedef int SimpleAssets_BOOL;
+		typedef unsigned short SimpleAssets_WCHAR;
+
+		typedef struct {
+			SimpleAssets_DWORD dwLowDateTime;
+			SimpleAssets_DWORD dwHighDateTime;
+		} SimpleAssets_FILETIME;
+
+		typedef struct {
+			SimpleAssets_DWORD dwFileAttributes;
+			SimpleAssets_FILETIME ftCreationTime;
+			SimpleAssets_FILETIME ftLastAccessTime;
+			SimpleAssets_FILETIME ftLastWriteTime;
+			SimpleAssets_DWORD nFileSizeHigh;
+			SimpleAssets_DWORD nFileSizeLow;
+			SimpleAssets_DWORD dwReserved0;
+			SimpleAssets_DWORD dwReserved1;
+			SimpleAssets_WCHAR cFileName[260];
+			SimpleAssets_WCHAR cAlternateFileName[14];
+		} SimpleAssets_WIN32_FIND_DATAW;
 
 		int SimpleAssetsRuntime_Start(void);
 		const char* SimpleAssetsRuntime_GameDir(void);
@@ -23,6 +45,13 @@ if not pcall(ffi.typeof, "SimpleAssetsRuntime_CDEF") then
 		const char* SimpleAssetsRuntime_AssetUrl(const char* path);
 		const char* SimpleAssetsRuntime_LastError(void);
 		void SimpleAssetsRuntime_Shutdown(void);
+		SimpleAssets_DWORD SimpleAssetsRuntime_GetLastError(void);
+		SimpleAssets_DWORD SimpleAssetsRuntime_GetFileAttributesW(const SimpleAssets_WCHAR* lpFileName);
+		int SimpleAssetsRuntime_MultiByteToWideChar(unsigned int CodePage, unsigned long dwFlags, const char* lpMultiByteStr, int cbMultiByte, SimpleAssets_WCHAR* lpWideCharStr, int cchWideChar);
+		int SimpleAssetsRuntime_WideCharToMultiByte(unsigned int CodePage, unsigned long dwFlags, const SimpleAssets_WCHAR* lpWideCharStr, int cchWideChar, char* lpMultiByteStr, int cbMultiByte, const char* lpDefaultChar, SimpleAssets_BOOL* lpUsedDefaultChar);
+		SimpleAssets_HANDLE SimpleAssetsRuntime_FindFirstFileW(const SimpleAssets_WCHAR* lpFileName, SimpleAssets_WIN32_FIND_DATAW* lpFindFileData);
+		SimpleAssets_BOOL SimpleAssetsRuntime_FindNextFileW(SimpleAssets_HANDLE hFindFile, SimpleAssets_WIN32_FIND_DATAW* lpFindFileData);
+		SimpleAssets_BOOL SimpleAssetsRuntime_FindClose(SimpleAssets_HANDLE hFindFile);
 	]])
 end
 
@@ -41,6 +70,8 @@ local function load_runtime()
 
 	return state.runtime
 end
+
+native.runtime = load_runtime
 
 local function runtime_string(pointer)
 	if pointer == nil then

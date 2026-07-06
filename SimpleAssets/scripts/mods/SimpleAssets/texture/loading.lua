@@ -70,7 +70,7 @@ loading.load_textures = function(asset_paths)
 end
 
 loading.load_textures_from_dir = function(asset_dir_path, recursive)
-	local resolved_dir_path = paths.resolve_asset_path(asset_dir_path)
+	local resolved_dir_path = paths.resolve_asset_dir_path(asset_dir_path)
 	local relative_paths = filesystem.list_files(resolved_dir_path, recursive == true)
 	local results = {}
 	local promises = {}

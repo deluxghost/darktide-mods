@@ -21,6 +21,28 @@ state.update_callbacks = state.update_callbacks or {}
 if not pcall(ffi.typeof, "SimpleAudioRuntime_CDEF") then
 	ffi.cdef([[
 		typedef struct { int unused; } SimpleAudioRuntime_CDEF;
+		typedef void* SimpleAudio_HANDLE;
+		typedef unsigned long SimpleAudio_DWORD;
+		typedef int SimpleAudio_BOOL;
+		typedef unsigned short SimpleAudio_WCHAR;
+
+		typedef struct {
+			SimpleAudio_DWORD dwLowDateTime;
+			SimpleAudio_DWORD dwHighDateTime;
+		} SimpleAudio_FILETIME;
+
+		typedef struct {
+			SimpleAudio_DWORD dwFileAttributes;
+			SimpleAudio_FILETIME ftCreationTime;
+			SimpleAudio_FILETIME ftLastAccessTime;
+			SimpleAudio_FILETIME ftLastWriteTime;
+			SimpleAudio_DWORD nFileSizeHigh;
+			SimpleAudio_DWORD nFileSizeLow;
+			SimpleAudio_DWORD dwReserved0;
+			SimpleAudio_DWORD dwReserved1;
+			SimpleAudio_WCHAR cFileName[260];
+			SimpleAudio_WCHAR cAlternateFileName[14];
+		} SimpleAudio_WIN32_FIND_DATAW;
 
 		int SimpleAudioRuntime_Initialize(char* error_buffer, int error_buffer_size);
 		int SimpleAudioRuntime_Play(const char* path, const char* filters, double volume_gain, double pos, double duration, int loop_count, int spatial, double source_x, double source_y, double source_z, double listener_x, double listener_y, double listener_z, double listener_front_x, double listener_front_y, double listener_front_z, double listener_top_x, double listener_top_y, double listener_top_z, char* error_buffer, int error_buffer_size);
@@ -31,6 +53,12 @@ if not pcall(ffi.typeof, "SimpleAudioRuntime_CDEF") then
 		int SimpleAudioRuntime_IsPlaying(int play_id);
 		int SimpleAudioRuntime_PollEvent(int* event_type, int* play_id, char* message_buffer, int message_buffer_size);
 		void SimpleAudioRuntime_Shutdown(void);
+		SimpleAudio_DWORD SimpleAudioRuntime_GetLastError(void);
+		int SimpleAudioRuntime_MultiByteToWideChar(unsigned int CodePage, unsigned long dwFlags, const char* lpMultiByteStr, int cbMultiByte, SimpleAudio_WCHAR* lpWideCharStr, int cchWideChar);
+		int SimpleAudioRuntime_WideCharToMultiByte(unsigned int CodePage, unsigned long dwFlags, const SimpleAudio_WCHAR* lpWideCharStr, int cchWideChar, char* lpMultiByteStr, int cbMultiByte, const char* lpDefaultChar, SimpleAudio_BOOL* lpUsedDefaultChar);
+		SimpleAudio_HANDLE SimpleAudioRuntime_FindFirstFileW(const SimpleAudio_WCHAR* lpFileName, SimpleAudio_WIN32_FIND_DATAW* lpFindFileData);
+		SimpleAudio_BOOL SimpleAudioRuntime_FindNextFileW(SimpleAudio_HANDLE hFindFile, SimpleAudio_WIN32_FIND_DATAW* lpFindFileData);
+		SimpleAudio_BOOL SimpleAudioRuntime_FindClose(SimpleAudio_HANDLE hFindFile);
 	]])
 end
 
@@ -65,6 +93,8 @@ local function load_runtime()
 
 	return state.runtime
 end
+
+native.runtime = load_runtime
 
 local function normalize_loop_count(loop)
 	if loop == nil or loop == false then

@@ -162,7 +162,9 @@ end)
 local promise = SimpleAssets.load_textures_from_dir(asset_dir_path, recursive)
 ```
 
-`asset_dir_path` is a directory path. It uses the same path rules as `load_texture`. Set `recursive` to `true` to include child directories.
+`asset_dir_path` is a directory path. It uses the same path rules as `load_texture`. Use an empty string to load from the calling mod's `assets` directory.
+
+`recursive` controls whether child directories are included. Set it to `true` to include them.
 
 The result uses the same value format as `load_textures`, but keys are relative paths from `asset_dir_path`.
 
