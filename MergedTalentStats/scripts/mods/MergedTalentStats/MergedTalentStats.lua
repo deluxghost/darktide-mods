@@ -384,11 +384,24 @@ mod:hook(CLASS.TalentBuilderView, "_setup_talents_summary_grid", function (func,
 				ability = {},
 				blitz = {},
 				aura = {},
+				iconics = {},
 			}
 			local player = self._preview_player
 			local profile = player and player:profile()
 
 			CharacterSheet.class_loadout(profile, base_class_loadout, true)
+
+			local iconics = base_class_loadout.iconics
+
+			for i = 1, #iconics do
+				local iconic = iconics[i]
+
+				nodes_to_present[#nodes_to_present + 1] = {
+					type = "iconic",
+					widget_type = "iconic",
+					talent = iconic,
+				}
+			end
 
 			if not ability_added then
 				local talent = base_class_loadout.ability.talent
@@ -506,7 +519,7 @@ mod:hook(CLASS.TalentBuilderView, "_setup_talents_summary_grid", function (func,
 					end
 
 					layout[#layout + 1] = {
-						widget_type = "talent_info",
+						widget_type = data.widget_type or "talent_info",
 						talent = talent,
 						display_name = display_name,
 						description = description,
@@ -517,7 +530,7 @@ mod:hook(CLASS.TalentBuilderView, "_setup_talents_summary_grid", function (func,
 						node_type = node_type,
 					}
 
-					if node_type ~= "stat" then
+					if node_type ~= "stat" and node_type ~= "iconic" then
 						layout[#layout + 1] = {
 							widget_type = "dynamic_spacing",
 							size = {
