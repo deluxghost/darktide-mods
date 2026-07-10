@@ -7,9 +7,9 @@ local file_playback = mod:io_dofile("SimpleAudio/scripts/mods/SimpleAudio/playba
 local wwise_playback = mod:io_dofile("SimpleAudio/scripts/mods/SimpleAudio/wwise/playback")
 local wwise_hooks = mod:io_dofile("SimpleAudio/scripts/mods/SimpleAudio/wwise/hooks")
 
-local initialized, initialize_error = native_runtime.initialize()
+local initialize_started, initialize_error = native_runtime.start_initialize()
 
-if not initialized then
+if not initialize_started then
 	local error_message = mod:localize("initialize_failed", initialize_error)
 	mod:error(error_message)
 	error(error_message)

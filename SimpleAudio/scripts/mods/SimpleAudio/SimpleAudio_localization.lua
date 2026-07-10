@@ -11,6 +11,10 @@ return {
 		en = "Failed to initialize SimpleAudio: %s",
 		["zh-cn"] = "初始化 SimpleAudio 失败：%s",
 	},
+	initialize_slow = {
+		en = "Simple Audio is taking longer than expected to initialize. This may be caused by an audio output device or driver issue.",
+		["zh-cn"] = "Simple Audio 初始化时间过长，可能与播放设备或音频驱动有关。",
+	},
 	play_failed = {
 		en = "Failed to play %s: %s",
 		["zh-cn"] = "播放 %s 失败：%s",

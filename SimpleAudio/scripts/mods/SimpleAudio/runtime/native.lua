@@ -7,6 +7,12 @@ local native = {}
 
 local RUNTIME_PATH = "../mods/SimpleAudio/bin/simple-audio-runtime.dll"
 local ERROR_BUFFER_SIZE = 4096
+local INITIALIZATION_SLOW_NOTIFY_SECONDS = 10
+local STATUS_UNINITIALIZED = 0
+local STATUS_INITIALIZING = 1
+local STATUS_READY = 2
+local STATUS_FAILED = 3
+local STATUS_SHUTTING_DOWN = 4
 local EVENT_FINISHED = 1
 local EVENT_ERROR = 2
 
@@ -17,6 +23,7 @@ local state = instances.simple_audio_runtime
 state.play_callbacks = state.play_callbacks or {}
 state.play_options = state.play_options or {}
 state.update_callbacks = state.update_callbacks or {}
+state.initialization_restart_pending = state.initialization_restart_pending or false
 
 if not pcall(ffi.typeof, "SimpleAudioRuntime_CDEF") then
 	ffi.cdef([[
@@ -44,7 +51,10 @@ if not pcall(ffi.typeof, "SimpleAudioRuntime_CDEF") then
 			SimpleAudio_WCHAR cAlternateFileName[14];
 		} SimpleAudio_WIN32_FIND_DATAW;
 
-		int SimpleAudioRuntime_Initialize(char* error_buffer, int error_buffer_size);
+		int SimpleAudioRuntime_StartInitialize(char* error_buffer, int error_buffer_size);
+		int SimpleAudioRuntime_InitializationStatus(void);
+		int SimpleAudioRuntime_InitializationStage(char* buffer, int buffer_size);
+		int SimpleAudioRuntime_InitializationError(char* buffer, int buffer_size);
 		int SimpleAudioRuntime_Play(const char* path, const char* filters, double volume_gain, double pos, double duration, int loop_count, int spatial, double source_x, double source_y, double source_z, double listener_x, double listener_y, double listener_z, double listener_front_x, double listener_front_y, double listener_front_z, double listener_top_x, double listener_top_y, double listener_top_z, char* error_buffer, int error_buffer_size);
 		int SimpleAudioRuntime_FileInfo(const char* path, int* sample_rate, int* channels, double* duration, long long* bit_rate, char* error_buffer, int error_buffer_size);
 		int SimpleAudioRuntime_SetPosition(int play_id, double volume_gain, double source_x, double source_y, double source_z, double listener_x, double listener_y, double listener_z, double listener_front_x, double listener_front_y, double listener_front_z, double listener_top_x, double listener_top_y, double listener_top_z, char* error_buffer, int error_buffer_size);
@@ -121,28 +131,100 @@ local function playback_seconds(value, field_name, default)
 	return seconds
 end
 
-native.initialize = function()
+local function initialization_error(runtime)
+	local buffer = error_buffer()
+	runtime.SimpleAudioRuntime_InitializationError(buffer, ERROR_BUFFER_SIZE)
+
+	local error_message = buffer_string(buffer)
+
+	if error_message == "" then
+		return "unknown error"
+	end
+
+	return error_message
+end
+
+local function initialization_stage(runtime)
+	local buffer = error_buffer()
+	runtime.SimpleAudioRuntime_InitializationStage(buffer, ERROR_BUFFER_SIZE)
+
+	return buffer_string(buffer)
+end
+
+local function runtime_not_ready_error(runtime, status)
+	if status == STATUS_INITIALIZING then
+		return "SimpleAudio runtime is still initializing"
+	end
+	if status == STATUS_FAILED then
+		return initialization_error(runtime)
+	end
+	if status == STATUS_SHUTTING_DOWN then
+		return "SimpleAudio runtime is shutting down"
+	end
+
+	return "SimpleAudio runtime is not initialized"
+end
+
+local function ready_runtime()
 	local runtime, load_error = load_runtime()
 
 	if not runtime then
-		return false, load_error
+		return nil, load_error
 	end
 
+	local status = tonumber(runtime.SimpleAudioRuntime_InitializationStatus())
+
+	if status ~= STATUS_READY then
+		return nil, runtime_not_ready_error(runtime, status)
+	end
+
+	return runtime
+end
+
+local function reset_initialization_tracking()
+	state.initialization_elapsed = 0
+	state.initialization_slow_notified = false
+	state.initialization_failure_reported = false
+end
+
+local function start_runtime_initialization(runtime)
 	local buffer = error_buffer()
-	local ok = runtime.SimpleAudioRuntime_Initialize(buffer, ERROR_BUFFER_SIZE)
+	local ok = runtime.SimpleAudioRuntime_StartInitialize(buffer, ERROR_BUFFER_SIZE)
 
 	if ok == 0 then
 		return false, buffer_string(buffer)
 	end
 
+	state.initialization_restart_pending = false
+	reset_initialization_tracking()
+
 	return true
 end
 
-native.play = function(path, options)
+native.start_initialize = function()
 	local runtime, load_error = load_runtime()
 
 	if not runtime then
 		return false, load_error
+	end
+
+	local status = tonumber(runtime.SimpleAudioRuntime_InitializationStatus())
+
+	if status == STATUS_SHUTTING_DOWN then
+		state.initialization_restart_pending = true
+		reset_initialization_tracking()
+
+		return true
+	end
+
+	return start_runtime_initialization(runtime)
+end
+
+native.play = function(path, options)
+	local runtime, runtime_error = ready_runtime()
+
+	if not runtime then
+		return false, runtime_error
 	end
 
 	local pos, pos_error = playback_seconds(options.pos, "pos", 0)
@@ -203,10 +285,10 @@ native.play = function(path, options)
 end
 
 native.file_info = function(path)
-	local runtime, load_error = load_runtime()
+	local runtime, runtime_error = ready_runtime()
 
 	if not runtime then
-		return false, load_error
+		return false, runtime_error
 	end
 
 	local sample_rate_buffer = ffi.new("int[1]")
@@ -363,10 +445,60 @@ local function update_playbacks(dt)
 	end
 end
 
+local function clear_all_playback_state()
+	state.play_callbacks = {}
+	state.play_options = {}
+	state.update_callbacks = {}
+end
+
+local function update_initialization(runtime, dt)
+	local status = tonumber(runtime.SimpleAudioRuntime_InitializationStatus())
+
+	if status == STATUS_UNINITIALIZED and state.initialization_restart_pending then
+		local started, start_error = start_runtime_initialization(runtime)
+
+		if not started then
+			state.initialization_restart_pending = false
+			state.initialization_failure_reported = true
+			mod:error(mod:localize("initialize_failed", start_error))
+
+			return STATUS_FAILED
+		end
+
+		return STATUS_INITIALIZING
+	elseif status == STATUS_INITIALIZING then
+		state.initialization_elapsed = (state.initialization_elapsed or 0) + (dt or 0)
+
+		if not state.initialization_slow_notified and state.initialization_elapsed >= INITIALIZATION_SLOW_NOTIFY_SECONDS then
+			state.initialization_slow_notified = true
+
+			local stage = initialization_stage(runtime)
+			mod:notify(mod:localize("initialize_slow"))
+			mod:info(string.format("SimpleAudio initialization is still running after %.1f seconds at stage: %s", state.initialization_elapsed, stage))
+		end
+	elseif status == STATUS_FAILED then
+		if not state.initialization_failure_reported then
+			state.initialization_failure_reported = true
+
+			local error_message = mod:localize("initialize_failed", initialization_error(runtime))
+			mod:error(error_message)
+			clear_all_playback_state()
+		end
+	elseif status == STATUS_READY then
+		state.initialization_elapsed = nil
+	end
+
+	return status
+end
+
 native.update = function(dt)
 	local runtime = state.runtime
 
 	if not runtime then
+		return
+	end
+
+	if update_initialization(runtime, dt) ~= STATUS_READY then
 		return
 	end
 
@@ -379,15 +511,17 @@ end
 
 native.shutdown = function()
 	local runtime = state.runtime
+	state.initialization_restart_pending = false
 
 	if runtime then
 		runtime.SimpleAudioRuntime_Shutdown()
+
+		if tonumber(runtime.SimpleAudioRuntime_InitializationStatus()) == STATUS_UNINITIALIZED then
+			state.runtime = nil
+		end
 	end
 
-	state.play_callbacks = {}
-	state.play_options = {}
-	state.update_callbacks = {}
-	state.runtime = nil
+	clear_all_playback_state()
 end
 
 return native
