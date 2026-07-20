@@ -256,6 +256,7 @@ Return value:
 - `channels`: Source audio stream channel count.
 - `duration`: Source audio stream duration in seconds. The field is omitted when FFmpeg does not report one.
 - `bit_rate`: FFmpeg-reported source audio stream bit rate in bits per second. Returns `0` when FFmpeg does not report one.
+- `tags`: Container metadata as string key/value pairs returned by FFmpeg. Always a table. Tag names are returned without normalization.
 
 `file_info` errors if `audio_path` is not a string or the file cannot be opened as an audio file.
 

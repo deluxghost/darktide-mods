@@ -56,7 +56,8 @@ if not pcall(ffi.typeof, "SimpleAudioRuntime_CDEF") then
 		int SimpleAudioRuntime_InitializationStage(char* buffer, int buffer_size);
 		int SimpleAudioRuntime_InitializationError(char* buffer, int buffer_size);
 		int SimpleAudioRuntime_Play(const char* path, const char* filters, double volume_gain, double pos, double duration, int loop_count, int spatial, double source_x, double source_y, double source_z, double listener_x, double listener_y, double listener_z, double listener_front_x, double listener_front_y, double listener_front_z, double listener_top_x, double listener_top_y, double listener_top_z, char* error_buffer, int error_buffer_size);
-		int SimpleAudioRuntime_FileInfo(const char* path, int* sample_rate, int* channels, double* duration, long long* bit_rate, char* error_buffer, int error_buffer_size);
+		int SimpleAudioRuntime_FileInfo(const char* path, int* sample_rate, int* channels, double* duration, long long* bit_rate, char** tags_json, char* error_buffer, int error_buffer_size);
+		void SimpleAudioRuntime_FreeString(char* value);
 		int SimpleAudioRuntime_SetPosition(int play_id, double volume_gain, double source_x, double source_y, double source_z, double listener_x, double listener_y, double listener_z, double listener_front_x, double listener_front_y, double listener_front_z, double listener_top_x, double listener_top_y, double listener_top_z, char* error_buffer, int error_buffer_size);
 		int SimpleAudioRuntime_Stop(int play_id);
 		void SimpleAudioRuntime_StopAll(void);
@@ -295,6 +296,7 @@ native.file_info = function(path)
 	local channels_buffer = ffi.new("int[1]")
 	local duration_buffer = ffi.new("double[1]")
 	local bit_rate_buffer = ffi.new("long long[1]")
+	local tags_json_buffer = ffi.new("char*[1]")
 	local buffer = error_buffer()
 	local ok = runtime.SimpleAudioRuntime_FileInfo(
 		windows.path(path),
@@ -302,6 +304,7 @@ native.file_info = function(path)
 		channels_buffer,
 		duration_buffer,
 		bit_rate_buffer,
+		tags_json_buffer,
 		buffer,
 		ERROR_BUFFER_SIZE
 	)
@@ -309,11 +312,24 @@ native.file_info = function(path)
 	if ok == 0 then
 		return false, buffer_string(buffer)
 	end
+	if tags_json_buffer[0] == nil then
+		return false, "Audio metadata is missing"
+	end
+
+	local tags_json = ffi.string(tags_json_buffer[0])
+	runtime.SimpleAudioRuntime_FreeString(tags_json_buffer[0])
+
+	local tags_ok, tags = pcall(cjson.decode, tags_json)
+
+	if not tags_ok or type(tags) ~= "table" then
+		return false, "Audio metadata is invalid"
+	end
 
 	local info = {
 		sample_rate = tonumber(sample_rate_buffer[0]),
 		channels = tonumber(channels_buffer[0]),
 		bit_rate = tonumber(bit_rate_buffer[0]),
+		tags = tags,
 	}
 
 	local duration = tonumber(duration_buffer[0])
