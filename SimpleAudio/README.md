@@ -123,7 +123,7 @@ Return value:
 - `pos`: Start position in seconds.
 - `duration`: Playback duration in seconds.
 - `loop`: `true` loops forever, a number sets the number of extra repeats, and `nil` or `false` disables looping.
-- `on_finished`: `function(play_id)` callback called when playback ends naturally. It is not called when playback is stopped with `stop_file`.
+- `on_finished`: `function(play_id)` callback called when playback ends naturally. It is not called after `stop_file` accepts a stop request, including during a fade-out.
 - `on_update`: `function(play_id, dt)` callback called from `SimpleAudio`'s update loop while playback is active.
 
 `SimpleAudio` reads playback options from the `playback_settings` table passed to the current call.
@@ -214,20 +214,23 @@ SimpleAudio.play_file("engine_loop.ogg", {
 Stop a specific playback instance:
 
 ```lua
-local stopped = SimpleAudio.stop_file(play_id)
+local stopped, error_message = SimpleAudio.stop_file(play_id, fade_out)
 ```
 
 Omitting `play_id` stops all currently playing files:
 
 ```lua
-local stopped = SimpleAudio.stop_file()
+local stopped, error_message = SimpleAudio.stop_file(nil, fade_out)
 ```
+
+`fade_out` is an optional non-negative duration in seconds. Omitting it or passing `0` stops immediately. A positive value applies a linear volume fade before stopping.
 
 Return value:
 
-- Returns `true` when called without `play_id`.
+- Returns `true` when called without `play_id` and `fade_out` is valid.
 - Returns `true` when `play_id` is active.
 - Returns `false` when `play_id` is not active.
+- Returns `false, error_message` when `fade_out` is invalid.
 
 Check playback status:
 
@@ -237,8 +240,10 @@ local playing = SimpleAudio.is_file_playing(play_id)
 
 Return value:
 
-- Returns `true` while `play_id` is still tracked as active playback.
+- Returns `true` while `play_id` is still tracked as active playback, including during a fade-out.
 - Returns `false` otherwise.
+
+During a fade-out, `on_update` continues until playback stops. If the file reaches its natural end after the stop request is accepted, it is still treated as stopped and does not call `on_finished`.
 
 ## File Information
 
@@ -424,4 +429,4 @@ For external dialogue, silencing checks both the stripped `loc_...` name and the
 - Supported input formats depend on the bundled FFmpeg DLLs.
 - File playback updates spatial audio only when `set_position` is called.
 - Doppler is not implemented.
-- Finished and error notifications are queued by the native runtime and polled from Lua. Very large bursts of very short sounds can overflow the event queue, which can prevent some `on_finished` callbacks from running.
+- Finished, stopped, and error notifications are queued by the native runtime and polled from Lua. Very large bursts of very short sounds can overflow the event queue, which can prevent some `on_finished` callbacks or stopped-playback cleanup from running.

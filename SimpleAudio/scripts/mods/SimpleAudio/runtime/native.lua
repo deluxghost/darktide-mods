@@ -15,6 +15,7 @@ local STATUS_FAILED = 3
 local STATUS_SHUTTING_DOWN = 4
 local EVENT_FINISHED = 1
 local EVENT_ERROR = 2
+local EVENT_STOPPED = 3
 
 local instances = mod:persistent_table("instances")
 instances.simple_audio_runtime = instances.simple_audio_runtime or {}
@@ -59,8 +60,8 @@ if not pcall(ffi.typeof, "SimpleAudioRuntime_CDEF") then
 		int SimpleAudioRuntime_FileInfo(const char* path, int* sample_rate, int* channels, double* duration, long long* bit_rate, char** tags_json, char* error_buffer, int error_buffer_size);
 		void SimpleAudioRuntime_FreeString(char* value);
 		int SimpleAudioRuntime_SetPosition(int play_id, double volume_gain, double source_x, double source_y, double source_z, double listener_x, double listener_y, double listener_z, double listener_front_x, double listener_front_y, double listener_front_z, double listener_top_x, double listener_top_y, double listener_top_z, char* error_buffer, int error_buffer_size);
-		int SimpleAudioRuntime_Stop(int play_id);
-		void SimpleAudioRuntime_StopAll(void);
+		int SimpleAudioRuntime_Stop(int play_id, double fade_out, char* error_buffer, int error_buffer_size);
+		int SimpleAudioRuntime_StopAll(double fade_out, char* error_buffer, int error_buffer_size);
 		int SimpleAudioRuntime_IsPlaying(int play_id);
 		int SimpleAudioRuntime_PollEvent(int* event_type, int* play_id, char* message_buffer, int message_buffer_size);
 		void SimpleAudioRuntime_Shutdown(void);
@@ -127,6 +128,20 @@ local function playback_seconds(value, field_name, default)
 
 	if not seconds then
 		return nil, string.format("playback_settings.%s must be numeric seconds, got %s", field_name, tostring(value))
+	end
+
+	return seconds
+end
+
+local function fade_out_seconds(value)
+	if value == nil then
+		return 0
+	end
+
+	local seconds = tonumber(value)
+
+	if not seconds or seconds ~= seconds or seconds == math.huge or seconds == -math.huge or seconds < 0 then
+		return nil, string.format("fade_out must be finite, non-negative numeric seconds, got %s", tostring(value))
 	end
 
 	return seconds
@@ -341,28 +356,55 @@ native.file_info = function(path)
 	return info
 end
 
-native.stop = function(play_id)
+native.stop = function(play_id, fade_out)
+	local seconds, duration_error = fade_out_seconds(fade_out)
+
+	if not seconds then
+		return false, duration_error
+	end
+
 	local runtime = state.runtime
 
 	if not runtime then
 		return play_id == nil
 	end
 
+	local buffer = error_buffer()
+
 	if play_id == nil then
-		runtime.SimpleAudioRuntime_StopAll()
-		state.play_callbacks = {}
-		state.play_options = {}
-		state.update_callbacks = {}
+		if runtime.SimpleAudioRuntime_StopAll(seconds, buffer, ERROR_BUFFER_SIZE) == 0 then
+			return false, buffer_string(buffer)
+		end
+
+		if seconds == 0 then
+			state.play_callbacks = {}
+			state.play_options = {}
+			state.update_callbacks = {}
+		end
 
 		return true
 	end
 
-	local stopped = runtime.SimpleAudioRuntime_Stop(play_id) ~= 0
+	play_id = tonumber(play_id)
 
-	if stopped then
+	if not play_id then
+		return false
+	end
+
+	local stopped = runtime.SimpleAudioRuntime_Stop(play_id, seconds, buffer, ERROR_BUFFER_SIZE) ~= 0
+
+	if stopped and seconds == 0 then
 		state.play_callbacks[play_id] = nil
 		state.play_options[play_id] = nil
 		state.update_callbacks[play_id] = nil
+	end
+
+	if not stopped then
+		local stop_error = buffer_string(buffer)
+
+		if stop_error ~= "" then
+			return false, stop_error
+		end
 	end
 
 	return stopped
@@ -444,6 +486,8 @@ local function poll_events(runtime)
 			if callback then
 				callback(id)
 			end
+		elseif event_type_buffer[0] == EVENT_STOPPED then
+			clear_playback_state(id)
 		elseif event_type_buffer[0] == EVENT_ERROR then
 			clear_playback_state(id)
 			mod:error(buffer_string(event_message_buffer))
