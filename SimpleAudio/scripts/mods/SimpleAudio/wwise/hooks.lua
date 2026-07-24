@@ -149,7 +149,7 @@ local function run_hooks(sound_type, event_name, position_or_unit_or_id, optiona
 end
 
 wwise_hooks.install = function()
-	mod:hook(WwiseWorld, "trigger_resource_event", function(func, wwise_world, event_name, ...)
+	mod:hook("WwiseWorld", "trigger_resource_event", function(func, wwise_world, event_name, ...)
 		local position_or_unit_or_id, optional_a, optional_b = ...
 		local sound_type = infer_sound_type(position_or_unit_or_id)
 		local hook_result = run_hooks(
@@ -179,7 +179,7 @@ wwise_hooks.install = function()
 		return func(wwise_world, event_name, ...)
 	end)
 
-	mod:hook(DialogueSystemWwise, "trigger_vorbis_external_event", function(func, dialogue_system, sound_event, sound_source, file_path, wwise_source_id)
+	mod:hook("DialogueSystemWwise", "trigger_vorbis_external_event", function(func, dialogue_system, sound_event, sound_source, file_path, wwise_source_id)
 		local event_name = file_path:gsub("^wwise/externals/", "")
 		local hook_result = run_hooks("external_sound", event_name, wwise_source_id, sound_event, sound_source)
 		local sound_is_silenced = hook_result == false
