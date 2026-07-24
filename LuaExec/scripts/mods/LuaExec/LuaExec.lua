@@ -1,6 +1,5 @@
 local mod = get_mod("LuaExec")
 
-local logs = mod:io_dofile("LuaExec/scripts/mods/LuaExec/logs")
 local executor = mod:io_dofile("LuaExec/scripts/mods/LuaExec/executor")
 local runtime = mod:io_dofile("LuaExec/scripts/mods/LuaExec/runtime/native")
 
@@ -27,10 +26,8 @@ local function handle_payload(payload)
 		})
 	end
 
-	return encode_response(executor.execute_request(request, logs))
+	return encode_response(executor.execute_request(request))
 end
-
-logs.install_hooks()
 
 local runtime_ok, runtime_error = runtime.start()
 
@@ -59,12 +56,6 @@ mod.update = function()
 	end
 end
 
-mod.on_all_mods_loaded = function()
-	logs.install_hooks()
-end
-
 mod.on_unload = function()
-	logs.uninstall_hooks()
-	logs.stop_session()
 	runtime.stop()
 end

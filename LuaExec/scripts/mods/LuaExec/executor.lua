@@ -58,7 +58,7 @@ local function call_chunk(chunk)
 	return ok, count_or_error, values
 end
 
-function M.execute_request(request, logs)
+function M.execute_request(request)
 	if type(request) ~= "table" then
 		return {
 			ok = false,
@@ -69,13 +69,7 @@ function M.execute_request(request, logs)
 	local request_id = type(request.id) == "string" and request.id or nil
 	local command = type(request.command) == "string" and request.command or nil
 
-	if command == "logs_start" then
-		return logs.start_request(request_id)
-	elseif command == "logs_poll" then
-		return logs.poll_request(request_id, request.session)
-	elseif command == "logs_stop" then
-		return logs.stop_request(request_id, request.session)
-	elseif command ~= nil and command ~= "exec" then
+	if command ~= nil and command ~= "exec" then
 		return {
 			id = request_id,
 			ok = false,
@@ -130,4 +124,3 @@ function M.execute_request(request, logs)
 end
 
 return M
-
