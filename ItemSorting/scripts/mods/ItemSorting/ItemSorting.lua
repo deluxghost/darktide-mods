@@ -223,22 +223,22 @@ local function setup_sort_options(self, view_type)
 	self._item_grid:setup_sort_button(self._sort_options, sort_callback)
 end
 
-mod:hook(InventoryWeaponsView, "_setup_sort_options", function (func, self)
+mod:hook_origin(InventoryWeaponsView, "_setup_sort_options", function (self)
 	setup_sort_options(self, "inventory")
 end)
 
-mod:hook(CraftingMechanicusModifyView, "_setup_sort_options", function (func, self)
+mod:hook_origin(CraftingMechanicusModifyView, "_setup_sort_options", function (self)
 	setup_sort_options(self, "inventory")
 end)
 
-mod:hook(CraftingMechanicusBarterItemsView, "_setup_sort_options", function (func, self)
+mod:hook_origin(CraftingMechanicusBarterItemsView, "_setup_sort_options", function (self)
 	setup_sort_options(self, "inventory")
 end)
 
-mod:hook(CreditsVendorView, "_setup_sort_options", function (func, self)
+mod:hook_origin(CreditsVendorView, "_setup_sort_options", function (self)
 	setup_sort_options(self, "store")
 end)
 
-mod:hook(MarksVendorView, "_setup_sort_options", function (func, self)
+mod:hook_origin(MarksVendorView, "_setup_sort_options", function (self)
 	setup_sort_options(self, "store")
 end)
