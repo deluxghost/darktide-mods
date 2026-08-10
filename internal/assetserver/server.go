@@ -9,9 +9,10 @@ import (
 	"net/url"
 	"os"
 	"path/filepath"
-	"strings"
 	"sync"
 	"time"
+
+	"darktide-simple-assets-runtime/internal/assetpaths"
 
 	"github.com/gabriel-vasile/mimetype"
 )
@@ -26,24 +27,22 @@ type Server struct {
 	server  *http.Server
 	baseURL string
 	listen  string
-	roots   []string
+	paths   *assetpaths.Resolver
 }
 
 func New() *Server {
 	return &Server{}
 }
 
-func (server *Server) Start(rootPaths []string) error {
+func (server *Server) Start(paths *assetpaths.Resolver) error {
 	server.mu.Lock()
 	defer server.mu.Unlock()
 
 	if server.server != nil {
 		return nil
 	}
-
-	roots, err := cleanAbsRoots(rootPaths...)
-	if err != nil {
-		return err
+	if paths == nil {
+		return errors.New("asset path resolver is not initialized")
 	}
 
 	listener, err := net.Listen("tcp4", "127.0.0.1:0")
@@ -60,14 +59,14 @@ func (server *Server) Start(rootPaths []string) error {
 	baseURL := fmt.Sprintf("http://127.0.0.1:%d", tcpAddr.Port)
 	listen := fmt.Sprintf("127.0.0.1:%d", tcpAddr.Port)
 	httpServer := &http.Server{
-		Handler:           server.routes(roots),
+		Handler:           server.routes(paths),
 		ReadHeaderTimeout: 5 * time.Second,
 	}
 
 	server.server = httpServer
 	server.baseURL = baseURL
 	server.listen = listen
-	server.roots = roots
+	server.paths = paths
 
 	go func() {
 		err := httpServer.Serve(listener)
@@ -77,7 +76,7 @@ func (server *Server) Start(rootPaths []string) error {
 				server.server = nil
 				server.baseURL = ""
 				server.listen = ""
-				server.roots = nil
+				server.paths = nil
 			}
 			server.mu.Unlock()
 		}
@@ -115,7 +114,7 @@ func (server *Server) Shutdown() {
 	server.server = nil
 	server.baseURL = ""
 	server.listen = ""
-	server.roots = nil
+	server.paths = nil
 	server.mu.Unlock()
 
 	if httpServer == nil {
@@ -128,23 +127,23 @@ func (server *Server) Shutdown() {
 	_ = httpServer.Shutdown(ctx)
 }
 
-func (server *Server) routes(roots []string) http.Handler {
+func (server *Server) routes(paths *assetpaths.Resolver) http.Handler {
 	mux := http.NewServeMux()
 	mux.HandleFunc(routeAssets, func(response http.ResponseWriter, request *http.Request) {
-		serveAsset(response, request, roots)
+		serveAsset(response, request, paths)
 	})
 
 	return mux
 }
 
-func serveAsset(response http.ResponseWriter, request *http.Request, roots []string) {
+func serveAsset(response http.ResponseWriter, request *http.Request, paths *assetpaths.Resolver) {
 	if request.Method != http.MethodGet {
 		http.Error(response, "method not allowed", http.StatusMethodNotAllowed)
 		return
 	}
 
 	rawPath := request.URL.Query().Get("path")
-	filePath, status, err := resolveAssetPath(rawPath, roots)
+	filePath, status, err := resolveAssetPath(rawPath, paths)
 	if err != nil {
 		http.Error(response, err.Error(), status)
 		return
@@ -172,117 +171,25 @@ func serveAsset(response http.ResponseWriter, request *http.Request, roots []str
 	http.ServeContent(response, request, filepath.Base(filePath), info.ModTime(), file)
 }
 
-func resolveAssetPath(rawPath string, roots []string) (string, int, error) {
-	if rawPath == "" {
-		return "", http.StatusBadRequest, errors.New("asset path is required")
+func resolveAssetPath(rawPath string, paths *assetpaths.Resolver) (string, int, error) {
+	filePath, err := paths.ResolveFile(rawPath)
+	if err == nil {
+		return filePath, http.StatusOK, nil
 	}
-	if !filepath.IsAbs(rawPath) {
-		return "", http.StatusBadRequest, errors.New("asset path must be absolute")
+	if errors.Is(err, assetpaths.ErrPathRequired) ||
+		errors.Is(err, assetpaths.ErrPathAbsolute) ||
+		errors.Is(err, assetpaths.ErrPathFile) {
+		return "", http.StatusBadRequest, err
 	}
-
-	filePath, err := cleanAbsPath(rawPath)
-	if err != nil {
-		return "", http.StatusInternalServerError, err
-	}
-
-	if !isUnderAnyRoot(filePath, roots) {
-		return "", http.StatusNotFound, errors.New("asset file was not found")
+	if errors.Is(err, assetpaths.ErrNotFound) {
+		return "", http.StatusNotFound, err
 	}
 
-	info, err := os.Stat(filePath)
-	if err != nil {
-		if shouldReturnNotFound(err) {
-			return "", http.StatusNotFound, errors.New("asset file was not found")
-		}
-
-		return "", http.StatusInternalServerError, err
-	}
-	if info.IsDir() {
-		return "", http.StatusBadRequest, errors.New("asset path must be a file")
-	}
-
-	return filePath, http.StatusOK, nil
-}
-
-func cleanAbsRoots(paths ...string) ([]string, error) {
-	roots := make([]string, 0, len(paths))
-
-	for _, path := range paths {
-		if strings.TrimSpace(path) == "" {
-			return nil, errors.New("asset root path is empty")
-		}
-
-		root, err := cleanAbsPath(path)
-		if err != nil {
-			return nil, fmt.Errorf("failed to resolve asset root %q: %w", path, err)
-		}
-
-		info, err := os.Stat(root)
-		if err != nil {
-			return nil, fmt.Errorf("failed to stat asset root %q: %w", path, err)
-		}
-		if !info.IsDir() {
-			return nil, fmt.Errorf("asset root is not a directory: %s", path)
-		}
-
-		if !containsRoot(roots, root) {
-			roots = append(roots, root)
-		}
-	}
-
-	return roots, nil
+	return "", http.StatusInternalServerError, err
 }
 
 func shouldReturnNotFound(err error) bool {
 	return errors.Is(err, os.ErrNotExist) || errors.Is(err, os.ErrPermission)
-}
-
-func cleanAbsPath(path string) (string, error) {
-	return filepath.Abs(filepath.Clean(path))
-}
-
-func containsRoot(roots []string, root string) bool {
-	cleanRoot, err := cleanAbsPath(root)
-	if err != nil {
-		return false
-	}
-
-	for _, existing := range roots {
-		if samePath(existing, cleanRoot) {
-			return true
-		}
-	}
-
-	return false
-}
-
-func isUnderAnyRoot(path string, roots []string) bool {
-	for _, root := range roots {
-		if isUnderRoot(path, root) {
-			return true
-		}
-	}
-
-	return false
-}
-
-func isUnderRoot(path string, root string) bool {
-	if samePath(path, root) {
-		return true
-	}
-
-	relativePath, err := filepath.Rel(root, path)
-	if err != nil {
-		return false
-	}
-
-	return relativePath != ".." &&
-		!strings.HasPrefix(relativePath, ".."+string(os.PathSeparator)) &&
-		!filepath.IsAbs(relativePath)
-}
-
-func samePath(left string, right string) bool {
-	return strings.EqualFold(filepath.Clean(left), filepath.Clean(right))
 }
 
 func contentType(path string) string {
