@@ -1,0 +1,6 @@
+[submodule "third_party/minhook"]
+	path = third_party/minhook
+	url = https://github.com/TsudaKageyu/minhook.git
+[submodule "third_party/zydis"]
+	path = third_party/zydis
+	url = https://github.com/zyantific/zydis.git
