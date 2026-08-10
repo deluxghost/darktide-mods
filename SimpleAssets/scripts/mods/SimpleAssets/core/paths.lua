@@ -88,12 +88,15 @@ paths.resolve_asset_dir_path = function(asset_dir_path)
 	end
 
 	local normalized_path = paths.normalize_asset_path(asset_dir_path)
+	local resolved_path
 
 	if normalized_path == "" then
-		return paths.join_path(paths.get_game_dir(), "mods/" .. context.mod_name() .. "/assets")
+		resolved_path = paths.join_path(paths.get_game_dir(), "mods/" .. context.mod_name() .. "/assets")
+	else
+		resolved_path = paths.resolve_asset_path(asset_dir_path)
 	end
 
-	return paths.resolve_asset_path(asset_dir_path)
+	return paths.normalize_asset_path(native_runtime.resolve_asset_path(resolved_path, true))
 end
 
 return paths

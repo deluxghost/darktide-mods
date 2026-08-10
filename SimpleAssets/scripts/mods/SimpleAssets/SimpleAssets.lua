@@ -10,15 +10,59 @@ if not initialized then
 end
 
 local paths = mod:io_dofile("SimpleAssets/scripts/mods/SimpleAssets/core/paths")
+local font_loading = mod:io_dofile("SimpleAssets/scripts/mods/SimpleAssets/font/loading")
 local texture_loading = mod:io_dofile("SimpleAssets/scripts/mods/SimpleAssets/texture/loading")
+local UISoundEvents = require("scripts/settings/ui/ui_sound_events")
+local WwiseGameSyncSettings = require("scripts/settings/wwise_game_sync/wwise_game_sync_settings")
 
 mod:info(string.format("SimpleAssets runtime listening on %s", native_runtime.listen_info()))
 
 mod.get_game_dir = paths.get_game_dir
 mod.get_user_dir = paths.get_user_dir
+mod.load_font = font_loading.load_font
 mod.load_texture = texture_loading.load_texture
 mod.load_textures = texture_loading.load_textures
 mod.load_textures_from_dir = texture_loading.load_textures_from_dir
+
+local DEMO_VIEW_NAME = "simple_assets_demo_view"
+local DEMO_VIEW_PATH = "SimpleAssets/scripts/mods/SimpleAssets/views/simple_assets_demo_view/simple_assets_demo_view"
+
+mod:add_require_path(DEMO_VIEW_PATH)
+mod:register_view({
+	view_name = DEMO_VIEW_NAME,
+	view_settings = {
+		init_view_function = function()
+			return true
+		end,
+		state_bound = true,
+		path = DEMO_VIEW_PATH,
+		class = "SimpleAssetsDemoView",
+		disable_game_world = false,
+		load_always = true,
+		load_in_hub = true,
+		game_world_blur = 1.1,
+		enter_sound_events = {
+			UISoundEvents.system_menu_enter,
+		},
+		exit_sound_events = {
+			UISoundEvents.system_menu_exit,
+		},
+		wwise_states = {
+			options = WwiseGameSyncSettings.state_groups.options.ingame_menu,
+		},
+	},
+	view_transitions = {},
+	view_options = {
+		close_all = false,
+		close_previous = false,
+	},
+})
+
+mod:command("simpleassets", "Open the SimpleAssets demo view.", function()
+	if not Managers.ui:view_instance(DEMO_VIEW_NAME) then
+		Managers.ui:open_view(DEMO_VIEW_NAME, nil, nil, nil, nil, {})
+	end
+end)
 
 mod.on_unload = function()
 	native_runtime.shutdown()

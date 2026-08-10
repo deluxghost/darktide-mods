@@ -1,6 +1,11 @@
 # SimpleAssets
 
-`SimpleAssets` is a local asset library for other Darktide mods. It loads local image files as game textures and supports batch texture loading.
+`SimpleAssets` lets other Darktide mods load external assets at runtime without packaging them into bundle patches.
+
+It currently supports:
+
+- Loading image files as game textures.
+- Loading preconverted `.slug` files as UI fonts.
 
 ## Quick Start
 
@@ -32,9 +37,11 @@ end
 
 ## Path Rules
 
+All asset file and directory paths accepted by this API use the rules below.
+
 Forward slashes and backslashes are accepted. Paths are normalized to forward slashes internally, and the examples below use forward slashes.
 
-`SimpleAssets.load_texture("file.png")` reads from the calling mod's `assets` directory by default:
+Relative asset paths are resolved from the calling mod's `assets` directory by default:
 
 ```lua
 SimpleAssets.load_texture("icon.png")
@@ -58,11 +65,13 @@ SimpleAssets.load_texture("mods/OtherAssetPack/assets/icon.png")
 -- mods/OtherAssetPack/assets/icon.png
 ```
 
-Windows absolute paths are used as-is:
+Windows absolute paths are accepted, but remain subject to the allowed roots below:
 
 ```lua
-SimpleAssets.load_texture("D:/Images/icon.png")
+SimpleAssets.load_texture("C:/Users/User/AppData/Roaming/Fatshark/Darktide/assets/icon.png")
 ```
+
+The resolved path must be inside either Darktide's game directory or user data directory. Paths outside both directories are rejected, including Windows absolute paths.
 
 ## Directories
 
@@ -73,8 +82,6 @@ local user_dir = SimpleAssets.get_user_dir()
 
 - `get_game_dir`: Returns the Darktide game directory used for mod asset paths. On Microsoft Store / PC Game Pass, this may be the protected Windows package folder that contains the running executable, not the Xbox app content folder visible to the user.
 - `get_user_dir`: Returns Darktide's user data directory.
-
-Files outside these two directories cannot be loaded, including Windows absolute paths.
 
 ## Loading Textures
 
@@ -119,7 +126,7 @@ end)
 local promise = SimpleAssets.load_textures(asset_paths)
 ```
 
-`asset_paths` is an array. Each item uses the same path rules as `load_texture`. A single item failure does not reject the whole batch.
+`asset_paths` is an array of asset paths. A single item failure does not reject the whole batch.
 
 ```lua
 {
@@ -162,7 +169,7 @@ end)
 local promise = SimpleAssets.load_textures_from_dir(asset_dir_path, recursive)
 ```
 
-`asset_dir_path` is a directory path. It uses the same path rules as `load_texture`. Use an empty string to load from the calling mod's `assets` directory.
+`asset_dir_path` is an asset directory path. Use an empty string to load from the calling mod's `assets` directory.
 
 `recursive` controls whether child directories are included. Set it to `true` to include them.
 
@@ -182,3 +189,19 @@ end)
 ```
 
 All files in the directory are attempted. Files the game cannot decode are returned as failed items.
+
+## Loading Fonts
+
+```lua
+local promise = SimpleAssets.load_font(font_type, asset_path)
+```
+
+`asset_path` must refer to a preconverted `.slug` file. The promise resolves to `font_type` after the engine resource is ready. The returned name can be assigned directly to a UI text style's `font_type` field.
+
+```lua
+SimpleAssets.load_font("my_ui_font", "fonts/my_ui_font.slug"):next(function(font_type)
+	widget.style.text.font_type = font_type
+end)
+```
+
+Font names are global in the UI font manager. Existing names and names already registered to another file are rejected.

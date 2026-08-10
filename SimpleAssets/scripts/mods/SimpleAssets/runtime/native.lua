@@ -39,9 +39,12 @@ if not pcall(ffi.typeof, "SimpleAssetsRuntime_CDEF") then
 		} SimpleAssets_WIN32_FIND_DATAW;
 
 		int SimpleAssetsRuntime_Start(void);
+		int SimpleAssetsRuntime_ResourceLoad(const char* resource_type, const char* resource_name, const char* file_path);
+		int SimpleAssetsRuntime_ResourceState(const char* resource_type, const char* resource_name);
 		const char* SimpleAssetsRuntime_GameDir(void);
 		const char* SimpleAssetsRuntime_UserDir(void);
 		const char* SimpleAssetsRuntime_ListenInfo(void);
+		const char* SimpleAssetsRuntime_ResolveAssetPath(const char* path, int directory);
 		const char* SimpleAssetsRuntime_AssetUrl(const char* path);
 		const char* SimpleAssetsRuntime_LastError(void);
 		void SimpleAssetsRuntime_Shutdown(void);
@@ -187,6 +190,42 @@ native.asset_url = function(path)
 	return asset_url
 end
 
+native.resolve_asset_path = function(path, directory)
+	local runtime = runtime_or_error()
+	local resolved_path = runtime_string(runtime.SimpleAssetsRuntime_ResolveAssetPath(
+		windows.path(path),
+		directory and 1 or 0
+	))
+
+	if not resolved_path then
+		error(runtime_string(runtime.SimpleAssetsRuntime_LastError()) or "SimpleAssets runtime failed to resolve asset path")
+	end
+
+	return resolved_path
+end
+
+native.resource_load = function(resource_type, resource_name, path)
+	local runtime = runtime_or_error()
+	local result = runtime.SimpleAssetsRuntime_ResourceLoad(resource_type, resource_name, windows.path(path))
+
+	if result == 0 then
+		return false, runtime_string(runtime.SimpleAssetsRuntime_LastError()) or "SimpleAssets runtime failed to load resource"
+	end
+
+	return true
+end
+
+native.resource_state = function(resource_type, resource_name)
+	local runtime = runtime_or_error()
+	local result = runtime.SimpleAssetsRuntime_ResourceState(resource_type, resource_name)
+
+	if result < 0 then
+		return nil, runtime_string(runtime.SimpleAssetsRuntime_LastError()) or "SimpleAssets runtime failed to query resource state"
+	end
+
+	return result
+end
+
 native.shutdown = function()
 	local runtime = state.runtime
 
@@ -197,7 +236,6 @@ native.shutdown = function()
 	state.listen_info = nil
 	state.game_dir = nil
 	state.user_dir = nil
-	state.runtime = nil
 end
 
 return native

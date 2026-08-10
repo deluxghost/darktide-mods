@@ -1,0 +1,270 @@
+local UIFontSettings = require("scripts/managers/ui/ui_font_settings")
+local UIWidget = require("scripts/managers/ui/ui_widget")
+local UIWorkspaceSettings = require("scripts/settings/ui/ui_workspace_settings")
+
+local VIEW_ROOT_LAYER = 13
+local CARD_WIDTH = 200
+local CARD_HEIGHT = 210
+local CARD_HORIZONTAL_GAP = 20
+local CARD_VERTICAL_GAP = 20
+local GALLERY_COLUMNS = 7
+
+local screen = table.clone(UIWorkspaceSettings.screen)
+
+screen.position[3] = VIEW_ROOT_LAYER
+
+local function gallery_item(index)
+	local zero_based_index = index - 1
+	local column = zero_based_index % GALLERY_COLUMNS
+	local row = math.floor(zero_based_index / GALLERY_COLUMNS)
+
+	return {
+		parent = "gallery",
+		horizontal_alignment = "left",
+		vertical_alignment = "top",
+		size = {
+			CARD_WIDTH,
+			CARD_HEIGHT,
+		},
+		position = {
+			column * (CARD_WIDTH + CARD_HORIZONTAL_GAP),
+			row * (CARD_HEIGHT + CARD_VERTICAL_GAP),
+			1,
+		},
+	}
+end
+
+local scenegraph_definition = {
+	screen = screen,
+	title = {
+		parent = "screen",
+		horizontal_alignment = "left",
+		vertical_alignment = "top",
+		size = {
+			600,
+			60,
+		},
+		position = {
+			180,
+			90,
+			2,
+		},
+	},
+	gallery = {
+		parent = "screen",
+		horizontal_alignment = "left",
+		vertical_alignment = "top",
+		size = {
+			1560,
+			820,
+		},
+		position = {
+			180,
+			170,
+			1,
+		},
+	},
+	gallery_item_1 = gallery_item(1),
+	gallery_item_2 = gallery_item(2),
+}
+
+local card_passes = {
+	{
+		pass_type = "rect",
+		style = {
+			color = {
+				220,
+				18,
+				18,
+				18,
+			},
+			offset = {
+				0,
+				0,
+				0,
+			},
+		},
+	},
+	{
+		pass_type = "texture",
+		value = "content/ui/materials/frames/frame_tile_2px",
+		style = {
+			color = Color.terminal_frame(nil, true),
+			offset = {
+				0,
+				0,
+				4,
+			},
+		},
+	},
+}
+
+local function append_passes(destination, passes)
+	for i = 1, #passes do
+		destination[#destination + 1] = table.clone(passes[i])
+	end
+
+	return destination
+end
+
+local function label_pass(label)
+	local style = table.clone(UIFontSettings.header_3)
+
+	style.font_size = 18
+	style.offset = {
+		10,
+		5,
+		3,
+	}
+	style.size = {
+		CARD_WIDTH - 20,
+		24,
+	}
+	style.text_horizontal_alignment = "left"
+	style.text_vertical_alignment = "center"
+
+	return {
+		pass_type = "text",
+		value = label,
+		style = style,
+	}
+end
+
+local function status_pass(initial_text, ready_id)
+	return {
+		pass_type = "text",
+		value_id = "status",
+		value = initial_text,
+		style = {
+			font_type = "proxima_nova_bold",
+			font_size = 14,
+			text_color = Color.text_default(255, true),
+			text_horizontal_alignment = "center",
+			text_vertical_alignment = "center",
+			offset = {
+				10,
+				38,
+				3,
+			},
+			size = {
+				CARD_WIDTH - 20,
+				CARD_HEIGHT - 48,
+			},
+		},
+		visibility_function = function(content)
+			return not content[ready_id]
+		end,
+	}
+end
+
+local texture_passes = append_passes({}, card_passes)
+
+texture_passes[#texture_passes + 1] = label_pass("texture")
+texture_passes[#texture_passes + 1] = {
+	pass_type = "texture",
+	style_id = "image",
+	style = {
+		horizontal_alignment = "center",
+		vertical_alignment = "top",
+		material_values = {
+			texture_map = nil,
+			use_placeholder_texture = 0,
+		},
+		offset = {
+			0,
+			38,
+			2,
+		},
+		size = {
+			165,
+			158,
+		},
+	},
+	visibility_function = function(content)
+		return content.texture_ready
+	end,
+}
+texture_passes[#texture_passes + 1] = status_pass("Loading texture...", "texture_ready")
+
+local font_passes = append_passes({}, card_passes)
+
+font_passes[#font_passes + 1] = label_pass("font")
+font_passes[#font_passes + 1] = {
+	pass_type = "text",
+	value_id = "sample_text",
+	value = "The quick brown fox\njumps over the lazy dog.",
+	style_id = "sample_text",
+	style = {
+		font_type = "proxima_nova_bold",
+		font_size = 20,
+		text_color = Color.text_default(255, true),
+		text_horizontal_alignment = "center",
+		text_vertical_alignment = "center",
+		offset = {
+			10,
+			38,
+			2,
+		},
+		size = {
+			CARD_WIDTH - 20,
+			CARD_HEIGHT - 48,
+		},
+	},
+	visibility_function = function(content)
+		return content.font_ready
+	end,
+}
+font_passes[#font_passes + 1] = status_pass("Loading font...", "font_ready")
+
+local widget_definitions = {
+	background = UIWidget.create_definition({
+		{
+			pass_type = "rect",
+			style = {
+				color = Color.black(255, true),
+			},
+		},
+		{
+			pass_type = "texture",
+			value = "content/ui/materials/backgrounds/terminal_basic",
+			style = {
+				horizontal_alignment = "center",
+				vertical_alignment = "center",
+				scale_to_material = true,
+				size_addition = {
+					40,
+					40,
+				},
+				color = Color.terminal_grid_background_gradient(204, true),
+			},
+		},
+	}, "screen"),
+	title = UIWidget.create_definition({
+		{
+			pass_type = "text",
+			value = "Simple Assets Demo",
+			style = table.clone(UIFontSettings.header_1),
+		},
+	}, "title"),
+	texture_demo = UIWidget.create_definition(texture_passes, "gallery_item_1", {
+		texture_ready = false,
+	}),
+	font_demo = UIWidget.create_definition(font_passes, "gallery_item_2", {
+		font_ready = false,
+	}),
+}
+
+local legend_inputs = {
+	{
+		input_action = "back",
+		on_pressed_callback = "_on_back_pressed",
+		display_name = "loc_class_selection_button_back",
+		alignment = "left_alignment",
+	},
+}
+
+return {
+	legend_inputs = legend_inputs,
+	scenegraph_definition = scenegraph_definition,
+	widget_definitions = widget_definitions,
+}
