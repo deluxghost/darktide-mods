@@ -18,11 +18,6 @@ local TEST_GREETING_LINES = {
 }
 local TEST_SYMBOLS = "© ® ™ € £ ¥ ± × ÷ ≤ ≥ ≠ ← → ↑ ↓ ✓ ✕ ★ … • ∞"
 
-local function report_has_status(report, status)
-	return string.find(report, "capture_status=" .. status, 1, true) ~= nil
-		or string.find(report, "configure_status=" .. status, 1, true) ~= nil
-end
-
 local function fail(message, result)
 	local error_message = message .. ": " .. tostring(result)
 	mod:error(error_message)
@@ -37,16 +32,10 @@ function imgui_runtime.install()
 			fail("ImguiPatch text capture install failed", result)
 		end
 
-		if not report_has_status(result, "installed") then
-			fail("ImguiPatch text capture install returned unexpected status", result)
-		end
-
 		state.capture_installed = true
 	end
 
 	state.fonts_configured = false
-	state.warmup_frames_remaining = nil
-	state.imgui_opened = nil
 end
 
 local function configure_fonts()
@@ -54,18 +43,18 @@ local function configure_fonts()
 		return true
 	end
 
-	local ok, result = native.configure_fonts()
+	local status, result = native.configure_fonts()
 
-	if not ok then
+	if status == nil then
 		fail("ImguiPatch configure fonts failed", result)
 	end
 
-	if report_has_status(result, "atlas_locked") then
+	if status == native.CONFIGURE_ATLAS_LOCKED then
 		return false
 	end
 
-	if not report_has_status(result, "applied") then
-		fail("ImguiPatch configure fonts returned unexpected status", result)
+	if status ~= native.CONFIGURE_APPLIED then
+		fail("ImguiPatch configure fonts returned unexpected status", status)
 	end
 
 	state.fonts_configured = true
@@ -78,21 +67,21 @@ local function update_capture()
 		return
 	end
 
-	local ok, result = native.poll_text_capture()
+	local status, result = native.poll_text_capture()
 
-	if not ok then
+	if status == nil then
 		fail("ImguiPatch text capture poll failed", result)
 	end
 
-	if report_has_status(result, "idle")
-		or report_has_status(result, "pending")
-		or report_has_status(result, "preparing")
-		or report_has_status(result, "atlas_locked") then
+	if status == native.CAPTURE_IDLE
+		or status == native.CAPTURE_PENDING
+		or status == native.CAPTURE_PREPARING
+		or status == native.CAPTURE_ATLAS_LOCKED then
 		return
 	end
 
-	if not report_has_status(result, "applied") then
-		fail("ImguiPatch text capture returned unexpected status", result)
+	if status ~= native.CAPTURE_APPLIED then
+		fail("ImguiPatch text capture returned unexpected status", status)
 	end
 
 end
@@ -160,18 +149,12 @@ function imgui_runtime.restore()
 			fail("ImguiPatch text capture uninstall failed", result)
 		end
 
-		if not report_has_status(result, "uninstalled") then
-			fail("ImguiPatch text capture uninstall returned unexpected status", result)
-		end
 	end
 
 	state.capture_installed = false
 	state.fonts_configured = false
-	state.warmup_frames_remaining = nil
-	state.imgui_opened = nil
 	state.test_window_open = false
 	state.test_window_initialized = false
-	native.unload()
 end
 
 return imgui_runtime

@@ -4,8 +4,6 @@ local ffi = Mods.lua.ffi
 local native = {}
 
 local RUNTIME_PATH = "../mods/ImguiPatch/bin/darktide-imgui-patch.dll"
-local OUTPUT_BUFFER_SIZE = 16384
-
 local instances = mod:persistent_table("instances")
 instances.imgui_patch_runtime = instances.imgui_patch_runtime or {}
 
@@ -15,16 +13,14 @@ if not pcall(ffi.typeof, "ImguiPatch_CDEF") then
 	ffi.cdef([[
 		typedef struct { int unused; } ImguiPatch_CDEF;
 
-		int ImguiPatch_ConfigureFonts(char* output_buffer, int output_buffer_size);
-		int ImguiPatch_InstallTextCapture(char* output_buffer, int output_buffer_size);
-		int ImguiPatch_PollTextCapture(char* output_buffer, int output_buffer_size);
-		int ImguiPatch_UninstallTextCapture(char* output_buffer, int output_buffer_size);
+		int ImguiPatch_ConfigureFonts(void);
+		int ImguiPatch_InstallTextCapture(void);
+		int ImguiPatch_PollTextCapture(void);
+		int ImguiPatch_UninstallTextCapture(void);
 		int ImguiPatch_WantsTextInput(void);
 		const char* ImguiPatch_LastError(void);
 	]])
 end
-
-local output_buffer = ffi.new("char[?]", OUTPUT_BUFFER_SIZE)
 
 local function runtime_string(pointer)
 	if pointer == nil then
@@ -56,37 +52,70 @@ local function load_runtime()
 	return state.runtime
 end
 
-local function call_with_output(function_name, error_message)
+local function call_boolean(function_name, error_message)
 	local runtime, load_error = load_runtime()
 
 	if not runtime then
 		return false, load_error
 	end
 
-	local ok = runtime[function_name](output_buffer, OUTPUT_BUFFER_SIZE)
+	local ok = runtime[function_name]()
 
 	if ok == 0 then
 		return false, runtime_string(runtime.ImguiPatch_LastError()) or error_message
 	end
 
-	return true, ffi.string(output_buffer)
+	return true
 end
 
 native.configure_fonts = function()
-	return call_with_output("ImguiPatch_ConfigureFonts", "ImguiPatch configure fonts failed")
+	local runtime, load_error = load_runtime()
+
+	if not runtime then
+		return nil, load_error
+	end
+
+	local status = runtime.ImguiPatch_ConfigureFonts()
+
+	if status < 0 then
+		return nil, runtime_string(runtime.ImguiPatch_LastError()) or "ImguiPatch configure fonts failed"
+	end
+
+	return status
 end
 
 native.install_text_capture = function()
-	return call_with_output("ImguiPatch_InstallTextCapture", "ImguiPatch text capture install failed")
+	return call_boolean("ImguiPatch_InstallTextCapture", "ImguiPatch text capture install failed")
 end
 
 native.poll_text_capture = function()
-	return call_with_output("ImguiPatch_PollTextCapture", "ImguiPatch text capture poll failed")
+	local runtime, load_error = load_runtime()
+
+	if not runtime then
+		return nil, load_error
+	end
+
+	local status = runtime.ImguiPatch_PollTextCapture()
+
+	if status < 0 then
+		return nil, runtime_string(runtime.ImguiPatch_LastError()) or "ImguiPatch text capture poll failed"
+	end
+
+	return status
 end
 
 native.uninstall_text_capture = function()
-	return call_with_output("ImguiPatch_UninstallTextCapture", "ImguiPatch text capture uninstall failed")
+	return call_boolean("ImguiPatch_UninstallTextCapture", "ImguiPatch text capture uninstall failed")
 end
+
+native.CONFIGURE_ATLAS_LOCKED = 0
+native.CONFIGURE_APPLIED = 1
+native.CAPTURE_IDLE = 0
+native.CAPTURE_PENDING = 1
+native.CAPTURE_PREPARING = 2
+native.CAPTURE_ATLAS_LOCKED = 3
+native.CAPTURE_APPLIED = 4
+native.CAPTURE_NOT_INSTALLED = 5
 
 native.wants_text_input = function()
 	local runtime = load_runtime()
@@ -96,10 +125,6 @@ native.wants_text_input = function()
 	end
 
 	return runtime.ImguiPatch_WantsTextInput() ~= 0
-end
-
-native.unload = function()
-	state.runtime = nil
 end
 
 return native
