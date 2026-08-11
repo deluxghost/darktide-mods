@@ -5,6 +5,7 @@ local resource_loading = mod:io_dofile("SimpleAssets/scripts/mods/SimpleAssets/r
 local loading = {}
 
 local RESOURCE_TYPE = "slug"
+local RESOURCE_PREFIX = "simple_assets/font/"
 local VARIANTS = {
 	{
 		suffix = "",
@@ -110,7 +111,8 @@ loading.load_font = function(font_type, asset_path)
 	validate_font_type(font_type)
 	validate_slug_path(asset_path)
 
-	local request = resource_loading.prepare(RESOURCE_TYPE, font_type, asset_path)
+	local resource_name = RESOURCE_PREFIX .. font_type
+	local request = resource_loading.prepare(RESOURCE_TYPE, resource_name, asset_path)
 
 	check_aliases(font_type, request.name, request.path)
 

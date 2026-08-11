@@ -14,7 +14,6 @@ local state = instances.simple_assets_runtime
 
 if not pcall(ffi.typeof, "SimpleAssetsRuntime_CDEF") then
 	ffi.cdef([[
-		typedef struct { int unused; } SimpleAssetsRuntime_CDEF;
 		typedef void* SimpleAssets_HANDLE;
 		typedef unsigned long SimpleAssets_DWORD;
 		typedef int SimpleAssets_BOOL;
@@ -40,6 +39,8 @@ if not pcall(ffi.typeof, "SimpleAssetsRuntime_CDEF") then
 
 		int SimpleAssetsRuntime_Start(void);
 		int SimpleAssetsRuntime_ResourceLoad(const char* resource_type, const char* resource_name, const char* file_path);
+		int SimpleAssetsRuntime_MouseCursorLoad(const char* resource_name, const char* file_path, unsigned int hotspot_x, unsigned int hotspot_y);
+		int SimpleAssetsRuntime_VideoLoad(const char* resource_name, const char* file_path);
 		int SimpleAssetsRuntime_ResourceState(const char* resource_type, const char* resource_name);
 		const char* SimpleAssetsRuntime_GameDir(void);
 		const char* SimpleAssetsRuntime_UserDir(void);
@@ -55,6 +56,8 @@ if not pcall(ffi.typeof, "SimpleAssetsRuntime_CDEF") then
 		SimpleAssets_HANDLE SimpleAssetsRuntime_FindFirstFileW(const SimpleAssets_WCHAR* lpFileName, SimpleAssets_WIN32_FIND_DATAW* lpFindFileData);
 		SimpleAssets_BOOL SimpleAssetsRuntime_FindNextFileW(SimpleAssets_HANDLE hFindFile, SimpleAssets_WIN32_FIND_DATAW* lpFindFileData);
 		SimpleAssets_BOOL SimpleAssetsRuntime_FindClose(SimpleAssets_HANDLE hFindFile);
+
+		typedef struct { int unused; } SimpleAssetsRuntime_CDEF;
 	]])
 end
 
@@ -210,6 +213,34 @@ native.resource_load = function(resource_type, resource_name, path)
 
 	if result == 0 then
 		return false, runtime_string(runtime.SimpleAssetsRuntime_LastError()) or "SimpleAssets runtime failed to load resource"
+	end
+
+	return true
+end
+
+native.mouse_cursor_load = function(resource_name, path, hotspot_x, hotspot_y)
+	local runtime = runtime_or_error()
+	local result = runtime.SimpleAssetsRuntime_MouseCursorLoad(
+		resource_name,
+		windows.path(path),
+		hotspot_x,
+		hotspot_y
+	)
+
+	if result == 0 then
+		return false, runtime_string(runtime.SimpleAssetsRuntime_LastError()) or
+			"SimpleAssets runtime failed to load mouse cursor"
+	end
+
+	return true
+end
+
+native.video_load = function(resource_name, path)
+	local runtime = runtime_or_error()
+	local result = runtime.SimpleAssetsRuntime_VideoLoad(resource_name, windows.path(path))
+
+	if result == 0 then
+		return false, runtime_string(runtime.SimpleAssetsRuntime_LastError()) or "SimpleAssets runtime failed to load video"
 	end
 
 	return true

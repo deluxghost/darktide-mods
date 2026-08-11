@@ -11,18 +11,26 @@ end
 
 local paths = mod:io_dofile("SimpleAssets/scripts/mods/SimpleAssets/core/paths")
 local font_loading = mod:io_dofile("SimpleAssets/scripts/mods/SimpleAssets/font/loading")
+local mouse_cursor_loading = mod:io_dofile("SimpleAssets/scripts/mods/SimpleAssets/mouse_cursor/loading")
+local resource_naming = mod:io_dofile("SimpleAssets/scripts/mods/SimpleAssets/resource/naming")
+local slug_album_loading = mod:io_dofile("SimpleAssets/scripts/mods/SimpleAssets/slug_album/loading")
 local texture_loading = mod:io_dofile("SimpleAssets/scripts/mods/SimpleAssets/texture/loading")
+local video_loading = mod:io_dofile("SimpleAssets/scripts/mods/SimpleAssets/video/loading")
 local UISoundEvents = require("scripts/settings/ui/ui_sound_events")
 local WwiseGameSyncSettings = require("scripts/settings/wwise_game_sync/wwise_game_sync_settings")
 
 mod:info(string.format("SimpleAssets runtime listening on %s", native_runtime.listen_info()))
 
 mod.get_game_dir = paths.get_game_dir
+mod.get_resource_name = resource_naming.get_resource_name
 mod.get_user_dir = paths.get_user_dir
 mod.load_font = font_loading.load_font
+mod.load_mouse_cursor = mouse_cursor_loading.load_mouse_cursor
+mod.load_slug_album = slug_album_loading.load_slug_album
 mod.load_texture = texture_loading.load_texture
 mod.load_textures = texture_loading.load_textures
 mod.load_textures_from_dir = texture_loading.load_textures_from_dir
+mod.load_video = video_loading.load_video
 
 local DEMO_VIEW_NAME = "simple_assets_demo_view"
 local DEMO_VIEW_PATH = "SimpleAssets/scripts/mods/SimpleAssets/views/simple_assets_demo_view/simple_assets_demo_view"
@@ -58,7 +66,7 @@ mod:register_view({
 	},
 })
 
-mod:command("simpleassets", "Open the SimpleAssets demo view.", function()
+mod:command("simpleassets", "Open the SimpleAssets UI demo view.", function()
 	if not Managers.ui:view_instance(DEMO_VIEW_NAME) then
 		Managers.ui:open_view(DEMO_VIEW_NAME, nil, nil, nil, nil, {})
 	end
