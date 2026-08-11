@@ -45,14 +45,28 @@ typedef struct {
     uint32_t worker_allocate_slot;
     uint32_t io_open_slot;
     uint32_t io_size_slot;
-    uint32_t io_read_slot;
 } SaQueueReadShape;
+
+typedef struct {
+    const uint8_t *helper;
+    void **file_system_slot;
+    uint32_t loader_offset;
+    uint32_t loader_subobject_offset;
+    uint32_t range_offset;
+    uint32_t handle_offset;
+} SaOpenStreamShape;
 
 typedef struct {
     uint8_t *load;
     uint8_t *get_raw_resource;
     uint8_t *queue_push;
     void **resource_manager_slot;
+    void **file_system_slot;
+    uint8_t *file_open;
+    uint32_t loader_offset;
+    uint32_t loader_subobject_offset;
+    uint32_t stream_range_offset;
+    uint32_t stream_handle_offset;
     SaTypeLayout type_layout;
     SaQueueReadShape queue_shape;
 } SaEngineApi;
@@ -67,19 +81,17 @@ _Static_assert(sizeof(SaWorkerAllocation) == 0x20, "worker allocation result ABI
 
 typedef void (*SaLoadFn)(void *, uint32_t, const uint64_t *, const uint64_t *, uint64_t, uint8_t, uint8_t);
 typedef void *(*SaGetRawResourceFn)(void *, const uint64_t *, const uint64_t *);
+typedef void *(*SaOpenStreamFn)(void *, void *, const uint64_t *, const uint64_t *, uint32_t);
+typedef int (*SaFileOpenFn)(void *, uint8_t, void *, void *);
 typedef uint64_t (*SaQueueRequestFn)(void *, void *);
 typedef void (*SaQueuePushFn)(void *, const void *);
 typedef void (*SaWorkerAllocateFn)(void *, SaWorkerAllocation *, uint64_t, uint64_t);
 typedef uint64_t (*SaIoOpenFn)(void *, const char *, uint64_t, uint64_t, uint32_t, void *, uint8_t);
 typedef uint64_t (*SaIoSizeFn)(void *, uint64_t);
-typedef uint32_t (*SaIoSubmitFn)(void *);
-typedef void (*SaIoWaitFn)(void *, uint32_t);
 
 extern SaEngineApi g_engine;
 extern SaImage g_image;
 extern DtIntUtilsHook g_queue_request_hook_state;
-extern DtIntUtilsHook g_io_submit_hook_state;
-extern DtIntUtilsHook g_io_wait_hook_state;
 
 void sa_set_error(char *buffer, size_t buffer_size, const char *format, ...);
 
@@ -147,30 +159,47 @@ int sa_validate_queue_read_shape(
     char *error,
     size_t error_size
 );
-int sa_validate_direct_storage_hook_shapes(
-    const SaFunction *submit,
-    const SaFunction *wait,
-    char *error,
-    size_t error_size
-);
 int sa_make_bundle_relative_path(const char *absolute_path, char *relative_path, size_t capacity);
 uint64_t sa_queue_request_hook(void *worker, void *request);
-void sa_async_read_start(
-    const char *path,
-    void *destination,
-    uint64_t size,
-    void *reader,
-    uint64_t type_hash,
-    uint64_t resource_hash
-);
-uint32_t sa_io_submit_hook(void *reader);
-void sa_io_wait_hook(void *reader, uint32_t token);
-int sa_validate_resource_file(
-    const char *resource_type,
-    const char *path,
-    uint64_t *file_size,
+int sa_analyze_path_join_call(
+    const SaImage *image,
+    const SaFunction *function,
+    const uint8_t **target,
     char *error,
     size_t error_size
+);
+int sa_analyze_open_stream(
+    const SaImage *image,
+    const SaFunction *function,
+    SaOpenStreamShape *shape,
+    char *error,
+    size_t error_size
+);
+int sa_validate_resource_data(
+    const char *resource_type,
+    const void *data,
+    size_t data_size,
+    char *error,
+    size_t error_size
+);
+int sa_validate_mouse_cursor_data(
+    const void *data,
+    size_t data_size,
+    char *error,
+    size_t error_size
+);
+int sa_ensure_stream_runtime(char *error, size_t error_size);
+int sa_load_external_resource(
+    const char *resource_type,
+    const char *resource_name,
+    const char *file_path,
+    const char *io_carrier_path,
+    const void *resource_data,
+    size_t resource_data_size,
+    const char *stream_path,
+    uint64_t stream_range,
+    char *error_buffer,
+    size_t error_buffer_size
 );
 
 int sa_locate_resource_manager_slot(
@@ -189,15 +218,22 @@ int sa_validate_resource_type(
     size_t error_size
 );
 
-int sa_find_resource_paths(
+int sa_find_resource_data(
+    uint64_t type_hash,
+    uint64_t resource_hash,
+    char *io_path,
+    size_t io_path_size,
+    const uint8_t **resource_data,
+    size_t *resource_data_size
+);
+int sa_find_resource_stream(
     uint64_t type_hash,
     uint64_t resource_hash,
     char *path,
     size_t path_size,
-    char *io_path,
-    size_t io_path_size,
-    uint64_t *file_size
+    uint64_t *range
 );
+int sa_is_resource_stream_path(const char *path);
 int sa_register_resource_mapping(
     uint64_t type_hash,
     uint64_t resource_hash,
@@ -205,7 +241,10 @@ int sa_register_resource_mapping(
     const char *resource_name,
     const char *file_path,
     const char *io_path,
-    uint64_t file_size,
+    const void *resource_data,
+    size_t resource_data_size,
+    const char *stream_path,
+    uint64_t stream_range,
     int *already_registered,
     char *error,
     size_t error_size
@@ -216,6 +255,11 @@ int sa_check_resource_mapping(
     const char *type_name,
     const char *resource_name,
     const char *file_path,
+    const char *io_path,
+    const void *resource_data,
+    size_t resource_data_size,
+    const char *stream_path,
+    uint64_t stream_range,
     int *registered,
     char *error,
     size_t error_size

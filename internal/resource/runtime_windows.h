@@ -2,6 +2,7 @@
 #define SIMPLE_ASSETS_RESOURCE_RUNTIME_WINDOWS_H
 
 #include <stddef.h>
+#include <stdint.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -12,6 +13,8 @@ int simple_assets_resource_load(
     const char *resource_name,
     const char *file_path,
     const char *io_carrier_path,
+    const void *resource_data,
+    size_t resource_data_size,
     char *error_buffer,
     size_t error_buffer_size
 );
@@ -19,6 +22,24 @@ int simple_assets_resource_load(
 int simple_assets_resource_state(
     const char *resource_type,
     const char *resource_name,
+    char *error_buffer,
+    size_t error_buffer_size
+);
+
+int simple_assets_video_load(
+    const char *resource_name,
+    const char *file_path,
+    const char *io_carrier_path,
+    char *error_buffer,
+    size_t error_buffer_size
+);
+
+int simple_assets_mouse_cursor_load(
+    const char *resource_name,
+    const char *file_path,
+    const char *io_carrier_path,
+    const void *compiled_data,
+    size_t compiled_data_size,
     char *error_buffer,
     size_t error_buffer_size
 );

@@ -11,8 +11,6 @@
 SaEngineApi g_engine;
 SaImage g_image;
 DtIntUtilsHook g_queue_request_hook_state;
-DtIntUtilsHook g_io_submit_hook_state;
-DtIntUtilsHook g_io_wait_hook_state;
 
 static INIT_ONCE g_initialize_once = INIT_ONCE_STATIC_INIT;
 static char g_initialize_error[1024];
@@ -49,12 +47,12 @@ static uint64_t sa_murmur_hash64a(const void *data, size_t size) {
     }
 
     switch (size) {
-        case 7: hash ^= (uint64_t)bytes[6] << 48;
-        case 6: hash ^= (uint64_t)bytes[5] << 40;
-        case 5: hash ^= (uint64_t)bytes[4] << 32;
-        case 4: hash ^= (uint64_t)bytes[3] << 24;
-        case 3: hash ^= (uint64_t)bytes[2] << 16;
-        case 2: hash ^= (uint64_t)bytes[1] << 8;
+        case 7: hash ^= (uint64_t)bytes[6] << 48; /* fall through */
+        case 6: hash ^= (uint64_t)bytes[5] << 40; /* fall through */
+        case 5: hash ^= (uint64_t)bytes[4] << 32; /* fall through */
+        case 4: hash ^= (uint64_t)bytes[3] << 24; /* fall through */
+        case 3: hash ^= (uint64_t)bytes[2] << 16; /* fall through */
+        case 2: hash ^= (uint64_t)bytes[1] << 8; /* fall through */
         case 1: hash ^= (uint64_t)bytes[0]; hash *= multiplier;
         default: break;
     }
@@ -72,8 +70,6 @@ static BOOL CALLBACK sa_initialize_engine(PINIT_ONCE once, PVOID parameter, PVOI
         SA_FUNCTION_QUEUE_REQUEST,
         SA_FUNCTION_QUEUE_READ,
         SA_FUNCTION_INPUT_TRANSFER,
-        SA_FUNCTION_IO_SUBMIT,
-        SA_FUNCTION_IO_WAIT,
         SA_FUNCTION_SLUG_REGISTRATION,
         SA_FUNCTION_COUNT
     };
@@ -83,8 +79,6 @@ static BOOL CALLBACK sa_initialize_engine(PINIT_ONCE once, PVOID parameter, PVOI
         "queue_request",
         "queue_read",
         "stingray::ResourceLoader::input_thread_transfer_request_to_callback_thread",
-        "stingray::DirectStorageResourceReader::submit",
-        "stingray::DirectStorageResourceReader::wait_complete",
         "slug_album",
     };
     SaImage image;
@@ -130,9 +124,6 @@ static BOOL CALLBACK sa_initialize_engine(PINIT_ONCE once, PVOID parameter, PVOI
         !sa_analyze_input_queue_offset(&functions[SA_FUNCTION_QUEUE_REQUEST], queue_push,
                                        &g_engine.queue_shape.input_queue_offset,
                                        g_initialize_error, sizeof(g_initialize_error)) ||
-        !sa_validate_direct_storage_hook_shapes(
-            &functions[SA_FUNCTION_IO_SUBMIT], &functions[SA_FUNCTION_IO_WAIT],
-            g_initialize_error, sizeof(g_initialize_error)) ||
         !sa_locate_resource_manager_slot(&image, &functions[SA_FUNCTION_SLUG_REGISTRATION],
                                          &g_engine.resource_manager_slot,
                                          g_initialize_error, sizeof(g_initialize_error))) {
@@ -155,37 +146,19 @@ static BOOL CALLBACK sa_initialize_engine(PINIT_ONCE once, PVOID parameter, PVOI
             {0x00, 1}, {0x00, 1}, {0x00, 1}, {0x00, 1},
         };
 
-        const DtIntUtilsHookRequest hook_requests[] = {
-            {
-                &g_io_submit_hook_state,
-                functions[SA_FUNCTION_IO_SUBMIT].start,
-                (void *)sa_io_submit_hook,
-                NULL,
-                0,
-            },
-            {
-                &g_io_wait_hook_state,
-                functions[SA_FUNCTION_IO_WAIT].start,
-                (void *)sa_io_wait_hook,
-                NULL,
-                0,
-            },
-            {
-                &g_queue_request_hook_state,
-                functions[SA_FUNCTION_QUEUE_REQUEST].start,
-                (void *)sa_queue_request_hook,
-                queue_request_entry,
-                SA_ARRAY_COUNT(queue_request_entry),
-            },
+        const DtIntUtilsHookRequest hook_request = {
+            &g_queue_request_hook_state,
+            functions[SA_FUNCTION_QUEUE_REQUEST].start,
+            (void *)sa_queue_request_hook,
+            queue_request_entry,
+            SA_ARRAY_COUNT(queue_request_entry),
         };
 
         if (!sa_validate_resource_type(&image, &g_engine, SA_KNOWN_SLUG_TYPE_HASH, "slug",
                                        g_initialize_error, sizeof(g_initialize_error))) {
             return TRUE;
         }
-        if (!dtintutils_hooks_install(
-                hook_requests, SA_ARRAY_COUNT(hook_requests),
-                g_initialize_error, sizeof(g_initialize_error))) {
+        if (!dtintutils_hooks_install(&hook_request, 1, g_initialize_error, sizeof(g_initialize_error))) {
             return TRUE;
         }
     }
@@ -193,15 +166,13 @@ static BOOL CALLBACK sa_initialize_engine(PINIT_ONCE once, PVOID parameter, PVOI
     return TRUE;
 }
 
-static int sa_ensure_initialized(char *error, size_t error_size) {
+static int sa_ensure_resource_runtime(char *error, size_t error_size) {
     if (!InitOnceExecuteOnce(&g_initialize_once, sa_initialize_engine, NULL, NULL)) {
         sa_set_error(error, error_size, "InitOnceExecuteOnce failed with Win32 error %lu", GetLastError());
         return 0;
     }
     if (g_initialize_error[0] != '\0' || g_queue_request_hook_state.trampoline == NULL ||
-        g_io_submit_hook_state.trampoline == NULL || g_io_wait_hook_state.trampoline == NULL ||
-        !g_queue_request_hook_state.active || !g_io_submit_hook_state.active ||
-        !g_io_wait_hook_state.active) {
+        !g_queue_request_hook_state.active) {
         sa_set_error(error, error_size, "%s",
                      g_initialize_error[0] != '\0' ? g_initialize_error : "resource runtime initialization failed");
         return 0;
@@ -209,11 +180,15 @@ static int sa_ensure_initialized(char *error, size_t error_size) {
     return 1;
 }
 
-int simple_assets_resource_load(
+int sa_load_external_resource(
     const char *resource_type,
     const char *resource_name,
     const char *file_path,
     const char *io_carrier_path,
+    const void *resource_data,
+    size_t resource_data_size,
+    const char *stream_path,
+    uint64_t stream_range,
     char *error_buffer,
     size_t error_buffer_size
 ) {
@@ -222,7 +197,6 @@ int simple_assets_resource_load(
     size_t type_name_length;
     size_t resource_name_length;
     size_t file_path_length;
-    uint64_t file_size;
     int already_registered;
     char io_path[SA_MAX_STREAM_PATH];
     void *manager;
@@ -248,7 +222,8 @@ int simple_assets_resource_load(
                      SA_MAX_RESOURCE_NAME - 1);
         return 0;
     }
-    if (!sa_ensure_initialized(error_buffer, error_buffer_size)) {
+    if (resource_data == NULL || resource_data_size == 0) {
+        sa_set_error(error_buffer, error_buffer_size, "resource data must be non-empty");
         return 0;
     }
     if (file_path_length == 0 || file_path_length >= SA_MAX_STREAM_PATH) {
@@ -256,9 +231,23 @@ int simple_assets_resource_load(
                      SA_MAX_STREAM_PATH);
         return 0;
     }
-    if (!sa_validate_resource_file(resource_type, file_path, &file_size,
-                                   error_buffer, error_buffer_size)) {
+    if (stream_path != NULL &&
+        (stream_path[0] == '\0' || strlen(stream_path) >= SA_MAX_STREAM_PATH)) {
+        sa_set_error(error_buffer, error_buffer_size, "resource stream path is invalid");
         return 0;
+    }
+    if (!sa_ensure_resource_runtime(error_buffer, error_buffer_size)) {
+        return 0;
+    }
+    if (stream_path != NULL) {
+        if (!sa_ensure_stream_runtime(error_buffer, error_buffer_size)) {
+            return 0;
+        }
+        if (strlen(stream_path) >= g_engine.stream_range_offset) {
+            sa_set_error(error_buffer, error_buffer_size,
+                         "resource stream path exceeds the engine stream path storage");
+            return 0;
+        }
     }
     if (!sa_make_bundle_relative_path(io_carrier_path, io_path, sizeof(io_path))) {
         sa_set_error(error_buffer, error_buffer_size,
@@ -282,6 +271,7 @@ int simple_assets_resource_load(
 
     if (!sa_check_resource_mapping(
             type_hash, resource_hash, resource_type, resource_name, file_path,
+            io_path, resource_data, resource_data_size, stream_path, stream_range,
             &already_registered, error_buffer, error_buffer_size)) {
         return 0;
     }
@@ -296,7 +286,8 @@ int simple_assets_resource_load(
     }
     if (!sa_register_resource_mapping(
             type_hash, resource_hash, resource_type, resource_name, file_path, io_path,
-            file_size, &already_registered, error_buffer, error_buffer_size)) {
+            resource_data, resource_data_size, stream_path, stream_range,
+            &already_registered, error_buffer, error_buffer_size)) {
         return 0;
     }
     if (already_registered) {
@@ -308,6 +299,31 @@ int simple_assets_resource_load(
         error_buffer[0] = '\0';
     }
     return 1;
+}
+
+int simple_assets_resource_load(
+    const char *resource_type,
+    const char *resource_name,
+    const char *file_path,
+    const char *io_carrier_path,
+    const void *resource_data,
+    size_t resource_data_size,
+    char *error_buffer,
+    size_t error_buffer_size
+) {
+    if (resource_type == NULL || resource_name == NULL || file_path == NULL ||
+        io_carrier_path == NULL || resource_data == NULL) {
+        sa_set_error(error_buffer, error_buffer_size,
+                     "resource type, name, path, I/O carrier, and data must not be null");
+        return 0;
+    }
+    if (!sa_validate_resource_data(resource_type, resource_data, resource_data_size,
+                                   error_buffer, error_buffer_size)) {
+        return 0;
+    }
+    return sa_load_external_resource(
+        resource_type, resource_name, file_path, io_carrier_path,
+        resource_data, resource_data_size, NULL, 0, error_buffer, error_buffer_size);
 }
 
 int simple_assets_resource_state(
@@ -329,7 +345,7 @@ int simple_assets_resource_state(
         sa_set_error(error_buffer, error_buffer_size, "resource type and name must not be empty");
         return -1;
     }
-    if (!sa_ensure_initialized(error_buffer, error_buffer_size)) {
+    if (!sa_ensure_resource_runtime(error_buffer, error_buffer_size)) {
         return -1;
     }
 

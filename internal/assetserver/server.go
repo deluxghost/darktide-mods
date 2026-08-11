@@ -13,13 +13,10 @@ import (
 	"time"
 
 	"darktide-simple-assets-runtime/internal/assetpaths"
-
-	"github.com/gabriel-vasile/mimetype"
 )
 
 const (
-	routeAssets     = "/assets"
-	defaultMimeType = "application/octet-stream"
+	routeAssets = "/assets"
 )
 
 type Server struct {
@@ -167,7 +164,6 @@ func serveAsset(response http.ResponseWriter, request *http.Request, paths *asse
 		return
 	}
 
-	response.Header().Set("Content-Type", contentType(filePath))
 	http.ServeContent(response, request, filepath.Base(filePath), info.ModTime(), file)
 }
 
@@ -190,13 +186,4 @@ func resolveAssetPath(rawPath string, paths *assetpaths.Resolver) (string, int, 
 
 func shouldReturnNotFound(err error) bool {
 	return errors.Is(err, os.ErrNotExist) || errors.Is(err, os.ErrPermission)
-}
-
-func contentType(path string) string {
-	mimeType, err := mimetype.DetectFile(path)
-	if err != nil || mimeType == nil {
-		return defaultMimeType
-	}
-
-	return mimeType.String()
 }

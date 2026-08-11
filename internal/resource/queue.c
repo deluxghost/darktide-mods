@@ -212,47 +212,6 @@ int sa_validate_queue_read_shape(
     shape->worker_allocate_slot = 0x80;
     shape->io_open_slot = 8;
     shape->io_size_slot = 0x20;
-    shape->io_read_slot = 0x28;
-    return 1;
-}
-
-static int sa_function_has_indirect_call_slot(const SaFunction *function, int64_t slot) {
-    size_t offset;
-
-    for (offset = 0; offset < function->size; ++offset) {
-        DtIntUtilsInstruction decoded;
-
-        if (!dtintutils_decode(function->start + offset, function->size - offset, &decoded) ||
-            decoded.mnemonic != DTINTUTILS_MNEMONIC_CALL || decoded.operand_count != 1 ||
-            decoded.operands[0].type != DTINTUTILS_OPERAND_MEMORY) {
-            continue;
-        }
-        if (decoded.operands[0].displacement == slot) {
-            return 1;
-        }
-    }
-    return 0;
-}
-
-int sa_validate_direct_storage_hook_shapes(
-    const SaFunction *submit,
-    const SaFunction *wait,
-    char *error,
-    size_t error_size
-) {
-    if (submit->size < 0x80 || submit->size > 0x400 ||
-        !sa_function_has_indirect_call_slot(submit, 0x20) ||
-        !sa_function_has_indirect_call_slot(submit, 0x30)) {
-        sa_set_error(error, error_size,
-                     "DirectStorage submit no longer matches the validated queue/status contract");
-        return 0;
-    }
-    if (wait->size < 0x80 || wait->size > 0x400 ||
-        !sa_function_has_indirect_call_slot(wait, 0x20)) {
-        sa_set_error(error, error_size,
-                     "DirectStorage wait no longer matches the validated status contract");
-        return 0;
-    }
     return 1;
 }
 
@@ -386,8 +345,9 @@ uint64_t sa_queue_request_hook(void *worker, void *request) {
     uint64_t type_hash;
     uint64_t name_hash;
     uint32_t package_id;
-    char path[SA_MAX_STREAM_PATH];
     char io_path[SA_MAX_STREAM_PATH];
+    const uint8_t *resource_data;
+    size_t resource_data_size;
     void *io_loader;
     void **io_vtable;
     void **worker_vtable;
@@ -396,7 +356,6 @@ uint64_t sa_queue_request_hook(void *worker, void *request) {
     SaWorkerAllocateFn allocate;
     uint64_t handle;
     uint64_t carrier_size;
-    uint64_t size;
     SaWorkerAllocation allocation = {0};
 
     if (worker == NULL || request == NULL) {
@@ -407,8 +366,9 @@ uint64_t sa_queue_request_hook(void *worker, void *request) {
     }
     memcpy(&type_hash, request_bytes + shape->type_hash_offset, sizeof(type_hash));
     memcpy(&name_hash, request_bytes + shape->name_hash_offset, sizeof(name_hash));
-    if (!sa_find_resource_paths(
-            type_hash, name_hash, path, sizeof(path), io_path, sizeof(io_path), &size)) {
+    if (!sa_find_resource_data(
+            type_hash, name_hash, io_path, sizeof(io_path),
+            &resource_data, &resource_data_size)) {
         return original(worker, request);
     }
 
@@ -426,7 +386,7 @@ uint64_t sa_queue_request_hook(void *worker, void *request) {
     memcpy(&io_vtable, io_loader, sizeof(io_vtable));
     if (io_vtable == NULL ||
         !sa_is_read_only_image_range(&g_image, worker_vtable, shape->worker_allocate_slot + sizeof(void *)) ||
-        !sa_is_read_only_image_range(&g_image, io_vtable, shape->io_read_slot + sizeof(void *))) {
+        !sa_is_read_only_image_range(&g_image, io_vtable, shape->io_size_slot + sizeof(void *))) {
         return sa_queue_failure(type_hash, name_hash, "resource loader vtables failed validation");
     }
     memcpy(&io_open, (uint8_t *)io_vtable + shape->io_open_slot, sizeof(io_open));
@@ -442,17 +402,20 @@ uint64_t sa_queue_request_hook(void *worker, void *request) {
     handle = io_open(io_loader, io_path, type_hash, name_hash, package_id, worker, 0);
     memcpy(request_bytes + shape->handle_offset, &handle, sizeof(handle));
     carrier_size = io_size(io_loader, handle);
-    memcpy(request_bytes + shape->size_offset, &size, sizeof(size));
-    if (carrier_size == 0 || size == 0 || size > SIZE_MAX) {
-        return sa_queue_failure(type_hash, name_hash, "external resource file or I/O carrier size is invalid");
+    {
+        uint64_t size = resource_data_size;
+        memcpy(request_bytes + shape->size_offset, &size, sizeof(size));
+    }
+    if (carrier_size == 0 || resource_data == NULL || resource_data_size == 0) {
+        return sa_queue_failure(type_hash, name_hash, "external resource data or I/O carrier size is invalid");
     }
 
-    allocate(worker, &allocation, size, 8);
+    allocate(worker, &allocation, resource_data_size, 8);
     if (allocation.data == NULL) {
         return sa_queue_failure(type_hash, name_hash, "resource loader could not allocate the destination buffer");
     }
     memcpy(request_bytes + shape->data_offset, &allocation.data, sizeof(allocation.data));
-    sa_async_read_start(path, allocation.data, size, io_loader, type_hash, name_hash);
+    memcpy(allocation.data, resource_data, resource_data_size);
 
     ((SaQueuePushFn)g_engine.queue_push)((uint8_t *)worker + shape->input_queue_offset, request);
     return 1;

@@ -19,7 +19,7 @@ int sa_parse_rip_relative(
         return 0;
     }
     mnemonic = opcode == 0x8d ? DTINTUTILS_MNEMONIC_LEA :
-        opcode == 0x89 ? DTINTUTILS_MNEMONIC_MOV : DTINTUTILS_MNEMONIC_OTHER;
+        opcode == 0x89 || opcode == 0x8b ? DTINTUTILS_MNEMONIC_MOV : DTINTUTILS_MNEMONIC_OTHER;
     if (decoded.mnemonic != mnemonic || decoded.operand_count != 2) {
         return 0;
     }
