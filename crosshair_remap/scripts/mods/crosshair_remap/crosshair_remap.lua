@@ -284,7 +284,25 @@ local altfire_action_kinds = {
 	flamer_gas = true,
 }
 
-mod:hook_origin("HudElementCrosshair", "_get_current_crosshair_type", function (self)
+local function get_dynamic_crosshair_type(crosshair_settings, player_extensions, unit_data_extension)
+	if not crosshair_settings or not crosshair_settings.crosshair_type_func then
+		return nil
+	end
+
+	local inventory_component = unit_data_extension:read_component("inventory")
+	local wielded_slot = inventory_component.wielded_slot
+	local slot_settings = slot_configuration[wielded_slot]
+
+	if not slot_settings or slot_settings.slot_type ~= "weapon" then
+		return nil
+	end
+
+	local condition_func_params = player_extensions.weapon:condition_func_params(wielded_slot)
+
+	return crosshair_settings.crosshair_type_func(condition_func_params)
+end
+
+mod:hook_origin("HudElementCrosshair", "_get_current_crosshair_type", function (self, crosshair_settings)
 	if is_in_hub() then
 		return "none"
 	end
@@ -326,6 +344,10 @@ mod:hook_origin("HudElementCrosshair", "_get_current_crosshair_type", function (
 				end
 
 				if WeaponTemplate.is_melee(weapon_template) then
+					if get_dynamic_crosshair_type(crosshair_settings, player_extensions, unit_data_extension) == "dot_special" then
+						return mod.settings["melee_special_class"]
+					end
+
 					return mod.settings["melee_class"]
 				end
 

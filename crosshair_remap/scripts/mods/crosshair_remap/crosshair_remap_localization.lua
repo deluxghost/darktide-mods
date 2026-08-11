@@ -7,8 +7,8 @@ local builtin_crosshairs_localization = {
 		["zh-cn"] = "倒 V 形",
 	},
 	small_circle_crosshair = {
-		en = "Small Circle",
-		["zh-cn"] = "小圆圈",
+		en = "Alternative Circle",
+		["zh-cn"] = "改版圆圈",
 	},
 	small_cross_no_spread_crosshair = {
 		en = "Small Cross (No Spread)",
@@ -100,6 +100,10 @@ local localization = {
 	dot_crosshair = {
 		en = Localize("loc_setting_crosshair_type_override_dot"),
 	},
+	dot_special_crosshair = {
+		en = "Circle",
+		["zh-cn"] = "圆圈",
+	},
 	flamer_crosshair = {
 		en = "Flamer",
 		["zh-cn"] = "喷火",
@@ -130,6 +134,10 @@ local localization = {
 	melee_class = {
 		en = "Melee Weapons and Actions",
 		["zh-cn"] = "近战武器和动作",
+	},
+	melee_special_class = {
+		en = "Melee Weapon Special State",
+		["zh-cn"] = "近战武器特殊状态",
 	},
 	ability_class = {
 		en = "Combat Ability in Progress",

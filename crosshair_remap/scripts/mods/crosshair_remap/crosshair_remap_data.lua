@@ -52,6 +52,7 @@ return {
 		widgets = {
 			make_dropdown("none_class", "none"),
 			make_dropdown("melee_class", "dot"),
+			make_dropdown("melee_special_class", "dot_special"),
 			make_dropdown("ability_class", "dot"),
 			make_dropdown("missile_launcher_class", "bfg"),
 			make_dropdown("cryptic_servo_skull_class", "dot"),

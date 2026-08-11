@@ -10,6 +10,7 @@ mod.vanilla_crosshair_names = {
 	"charge_up_ads",
 	"cross",
 	"dot",
+	"dot_special",
 	"flamer",
 	"ironsight",
 	"projectile_drop",
