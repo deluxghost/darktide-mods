@@ -88,6 +88,10 @@ end)
 mod:hook(StateMainMenu, "_show_reconnect_popup", function (func, self)
 	local handle_rejoin_popup = mod:get("handle_rejoin_popup")
 	if handle_rejoin_popup == "rejoin" then
+		if self._reconnect_pressed then
+			return
+		end
+
 		self._reconnect_pressed = true
 		self:_rejoin_game()
 		return
