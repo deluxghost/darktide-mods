@@ -438,6 +438,9 @@ mod:add_require_path("SoloPlay/scripts/mods/SoloPlay/soloplay_mod_view/soloplay_
 mod:register_view({
 	view_name = "soloplay_mod_view",
 	view_settings = {
+		package = {
+			"packages/ui/views/inventory_view/inventory_view",
+		},
 		init_view_function = function (ingame_ui_context)
 			return true
 		end,
