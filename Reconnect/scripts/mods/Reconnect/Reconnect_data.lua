@@ -24,6 +24,11 @@ return {
 				keybind_type = "function_call",
 				function_name = "retry_keybind_func",
 			},
+			{
+				setting_id = "show_system_menu_button",
+				type = "checkbox",
+				default_value = false,
+			},
 		}
 	}
 }

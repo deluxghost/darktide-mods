@@ -1,0 +1,26 @@
+{
+  "name": "Reconnect",
+  "description": "Use /retry command to return to main menu so you can reconnect quickly.",
+  "homepage": "https://www.nexusmods.com/warhammer40kdarktide/mods/132",
+  "source": "https://github.com/deluxghost/darktide-mods/tree/main/Reconnect",
+  "funding": {
+    "kofi": "https://ko-fi.com/deluxghost",
+    "bilibili": "https://space.bilibili.com/4712698"
+  },
+  "version": "1.3.0",
+  "author": "deluxghost",
+  "localization": {
+    "zh-cn": {
+      "name": "重新连接",
+      "description": "使用 /retry 命令返回主菜单以便快速重新连接。"
+    },
+    "zh-tw": {
+      "name": "重新連線",
+      "description": "使用 /retry 命令返回主選單以便快速重新連線。"
+    },
+    "ru": {
+      "name": "Переподключение",
+      "description": "Reconnect - Используйте команду /retry для возвращения в главное меню, чтобы вы могли быстро переподключиться к предыдущей сессии."
+    }
+  }
+}

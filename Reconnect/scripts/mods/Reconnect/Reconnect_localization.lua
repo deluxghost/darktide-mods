@@ -35,6 +35,12 @@ return {
 		["zh-tw"] = "命令 /retry 的快捷鍵",
 		ru = "Клавиша для команды /retry",
 	},
+	show_system_menu_button = {
+		en = "Show reconnect button in game menu",
+		["zh-cn"] = "在游戏菜单中显示重新连接按钮",
+		["zh-tw"] = "在遊戲選單中顯示重新連線按鈕",
+		ru = "Показывать кнопку переподключения в игровом меню",
+	},
 	handle_rejoin_popup = {
 		en = "Rejoin popup auto action",
 		["zh-cn"] = "重连弹框自动操作",
