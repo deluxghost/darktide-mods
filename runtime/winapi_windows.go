@@ -1,9 +1,8 @@
 package main
 
 /*
-#define WIN32_LEAN_AND_MEAN
 #include <stdint.h>
-#include <windows.h>
+#include "winapi_windows.h"
 */
 import "C"
 
@@ -14,8 +13,8 @@ import (
 
 var simpleAssetsRuntimeLastWindowsError atomic.Uint32
 
-func captureSimpleAssetsRuntimeLastWindowsError() {
-	simpleAssetsRuntimeLastWindowsError.Store(uint32(C.GetLastError()))
+func storeSimpleAssetsRuntimeLastWindowsError(lastError C.DWORD) {
+	simpleAssetsRuntimeLastWindowsError.Store(uint32(lastError))
 }
 
 //export SimpleAssetsRuntime_GetLastError
@@ -25,8 +24,9 @@ func SimpleAssetsRuntime_GetLastError() C.uint32_t {
 
 //export SimpleAssetsRuntime_GetFileAttributesW
 func SimpleAssetsRuntime_GetFileAttributesW(fileName unsafe.Pointer) C.uint32_t {
-	result := C.GetFileAttributesW((*C.WCHAR)(fileName))
-	captureSimpleAssetsRuntimeLastWindowsError()
+	var lastError C.DWORD
+	result := C.SimpleAssetsRuntimeCall_GetFileAttributesW((*C.WCHAR)(fileName), &lastError)
+	storeSimpleAssetsRuntimeLastWindowsError(lastError)
 
 	return C.uint32_t(result)
 }
@@ -40,15 +40,17 @@ func SimpleAssetsRuntime_MultiByteToWideChar(
 	wideText unsafe.Pointer,
 	wideLength C.int,
 ) C.int {
-	result := C.MultiByteToWideChar(
+	var lastError C.DWORD
+	result := C.SimpleAssetsRuntimeCall_MultiByteToWideChar(
 		C.UINT(codePage),
 		C.DWORD(flags),
 		multiByteText,
 		multiByteLength,
 		(*C.WCHAR)(wideText),
 		wideLength,
+		&lastError,
 	)
-	captureSimpleAssetsRuntimeLastWindowsError()
+	storeSimpleAssetsRuntimeLastWindowsError(lastError)
 
 	return result
 }
@@ -64,7 +66,8 @@ func SimpleAssetsRuntime_WideCharToMultiByte(
 	defaultChar *C.char,
 	usedDefaultChar unsafe.Pointer,
 ) C.int {
-	result := C.WideCharToMultiByte(
+	var lastError C.DWORD
+	result := C.SimpleAssetsRuntimeCall_WideCharToMultiByte(
 		C.UINT(codePage),
 		C.DWORD(flags),
 		(*C.WCHAR)(wideText),
@@ -73,32 +76,44 @@ func SimpleAssetsRuntime_WideCharToMultiByte(
 		multiByteLength,
 		defaultChar,
 		(*C.BOOL)(usedDefaultChar),
+		&lastError,
 	)
-	captureSimpleAssetsRuntimeLastWindowsError()
+	storeSimpleAssetsRuntimeLastWindowsError(lastError)
 
 	return result
 }
 
 //export SimpleAssetsRuntime_FindFirstFileW
 func SimpleAssetsRuntime_FindFirstFileW(fileName unsafe.Pointer, findData unsafe.Pointer) unsafe.Pointer {
-	result := C.FindFirstFileW((*C.WCHAR)(fileName), (*C.WIN32_FIND_DATAW)(findData))
-	captureSimpleAssetsRuntimeLastWindowsError()
+	var lastError C.DWORD
+	result := C.SimpleAssetsRuntimeCall_FindFirstFileW(
+		(*C.WCHAR)(fileName),
+		(*C.WIN32_FIND_DATAW)(findData),
+		&lastError,
+	)
+	storeSimpleAssetsRuntimeLastWindowsError(lastError)
 
 	return unsafe.Pointer(result)
 }
 
 //export SimpleAssetsRuntime_FindNextFileW
 func SimpleAssetsRuntime_FindNextFileW(findHandle unsafe.Pointer, findData unsafe.Pointer) C.int {
-	result := C.FindNextFileW(C.HANDLE(findHandle), (*C.WIN32_FIND_DATAW)(findData))
-	captureSimpleAssetsRuntimeLastWindowsError()
+	var lastError C.DWORD
+	result := C.SimpleAssetsRuntimeCall_FindNextFileW(
+		C.HANDLE(findHandle),
+		(*C.WIN32_FIND_DATAW)(findData),
+		&lastError,
+	)
+	storeSimpleAssetsRuntimeLastWindowsError(lastError)
 
 	return C.int(result)
 }
 
 //export SimpleAssetsRuntime_FindClose
 func SimpleAssetsRuntime_FindClose(findHandle unsafe.Pointer) C.int {
-	result := C.FindClose(C.HANDLE(findHandle))
-	captureSimpleAssetsRuntimeLastWindowsError()
+	var lastError C.DWORD
+	result := C.SimpleAssetsRuntimeCall_FindClose(C.HANDLE(findHandle), &lastError)
+	storeSimpleAssetsRuntimeLastWindowsError(lastError)
 
 	return C.int(result)
 }

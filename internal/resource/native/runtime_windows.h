@@ -26,7 +26,35 @@ int simple_assets_resource_state(
     size_t error_buffer_size
 );
 
-int simple_assets_video_load(
+int simple_assets_resource_replace(
+    const char *resource_type,
+    const char *target_resource_name,
+    const char *source_resource_name,
+    char *error_buffer,
+    size_t error_buffer_size
+);
+
+int simple_assets_texture_resource_load(
+    const char *resource_name,
+    const char *file_path,
+    const char *io_carrier_path,
+    const void *resource_data,
+    size_t resource_data_size,
+    const char *stream_path,
+    size_t stream_data_size,
+    char *error_buffer,
+    size_t error_buffer_size
+);
+
+int simple_assets_ivf_video_load(
+    const char *resource_name,
+    const char *file_path,
+    const char *io_carrier_path,
+    char *error_buffer,
+    size_t error_buffer_size
+);
+
+int simple_assets_bink_video_load(
     const char *resource_name,
     const char *file_path,
     const char *io_carrier_path,

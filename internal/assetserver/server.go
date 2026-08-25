@@ -13,18 +13,16 @@ import (
 	"time"
 
 	"darktide-simple-assets-runtime/internal/assetpaths"
+	"darktide-simple-assets-runtime/internal/imageformat"
 )
 
-const (
-	routeAssets = "/assets"
-)
+const routeAssets = "/assets"
 
 type Server struct {
-	mu      sync.Mutex
-	server  *http.Server
-	baseURL string
-	listen  string
-	paths   *assetpaths.Resolver
+	mu       sync.Mutex
+	server   *http.Server
+	serveErr error
+	baseURL  string
 }
 
 func New() *Server {
@@ -54,16 +52,14 @@ func (server *Server) Start(paths *assetpaths.Resolver) error {
 	}
 
 	baseURL := fmt.Sprintf("http://127.0.0.1:%d", tcpAddr.Port)
-	listen := fmt.Sprintf("127.0.0.1:%d", tcpAddr.Port)
 	httpServer := &http.Server{
 		Handler:           server.routes(paths),
 		ReadHeaderTimeout: 5 * time.Second,
 	}
 
 	server.server = httpServer
+	server.serveErr = nil
 	server.baseURL = baseURL
-	server.listen = listen
-	server.paths = paths
 
 	go func() {
 		err := httpServer.Serve(listener)
@@ -71,9 +67,8 @@ func (server *Server) Start(paths *assetpaths.Resolver) error {
 			server.mu.Lock()
 			if server.server == httpServer {
 				server.server = nil
+				server.serveErr = err
 				server.baseURL = ""
-				server.listen = ""
-				server.paths = nil
 			}
 			server.mu.Unlock()
 		}
@@ -82,20 +77,17 @@ func (server *Server) Start(paths *assetpaths.Resolver) error {
 	return nil
 }
 
-func (server *Server) ListenInfo() string {
-	server.mu.Lock()
-	defer server.mu.Unlock()
-
-	return server.listen
-}
-
 func (server *Server) AssetURL(path string) (string, error) {
 	server.mu.Lock()
 	baseURL := server.baseURL
 	running := server.server != nil
+	serveErr := server.serveErr
 	server.mu.Unlock()
 
 	if !running || baseURL == "" {
+		if serveErr != nil {
+			return "", fmt.Errorf("SimpleAssets asset server stopped: %w", serveErr)
+		}
 		return "", errors.New("SimpleAssets runtime is not running")
 	}
 
@@ -109,9 +101,8 @@ func (server *Server) Shutdown() {
 	server.mu.Lock()
 	httpServer := server.server
 	server.server = nil
+	server.serveErr = nil
 	server.baseURL = ""
-	server.listen = ""
-	server.paths = nil
 	server.mu.Unlock()
 
 	if httpServer == nil {
@@ -148,7 +139,7 @@ func serveAsset(response http.ResponseWriter, request *http.Request, paths *asse
 
 	file, err := os.Open(filePath)
 	if err != nil {
-		if shouldReturnNotFound(err) {
+		if errors.Is(err, os.ErrNotExist) {
 			http.Error(response, "asset file was not found", http.StatusNotFound)
 			return
 		}
@@ -164,6 +155,15 @@ func serveAsset(response http.ResponseWriter, request *http.Request, paths *asse
 		return
 	}
 
+	format, err := imageformat.Detect(file)
+	if err != nil {
+		http.Error(response, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	if mediaType := format.MediaType(); mediaType != "" {
+		response.Header().Set("Content-Type", mediaType)
+	}
+
 	http.ServeContent(response, request, filepath.Base(filePath), info.ModTime(), file)
 }
 
@@ -173,7 +173,8 @@ func resolveAssetPath(rawPath string, paths *assetpaths.Resolver) (string, int, 
 		return filePath, http.StatusOK, nil
 	}
 	if errors.Is(err, assetpaths.ErrPathRequired) ||
-		errors.Is(err, assetpaths.ErrPathAbsolute) ||
+		errors.Is(err, assetpaths.ErrPathInvalid) ||
+		errors.Is(err, assetpaths.ErrPathOutside) ||
 		errors.Is(err, assetpaths.ErrPathFile) {
 		return "", http.StatusBadRequest, err
 	}
@@ -182,8 +183,4 @@ func resolveAssetPath(rawPath string, paths *assetpaths.Resolver) (string, int, 
 	}
 
 	return "", http.StatusInternalServerError, err
-}
-
-func shouldReturnNotFound(err error) bool {
-	return errors.Is(err, os.ErrNotExist) || errors.Is(err, os.ErrPermission)
 }

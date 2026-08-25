@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"os"
 	"sync"
+
+	"darktide-simple-assets-runtime/internal/resource/native"
 )
 
 type preparationState uint8
@@ -17,16 +19,28 @@ const (
 	preparationFailed
 )
 
+const preparationWorkerCount = 4
+
 type preparation struct {
-	identity string
-	prepare  func() ([]byte, error)
-	register func([]byte) error
-	data     []byte
-	err      error
-	state    preparationState
+	prepare   func() (preparedRegistration, error)
+	register  func() error
+	resources []resourceReference
+	source    string
+	err       error
+	state     preparationState
 }
 
-var preparationWorkerOnce sync.Once
+type resourceReference struct {
+	typeName string
+	name     string
+}
+
+type preparedRegistration struct {
+	resources []resourceReference
+	register  func() error
+}
+
+var preparationWorkersOnce sync.Once
 var preparationMu sync.Mutex
 var preparationCond = sync.NewCond(&preparationMu)
 var preparations = make(map[string]*preparation)
@@ -35,22 +49,33 @@ var preparationQueue []*preparation
 func Prepare(resourceType string, resourceName string, filePath string, carrierPath string) error {
 	return startPreparation(
 		preparationKey(resourceType, resourceName),
-		filePath+"\x00"+carrierPath,
-		func() ([]byte, error) {
-			data, err := os.ReadFile(filePath)
+		filePath,
+		func() (preparedRegistration, error) {
+			data, err := readResourceFile(resourceType, filePath)
 			if err != nil {
-				return nil, fmt.Errorf("read external %s resource: %w", resourceType, err)
-			}
-			if len(data) == 0 {
-				return nil, errors.New("external resource file is empty")
+				return preparedRegistration{}, err
 			}
 
-			return data, nil
-		},
-		func(data []byte) error {
-			return registerResource(resourceType, resourceName, filePath, carrierPath, data)
+			return preparedRegistration{
+				resources: []resourceReference{{typeName: resourceType, name: resourceName}},
+				register: func() error {
+					return native.LoadResource(resourceType, resourceName, filePath, carrierPath, data)
+				},
+			}, nil
 		},
 	)
+}
+
+func readResourceFile(resourceType string, filePath string) ([]byte, error) {
+	data, err := os.ReadFile(filePath)
+	if err != nil {
+		return nil, fmt.Errorf("read external %s resource: %w", resourceType, err)
+	}
+	if len(data) == 0 {
+		return nil, errors.New("external resource file is empty")
+	}
+
+	return data, nil
 }
 
 func Advance(resourceType string, resourceName string) (bool, bool, error) {
@@ -78,16 +103,14 @@ func Advance(resourceType string, resourceName string) (bool, bool, error) {
 		load.state = preparationRegistering
 	}
 
-	data := load.data
 	register := load.register
 	preparationMu.Unlock()
 
-	err := register(data)
+	err := register()
 
 	preparationMu.Lock()
 	defer preparationMu.Unlock()
 
-	load.data = nil
 	load.prepare = nil
 	load.register = nil
 	if err != nil {
@@ -102,20 +125,21 @@ func Advance(resourceType string, resourceName string) (bool, bool, error) {
 
 func startPreparation(
 	key string,
-	identity string,
-	prepare func() ([]byte, error),
-	register func([]byte) error,
+	source string,
+	prepare func() (preparedRegistration, error),
 ) error {
-	preparationWorkerOnce.Do(func() {
-		go runPreparationWorker()
+	preparationWorkersOnce.Do(func() {
+		for range preparationWorkerCount {
+			go runPreparationWorker()
+		}
 	})
 
 	preparationMu.Lock()
 	defer preparationMu.Unlock()
 
 	if existing := preparations[key]; existing != nil {
-		if existing.identity != identity {
-			return errors.New("resource name is already assigned to different resource data")
+		if existing.source != source {
+			return errors.New("resource identity is already prepared from different source data")
 		}
 		if existing.state == preparationFailed {
 			return existing.err
@@ -125,10 +149,9 @@ func startPreparation(
 	}
 
 	load := &preparation{
-		identity: identity,
-		prepare:  prepare,
-		register: register,
-		state:    preparationPending,
+		prepare: prepare,
+		source:  source,
+		state:   preparationPending,
 	}
 	preparations[key] = load
 	preparationQueue = append(preparationQueue, load)
@@ -145,12 +168,16 @@ func runPreparationWorker() {
 		}
 
 		load := preparationQueue[0]
-		preparationQueue[0] = nil
-		preparationQueue = preparationQueue[1:]
+		if len(preparationQueue) == 1 {
+			preparationQueue = nil
+		} else {
+			preparationQueue[0] = nil
+			preparationQueue = preparationQueue[1:]
+		}
 		prepare := load.prepare
 		preparationMu.Unlock()
 
-		data, err := prepare()
+		prepared, err := prepare()
 
 		preparationMu.Lock()
 		if err != nil {
@@ -159,7 +186,8 @@ func runPreparationWorker() {
 			load.register = nil
 			load.state = preparationFailed
 		} else {
-			load.data = data
+			load.resources = prepared.resources
+			load.register = prepared.register
 			load.state = preparationReady
 		}
 		preparationMu.Unlock()
@@ -168,4 +196,16 @@ func runPreparationWorker() {
 
 func preparationKey(resourceType string, resourceName string) string {
 	return resourceType + "\x00" + resourceName
+}
+
+func preparationResources(resourceType string, resourceName string) []resourceReference {
+	preparationMu.Lock()
+	defer preparationMu.Unlock()
+
+	load := preparations[preparationKey(resourceType, resourceName)]
+	if load == nil || len(load.resources) == 0 {
+		return nil
+	}
+
+	return append([]resourceReference(nil), load.resources...)
 }

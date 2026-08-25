@@ -25,11 +25,10 @@ var (
 type Info struct {
 	GameDir string
 	UserDir string
-	Roots   []string
 }
 
 func Resolve() (Info, error) {
-	fallbackGameDir, err := cleanAbsPath("..")
+	gameDir, err := currentGameDir()
 	if err != nil {
 		return Info{}, fmt.Errorf("failed to resolve runtime game directory: %w", err)
 	}
@@ -39,31 +38,14 @@ func Resolve() (Info, error) {
 		return Info{}, err
 	}
 
-	gameDir := fallbackGameDir
-	if isPackaged {
-		gameDir, err = packagedGameDir()
-		if err != nil {
-			return Info{}, err
-		}
-	}
-
 	userDir, err := userDir(isPackaged)
 	if err != nil {
 		return Info{}, err
 	}
 
-	roots := make([]string, 0, 2)
-	appendUniquePath(&roots, gameDir)
-	appendUniquePath(&roots, userDir)
-
-	if len(roots) == 0 {
-		return Info{}, errors.New("no asset roots were resolved")
-	}
-
 	return Info{
 		GameDir: gameDir,
 		UserDir: userDir,
-		Roots:   roots,
 	}, nil
 }
 
@@ -107,7 +89,7 @@ func userDir(isPackaged bool) (string, error) {
 	return normalizePath(filepath.Join(appData, "Fatshark", "Darktide")), nil
 }
 
-func packagedGameDir() (string, error) {
+func currentGameDir() (string, error) {
 	executablePath, err := currentExecutablePath()
 	if err != nil {
 		return "", err
@@ -115,12 +97,12 @@ func packagedGameDir() (string, error) {
 
 	binariesDir := filepath.Dir(executablePath)
 	if !strings.EqualFold(filepath.Base(binariesDir), "binaries") {
-		return "", fmt.Errorf("packaged executable is not in a binaries directory: %s", executablePath)
+		return "", fmt.Errorf("game executable is not in a binaries directory: %s", executablePath)
 	}
 
 	gameDir := normalizePath(filepath.Dir(binariesDir))
 	if !isDirectory(gameDir) {
-		return "", fmt.Errorf("packaged game directory does not exist: %s", gameDir)
+		return "", fmt.Errorf("game directory does not exist: %s", gameDir)
 	}
 
 	return gameDir, nil
@@ -148,15 +130,6 @@ func currentExecutablePath() (string, error) {
 	}
 }
 
-func cleanAbsPath(path string) (string, error) {
-	absolutePath, err := filepath.Abs(filepath.Clean(path))
-	if err != nil {
-		return "", err
-	}
-
-	return normalizePath(absolutePath), nil
-}
-
 func normalizePath(path string) string {
 	return strings.TrimRight(strings.ReplaceAll(path, "\\", "/"), "/")
 }
@@ -165,15 +138,4 @@ func isDirectory(path string) bool {
 	info, err := os.Stat(path)
 
 	return err == nil && info.IsDir()
-}
-
-func appendUniquePath(paths *[]string, path string) {
-	normalizedPath := normalizePath(path)
-	for _, existing := range *paths {
-		if strings.EqualFold(existing, normalizedPath) {
-			return
-		}
-	}
-
-	*paths = append(*paths, normalizedPath)
 }

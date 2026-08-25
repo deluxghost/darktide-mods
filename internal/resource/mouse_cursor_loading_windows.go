@@ -1,8 +1,6 @@
 package resource
 
-import (
-	"fmt"
-)
+import "darktide-simple-assets-runtime/internal/resource/native"
 
 func PrepareMouseCursor(
 	resourceName string,
@@ -13,12 +11,19 @@ func PrepareMouseCursor(
 ) error {
 	return startPreparation(
 		preparationKey("mouse_cursor", resourceName),
-		fmt.Sprintf("%s\x00%s\x00%d\x00%d", filePath, carrierPath, hotspotX, hotspotY),
-		func() ([]byte, error) {
-			return compileMouseCursor(filePath, hotspotX, hotspotY)
-		},
-		func(data []byte) error {
-			return registerMouseCursor(resourceName, filePath, carrierPath, data)
+		filePath,
+		func() (preparedRegistration, error) {
+			data, err := compileMouseCursor(filePath, hotspotX, hotspotY)
+			if err != nil {
+				return preparedRegistration{}, err
+			}
+
+			return preparedRegistration{
+				resources: []resourceReference{{typeName: "mouse_cursor", name: resourceName}},
+				register: func() error {
+					return native.LoadMouseCursor(resourceName, filePath, carrierPath, data)
+				},
+			}, nil
 		},
 	)
 }

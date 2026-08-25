@@ -1,5 +1,5 @@
-#include "runtime_internal.h"
-#include "runtime_windows.h"
+#include "../runtime_internal.h"
+#include "../runtime_windows.h"
 
 int simple_assets_mouse_cursor_load(
     const char *resource_name,
@@ -13,10 +13,6 @@ int simple_assets_mouse_cursor_load(
     if (resource_name == NULL || file_path == NULL || io_carrier_path == NULL) {
         sa_set_error(error_buffer, error_buffer_size,
                      "mouse cursor name, path, and I/O carrier must not be null");
-        return 0;
-    }
-    if (!sa_validate_mouse_cursor_data(
-            compiled_data, compiled_data_size, error_buffer, error_buffer_size)) {
         return 0;
     }
     return sa_load_external_resource(

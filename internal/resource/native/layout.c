@@ -1,0 +1,8 @@
+#include "layout/instructions.c"
+#include "layout/type.c"
+#include "layout/manager.c"
+#include "layout/queue.c"
+#include "layout/queue_read.c"
+#include "layout/stream.c"
+#include "layout/stream_path.c"
+#include "layout/resource_lookup.c"

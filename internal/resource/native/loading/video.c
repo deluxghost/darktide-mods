@@ -1,5 +1,5 @@
-#include "runtime_internal.h"
-#include "runtime_windows.h"
+#include "../runtime_internal.h"
+#include "../runtime_windows.h"
 
 #include <string.h>
 
@@ -116,7 +116,61 @@ static int sa_parse_ivf_resource(
     return 1;
 }
 
-int simple_assets_video_load(
+static int sa_parse_bk2_resource(
+    const char *path,
+    uint64_t *stream_range,
+    char *error,
+    size_t error_size
+) {
+    WCHAR wide_path[SA_MAX_STREAM_PATH];
+    HANDLE file;
+    LARGE_INTEGER file_size;
+    uint8_t header[4];
+    DWORD bytes_read = 0;
+
+    if (path == NULL || stream_range == NULL) {
+        sa_set_error(error, error_size, "video path and stream range pointer must not be null");
+        return 0;
+    }
+    if (MultiByteToWideChar(CP_UTF8, MB_ERR_INVALID_CHARS, path, -1, wide_path,
+                            SA_ARRAY_COUNT(wide_path)) == 0) {
+        sa_set_error(error, error_size, "video path is not valid UTF-8 or is too long");
+        return 0;
+    }
+    file = CreateFileW(wide_path, GENERIC_READ,
+                       FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE,
+                       NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
+    if (file == INVALID_HANDLE_VALUE) {
+        sa_set_error(error, error_size, "video file could not be opened: Win32 error %lu", GetLastError());
+        return 0;
+    }
+    if (!GetFileSizeEx(file, &file_size) || file_size.QuadPart < (LONGLONG)sizeof(header)) {
+        sa_set_error(error, error_size, "video file is shorter than a BK2 signature");
+        CloseHandle(file);
+        return 0;
+    }
+    if ((uint64_t)file_size.QuadPart > UINT32_MAX) {
+        sa_set_error(error, error_size, "video stream exceeds the engine's 32-bit stream range");
+        CloseHandle(file);
+        return 0;
+    }
+    if (!ReadFile(file, header, sizeof(header), &bytes_read, NULL) || bytes_read != sizeof(header)) {
+        sa_set_error(error, error_size, "video BK2 signature could not be read");
+        CloseHandle(file);
+        return 0;
+    }
+    CloseHandle(file);
+
+    if (memcmp(header, "KB2", 3) != 0) {
+        sa_set_error(error, error_size, "video file is not a Bink 2 BK2 resource");
+        return 0;
+    }
+
+    *stream_range = (uint64_t)file_size.QuadPart << 32;
+    return 1;
+}
+
+int simple_assets_ivf_video_load(
     const char *resource_name,
     const char *file_path,
     const char *io_carrier_path,
@@ -136,5 +190,27 @@ int simple_assets_video_load(
     return sa_load_external_resource(
         "ivf", resource_name, file_path, io_carrier_path,
         metadata, sizeof(metadata), file_path, stream_range,
+        error_buffer, error_buffer_size);
+}
+
+int simple_assets_bink_video_load(
+    const char *resource_name,
+    const char *file_path,
+    const char *io_carrier_path,
+    char *error_buffer,
+    size_t error_buffer_size
+) {
+    uint64_t stream_range;
+
+    if (resource_name == NULL || file_path == NULL || io_carrier_path == NULL) {
+        sa_set_error(error_buffer, error_buffer_size, "video name, path, and I/O carrier must not be null");
+        return 0;
+    }
+    if (!sa_parse_bk2_resource(file_path, &stream_range, error_buffer, error_buffer_size)) {
+        return 0;
+    }
+    return sa_load_external_resource(
+        "bk2", resource_name, file_path, io_carrier_path,
+        NULL, 0, file_path, stream_range,
         error_buffer, error_buffer_size);
 }

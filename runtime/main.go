@@ -21,9 +21,8 @@ var runtimeServer = assetserver.New()
 var stateMu sync.Mutex
 var gameDirString *C.char
 var userDirString *C.char
-var listenInfoString *C.char
 var assetURLString *C.char
-var resolvedAssetPathString *C.char
+var canonicalAssetPathString *C.char
 var lastErrorString *C.char
 var assetPathResolver *assetpaths.Resolver
 var resourceCarrierPath string
@@ -38,7 +37,7 @@ func SimpleAssetsRuntime_Start() C.int {
 		return 0
 	}
 
-	paths, err := assetpaths.New(info.Roots)
+	paths, err := assetpaths.New(info.GameDir, info.UserDir)
 	if err != nil {
 		setLastError(err)
 		return 0
@@ -59,33 +58,26 @@ func SimpleAssetsRuntime_Start() C.int {
 	setUserDir(info.UserDir)
 	setAssetPathResolver(paths)
 	setResourceCarrierPath(carrierPath)
-	setListenInfo(runtimeServer.ListenInfo())
 	setLastError(nil)
 
 	return 1
 }
 
-//export SimpleAssetsRuntime_ResolveAssetPath
-func SimpleAssetsRuntime_ResolveAssetPath(path *C.char, directory C.int) *C.char {
+//export SimpleAssetsRuntime_CanonicalAssetPath
+func SimpleAssetsRuntime_CanonicalAssetPath(path *C.char) *C.char {
 	if path == nil {
 		setLastError(errors.New("asset path is null"))
 		return nil
 	}
 
-	var resolvedPath string
-	var err error
-	if directory != 0 {
-		resolvedPath, err = resolveAssetDirectory(C.GoString(path))
-	} else {
-		resolvedPath, err = resolveAssetFile(C.GoString(path))
-	}
+	virtualPath, err := canonicalAssetPath(C.GoString(path))
 	if err != nil {
 		setLastError(err)
 		return nil
 	}
 
 	setLastError(nil)
-	return replaceResolvedAssetPath(resolvedPath)
+	return replaceCanonicalAssetPath(virtualPath)
 }
 
 //export SimpleAssetsRuntime_GameDir
@@ -102,14 +94,6 @@ func SimpleAssetsRuntime_UserDir() *C.char {
 	defer stateMu.Unlock()
 
 	return userDirString
-}
-
-//export SimpleAssetsRuntime_ListenInfo
-func SimpleAssetsRuntime_ListenInfo() *C.char {
-	stateMu.Lock()
-	defer stateMu.Unlock()
-
-	return listenInfoString
 }
 
 //export SimpleAssetsRuntime_AssetUrl
@@ -143,9 +127,8 @@ func SimpleAssetsRuntime_Shutdown() {
 	runtimeServer.Shutdown()
 	clearGameDir()
 	clearUserDir()
-	clearListenInfo()
 	clearAssetURL()
-	clearResolvedAssetPath()
+	clearCanonicalAssetPath()
 	clearAssetPathResolver()
 	clearResourceCarrierPath()
 	setLastError(nil)
@@ -179,20 +162,6 @@ func clearUserDir() {
 	freeCString(&userDirString)
 }
 
-func setListenInfo(value string) {
-	stateMu.Lock()
-	defer stateMu.Unlock()
-
-	replaceCString(&listenInfoString, value)
-}
-
-func clearListenInfo() {
-	stateMu.Lock()
-	defer stateMu.Unlock()
-
-	freeCString(&listenInfoString)
-}
-
 func replaceAssetURL(value string) *C.char {
 	stateMu.Lock()
 	defer stateMu.Unlock()
@@ -209,20 +178,20 @@ func clearAssetURL() {
 	freeCString(&assetURLString)
 }
 
-func replaceResolvedAssetPath(value string) *C.char {
+func replaceCanonicalAssetPath(value string) *C.char {
 	stateMu.Lock()
 	defer stateMu.Unlock()
 
-	replaceCString(&resolvedAssetPathString, value)
+	replaceCString(&canonicalAssetPathString, value)
 
-	return resolvedAssetPathString
+	return canonicalAssetPathString
 }
 
-func clearResolvedAssetPath() {
+func clearCanonicalAssetPath() {
 	stateMu.Lock()
 	defer stateMu.Unlock()
 
-	freeCString(&resolvedAssetPathString)
+	freeCString(&canonicalAssetPathString)
 }
 
 func setAssetPathResolver(value *assetpaths.Resolver) {
@@ -230,6 +199,18 @@ func setAssetPathResolver(value *assetpaths.Resolver) {
 	defer stateMu.Unlock()
 
 	assetPathResolver = value
+}
+
+func canonicalAssetPath(path string) (string, error) {
+	stateMu.Lock()
+	resolver := assetPathResolver
+	stateMu.Unlock()
+
+	if resolver == nil {
+		return "", errors.New("asset path resolver is not initialized")
+	}
+
+	return resolver.VirtualPath(path)
 }
 
 func resolveAssetFile(path string) (string, error) {
@@ -242,18 +223,6 @@ func resolveAssetFile(path string) (string, error) {
 	}
 
 	return resolver.ResolveFile(path)
-}
-
-func resolveAssetDirectory(path string) (string, error) {
-	stateMu.Lock()
-	resolver := assetPathResolver
-	stateMu.Unlock()
-
-	if resolver == nil {
-		return "", errors.New("asset path resolver is not initialized")
-	}
-
-	return resolver.ResolveDirectory(path)
 }
 
 func clearAssetPathResolver() {
