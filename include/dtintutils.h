@@ -24,7 +24,8 @@ typedef enum DtIntUtilsMnemonic {
     DTINTUTILS_MNEMONIC_IMUL,
     DTINTUTILS_MNEMONIC_LEA,
     DTINTUTILS_MNEMONIC_MOV,
-    DTINTUTILS_MNEMONIC_TEST
+    DTINTUTILS_MNEMONIC_TEST,
+    DTINTUTILS_MNEMONIC_SUB
 } DtIntUtilsMnemonic;
 
 typedef enum DtIntUtilsOperandType {
@@ -34,6 +35,12 @@ typedef enum DtIntUtilsOperandType {
     DTINTUTILS_OPERAND_IMMEDIATE,
     DTINTUTILS_OPERAND_POINTER
 } DtIntUtilsOperandType;
+
+typedef enum DtIntUtilsOperandAccess {
+    DTINTUTILS_OPERAND_ACCESS_NONE = 0,
+    DTINTUTILS_OPERAND_ACCESS_READ = 1u << 0,
+    DTINTUTILS_OPERAND_ACCESS_WRITE = 1u << 1
+} DtIntUtilsOperandAccess;
 
 typedef enum DtIntUtilsLocatorOperation {
     DTINTUTILS_LOCATOR_FIND_EXACT_STRING = 1,
@@ -50,7 +57,10 @@ typedef enum DtIntUtilsLocatorOperation {
     DTINTUTILS_LOCATOR_FILTER_PATTERN_NEAR,
     DTINTUTILS_LOCATOR_FILTER_FUNCTION_PATTERN,
     DTINTUTILS_LOCATOR_FILTER_SECTION,
-    DTINTUTILS_LOCATOR_FILTER_FUNCTION_ENTRIES
+    DTINTUTILS_LOCATOR_FILTER_FUNCTION_ENTRIES,
+    DTINTUTILS_LOCATOR_SOURCE_ADDRESS,
+    DTINTUTILS_LOCATOR_COLLECT_FUNCTION_RIP_TARGETS,
+    DTINTUTILS_LOCATOR_FILTER_CALL_TARGETS_OF
 } DtIntUtilsLocatorOperation;
 
 typedef enum DtIntUtilsSectionFlags {
@@ -146,6 +156,8 @@ typedef int (*DtIntUtilsLocatorValidator)(
     {DTINTUTILS_LOCATOR_FIND_PATTERN, DTINTUTILS_MNEMONIC_ANY, 0u, minimum, maximum, 0u, 0, 0, value, section_name, NULL, 0}
 #define DTINTUTILS_LOCATE_PATTERN(section_name, values, value_count, minimum, maximum) \
     {DTINTUTILS_LOCATOR_FIND_PATTERN, DTINTUTILS_MNEMONIC_ANY, 0u, minimum, maximum, 0u, 0, 0, NULL, section_name, values, value_count}
+#define DTINTUTILS_LOCATE_ADDRESS(value, minimum, maximum) \
+    {DTINTUTILS_LOCATOR_SOURCE_ADDRESS, DTINTUTILS_MNEMONIC_ANY, 0u, minimum, maximum, 0u, 0, 0, (const char *)(value), NULL, NULL, 0}
 #define DTINTUTILS_LOCATE_POINTER_SLOTS(minimum, maximum) \
     {DTINTUTILS_LOCATOR_FIND_POINTER_SLOTS, DTINTUTILS_MNEMONIC_ANY, 0u, minimum, maximum, 0u, 0, 0, NULL, NULL, NULL, 0}
 #define DTINTUTILS_LOCATE_RIP_REFERENCES(mnemonic_value, section_name, minimum, maximum) \
@@ -164,6 +176,10 @@ typedef int (*DtIntUtilsLocatorValidator)(
     {DTINTUTILS_LOCATOR_RESOLVE_DIRECT_CALL, DTINTUTILS_MNEMONIC_CALL, DTINTUTILS_SECTION_EXECUTABLE, minimum, maximum, 0u, 0, 0, NULL, NULL, NULL, 0}
 #define DTINTUTILS_LOCATE_COLLECT_FUNCTION_CALL_TARGETS(minimum, maximum) \
     {DTINTUTILS_LOCATOR_COLLECT_FUNCTION_CALL_TARGETS, DTINTUTILS_MNEMONIC_CALL, DTINTUTILS_SECTION_EXECUTABLE, minimum, maximum, 0u, 0, 0, NULL, NULL, NULL, 0}
+#define DTINTUTILS_LOCATE_COLLECT_FUNCTION_RIP_TARGETS(mnemonic_value, minimum, maximum) \
+    {DTINTUTILS_LOCATOR_COLLECT_FUNCTION_RIP_TARGETS, mnemonic_value, 0u, minimum, maximum, 0u, 0, 0, NULL, NULL, NULL, 0}
+#define DTINTUTILS_LOCATE_FILTER_CALL_TARGETS_OF(function_address, minimum, maximum) \
+    {DTINTUTILS_LOCATOR_FILTER_CALL_TARGETS_OF, DTINTUTILS_MNEMONIC_CALL, DTINTUTILS_SECTION_EXECUTABLE, minimum, maximum, 0u, 0, 0, (const char *)(function_address), NULL, NULL, 0}
 #define DTINTUTILS_LOCATE_FILTER_IDA_PATTERN_NEAR(value, relative_start, bytes, minimum, maximum) \
     {DTINTUTILS_LOCATOR_FILTER_PATTERN_NEAR, DTINTUTILS_MNEMONIC_ANY, 0u, minimum, maximum, 0u, relative_start, bytes, value, NULL, NULL, 0}
 #define DTINTUTILS_LOCATE_FILTER_PATTERN_NEAR(values, value_count, relative_start, bytes, minimum, maximum) \
@@ -287,6 +303,16 @@ int dtintutils_decode(
     DtIntUtilsInstruction *instruction
 );
 
+int dtintutils_instruction_writes_register(
+    const DtIntUtilsInstruction *instruction,
+    int register_id
+);
+
+uint32_t dtintutils_instruction_operand_access(
+    const DtIntUtilsInstruction *instruction,
+    size_t operand_index
+);
+
 size_t dtintutils_find_rip_references(
     const uint8_t *start,
     size_t size,
@@ -306,6 +332,13 @@ size_t dtintutils_collect_direct_call_targets(
     const DtIntUtilsModule *module,
     const DtIntUtilsFunction *function,
     const uint8_t **results,
+    size_t result_capacity
+);
+
+size_t dtintutils_collect_entry_register_copies(
+    const DtIntUtilsFunction *function,
+    int source_register,
+    int *results,
     size_t result_capacity
 );
 

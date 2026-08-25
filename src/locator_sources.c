@@ -34,7 +34,7 @@ int dtintutils_locator_append_pattern_hits(
         free(hits);
         return 0;
     }
-    result = dtintutils_locator_list_assign_hits(output, hits, hit_count, error, error_size);
+    result = dtintutils_locator_list_append_hits(output, hits, hit_count, error, error_size);
     free(hits);
     return result;
 }
@@ -70,7 +70,7 @@ int dtintutils_locator_find_exact_string(
         free(hits);
         return 0;
     }
-    result = dtintutils_locator_list_assign_hits(output, hits, count, error, error_size);
+    result = dtintutils_locator_list_append_hits(output, hits, count, error, error_size);
     free(hits);
     return result;
 }
@@ -98,7 +98,7 @@ static int dtintutils_locator_append_prefix_section(
         free(hits);
         return 0;
     }
-    result = dtintutils_locator_list_assign_hits(output, hits, count, error, error_size);
+    result = dtintutils_locator_list_append_hits(output, hits, count, error, error_size);
     free(hits);
     return result;
 }
@@ -181,7 +181,7 @@ int dtintutils_locator_append_pointer_slots(
         free(hits);
         return 0;
     }
-    result = dtintutils_locator_list_assign_hits(output, hits, count, error, error_size);
+    result = dtintutils_locator_list_append_hits(output, hits, count, error, error_size);
     free(hits);
     return result;
 }
@@ -216,7 +216,7 @@ int dtintutils_locator_append_rip_references(
         free(hits);
         return 0;
     }
-    result = dtintutils_locator_list_assign_hits(output, hits, count, error, error_size);
+    result = dtintutils_locator_list_append_hits(output, hits, count, error, error_size);
     free(hits);
     return result;
 }

@@ -1,6 +1,7 @@
 # Build outputs
 bin/
 obj/
+release/
 
 # Visual Studio local files
 .vs/

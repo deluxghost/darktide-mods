@@ -25,7 +25,7 @@ int dtintutils_locator_list_append_unique(
     char *error,
     size_t error_size
 );
-int dtintutils_locator_list_assign_hits(
+int dtintutils_locator_list_append_hits(
     DtIntUtilsCandidateList *list,
     const uint8_t **hits,
     size_t hit_count,

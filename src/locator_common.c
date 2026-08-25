@@ -27,6 +27,8 @@ const char *dtintutils_locator_operation_name(uint32_t operation) {
             return "find string prefix";
         case DTINTUTILS_LOCATOR_FIND_PATTERN:
             return "find pattern";
+        case DTINTUTILS_LOCATOR_SOURCE_ADDRESS:
+            return "use address";
         case DTINTUTILS_LOCATOR_FIND_POINTER_SLOTS:
             return "find pointer slots";
         case DTINTUTILS_LOCATOR_FIND_RIP_REFERENCES:
@@ -43,6 +45,10 @@ const char *dtintutils_locator_operation_name(uint32_t operation) {
             return "resolve direct call";
         case DTINTUTILS_LOCATOR_COLLECT_FUNCTION_CALL_TARGETS:
             return "collect function call targets";
+        case DTINTUTILS_LOCATOR_COLLECT_FUNCTION_RIP_TARGETS:
+            return "collect function RIP targets";
+        case DTINTUTILS_LOCATOR_FILTER_CALL_TARGETS_OF:
+            return "filter call targets";
         case DTINTUTILS_LOCATOR_FILTER_PATTERN_NEAR:
             return "filter by nearby pattern";
         case DTINTUTILS_LOCATOR_FILTER_FUNCTION_PATTERN:
@@ -120,7 +126,7 @@ int dtintutils_locator_list_append_unique(
     return 1;
 }
 
-int dtintutils_locator_list_assign_hits(
+int dtintutils_locator_list_append_hits(
     DtIntUtilsCandidateList *list,
     const uint8_t **hits,
     size_t hit_count,

@@ -19,6 +19,7 @@ static DtIntUtilsMnemonic dtintutils_mnemonic(ZydisMnemonic mnemonic) {
         case ZYDIS_MNEMONIC_LEA: return DTINTUTILS_MNEMONIC_LEA;
         case ZYDIS_MNEMONIC_MOV: return DTINTUTILS_MNEMONIC_MOV;
         case ZYDIS_MNEMONIC_TEST: return DTINTUTILS_MNEMONIC_TEST;
+        case ZYDIS_MNEMONIC_SUB: return DTINTUTILS_MNEMONIC_SUB;
         default: return DTINTUTILS_MNEMONIC_OTHER;
     }
 }
@@ -123,6 +124,75 @@ int dtintutils_decode(
         return 0;
     }
     return dtintutils_decode_with_decoder(&decoder, address, available, instruction);
+}
+
+static int dtintutils_redecode(
+    const DtIntUtilsInstruction *instruction,
+    ZydisDecodedInstruction *decoded,
+    ZydisDecodedOperand operands[ZYDIS_MAX_OPERAND_COUNT]
+) {
+    ZydisDecoder decoder;
+
+    return instruction != NULL && instruction->address != NULL && instruction->length != 0 &&
+        ZYAN_SUCCESS(ZydisDecoderInit(
+            &decoder, ZYDIS_MACHINE_MODE_LONG_64, ZYDIS_STACK_WIDTH_64)) &&
+        ZYAN_SUCCESS(ZydisDecoderDecodeFull(
+            &decoder, instruction->address, instruction->length, decoded, operands));
+}
+
+static int dtintutils_decoded_writes_register(
+    const ZydisDecodedInstruction *instruction,
+    const ZydisDecodedOperand *operands,
+    int register_id
+) {
+    size_t index;
+
+    for (index = 0; index < instruction->operand_count; ++index) {
+        const ZydisDecodedOperand *operand = &operands[index];
+
+        if (operand->type == ZYDIS_OPERAND_TYPE_REGISTER &&
+            (operand->actions & ZYDIS_OPERAND_ACTION_MASK_WRITE) != 0 &&
+            dtintutils_register_id(operand->reg.value) == register_id) {
+            return 1;
+        }
+    }
+    return 0;
+}
+
+int dtintutils_instruction_writes_register(
+    const DtIntUtilsInstruction *instruction,
+    int register_id
+) {
+    ZydisDecodedInstruction decoded;
+    ZydisDecodedOperand operands[ZYDIS_MAX_OPERAND_COUNT];
+
+    if (register_id < 0 || register_id >= 16 ||
+        !dtintutils_redecode(instruction, &decoded, operands)) {
+        return 0;
+    }
+    return dtintutils_decoded_writes_register(&decoded, operands, register_id);
+}
+
+uint32_t dtintutils_instruction_operand_access(
+    const DtIntUtilsInstruction *instruction,
+    size_t operand_index
+) {
+    ZydisDecodedInstruction decoded;
+    ZydisDecodedOperand operands[ZYDIS_MAX_OPERAND_COUNT];
+    uint32_t access = DTINTUTILS_OPERAND_ACCESS_NONE;
+
+    if (instruction == NULL || operand_index >= instruction->operand_count ||
+        !dtintutils_redecode(instruction, &decoded, operands) ||
+        operand_index >= decoded.operand_count_visible) {
+        return access;
+    }
+    if ((operands[operand_index].actions & ZYDIS_OPERAND_ACTION_MASK_READ) != 0) {
+        access |= DTINTUTILS_OPERAND_ACCESS_READ;
+    }
+    if ((operands[operand_index].actions & ZYDIS_OPERAND_ACTION_MASK_WRITE) != 0) {
+        access |= DTINTUTILS_OPERAND_ACCESS_WRITE;
+    }
+    return access;
 }
 
 size_t dtintutils_find_rip_references(
@@ -335,6 +405,39 @@ int dtintutils_function_containing(
     return 1;
 }
 
+static int dtintutils_append_unique_address(
+    const uint8_t ***values,
+    size_t *count,
+    size_t *capacity,
+    const uint8_t *value
+) {
+    size_t index;
+
+    for (index = 0; index < *count; ++index) {
+        if ((*values)[index] == value) {
+            return 1;
+        }
+    }
+    if (*count == *capacity) {
+        size_t next_capacity = *capacity == 0 ? 16 : *capacity * 2;
+        const uint8_t **next_values;
+
+        if (next_capacity < *capacity || next_capacity > SIZE_MAX / sizeof(*next_values)) {
+            return 0;
+        }
+        next_values = (const uint8_t **)realloc(
+            *values,
+            next_capacity * sizeof(*next_values));
+        if (next_values == NULL) {
+            return 0;
+        }
+        *values = next_values;
+        *capacity = next_capacity;
+    }
+    (*values)[(*count)++] = value;
+    return 1;
+}
+
 size_t dtintutils_collect_direct_call_targets(
     const DtIntUtilsModule *module,
     const DtIntUtilsFunction *function,
@@ -365,35 +468,10 @@ size_t dtintutils_collect_direct_call_targets(
                 instruction.operands[0].has_absolute &&
                 dtintutils_is_executable_address(module, (const void *)(uintptr_t)instruction.operands[0].absolute)) {
                 const uint8_t *target = (const uint8_t *)(uintptr_t)instruction.operands[0].absolute;
-                size_t index;
-                int duplicate = 0;
-
-                for (index = 0; index < unique_count; ++index) {
-                    if (unique_targets[index] == target) {
-                        duplicate = 1;
-                        break;
-                    }
-                }
-                if (!duplicate) {
-                    if (unique_count == unique_capacity) {
-                        size_t next_capacity = unique_capacity == 0 ? 16 : unique_capacity * 2;
-                        const uint8_t **next_targets;
-
-                        if (next_capacity < unique_capacity || next_capacity > SIZE_MAX / sizeof(*next_targets)) {
-                            free(unique_targets);
-                            return 0;
-                        }
-                        next_targets = (const uint8_t **)realloc(
-                            unique_targets,
-                            next_capacity * sizeof(*next_targets));
-                        if (next_targets == NULL) {
-                            free(unique_targets);
-                            return 0;
-                        }
-                        unique_targets = next_targets;
-                        unique_capacity = next_capacity;
-                    }
-                    unique_targets[unique_count++] = target;
+                if (!dtintutils_append_unique_address(
+                        &unique_targets, &unique_count, &unique_capacity, target)) {
+                    free(unique_targets);
+                    return 0;
                 }
             }
         }
@@ -405,6 +483,75 @@ size_t dtintutils_collect_direct_call_targets(
     }
     free(unique_targets);
     return unique_count;
+}
+
+size_t dtintutils_collect_entry_register_copies(
+    const DtIntUtilsFunction *function,
+    int source_register,
+    int *results,
+    size_t result_capacity
+) {
+    enum { DTINTUTILS_X64_REGISTER_RSP = 4 };
+    ZydisDecoder decoder;
+    uint8_t aliases[16] = {0};
+    size_t result_count = 0;
+    size_t offset = 0;
+    int register_id;
+
+    if (function == NULL || function->start == NULL || function->size == 0 ||
+        source_register < 0 || source_register >= 16 ||
+        ZYAN_FAILED(ZydisDecoderInit(
+            &decoder, ZYDIS_MACHINE_MODE_LONG_64, ZYDIS_STACK_WIDTH_64))) {
+        return 0;
+    }
+    aliases[source_register] = 1;
+    while (offset < function->size) {
+        ZydisDecodedInstruction instruction;
+        ZydisDecodedOperand operands[ZYDIS_MAX_OPERAND_COUNT];
+        int copied_alias = 0;
+        int destination = DTINTUTILS_REGISTER_NONE;
+
+        if (ZYAN_FAILED(ZydisDecoderDecodeFull(
+                &decoder, function->start + offset, function->size - offset,
+                &instruction, operands))) {
+            ++offset;
+            continue;
+        }
+        if (instruction.mnemonic == ZYDIS_MNEMONIC_CALL) {
+            break;
+        }
+        offset += instruction.length;
+        if (instruction.mnemonic == ZYDIS_MNEMONIC_MOV && instruction.operand_count_visible == 2 &&
+            operands[0].type == ZYDIS_OPERAND_TYPE_REGISTER && operands[0].size == 64 &&
+            operands[1].type == ZYDIS_OPERAND_TYPE_REGISTER && operands[1].size == 64) {
+            int source = dtintutils_register_id(operands[1].reg.value);
+
+            destination = dtintutils_register_id(operands[0].reg.value);
+            copied_alias = source >= 0 && source < 16 && aliases[source];
+        }
+
+        for (register_id = 0; register_id < 16; ++register_id) {
+            if (dtintutils_decoded_writes_register(&instruction, operands, register_id)) {
+                aliases[register_id] = 0;
+            }
+        }
+        if (destination >= 0 && destination < 16 &&
+            destination != DTINTUTILS_X64_REGISTER_RSP && copied_alias) {
+            aliases[destination] = 1;
+        }
+    }
+
+    for (register_id = 0; register_id < 16; ++register_id) {
+        if (register_id == source_register || register_id == DTINTUTILS_X64_REGISTER_RSP ||
+            !aliases[register_id]) {
+            continue;
+        }
+        if (result_count < result_capacity && results != NULL) {
+            results[result_count] = register_id;
+        }
+        ++result_count;
+    }
+    return result_count;
 }
 
 int dtintutils_find_unique_function_by_exact_string(

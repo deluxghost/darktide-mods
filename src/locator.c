@@ -5,6 +5,152 @@
 
 #include "dtintutils_locator_internal.h"
 
+static int dtintutils_locator_append_call_targets(
+    const DtIntUtilsModule *module,
+    const DtIntUtilsCandidateList *input,
+    DtIntUtilsCandidateList *output,
+    char *error,
+    size_t error_size
+) {
+    size_t index;
+
+    for (index = 0; index < input->count; ++index) {
+        DtIntUtilsFunction function;
+        const uint8_t **targets;
+        size_t count;
+
+        if (!dtintutils_function_containing(module, input->items[index], &function)) {
+            continue;
+        }
+        count = dtintutils_collect_direct_call_targets(module, &function, NULL, 0);
+        if (count == 0) {
+            continue;
+        }
+        if (count > DTINTUTILS_LOCATOR_MAX_CANDIDATES) {
+            dtintutils_locator_set_error(
+                error, error_size, "function call scan produced %zu raw candidates; limit is %u",
+                count, DTINTUTILS_LOCATOR_MAX_CANDIDATES);
+            return 0;
+        }
+        targets = (const uint8_t **)malloc(count * sizeof(*targets));
+        if (targets == NULL) {
+            dtintutils_locator_set_error(
+                error, error_size, "could not allocate %zu function call candidates", count);
+            return 0;
+        }
+        count = dtintutils_collect_direct_call_targets(module, &function, targets, count);
+        if (!dtintutils_locator_list_append_hits(output, targets, count, error, error_size)) {
+            free(targets);
+            return 0;
+        }
+        free(targets);
+    }
+    return 1;
+}
+
+static int dtintutils_locator_append_function_rip_targets(
+    const DtIntUtilsModule *module,
+    const DtIntUtilsLocatorStep *step,
+    const DtIntUtilsCandidateList *input,
+    DtIntUtilsCandidateList *output,
+    char *error,
+    size_t error_size
+) {
+    size_t input_index;
+
+    for (input_index = 0; input_index < input->count; ++input_index) {
+        DtIntUtilsFunction function;
+        size_t offset = 0;
+
+        if (!dtintutils_function_containing(module, input->items[input_index], &function)) {
+            continue;
+        }
+        while (offset < function.size) {
+            DtIntUtilsInstruction instruction;
+            size_t operand_index;
+
+            if (!dtintutils_decode(function.start + offset, function.size - offset, &instruction)) {
+                ++offset;
+                continue;
+            }
+            offset += instruction.length;
+            if (step->mnemonic != DTINTUTILS_MNEMONIC_ANY &&
+                instruction.mnemonic != (DtIntUtilsMnemonic)step->mnemonic) {
+                continue;
+            }
+            for (operand_index = 0; operand_index < instruction.operand_count; ++operand_index) {
+                const DtIntUtilsOperand *operand = &instruction.operands[operand_index];
+                const uint8_t *target;
+
+                if (operand->type != DTINTUTILS_OPERAND_MEMORY ||
+                    operand->memory_base != DTINTUTILS_REGISTER_RIP || !operand->has_absolute) {
+                    continue;
+                }
+                target = (const uint8_t *)(uintptr_t)operand->absolute;
+                if (dtintutils_section_for_address(module, target) != NULL &&
+                    !dtintutils_locator_list_append_unique(output, target, error, error_size)) {
+                    return 0;
+                }
+            }
+        }
+    }
+    return 1;
+}
+
+static int dtintutils_locator_filter_call_targets(
+    const DtIntUtilsModule *module,
+    const DtIntUtilsLocatorStep *step,
+    const DtIntUtilsCandidateList *input,
+    DtIntUtilsCandidateList *output,
+    char *error,
+    size_t error_size
+) {
+    DtIntUtilsFunction function;
+    const uint8_t **targets;
+    size_t target_count;
+    size_t input_index;
+    size_t target_index;
+
+    if (step->text == NULL ||
+        !dtintutils_function_containing(module, step->text, &function)) {
+        dtintutils_locator_set_error(error, error_size, "call-target filter function is invalid");
+        return 0;
+    }
+    target_count = dtintutils_collect_direct_call_targets(module, &function, NULL, 0);
+    if (target_count == 0) {
+        return 1;
+    }
+    if (target_count > DTINTUTILS_LOCATOR_MAX_CANDIDATES) {
+        dtintutils_locator_set_error(
+            error, error_size, "call-target filter produced %zu raw candidates; limit is %u",
+            target_count, DTINTUTILS_LOCATOR_MAX_CANDIDATES);
+        return 0;
+    }
+    targets = (const uint8_t **)malloc(target_count * sizeof(*targets));
+    if (targets == NULL) {
+        dtintutils_locator_set_error(
+            error, error_size, "could not allocate %zu call-target filter candidates", target_count);
+        return 0;
+    }
+    target_count = dtintutils_collect_direct_call_targets(
+        module, &function, targets, target_count);
+    for (input_index = 0; input_index < input->count; ++input_index) {
+        for (target_index = 0; target_index < target_count; ++target_index) {
+            if (input->items[input_index] != targets[target_index]) {
+                continue;
+            }
+            if (!dtintutils_locator_list_append_unique(
+                    output, input->items[input_index], error, error_size)) {
+                free(targets);
+                return 0;
+            }
+            break;
+        }
+    }
+    free(targets);
+    return 1;
+}
+
 static int dtintutils_locator_transform_step(
     const DtIntUtilsModule *module,
     const DtIntUtilsLocatorStep *step,
@@ -100,37 +246,16 @@ static int dtintutils_locator_transform_step(
             return 1;
 
         case DTINTUTILS_LOCATOR_COLLECT_FUNCTION_CALL_TARGETS:
-            for (index = 0; index < input->count; ++index) {
-                DtIntUtilsFunction function;
-                const uint8_t **targets;
-                size_t capacity;
-                size_t count;
+            return dtintutils_locator_append_call_targets(
+                module, input, output, error, error_size);
 
-                if (!dtintutils_function_containing(module, input->items[index], &function)) {
-                    continue;
-                }
-                capacity = dtintutils_collect_direct_call_targets(module, &function, NULL, 0);
-                if (capacity == 0) {
-                    continue;
-                }
-                if (capacity > DTINTUTILS_LOCATOR_MAX_CANDIDATES) {
-                    dtintutils_locator_set_error(error, error_size, "function call scan produced %zu raw candidates; limit is %u",
-                                      capacity, DTINTUTILS_LOCATOR_MAX_CANDIDATES);
-                    return 0;
-                }
-                targets = (const uint8_t **)malloc(capacity * sizeof(*targets));
-                if (targets == NULL) {
-                    dtintutils_locator_set_error(error, error_size, "could not allocate %zu function call candidates", capacity);
-                    return 0;
-                }
-                count = dtintutils_collect_direct_call_targets(module, &function, targets, capacity);
-                if (!dtintutils_locator_list_assign_hits(output, targets, count, error, error_size)) {
-                    free(targets);
-                    return 0;
-                }
-                free(targets);
-            }
-            return 1;
+        case DTINTUTILS_LOCATOR_COLLECT_FUNCTION_RIP_TARGETS:
+            return dtintutils_locator_append_function_rip_targets(
+                module, step, input, output, error, error_size);
+
+        case DTINTUTILS_LOCATOR_FILTER_CALL_TARGETS_OF:
+            return dtintutils_locator_filter_call_targets(
+                module, step, input, output, error, error_size);
 
         case DTINTUTILS_LOCATOR_FILTER_PATTERN_NEAR:
         case DTINTUTILS_LOCATOR_FILTER_FUNCTION_PATTERN:
@@ -247,7 +372,8 @@ static int dtintutils_locator_execute(
         DtIntUtilsCandidateList next = {0};
         int source_operation = step->operation == DTINTUTILS_LOCATOR_FIND_EXACT_STRING ||
             step->operation == DTINTUTILS_LOCATOR_FIND_STRING_PREFIX ||
-            step->operation == DTINTUTILS_LOCATOR_FIND_PATTERN;
+            step->operation == DTINTUTILS_LOCATOR_FIND_PATTERN ||
+            step->operation == DTINTUTILS_LOCATOR_SOURCE_ADDRESS;
         int succeeded;
 
         if (step->reserved != 0 ||
@@ -274,6 +400,18 @@ static int dtintutils_locator_execute(
                 break;
             case DTINTUTILS_LOCATOR_FIND_PATTERN:
                 succeeded = dtintutils_locator_find_pattern_source(module, step, &next, error, error_size);
+                break;
+            case DTINTUTILS_LOCATOR_SOURCE_ADDRESS:
+                if (step->text == NULL ||
+                    dtintutils_section_for_address(module, step->text) == NULL) {
+                    dtintutils_locator_set_error(
+                        error, error_size, "locator '%s' address source is outside the module",
+                        dtintutils_locator_name(locator));
+                    succeeded = 0;
+                } else {
+                    succeeded = dtintutils_locator_list_append_unique(
+                        &next, (const uint8_t *)step->text, error, error_size);
+                }
                 break;
             default:
                 succeeded = dtintutils_locator_transform_step(module, step, &current, &next, error, error_size);
