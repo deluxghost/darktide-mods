@@ -98,9 +98,9 @@ local function collect_files(runtime, directory_path, relative_base_path, recurs
 	end
 end
 
-filesystem.list_files = function(directory_path, recursive)
-	if type(directory_path) ~= "string" then
-		error(string.format("Asset directory path must be a string, got %s", type(directory_path)))
+filesystem.list_files = function(directory_paths, recursive)
+	if type(directory_paths) ~= "table" then
+		error(string.format("Asset directory paths must be a table, got %s", type(directory_paths)))
 	end
 
 	local runtime, load_error = native_runtime.runtime()
@@ -109,13 +109,34 @@ filesystem.list_files = function(directory_path, recursive)
 		error(load_error)
 	end
 
-	if not windows.is_directory(runtime, directory_path) then
-		error(string.format("Asset directory was not found: %s", directory_path))
+	local files = {}
+	local found_directory = false
+	local seen = {}
+
+	for i = 1, #directory_paths do
+		local directory_path = directory_paths[i]
+
+		if windows.is_directory(runtime, directory_path) then
+			local layer_files = {}
+
+			found_directory = true
+			collect_files(runtime, directory_path, "", recursive == true, layer_files)
+
+			for j = 1, #layer_files do
+				local relative_path = layer_files[j]
+				local key = relative_path:lower()
+
+				if not seen[key] then
+					seen[key] = true
+					files[#files + 1] = relative_path
+				end
+			end
+		end
 	end
 
-	local files = {}
-
-	collect_files(runtime, directory_path, "", recursive == true, files)
+	if not found_directory then
+		error("Asset directory was not found")
+	end
 	table.sort(files)
 
 	return files

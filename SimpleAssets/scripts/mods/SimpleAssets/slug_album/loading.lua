@@ -1,28 +1,28 @@
 local mod = get_mod("SimpleAssets")
 
+local native_runtime = mod:io_dofile("SimpleAssets/scripts/mods/SimpleAssets/runtime/native")
 local resource_loading = mod:io_dofile("SimpleAssets/scripts/mods/SimpleAssets/resource/loading")
-local resource_naming = mod:io_dofile("SimpleAssets/scripts/mods/SimpleAssets/resource/naming")
+local resource_replacement = mod:io_dofile("SimpleAssets/scripts/mods/SimpleAssets/resource/replacement")
 
 local loading = {}
 
 local RESOURCE_TYPE = "slug_album"
 
-local function validate_path(asset_path)
-	if type(asset_path) ~= "string" then
-		error(string.format("Slug album asset path must be a string, got %s", type(asset_path)))
-	end
-	if not asset_path:lower():match("%.slug$") then
-		error("Slug album asset path must refer to a .slug file")
-	end
+local function start_slug_album(request)
+	return native_runtime.slug_album_load(request.path)
 end
 
-loading.load_slug_album = function(name, asset_path)
-	validate_path(asset_path)
+loading.load_slug_album = resource_loading.create_loader(
+	RESOURCE_TYPE,
+	".slug",
+	start_slug_album
+)
 
-	local resource_name = resource_naming.get_resource_name("slug_album", name)
-	local request = resource_loading.prepare(RESOURCE_TYPE, resource_name, asset_path)
-
-	return resource_loading.load_prepared(request)
-end
+loading.replace_slug_album = resource_replacement.create_replacer(
+	RESOURCE_TYPE,
+	".slug",
+	start_slug_album,
+	native_runtime.slug_album_replace
+)
 
 return loading

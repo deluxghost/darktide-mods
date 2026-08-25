@@ -1,5 +1,12 @@
 local mod = get_mod("SimpleAssets")
+
+if mod._simple_assets_native_runtime then
+	return mod._simple_assets_native_runtime
+end
+
 local ffi = Mods.lua.ffi
+
+mod:io_dofile("SimpleAssets/scripts/mods/SimpleAssets/runtime/cdef")
 
 local windows = mod:io_dofile("SimpleAssets/scripts/mods/SimpleAssets/platform/windows")
 
@@ -7,59 +14,7 @@ local native = {}
 
 local RUNTIME_PATH = "../mods/SimpleAssets/bin/simple-assets-runtime.dll"
 
-local instances = mod:persistent_table("instances")
-instances.simple_assets_runtime = instances.simple_assets_runtime or {}
-
-local state = instances.simple_assets_runtime
-
-if not pcall(ffi.typeof, "SimpleAssetsRuntime_CDEF") then
-	ffi.cdef([[
-		typedef void* SimpleAssets_HANDLE;
-		typedef unsigned long SimpleAssets_DWORD;
-		typedef int SimpleAssets_BOOL;
-		typedef unsigned short SimpleAssets_WCHAR;
-
-		typedef struct {
-			SimpleAssets_DWORD dwLowDateTime;
-			SimpleAssets_DWORD dwHighDateTime;
-		} SimpleAssets_FILETIME;
-
-		typedef struct {
-			SimpleAssets_DWORD dwFileAttributes;
-			SimpleAssets_FILETIME ftCreationTime;
-			SimpleAssets_FILETIME ftLastAccessTime;
-			SimpleAssets_FILETIME ftLastWriteTime;
-			SimpleAssets_DWORD nFileSizeHigh;
-			SimpleAssets_DWORD nFileSizeLow;
-			SimpleAssets_DWORD dwReserved0;
-			SimpleAssets_DWORD dwReserved1;
-			SimpleAssets_WCHAR cFileName[260];
-			SimpleAssets_WCHAR cAlternateFileName[14];
-		} SimpleAssets_WIN32_FIND_DATAW;
-
-		int SimpleAssetsRuntime_Start(void);
-		int SimpleAssetsRuntime_ResourceLoad(const char* resource_type, const char* resource_name, const char* file_path);
-		int SimpleAssetsRuntime_MouseCursorLoad(const char* resource_name, const char* file_path, unsigned int hotspot_x, unsigned int hotspot_y);
-		int SimpleAssetsRuntime_VideoLoad(const char* resource_name, const char* file_path);
-		int SimpleAssetsRuntime_ResourceState(const char* resource_type, const char* resource_name);
-		const char* SimpleAssetsRuntime_GameDir(void);
-		const char* SimpleAssetsRuntime_UserDir(void);
-		const char* SimpleAssetsRuntime_ListenInfo(void);
-		const char* SimpleAssetsRuntime_ResolveAssetPath(const char* path, int directory);
-		const char* SimpleAssetsRuntime_AssetUrl(const char* path);
-		const char* SimpleAssetsRuntime_LastError(void);
-		void SimpleAssetsRuntime_Shutdown(void);
-		SimpleAssets_DWORD SimpleAssetsRuntime_GetLastError(void);
-		SimpleAssets_DWORD SimpleAssetsRuntime_GetFileAttributesW(const SimpleAssets_WCHAR* lpFileName);
-		int SimpleAssetsRuntime_MultiByteToWideChar(unsigned int CodePage, unsigned long dwFlags, const char* lpMultiByteStr, int cbMultiByte, SimpleAssets_WCHAR* lpWideCharStr, int cchWideChar);
-		int SimpleAssetsRuntime_WideCharToMultiByte(unsigned int CodePage, unsigned long dwFlags, const SimpleAssets_WCHAR* lpWideCharStr, int cchWideChar, char* lpMultiByteStr, int cbMultiByte, const char* lpDefaultChar, SimpleAssets_BOOL* lpUsedDefaultChar);
-		SimpleAssets_HANDLE SimpleAssetsRuntime_FindFirstFileW(const SimpleAssets_WCHAR* lpFileName, SimpleAssets_WIN32_FIND_DATAW* lpFindFileData);
-		SimpleAssets_BOOL SimpleAssetsRuntime_FindNextFileW(SimpleAssets_HANDLE hFindFile, SimpleAssets_WIN32_FIND_DATAW* lpFindFileData);
-		SimpleAssets_BOOL SimpleAssetsRuntime_FindClose(SimpleAssets_HANDLE hFindFile);
-
-		typedef struct { int unused; } SimpleAssetsRuntime_CDEF;
-	]])
-end
+local state = {}
 
 local function load_runtime()
 	if state.runtime then
@@ -116,13 +71,6 @@ native.initialize = function()
 		return false, runtime_string(runtime.SimpleAssetsRuntime_LastError()) or "SimpleAssets runtime failed to start"
 	end
 
-	local listen_info = runtime_string(runtime.SimpleAssetsRuntime_ListenInfo())
-
-	if not listen_info then
-		return false, "SimpleAssets runtime did not return listening information"
-	end
-
-	state.listen_info = listen_info
 	state.game_dir = runtime_string(runtime.SimpleAssetsRuntime_GameDir())
 	state.user_dir = runtime_string(runtime.SimpleAssetsRuntime_UserDir())
 
@@ -163,24 +111,6 @@ native.user_dir = function()
 	return user_dir
 end
 
-native.listen_info = function()
-	if state.listen_info then
-		return state.listen_info
-	end
-
-	local runtime = runtime_or_error()
-
-	local listen_info = runtime_string(runtime.SimpleAssetsRuntime_ListenInfo())
-
-	if not listen_info then
-		error("SimpleAssets runtime did not return listening information")
-	end
-
-	state.listen_info = listen_info
-
-	return listen_info
-end
-
 native.asset_url = function(path)
 	local runtime = runtime_or_error()
 
@@ -193,35 +123,88 @@ native.asset_url = function(path)
 	return asset_url
 end
 
-native.resolve_asset_path = function(path, directory)
+native.canonical_asset_path = function(path)
 	local runtime = runtime_or_error()
-	local resolved_path = runtime_string(runtime.SimpleAssetsRuntime_ResolveAssetPath(
-		windows.path(path),
-		directory and 1 or 0
-	))
+	local asset_path = runtime_string(runtime.SimpleAssetsRuntime_CanonicalAssetPath(windows.path(path)))
 
-	if not resolved_path then
-		error(runtime_string(runtime.SimpleAssetsRuntime_LastError()) or "SimpleAssets runtime failed to resolve asset path")
+	if not asset_path then
+		error(runtime_string(runtime.SimpleAssetsRuntime_LastError()) or
+			"SimpleAssets runtime failed to canonicalize asset path")
 	end
 
-	return resolved_path
+	return asset_path
 end
 
-native.resource_load = function(resource_type, resource_name, path)
-	local runtime = runtime_or_error()
-	local result = runtime.SimpleAssetsRuntime_ResourceLoad(resource_type, resource_name, windows.path(path))
+local IMAGE_FORMATS = {
+	[1] = "png",
+	[2] = "jpeg",
+	[3] = "dds",
+}
 
-	if result == 0 then
-		return false, runtime_string(runtime.SimpleAssetsRuntime_LastError()) or "SimpleAssets runtime failed to load resource"
+native.detect_image_format = function(path)
+	local runtime = runtime_or_error()
+	local result = runtime.SimpleAssetsRuntime_DetectImageFormat(windows.path(path))
+
+	if result < 0 then
+		return nil, runtime_string(runtime.SimpleAssetsRuntime_LastError()) or
+			"SimpleAssets runtime failed to detect the asset image format"
 	end
 
-	return true
+	return IMAGE_FORMATS[result]
 end
 
-native.mouse_cursor_load = function(resource_name, path, hotspot_x, hotspot_y)
+local function create_resource_loader(symbol, description)
+	return function(path)
+		local runtime = runtime_or_error()
+		local result = runtime[symbol](windows.path(path))
+
+		if result == 0 then
+			return false, runtime_string(runtime.SimpleAssetsRuntime_LastError()) or
+				string.format("SimpleAssets runtime failed to load %s", description)
+		end
+
+		return true
+	end
+end
+
+native.animation_load = create_resource_loader("SimpleAssetsRuntime_AnimationLoad", "animation resource")
+native.font_load = create_resource_loader("SimpleAssetsRuntime_FontLoad", "Slug font resource")
+native.material_load = create_resource_loader("SimpleAssetsRuntime_MaterialLoad", "material resource")
+native.particles_load = create_resource_loader("SimpleAssetsRuntime_ParticlesLoad", "particles resource")
+native.slug_album_load = create_resource_loader("SimpleAssetsRuntime_SlugAlbumLoad", "Slug album resource")
+native.texture_load = create_resource_loader("SimpleAssetsRuntime_TextureLoad", "texture resource")
+native.unit_load = create_resource_loader("SimpleAssetsRuntime_UnitLoad", "unit resource")
+native.video_load = create_resource_loader("SimpleAssetsRuntime_VideoLoad", "video resource")
+
+local function create_resource_replacer(symbol, description)
+	return function(target_resource_path, source_asset_path)
+		local runtime = runtime_or_error()
+		local result = runtime[symbol](
+			windows.path(target_resource_path),
+			windows.path(source_asset_path)
+		)
+
+		if result == 0 then
+			return false, runtime_string(runtime.SimpleAssetsRuntime_LastError()) or
+				string.format("SimpleAssets runtime failed to replace %s", description)
+		end
+
+		return true
+	end
+end
+
+native.animation_replace = create_resource_replacer("SimpleAssetsRuntime_AnimationReplace", "animation resource")
+native.font_replace = create_resource_replacer("SimpleAssetsRuntime_FontReplace", "font resource")
+native.material_replace = create_resource_replacer("SimpleAssetsRuntime_MaterialReplace", "material resource")
+native.mouse_cursor_replace = create_resource_replacer("SimpleAssetsRuntime_MouseCursorReplace", "mouse cursor resource")
+native.particles_replace = create_resource_replacer("SimpleAssetsRuntime_ParticlesReplace", "particles resource")
+native.slug_album_replace = create_resource_replacer("SimpleAssetsRuntime_SlugAlbumReplace", "Slug album resource")
+native.texture_replace = create_resource_replacer("SimpleAssetsRuntime_TextureReplace", "texture resource")
+native.unit_replace = create_resource_replacer("SimpleAssetsRuntime_UnitReplace", "unit resource")
+native.video_replace = create_resource_replacer("SimpleAssetsRuntime_VideoReplace", "video resource")
+native.mouse_cursor_load = function(path, hotspot_x, hotspot_y)
 	local runtime = runtime_or_error()
 	local result = runtime.SimpleAssetsRuntime_MouseCursorLoad(
-		resource_name,
 		windows.path(path),
 		hotspot_x,
 		hotspot_y
@@ -235,20 +218,9 @@ native.mouse_cursor_load = function(resource_name, path, hotspot_x, hotspot_y)
 	return true
 end
 
-native.video_load = function(resource_name, path)
+native.resource_state = function(resource_type, path)
 	local runtime = runtime_or_error()
-	local result = runtime.SimpleAssetsRuntime_VideoLoad(resource_name, windows.path(path))
-
-	if result == 0 then
-		return false, runtime_string(runtime.SimpleAssetsRuntime_LastError()) or "SimpleAssets runtime failed to load video"
-	end
-
-	return true
-end
-
-native.resource_state = function(resource_type, resource_name)
-	local runtime = runtime_or_error()
-	local result = runtime.SimpleAssetsRuntime_ResourceState(resource_type, resource_name)
+	local result = runtime.SimpleAssetsRuntime_ResourceState(resource_type, windows.path(path))
 
 	if result < 0 then
 		return nil, runtime_string(runtime.SimpleAssetsRuntime_LastError()) or "SimpleAssets runtime failed to query resource state"
@@ -264,9 +236,10 @@ native.shutdown = function()
 		runtime.SimpleAssetsRuntime_Shutdown()
 	end
 
-	state.listen_info = nil
 	state.game_dir = nil
 	state.user_dir = nil
 end
+
+mod._simple_assets_native_runtime = native
 
 return native

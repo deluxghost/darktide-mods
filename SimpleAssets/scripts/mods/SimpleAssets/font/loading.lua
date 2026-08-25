@@ -1,11 +1,12 @@
 local mod = get_mod("SimpleAssets")
+local Promise = require("scripts/foundation/utilities/promise")
 
+local native_runtime = mod:io_dofile("SimpleAssets/scripts/mods/SimpleAssets/runtime/native")
 local resource_loading = mod:io_dofile("SimpleAssets/scripts/mods/SimpleAssets/resource/loading")
-
+local resource_replacement = mod:io_dofile("SimpleAssets/scripts/mods/SimpleAssets/resource/replacement")
 local loading = {}
 
 local RESOURCE_TYPE = "slug"
-local RESOURCE_PREFIX = "simple_assets/font/"
 local VARIANTS = {
 	{
 		suffix = "",
@@ -32,6 +33,10 @@ local VARIANTS = {
 
 local persistent = mod:persistent_table("external_fonts")
 persistent.registrations = persistent.registrations or {}
+
+local function start_slug(request)
+	return native_runtime.font_load(request.path)
+end
 
 local function variant_names(font_type)
 	local names = {}
@@ -103,22 +108,54 @@ local function register_font(font_type, resource, resolved_path)
 			resource = resource,
 		}
 	end
+end
 
-	return font_type
+local function reject_font_load(load_error, resource_name, font_type)
+	local error_value = load_error
+
+	if type(load_error) == "table" then
+		error_value = load_error.error or load_error.message or load_error
+	end
+
+	return Promise.rejected({
+		is_ok = false,
+		resource_name = resource_name,
+		font_type = font_type,
+		error = error_value,
+	})
 end
 
 loading.load_font = function(font_type, asset_path)
 	validate_font_type(font_type)
 	validate_slug_path(asset_path)
 
-	local resource_name = RESOURCE_PREFIX .. font_type
-	local request = resource_loading.prepare(RESOURCE_TYPE, resource_name, asset_path)
+	local request = resource_loading.prepare(RESOURCE_TYPE, asset_path)
+	local aliases_ok, alias_error = pcall(check_aliases, font_type, request.name, request.path)
 
-	check_aliases(font_type, request.name, request.path)
+	if not aliases_ok then
+		return reject_font_load(alias_error, request.name, font_type)
+	end
 
-	return resource_loading.load_prepared(request):next(function(resource_name)
-		return register_font(font_type, resource_name, request.path)
-	end)
+	return resource_loading.load_prepared(request, start_slug)
+		:next(function(result)
+			register_font(font_type, result.resource_name, request.path)
+
+			return {
+				is_ok = true,
+				resource_name = result.resource_name,
+				font_type = font_type,
+			}
+		end)
+		:catch(function(load_error)
+			return reject_font_load(load_error, request.name, font_type)
+		end)
 end
+
+loading.replace_font = resource_replacement.create_replacer(
+	RESOURCE_TYPE,
+	".slug",
+	start_slug,
+	native_runtime.font_replace
+)
 
 return loading

@@ -3,6 +3,8 @@ local ffi = Mods.lua.ffi
 local windows = {}
 
 local CP_UTF8 = 65001
+local ERROR_FILE_NOT_FOUND = 2
+local ERROR_PATH_NOT_FOUND = 3
 local FILE_ATTRIBUTE_DIRECTORY = 0x10
 local INVALID_FILE_ATTRIBUTES = 0xFFFFFFFF
 
@@ -61,7 +63,17 @@ end
 windows.is_directory = function(runtime, path)
 	local attributes = windows.file_attributes(runtime, path)
 
-	return attributes ~= INVALID_FILE_ATTRIBUTES and has_file_attribute(attributes, FILE_ATTRIBUTE_DIRECTORY)
+	if attributes == INVALID_FILE_ATTRIBUTES then
+		local last_error = windows.last_error(runtime)
+
+		if last_error == ERROR_FILE_NOT_FOUND or last_error == ERROR_PATH_NOT_FOUND then
+			return false
+		end
+
+		error(string.format("Failed to inspect asset directory %s: Windows error %d", path, last_error))
+	end
+
+	return has_file_attribute(attributes, FILE_ATTRIBUTE_DIRECTORY)
 end
 
 return windows

@@ -12,6 +12,8 @@ end
 local paths = mod:io_dofile("SimpleAssets/scripts/mods/SimpleAssets/core/paths")
 local font_loading = mod:io_dofile("SimpleAssets/scripts/mods/SimpleAssets/font/loading")
 local mouse_cursor_loading = mod:io_dofile("SimpleAssets/scripts/mods/SimpleAssets/mouse_cursor/loading")
+local resource_loading = mod:io_dofile("SimpleAssets/scripts/mods/SimpleAssets/resource/loading")
+local resource_replacement = mod:io_dofile("SimpleAssets/scripts/mods/SimpleAssets/resource/replacement")
 local resource_naming = mod:io_dofile("SimpleAssets/scripts/mods/SimpleAssets/resource/naming")
 local slug_album_loading = mod:io_dofile("SimpleAssets/scripts/mods/SimpleAssets/slug_album/loading")
 local texture_loading = mod:io_dofile("SimpleAssets/scripts/mods/SimpleAssets/texture/loading")
@@ -19,18 +21,54 @@ local video_loading = mod:io_dofile("SimpleAssets/scripts/mods/SimpleAssets/vide
 local UISoundEvents = require("scripts/settings/ui/ui_sound_events")
 local WwiseGameSyncSettings = require("scripts/settings/wwise_game_sync/wwise_game_sync_settings")
 
-mod:info(string.format("SimpleAssets runtime listening on %s", native_runtime.listen_info()))
-
 mod.get_game_dir = paths.get_game_dir
 mod.get_resource_name = resource_naming.get_resource_name
 mod.get_user_dir = paths.get_user_dir
+
+local function start_animation(request)
+	return native_runtime.animation_load(request.path)
+end
+
+local function start_material(request)
+	return native_runtime.material_load(request.path)
+end
+
+local function start_particles(request)
+	return native_runtime.particles_load(request.path)
+end
+
+local function start_unit(request)
+	return native_runtime.unit_load(request.path)
+end
+
+mod.load_animation = resource_loading.create_loader("animation", ".animation", start_animation)
 mod.load_font = font_loading.load_font
+mod.load_material = resource_loading.create_loader("material", ".material", start_material)
 mod.load_mouse_cursor = mouse_cursor_loading.load_mouse_cursor
+mod.load_particles = resource_loading.create_loader("particles", ".particles", start_particles)
 mod.load_slug_album = slug_album_loading.load_slug_album
 mod.load_texture = texture_loading.load_texture
 mod.load_textures = texture_loading.load_textures
 mod.load_textures_from_dir = texture_loading.load_textures_from_dir
+mod.load_unit = resource_loading.create_loader("unit", ".unit", start_unit)
 mod.load_video = video_loading.load_video
+mod.replace_animation = resource_replacement.create_replacer(
+	"animation", ".animation", start_animation, native_runtime.animation_replace
+)
+mod.replace_font = font_loading.replace_font
+mod.replace_material = resource_replacement.create_replacer(
+	"material", ".material", start_material, native_runtime.material_replace
+)
+mod.replace_mouse_cursor = mouse_cursor_loading.replace_mouse_cursor
+mod.replace_particles = resource_replacement.create_replacer(
+	"particles", ".particles", start_particles, native_runtime.particles_replace
+)
+mod.replace_slug_album = slug_album_loading.replace_slug_album
+mod.replace_texture = texture_loading.replace_texture
+mod.replace_unit = resource_replacement.create_replacer(
+	"unit", ".unit", start_unit, native_runtime.unit_replace
+)
+mod.replace_video = video_loading.replace_video
 
 local DEMO_VIEW_NAME = "simple_assets_demo_view"
 local DEMO_VIEW_PATH = "SimpleAssets/scripts/mods/SimpleAssets/views/simple_assets_demo_view/simple_assets_demo_view"

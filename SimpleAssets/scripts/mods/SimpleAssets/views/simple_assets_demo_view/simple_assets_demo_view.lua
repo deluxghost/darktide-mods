@@ -4,22 +4,19 @@ local ViewElementInputLegend = require("scripts/ui/view_elements/view_element_in
 local definitions = mod:io_dofile(
 	"SimpleAssets/scripts/mods/SimpleAssets/views/simple_assets_demo_view/simple_assets_demo_view_definitions"
 )
-local names = definitions.names
+local asset_paths = definitions.asset_paths
 local resource_names = definitions.resource_names
 
 local TEXTURE_PATH = "textures/cat.jpg"
 local FONT_PATH = "fonts/DancingScript-Regular.slug"
 local FONT_TYPE = "simple_assets_demo_dancing_script"
-local MOUSE_CURSOR_PATH = "mouse_cursors/left_ptr.png"
-local MOUSE_CURSOR_NAME = names.mouse_cursor
+local MOUSE_CURSOR_PATH = asset_paths.mouse_cursor
 local MOUSE_CURSOR_RESOURCE_NAME = resource_names.mouse_cursor
 local MOUSE_CURSOR_HOTSPOT_X = 6
 local MOUSE_CURSOR_HOTSPOT_Y = 2
-local VIDEO_PATH = "videos/flower.ivf"
-local VIDEO_NAME = names.video
+local VIDEO_PATH = asset_paths.video
 local VIDEO_RESOURCE_NAME = resource_names.video
-local SLUG_ALBUM_PATH = "slug_albums/run.slug"
-local SLUG_ALBUM_NAME = names.slug_album
+local SLUG_ALBUM_PATH = asset_paths.slug_album
 local SLUG_ALBUM_RESOURCE_NAME = resource_names.slug_album
 local DEFAULT_MOUSE_CURSOR = "content/ui/textures/cursors/mouse_cursor_idle"
 local LOADING_TEXT = "Loading..."
@@ -47,7 +44,7 @@ local assets = {
 }
 
 local function set_failed(asset, asset_type, load_error)
-	local message = type(load_error) == "table" and load_error.message or load_error
+	local message = type(load_error) == "table" and (load_error.error or load_error.url or load_error) or load_error
 
 	asset.error = string.format("Failed to load %s. See the console log.", asset_type)
 	asset.status = "failed"
@@ -93,8 +90,8 @@ local function load_font()
 	assets.revision = assets.revision + 1
 
 	mod.load_font(FONT_TYPE, FONT_PATH)
-		:next(function(font_type)
-			asset.font_type = font_type
+		:next(function(result)
+			asset.font_type = result.font_type
 			asset.status = "ready"
 			assets.revision = assets.revision + 1
 		end)
@@ -112,7 +109,8 @@ local function load_engine_resource(asset, asset_type, load)
 	assets.revision = assets.revision + 1
 
 	load()
-		:next(function()
+		:next(function(result)
+			asset.resource = result.resource_name
 			asset.status = "ready"
 			assets.revision = assets.revision + 1
 		end)
@@ -126,17 +124,16 @@ local function load_assets()
 	load_font()
 	load_engine_resource(assets.mouse_cursor, "mouse cursor", function()
 		return mod.load_mouse_cursor(
-			MOUSE_CURSOR_NAME,
 			MOUSE_CURSOR_PATH,
 			MOUSE_CURSOR_HOTSPOT_X,
 			MOUSE_CURSOR_HOTSPOT_Y
 		)
 	end)
 	load_engine_resource(assets.video, "video", function()
-		return mod.load_video(VIDEO_NAME, VIDEO_PATH)
+		return mod.load_video(VIDEO_PATH)
 	end)
 	load_engine_resource(assets.slug_album, "slug album", function()
-		return mod.load_slug_album(SLUG_ALBUM_NAME, SLUG_ALBUM_PATH)
+		return mod.load_slug_album(SLUG_ALBUM_PATH)
 	end)
 end
 

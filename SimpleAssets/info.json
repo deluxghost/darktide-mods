@@ -1,0 +1,18 @@
+{
+  "name": "Simple Assets",
+  "description": "Provides local asset loading helpers for other mods.",
+  "homepage": "https://www.nexusmods.com/warhammer40kdarktide/mods/1008",
+  "source": "https://github.com/deluxghost/darktide-mods/tree/main/SimpleAssets",
+  "funding": {
+    "kofi": "https://ko-fi.com/deluxghost",
+    "bilibili": "https://space.bilibili.com/4712698"
+  },
+  "version": "2.0.0",
+  "author": "deluxghost",
+  "localization": {
+    "zh-cn": {
+      "name": "简易资源",
+      "description": "为其他模组提供本地资产加载辅助功能。"
+    }
+  }
+}

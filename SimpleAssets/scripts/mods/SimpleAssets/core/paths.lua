@@ -15,11 +15,41 @@ local function normalize_path(path)
 	return normalized_path
 end
 
-paths.normalize_asset_path = function(asset_path)
-	local normalized_path = asset_path:gsub("\\", "/")
-	normalized_path = normalized_path:gsub("^/+", "")
+local function validate_asset_path(asset_path, allow_empty)
+	if type(asset_path) ~= "string" then
+		error(string.format("Asset path must be a string, got %s", type(asset_path)))
+	end
+	if not allow_empty and asset_path == "" then
+		error("Asset path must not be empty")
+	end
+end
 
-	return normalized_path
+local function is_windows_absolute(path)
+	return path:match("^%a:[/\\]") ~= nil or path:match("^[/\\][/\\]") ~= nil
+end
+
+local function expand_relative_path(asset_path, allow_empty)
+	local normalized_path = normalize_path(asset_path):gsub("^/+", "")
+	local caller_name = context.mod_name()
+
+	if caller_name == "unknown" then
+		error("Could not determine the calling mod for the asset path")
+	end
+	if normalized_path == "" then
+		if allow_empty then
+			return "mods/" .. caller_name .. "/assets"
+		end
+
+		error("Asset path must not be empty")
+	end
+	if normalized_path:sub(1, 5):lower() == "mods/" then
+		return "mods/" .. normalized_path:sub(6)
+	end
+	if normalized_path:sub(1, #caller_name + 1):lower() == (caller_name .. "/"):lower() then
+		return "mods/" .. caller_name .. normalized_path:sub(#caller_name + 1)
+	end
+
+	return "mods/" .. caller_name .. "/assets/" .. normalized_path
 end
 
 paths.join_path = function(base_path, path)
@@ -52,51 +82,39 @@ paths.get_user_dir = function()
 	return cached_user_dir
 end
 
-paths.resolve_asset_path = function(asset_path)
-	if type(asset_path) ~= "string" then
-		error(string.format("Asset path must be a string, got %s", type(asset_path)))
-	end
+paths.get_asset_path = function(asset_path)
+	validate_asset_path(asset_path, false)
 
-	local normalized_path = paths.normalize_asset_path(asset_path)
+	local expanded_path = is_windows_absolute(asset_path) and asset_path or expand_relative_path(asset_path, false)
 
-	if normalized_path == "" then
-		error("Asset path must not be empty")
-	end
-
-	if normalized_path:match("^%a:/") then
-		return normalized_path
-	end
-
-	local game_dir = paths.get_game_dir()
-
-	if normalized_path:sub(1, 5) == "mods/" then
-		return paths.join_path(game_dir, normalized_path)
-	end
-
-	local caller_name = context.mod_name()
-
-	if normalized_path:sub(1, #caller_name + 1) == caller_name .. "/" then
-		return paths.join_path(game_dir, "mods/" .. normalized_path)
-	end
-
-	return paths.join_path(game_dir, "mods/" .. caller_name .. "/assets/" .. normalized_path)
+	return native_runtime.canonical_asset_path(expanded_path)
 end
 
-paths.resolve_asset_dir_path = function(asset_dir_path)
-	if type(asset_dir_path) ~= "string" then
-		error(string.format("Asset path must be a string, got %s", type(asset_dir_path)))
+paths.get_resource_path = function(resource_path)
+	validate_asset_path(resource_path, false)
+
+	return native_runtime.canonical_asset_path(resource_path)
+end
+
+paths.get_asset_dir_path = function(asset_dir_path)
+	validate_asset_path(asset_dir_path, true)
+
+	local expanded_path = is_windows_absolute(asset_dir_path) and asset_dir_path or
+		expand_relative_path(asset_dir_path, true)
+
+	return native_runtime.canonical_asset_path(expanded_path)
+end
+
+paths.get_asset_dir_paths = function(asset_dir_path)
+	local virtual_path = paths.get_asset_dir_path(asset_dir_path)
+	local physical_paths = {}
+
+	if virtual_path == "mods" or virtual_path:sub(1, 5) == "mods/" then
+		physical_paths[#physical_paths + 1] = paths.join_path(paths.get_user_dir(), virtual_path)
 	end
+	physical_paths[#physical_paths + 1] = paths.join_path(paths.get_game_dir(), virtual_path)
 
-	local normalized_path = paths.normalize_asset_path(asset_dir_path)
-	local resolved_path
-
-	if normalized_path == "" then
-		resolved_path = paths.join_path(paths.get_game_dir(), "mods/" .. context.mod_name() .. "/assets")
-	else
-		resolved_path = paths.resolve_asset_path(asset_dir_path)
-	end
-
-	return paths.normalize_asset_path(native_runtime.resolve_asset_path(resolved_path, true))
+	return virtual_path, physical_paths
 end
 
 return paths

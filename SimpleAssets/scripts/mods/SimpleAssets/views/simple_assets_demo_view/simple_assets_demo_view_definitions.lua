@@ -12,15 +12,15 @@ local GALLERY_COLUMNS = 7
 local LOADING_TEXT = "Loading..."
 local VIDEO_PASS_VALUE = "content/videos/fatshark_splash"
 
-local names = {
-	mouse_cursor = "left_ptr",
-	slug_album = "run",
-	video = "flower",
+local asset_paths = {
+	mouse_cursor = "mouse_cursors/left_ptr.png",
+	slug_album = "slug_albums/run.slug",
+	video = "videos/flower.ivf",
 }
 local resource_names = {
-	mouse_cursor = mod.get_resource_name("mouse_cursor", names.mouse_cursor),
-	slug_album = mod.get_resource_name("slug_album", names.slug_album),
-	video = mod.get_resource_name("video", names.video),
+	mouse_cursor = mod.get_resource_name(asset_paths.mouse_cursor),
+	slug_album = mod.get_resource_name(asset_paths.slug_album),
+	video = mod.get_resource_name(asset_paths.video),
 }
 
 local screen = table.clone(UIWorkspaceSettings.screen)
@@ -375,8 +375,8 @@ local legend_inputs = {
 }
 
 return {
+	asset_paths = asset_paths,
 	legend_inputs = legend_inputs,
-	names = names,
 	resource_names = resource_names,
 	scenegraph_definition = scenegraph_definition,
 	widget_definitions = widget_definitions,
