@@ -9,6 +9,4 @@ return {
 		})
 	end,
 	packages = {},
-	version = "2.0.1",
-	author = "deluxghost",
 }

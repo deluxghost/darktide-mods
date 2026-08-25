@@ -1,0 +1,12 @@
+{
+  "name": "Lua Exec",
+  "description": "Lua code executor mod for dt-cli.",
+  "homepage": "https://www.nexusmods.com/warhammer40kdarktide/mods/1016",
+  "source": "https://github.com/deluxghost/darktide-mods/tree/main/LuaExec",
+  "funding": {
+    "kofi": "https://ko-fi.com/deluxghost",
+    "bilibili": "https://space.bilibili.com/4712698"
+  },
+  "version": "2.1.0",
+  "author": "deluxghost"
+}
