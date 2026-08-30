@@ -87,7 +87,7 @@ local WAIT_ON_CLIENTS_STATE_HANDLERS = {
 }
 
 mod:hook_safe(ExpeditionLogicServer, "update", function (self)
-	if not mod.is_soloplay() then
+	if not mod.has_local_gameplay_authority() then
 		return
 	end
 
@@ -108,7 +108,7 @@ end)
 
 -- fake expedition server client: exit safe zone trigger
 mod:hook_safe(ExpeditionLogicServer, "_on_gameplay_paused", function (self)
-	if not mod.is_soloplay() then
+	if not mod.has_local_gameplay_authority() then
 		return
 	end
 

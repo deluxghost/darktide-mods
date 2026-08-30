@@ -16,6 +16,7 @@ local ExpeditionLevelsLoader = require("scripts/loading/loaders/expedition_level
 local SoloPlaySettings = mod:io_dofile("SoloPlay/scripts/mods/SoloPlay/SoloPlaySettings")
 mod:io_dofile("SoloPlay/scripts/mods/SoloPlay/havoc")
 mod:io_dofile("SoloPlay/scripts/mods/SoloPlay/mission_brief")
+mod:io_dofile("SoloPlay/scripts/mods/SoloPlay/system_menu")
 mod:io_dofile("SoloPlay/scripts/mods/SoloPlay/workarounds/workarounds")
 
 local HOST_TYPES = MatchmakingConstants.HOST_TYPES
@@ -38,6 +39,31 @@ mod.is_soloplay = function ()
 	end
 	local host_type = Managers.multiplayer_session:host_type()
 	return host_type == HOST_TYPES.singleplay
+end
+
+mod.has_local_gameplay_authority = function ()
+	local multiplayer_session = Managers.multiplayer_session
+	if not multiplayer_session then
+		return false
+	end
+
+	local host_type = multiplayer_session:host_type()
+	if host_type ~= HOST_TYPES.singleplay and host_type ~= HOST_TYPES.player then
+		return false
+	end
+
+	local game_session = Managers.state and Managers.state.game_session
+	return game_session and game_session:is_server()
+end
+
+mod.is_player_host = function ()
+	local multiplayer_session = Managers.multiplayer_session
+	if not multiplayer_session or multiplayer_session:host_type() ~= HOST_TYPES.player then
+		return false
+	end
+
+	local connection = Managers.connection
+	return connection and connection:is_host()
 end
 
 mod.load_package = function (package_name)
@@ -151,86 +177,9 @@ mod.gen_havoc_mission_context = function ()
 	return mission_context
 end
 
-mod:hook_require("scripts/ui/views/system_view/system_view_content_list", function (instance)
-	local leave_mission_occur = 1
-	for _, item in ipairs(instance.default) do
-		if item.text == "loc_exit_to_main_menu_display_name" then
-			item.validation_function = function ()
-				local game_mode_manager = Managers.state.game_mode
-				if not game_mode_manager then
-					return false
-				end
-
-				local game_mode_name = game_mode_manager:game_mode_name()
-				local is_onboarding = game_mode_name == "prologue" or game_mode_name == "prologue_hub"
-				local is_hub = game_mode_name == "hub"
-				local is_training_grounds = game_mode_name == "training_grounds" or game_mode_name == "shooting_range"
-
-				local host_type = Managers.multiplayer_session:host_type()
-				local can_show = is_onboarding or is_hub or is_training_grounds or host_type == HOST_TYPES.singleplay
-				local is_leaving_game = game_mode_manager:game_mode_state() == "leaving_game"
-				local is_in_matchmaking = Managers.data_service.social:is_in_matchmaking()
-				local is_disabled = is_leaving_game or is_in_matchmaking
-
-				return can_show, is_disabled
-			end
-		elseif item.text == "loc_leave_mission_display_name" and leave_mission_occur == 1 then
-			item.validation_function = function ()
-				local game_mode_manager = Managers.state.game_mode
-				local is_training_grounds = false
-				if game_mode_manager then
-					local game_mode_name = game_mode_manager:game_mode_name()
-					is_training_grounds = game_mode_name == "training_grounds" or game_mode_name == "shooting_range"
-				end
-
-				local host_type = Managers.multiplayer_session:host_type()
-				local mechanism = Managers.mechanism:current_mechanism()
-				local mechanism_data = mechanism and mechanism:mechanism_data()
-
-				if is_training_grounds then
-					return false
-				end
-				if host_type == HOST_TYPES.singleplay then
-					return true
-				end
-				if host_type == HOST_TYPES.mission_server then
-					return mechanism_data and not mechanism_data.havoc_data
-				end
-				return false
-			end
-			leave_mission_occur = leave_mission_occur + 1
-		elseif item.text == "loc_leave_mission_display_name" and leave_mission_occur == 2 then
-			item.validation_function = function ()
-				local game_mode_manager = Managers.state.game_mode
-				local is_training_grounds = false
-				if game_mode_manager then
-					local game_mode_name = game_mode_manager:game_mode_name()
-					is_training_grounds = game_mode_name == "training_grounds" or game_mode_name == "shooting_range"
-				end
-
-				local host_type = Managers.multiplayer_session:host_type()
-				local mechanism = Managers.mechanism:current_mechanism()
-				local mechanism_data = mechanism and mechanism:mechanism_data()
-
-				if is_training_grounds then
-					return false
-				end
-				if host_type == HOST_TYPES.singleplay then
-					return false
-				end
-				if host_type == HOST_TYPES.mission_server then
-					return mechanism_data and mechanism_data.havoc_data
-				end
-				return false
-			end
-			leave_mission_occur = leave_mission_occur + 1
-		end
-	end
-end)
-
 mod:hook(DifficultyManager, "friendly_fire_enabled", function (func, self, target_is_player, target_is_minion)
 	local ret = func(self, target_is_player, target_is_minion)
-	if mod.is_soloplay() and mod:get("friendly_fire_enabled") then
+	if mod.has_local_gameplay_authority() and mod:get("friendly_fire_enabled") then
 		return true
 	end
 	return ret
@@ -389,10 +338,15 @@ local function on_main_menu()
 end
 
 mod.can_start_game = function ()
-	if in_hub_or_psykhanium() or mod.is_soloplay() or on_main_menu() then
+	if mod.is_soloplay() or mod.is_player_host() or on_main_menu() then
 		return true
 	end
-	return false
+	if not in_hub_or_psykhanium() then
+		return false
+	end
+
+	local multiplayer_session = Managers.multiplayer_session
+	return not multiplayer_session or multiplayer_session:host_type() ~= HOST_TYPES.player
 end
 
 mod.start_game = function (mode)
@@ -422,6 +376,12 @@ mod.start_game = function (mode)
 
 	Managers.multiplayer_session:reset("Hosting SoloPlay session")
 	Managers.multiplayer_session:boot_singleplayer_session()
+	if not Managers.state or not Managers.state.game_session then
+		Managers.mechanism:change_mechanism(mechanism_name, mission_context)
+		Managers.mechanism:trigger_event("all_players_ready")
+
+		return
+	end
 
 	Promise.until_true(function ()
 		if not Managers.multiplayer_session._session_boot or not Managers.multiplayer_session._session_boot.leaving_game_session then

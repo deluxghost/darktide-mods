@@ -6,10 +6,20 @@ return {
 		["zh-tw"] = "單人遊戲",
 	},
 	mod_description = {
-		en = "Play offline solo mission by /solo command. You can't get any rewards or progression in offline game.",
-		["zh-cn"] = "输入 /solo 命令玩离线单人任务。你无法从离线游戏中获得任何奖励或进度。",
-		ru = "Solo Play - Играйте в офлайн-соло-миссию командой /solo. В офлайн-игре вы не получаете никаких наград или прогресса.",
-		["zh-tw"] = "使用 /solo 指令進行離線單人任務。你無法在離線遊戲中獲得任何獎勵或進度。",
+		en = "Play local single-player missions. You can't get any rewards or progression in local games.",
+		["zh-cn"] = "玩本地单人任务。你无法从本地游戏中获得任何奖励或进度。",
+		ru = "Играйте в одиночные миссии локально. В локальной игре вы не получаете никаких наград или прогресса.",
+		["zh-tw"] = "遊玩本機單人任務。你無法從本機遊戲中獲得任何獎勵或進度。",
+	},
+	open_solo_play = {
+		en = "Local Game Interface",
+		["zh-cn"] = "本地游戏界面",
+		ru = "Меню локальной игры",
+		["zh-tw"] = "本機遊戲介面",
+	},
+	open = {
+		en = "Open",
+		["zh-cn"] = "打开",
 	},
 	default_text = {
 		en = "Default",
@@ -38,16 +48,16 @@ return {
 		["zh-tw"] = "快捷鍵",
 	},
 	solo_keybind = {
-		en = "Open Solo Play view",
-		["zh-cn"] = "打开单人游戏界面",
-		ru = "Открыть меню Игры в соло",
-		["zh-tw"] = "開啟單人遊戲界面",
+		en = "Open Local Game view",
+		["zh-cn"] = "打开本地游戏界面",
+		ru = "Открыть меню локальной игры",
+		["zh-tw"] = "開啟本機遊戲介面",
 	},
 	solo_keybind_description = {
-		en = "Solo Play view can also be opened by \"/solo\" command.",
-		["zh-cn"] = "单人游戏界面也可以通过“/solo”命令打开。",
-		ru = "Режим соло-игры также можно открыть с помощью команды \"/solo\".",
-		["zh-tw"] = "單人遊戲界面也可以通過「/solo」指令開啟。",
+		en = "Local Game view can also be opened with the \"/solo\" command.",
+		["zh-cn"] = "本地游戏界面也可以通过“/solo”命令打开。",
+		ru = "Меню локальной игры также можно открыть с помощью команды \"/solo\".",
+		["zh-tw"] = "本機遊戲介面也可以透過「/solo」指令開啟。",
 	},
 	inventory_keybind = {
 		en = Localize("loc_alias_view_hotkey_inventory"),
@@ -76,26 +86,26 @@ return {
 	},
 	random_side_mission_seed_description = {
 		en = "Currently, side mission pickup spawn locations are locked and only changed on a weekly cadence.\n" ..
-			"This option enables the old random location generator in Solo Play.",
+			"This option enables the old random location generator in local games.",
 		["zh-cn"] = "目前，次要目标的生成位置是固定的，仅会每周刷新一次。\n" ..
-			"此选项会在单人游戏中启用旧版的随机位置生成器。",
+			"此选项会在本地游戏中启用旧版的随机位置生成器。",
 		ru = "В настоящее время места появления побочных миссий заблокированы и меняются еженедельно.\n" ..
-			"Эта опция включает старый генератор случайных мест в соло-игре.",
+			"Эта опция включает старый генератор случайных мест в локальной игре.",
 		["zh-tw"] = "目前，次要目標的生成位置是鎖定的，並且僅在每週更換一次。\n" ..
-			"此選項會在單人遊戲中啟用舊版的隨機位置生成器。",
+			"此選項會在本機遊戲中啟用舊版的隨機位置生成器。",
 	},
 	solo_command_desc = {
-		en = "Play offline solo mission",
-		["zh-cn"] = "玩离线单人任务",
-		ru = "Пройдите миссию в одиночку в офлайн режиме",
-		["zh-tw"] = "進行離線單人任務",
+		en = "Play a local single-player mission",
+		["zh-cn"] = "玩本地单人任务",
+		ru = "Пройти одиночную миссию локально",
+		["zh-tw"] = "遊玩本機單人任務",
 	},
 
 	solo_view_title = {
-		en = "Solo Play",
-		["zh-cn"] = "单人游戏",
-		ru = "Игра в соло",
-		["zh-tw"] = "單人遊戲",
+		en = "Local Game",
+		["zh-cn"] = "本地游戏",
+		ru = "Локальная игра",
+		["zh-tw"] = "本機遊戲",
 	},
 	button_start_normal = {
 		en = "Play Normal Game",
@@ -195,14 +205,14 @@ return {
 	},
 
 	tip_solo_offline = {
-		en = "Offline game is mainly for testing, the experience may differ from online gameplay.\n"
-			.. "You can't get any rewards or progression in offline game.",
-		["zh-cn"] = "离线游戏主要用于测试，其体验可能与在线游戏不同。\n"
-			.. "你无法从离线游戏中获得任何奖励或进度。",
-		ru = "Офлайн-игра предназначена в основном для тестирования, впечатления от неё могут отличаться от онлайн-игры.\n"
-			.. "В офлайн-игре вы не сможете получить никаких наград или прогресса.",
-		["zh-tw"] = "離線遊戲主要用於測試，其體驗可能與在線遊戲有所不同。\n"
-			.. "你無法在離線遊戲中獲得任何獎勵或進度。",
+		en = "Local games are mainly for testing; the experience may differ from official games.\n"
+			.. "You can't get any rewards or progression in local games.",
+		["zh-cn"] = "本地游戏主要用于测试，其体验可能与官方游戏不同。\n"
+			.. "你无法从本地游戏中获得任何奖励或进度。",
+		ru = "Локальная игра предназначена в основном для тестирования, впечатления от неё могут отличаться от официальной игры.\n"
+			.. "В локальной игре вы не сможете получить никаких наград или прогресса.",
+		["zh-tw"] = "本機遊戲主要用於測試，其體驗可能與官方遊戲有所不同。\n"
+			.. "你無法從本機遊戲中獲得任何獎勵或進度。",
 	},
 	tip_invalid_combination = {
 		en = "Note: some options may not be supported, have no effect, or cause crashes.",
@@ -211,10 +221,10 @@ return {
 		["zh-tw"] = "注意：某些選項可能不受支援、無效或導致遊戲崩潰。",
 	},
 	msg_not_available = {
-		en = "Solo Play is currently unavailable",
-		["zh-cn"] = "单人游戏目前不可用",
-		ru = "В настоящее время режим соло-игры недоступен",
-		["zh-tw"] = "單人遊戲目前不可用",
+		en = "Local games are currently unavailable",
+		["zh-cn"] = "本地游戏目前不可用",
+		ru = "Локальная игра сейчас недоступна",
+		["zh-tw"] = "本機遊戲目前不可用",
 	},
 
 	havoc_faction_mixed = {

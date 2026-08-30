@@ -7,6 +7,12 @@ return {
 	options = {
 		widgets = {
 			{
+				setting_id = "open_solo_play",
+				type = "button",
+				button_text = "open",
+				function_name = "open_solo_view",
+			},
+			{
 				setting_id = "group_keybinds",
 				type = "group",
 				sub_widgets = {

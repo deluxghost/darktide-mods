@@ -1,26 +1,26 @@
 {
   "name": "Solo Play",
-  "description": "Play offline solo mission by /solo command. You can't get any rewards or progression in offline game.",
+  "description": "Play local single-player missions. You can't get any rewards or progression in local games.",
   "homepage": "https://www.nexusmods.com/warhammer40kdarktide/mods/176",
   "source": "https://github.com/deluxghost/darktide-mods/tree/main/SoloPlay",
   "funding": {
     "kofi": "https://ko-fi.com/deluxghost",
     "bilibili": "https://space.bilibili.com/4712698"
   },
-  "version": "2.5.4",
+  "version": "2.6.0",
   "author": "deluxghost",
   "localization": {
     "zh-cn": {
       "name": "单人游戏",
-      "description": "输入 /solo 命令玩离线单人任务。你无法从离线游戏中获得任何奖励或进度。"
+      "description": "玩本地单人任务。你无法从本地游戏中获得任何奖励或进度。"
     },
     "ru": {
       "name": "Игра в соло",
-      "description": "Solo Play - Играйте в офлайн-соло-миссию командой /solo. В офлайн-игре вы не получаете никаких наград или прогресса."
+      "description": "Играйте в одиночные миссии локально. В локальной игре вы не получаете никаких наград или прогресса."
     },
     "zh-tw": {
       "name": "單人遊戲",
-      "description": "使用 /solo 指令進行離線單人任務。你無法在離線遊戲中獲得任何獎勵或進度。"
+      "description": "遊玩本機單人任務。你無法從本機遊戲中獲得任何獎勵或進度。"
     }
   }
 }

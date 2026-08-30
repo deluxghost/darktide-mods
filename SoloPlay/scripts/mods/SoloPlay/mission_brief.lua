@@ -237,6 +237,11 @@ local function _get_mission_brief_bot_profile(profile_name, index)
 end
 
 mod:hook_safe(MissionIntroView, "_assign_player_slots", function (self)
+	local multiplayer_session = Managers.multiplayer_session
+	if not multiplayer_session or multiplayer_session:host_type() ~= HOST_TYPES.singleplay then
+		return
+	end
+
 	local mechanism_data = Managers.mechanism:mechanism_data()
 	local profile_names = _initial_bot_profile_names(mechanism_data)
 	if not mod:get("mission_brief_enabled") or not profile_names then
@@ -263,6 +268,10 @@ mod:hook_safe(MissionIntroView, "_assign_player_slots", function (self)
 end)
 
 mod:hook(PlayerUnitSpawnManager, "_handle_initial_bot_spawning", function (func, self)
+	if not mod.is_soloplay() then
+		return func(self)
+	end
+
 	local mechanism_data = Managers.mechanism:mechanism_data()
 	local initial_bot_seed = _get_initial_bot_seed(mechanism_data)
 	if not initial_bot_seed then

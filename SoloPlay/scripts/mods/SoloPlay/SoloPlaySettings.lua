@@ -15,6 +15,7 @@ local havoc_modifier_template = mod:io_dofile("SoloPlay/scripts/mods/SoloPlay/ha
 local TRAINING_GROUND = "tg_shooting_range"
 local MORTIS_TRIALS = "psykhanium"
 local TWINS_MISSION = "km_enforcer_twins"
+local HAVOC_LOC = Localize("loc_havoc_name")
 
 local objectives_denylist = {
 	"hub",
@@ -38,6 +39,29 @@ local circumstance_prefer_list = {
 }
 local circumstance_format_group = {
 	high_flash_mission = "format_auric",
+}
+local havoc_themes = {
+	"darkness",
+	"ventilation_purge",
+	"toxic_gas",
+	"ember",
+}
+local havoc_circumstances_per_theme = {
+	darkness = {
+		"darkness_01",
+		"darkness_hunting_grounds_01",
+	},
+	ventilation_purge = {
+		"ventilation_purge_01",
+		"ventilation_purge_with_snipers_01",
+	},
+	toxic_gas = {
+		"toxic_gas_01",
+		"toxic_gas_cultist_grenadier",
+	},
+	ember = {
+		"ember_01_havoc",
+	},
 }
 local expedition_circumstances = {}
 local campaign_circumstances = {
@@ -93,6 +117,7 @@ local settings = {
 		missions = {},
 		side_missions = {},
 		circumstances = {},
+		havoc_circumstances = {},
 		mission_givers = {},
 		havoc_modifiers = havoc_modifier_template.loc,
 	},
@@ -233,6 +258,12 @@ end
 -- pre-process havoc circumstances
 local havoc_circumstances_loc_fallback = {}
 local havoc_circumstances_lookup_unfiltered = {}
+local function name_has_havoc_token(name)
+	local padded_name = "_" .. string.lower(name) .. "_"
+
+	return string.find(padded_name, "_havoc_", 1, true) ~= nil
+end
+
 for circumstance_name, circumstance in pairs(HavocCircumstanceTemplate) do
 	local loc_data = HavocSettings.ui_settings.circumstances[circumstance_name]
 	if loc_data then
@@ -244,6 +275,11 @@ for _, circumstance_name in ipairs(HavocSettings.circumstances) do
 end
 for circumstance_name in pairs(HavocCircumstanceTemplate) do
 	havoc_circumstances_lookup_unfiltered[circumstance_name] = true
+end
+for circumstance_name in pairs(CircumstanceTemplates) do
+	if not havoc_circumstances_lookup_unfiltered[circumstance_name] and name_has_havoc_token(circumstance_name) then
+		havoc_circumstances_lookup_unfiltered[circumstance_name] = true
+	end
 end
 for circumstance_name in pairs(ExpeditionCircumstanceTemplate) do
 	expedition_circumstances[circumstance_name] = true
@@ -275,11 +311,9 @@ for name, circumstance in pairs(CircumstanceTemplates) do
 			format_key = "format_expedition"
 		end
 		local display_name = circumstance.ui.display_name
-		local reverse_map_key = format_key and string.format("%s:%s", format_key, display_name) or display_name
 		local campaign = get_campaign(name)
 		if havoc_circumstances_loc_fallback[name] then
 			display_name = havoc_circumstances_loc_fallback[name]
-			reverse_map_key = format_key and string.format("%s:%s", format_key, display_name) or display_name
 		elseif campaign ~= nil then
 			local campaign_display = Localize(CampaignSettings[campaign].display_name)
 			local campaign_order = campaign_circumstances[campaign][name] or 0
@@ -289,8 +323,10 @@ for name, circumstance in pairs(CircumstanceTemplates) do
 			else
 				display_name = string.format("%s: %s", campaign_display, display_name)
 			end
-			reverse_map_key = display_name
 		end
+		local is_havoc = havoc_circumstances_lookup_unfiltered[name]
+		local reverse_display_name = is_havoc and string.format("%s: %s", HAVOC_LOC, display_name) or display_name
+		local reverse_map_key = format_key and string.format("%s:%s", format_key, reverse_display_name) or reverse_display_name
 		if not deny then
 			circumstance_reverse_map[reverse_map_key] = circumstance_reverse_map[reverse_map_key] or {}
 			table.insert(circumstance_reverse_map[reverse_map_key], name)
@@ -300,6 +336,7 @@ for name, circumstance in pairs(CircumstanceTemplates) do
 			format_key = format_key,
 			display_name = display_name,
 			reverse_map_key = reverse_map_key,
+			is_havoc = is_havoc,
 		}
 	end
 end
@@ -326,6 +363,10 @@ for name, circumstance in pairs(CircumstanceTemplates) do
 			end
 			if format_key then
 				display = mod:localize(format_key, display)
+			end
+			if property.is_havoc then
+				settings.loc.havoc_circumstances[name] = display
+				display = string.format("%s: %s", HAVOC_LOC, display)
 			end
 			circumstances_loc_array[#circumstances_loc_array+1] = {
 				data = name,
@@ -392,7 +433,7 @@ local havoc_circumstances_array = {}
 for _, circumstance_name in ipairs(HavocSettings.circumstances) do
 	havoc_circumstances_array[#havoc_circumstances_array+1] = {
 		data = circumstance_name,
-		localized = settings.loc.circumstances[circumstance_name],
+		localized = settings.loc.havoc_circumstances[circumstance_name] or settings.loc.circumstances[circumstance_name],
 	}
 end
 table.sort(havoc_circumstances_array, mod.sort_function_localized)
@@ -401,9 +442,10 @@ for index, circumstance_loc in ipairs(havoc_circumstances_array) do
 end
 
 -- havoc_theme_circumstances
-for _, circumstances in pairs(HavocSettings.circumstances_per_theme) do
-	for _, circumstance_name in ipairs(circumstances) do
+for _, theme in ipairs(havoc_themes) do
+	for _, circumstance_name in ipairs(havoc_circumstances_per_theme[theme]) do
 		settings.order.havoc_theme_circumstances[#settings.order.havoc_theme_circumstances+1] = circumstance_name
+		settings.lookup.theme_of_circumstances[circumstance_name] = theme
 	end
 end
 
@@ -412,17 +454,10 @@ for theme, missions in pairs(HavocSettings.missions) do
 	for _, mission_name in ipairs(missions) do
 		settings.lookup.theme_circumstances_of_havoc_missions[mission_name] = settings.lookup.theme_circumstances_of_havoc_missions[mission_name] or {}
 		if theme ~= "default" then
-			for _, theme_circumstance in ipairs(HavocSettings.circumstances_per_theme[theme]) do
+			for _, theme_circumstance in ipairs(havoc_circumstances_per_theme[theme]) do
 				settings.lookup.theme_circumstances_of_havoc_missions[mission_name][theme_circumstance] = true
 			end
 		end
-	end
-end
-
--- theme_of_circumstances
-for theme, theme_circumstances in pairs(HavocSettings.circumstances_per_theme) do
-	for _, theme_circumstance in ipairs(theme_circumstances) do
-		settings.lookup.theme_of_circumstances[theme_circumstance] = theme
 	end
 end
 
@@ -440,7 +475,7 @@ end
 local unused_havoc_circumstances_array = {}
 for circumstance_name in pairs(HavocCircumstanceTemplate) do
 	if not used_havoc_circumstances[circumstance_name] then
-		local loc = settings.loc.circumstances[circumstance_name]
+		local loc = settings.loc.havoc_circumstances[circumstance_name] or settings.loc.circumstances[circumstance_name]
 		if loc then
 			unused_havoc_circumstances_array[#unused_havoc_circumstances_array+1] = {
 				data = circumstance_name,
