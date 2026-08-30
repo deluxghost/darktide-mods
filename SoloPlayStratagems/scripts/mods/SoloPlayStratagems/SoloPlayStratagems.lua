@@ -1,4 +1,5 @@
 local mod = get_mod("SoloPlayStratagems")
+local realms
 local FixedFrame = require("scripts/utilities/fixed_frame")
 local MasterItems = require("scripts/backend/master_items")
 local Pickups = require("scripts/settings/pickup/pickups")
@@ -7,9 +8,14 @@ local Pocketable = require("scripts/utilities/pocketable")
 local MatchmakingConstants = require("scripts/settings/network/matchmaking_constants")
 local HOST_TYPES = MatchmakingConstants.HOST_TYPES
 
+local NETWORK_RPC_TRIGGER = "trigger_stratagem"
+
 mod.state = mod.state or mod:persistent_table("state")
 mod:io_dofile("SoloPlayStratagems/scripts/mods/SoloPlayStratagems/airstrike")
 mod:io_dofile("SoloPlayStratagems/scripts/mods/SoloPlayStratagems/stratagem_menu_state")
+
+local network_registered = false
+local trigger_stratagem_for_player
 
 mod:register_hud_element({
 	class_name = "HudElementStratagemMenu",
@@ -33,10 +39,33 @@ mod.load_package = function (package_name)
 end
 
 mod.on_all_mods_loaded = function ()
+	realms = get_mod("Realms")
+
 	for i = 1, #PACKAGES do
 		mod.load_package(PACKAGES[i])
 	end
 	mod.refresh_active_stratagems()
+
+	if realms then
+		local registered, register_error = realms.network_register(mod, NETWORK_RPC_TRIGGER, function (sender_peer_id, name)
+			if not mod.is_server() or type(name) ~= "string" then
+				return
+			end
+
+			local player_manager = Managers.player
+			local player = player_manager and player_manager:player(sender_peer_id, 1)
+
+			if player and player:is_human_controlled() then
+				trigger_stratagem_for_player(player, name)
+			end
+		end)
+
+		if not registered then
+			mod:error("Failed registering stratagem network RPC: %s", register_error)
+		end
+
+		network_registered = registered
+	end
 end
 
 mod.is_server = function ()
@@ -52,6 +81,12 @@ mod.is_local_game = function ()
 		return false
 	end
 	local host_type = Managers.multiplayer_session:host_type()
+	if host_type == HOST_TYPES.player then
+		local network_available = network_registered
+			and realms.network_is_available()
+
+		return mod.is_server() or network_available
+	end
 	return host_type == HOST_TYPES.singleplay or host_type == HOST_TYPES.singleplay_backend_session
 end
 
@@ -121,10 +156,11 @@ mod.get_active_stratagems = function ()
 	return mod.state.active_stratagems or mod.refresh_active_stratagems()
 end
 
-mod.trigger_stratagem = function (name)
-	if not mod.is_server() then
+trigger_stratagem_for_player = function (player, name)
+	if not _find_template_by_pocketable(name) then
 		return false
 	end
+
 	local pickup_data = Pickups.by_name[name]
 	if not pickup_data then
 		return false
@@ -137,8 +173,7 @@ mod.trigger_stratagem = function (name)
 		return false
 	end
 
-	local local_player = Managers.player and Managers.player:local_player(1)
-	local player_unit = local_player and local_player.player_unit
+	local player_unit = player.player_unit
 	if not player_unit then
 		return false
 	end
@@ -160,6 +195,26 @@ mod.trigger_stratagem = function (name)
 	PlayerUnitVisualLoadout.equip_item_to_slot(player_unit, inventory_item, slot_name, nil, fixed_t)
 	PlayerUnitVisualLoadout.wield_slot(slot_name, player_unit, fixed_t)
 	return true
+end
+
+mod.trigger_stratagem = function (name)
+	if mod.is_server() then
+		local local_player = Managers.player and Managers.player:local_player(1)
+
+		return local_player and trigger_stratagem_for_player(local_player, name) or false
+	end
+	if not network_registered or not realms.network_is_available() then
+		return false
+	end
+
+	local connection = Managers.connection
+	local host_peer_id = connection and connection:is_client() and connection:host()
+
+	if not host_peer_id then
+		return false
+	end
+
+	return realms.network_send(mod, NETWORK_RPC_TRIGGER, host_peer_id, name)
 end
 
 mod:hook_safe("GameplayStateRun", "update", function ()

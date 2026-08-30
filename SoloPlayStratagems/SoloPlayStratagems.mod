@@ -8,5 +8,7 @@ return {
 			mod_localization = "SoloPlayStratagems/scripts/mods/SoloPlayStratagems/SoloPlayStratagems_localization",
 		})
 	end,
-	packages = {},
+	packages = {
+		"packages/game_mode/expedition",
+	},
 }

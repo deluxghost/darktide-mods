@@ -5,12 +5,12 @@ mod.templates = mod:io_dofile("SoloPlayStratagems/scripts/mods/SoloPlayStratagem
 
 local localization = {
 	mod_name = {
-		en = "Solo Play - Stratagems DLC",
-		["zh-cn"] = "单人游戏 - 战略配备 DLC",
+		en = "Stratagems",
+		["zh-cn"] = "战略配备",
 	},
 	mod_description = {
-		en = "Gives you a super way to acquire stratagems in Solo Play missions",
-		["zh-cn"] = "在「单人游戏」任务中，使用一种超级方法获取战略配备",
+		en = "Gives you a super way to acquire stratagems in local server",
+		["zh-cn"] = "在本地服务器中，使用一种超级方法获取战略配备",
 	},
 	group_stratagem_controls = {
 		en = "Controls",

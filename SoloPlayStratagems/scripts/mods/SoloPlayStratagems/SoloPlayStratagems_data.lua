@@ -1,4 +1,5 @@
 local mod = get_mod("SoloPlayStratagems")
+local Pickups = require("scripts/settings/pickup/pickups")
 
 local slot_options = {
 	{
@@ -9,9 +10,11 @@ local slot_options = {
 for _, template in ipairs(mod.templates.stratagems) do
 	local pocketable = template.pocketable
 	if pocketable ~= "" then
+		local pickup = Pickups.by_name[pocketable]
 		slot_options[#slot_options + 1] = {
 			text = "loc_stratagem_" .. pocketable,
 			value = pocketable,
+			icon = pickup.interaction_icon,
 		}
 	end
 end

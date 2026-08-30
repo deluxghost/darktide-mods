@@ -1,0 +1,23 @@
+{
+  "name": "Stratagems",
+  "description": "Gives you a super way to acquire stratagems in local server",
+  "homepage": "https://www.nexusmods.com/warhammer40kdarktide/mods/841",
+  "source": "https://github.com/deluxghost/darktide-mods/tree/main/SoloPlayStratagems",
+  "funding": {
+    "kofi": "https://ko-fi.com/deluxghost",
+    "bilibili": "https://space.bilibili.com/4712698"
+  },
+  "version": "1.1.0",
+  "author": "deluxghost",
+  "dependencies": {
+    "required": [
+      "SoloPlay"
+    ]
+  },
+  "localization": {
+    "zh-cn": {
+      "name": "战略配备",
+      "description": "在本地服务器中，使用一种超级方法获取战略配备"
+    }
+  }
+}
