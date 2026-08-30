@@ -1,0 +1,23 @@
+{
+  "name": "Realms Server",
+  "description": "Adds LAN multiplayer support to Darktide. Every local single-player game also starts a LAN listen server.",
+  "homepage": "https://www.nexusmods.com/warhammer40kdarktide/mods/1223",
+  "source": "https://github.com/deluxghost/darktide-mods/tree/main/Realms",
+  "funding": {
+    "kofi": "https://ko-fi.com/deluxghost",
+    "bilibili": "https://space.bilibili.com/4712698"
+  },
+  "version": "0.1.0",
+  "author": "deluxghost",
+  "dependencies": {
+    "required": [
+      "SoloPlay"
+    ]
+  },
+  "localization": {
+    "zh-cn": {
+      "name": "领域服务器",
+      "description": "为暗潮提供局域网联机功能。所有本地单人游戏都会同时启动局域网监听服务器。"
+    }
+  }
+}
