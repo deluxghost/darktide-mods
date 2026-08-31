@@ -21,6 +21,18 @@ local localization = {
 		en = "Open",
 		["zh-cn"] = "打开",
 	},
+	hide_join_server_address = {
+		en = "Hide server address",
+		["zh-cn"] = "隐藏服务器地址",
+	},
+	hide_join_server_address_description = {
+		en = "Mask the server address in the Join Server view. This only changes its on-screen appearance.",
+		["zh-cn"] = "在加入服务器界面中隐藏服务器地址。这只会改变屏幕上的显示。",
+	},
+	server_settings = {
+		en = "Server settings",
+		["zh-cn"] = "服务器设置",
+	},
 	mission_preparation = {
 		en = "Mission preparation",
 		["zh-cn"] = "任务准备",

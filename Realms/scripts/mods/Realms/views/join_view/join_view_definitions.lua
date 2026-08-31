@@ -3,6 +3,7 @@ local dmf = get_mod("DMF")
 local UIFontSettings = require("scripts/managers/ui/ui_font_settings")
 local UIWidget = require("scripts/managers/ui/ui_widget")
 local TextInputUtils = dmf:io_dofile("dmf/scripts/mods/dmf/modules/ui/options/text_input_utils")
+local MaskedTextInput = mod:io_dofile("Realms/scripts/mods/Realms/views/join_view/masked_text_input")
 local Style = mod:io_dofile("Realms/scripts/mods/Realms/views/realms_view_style")
 
 local PANEL_SIZE = {
@@ -199,6 +200,8 @@ local function input_pass_template()
 		end
 	end
 
+	MaskedTextInput.add_to_passes(passes)
+
 	return passes
 end
 
@@ -233,6 +236,7 @@ local widget_definitions = {
 	}, "password_label"),
 	password_input = UIWidget.create_definition(input_pass_template(), "password_input", {
 		input_text = "",
+		mask_input = true,
 		placeholder_text = "",
 		virtual_keyboard_title = mod:localize("join_server_password"),
 	}),

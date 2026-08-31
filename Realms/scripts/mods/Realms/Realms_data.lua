@@ -14,34 +14,45 @@ return {
 				function_name = "open_join_view",
 			},
 			{
-				setting_id = "mission_preparation",
-				type = "checkbox",
-				default_value = true,
-			},
-			{
-				setting_id = "private_mode",
+				setting_id = "hide_join_server_address",
 				type = "checkbox",
 				default_value = false,
 			},
 			{
-				setting_id = "max_players",
-				type = "numeric",
-				default_value = 4,
-				range = {2, 8},
-			},
-			{
-				setting_id = "bot_fill_target",
-				type = "numeric",
-				default_value = 4,
-				range = {1, 8},
-			},
-			{
-				setting_id = "server_password",
-				type = "text",
-				default_value = "",
-				validate = function (value)
-					return #value <= 1024 and string.find(value, "%s") == nil
-				end,
+				setting_id = "server_settings",
+				type = "group",
+				sub_widgets = {
+					{
+						setting_id = "mission_preparation",
+						type = "checkbox",
+						default_value = true,
+					},
+					{
+						setting_id = "private_mode",
+						type = "checkbox",
+						default_value = false,
+					},
+					{
+						setting_id = "max_players",
+						type = "numeric",
+						default_value = 4,
+						range = {2, 8},
+					},
+					{
+						setting_id = "bot_fill_target",
+						type = "numeric",
+						default_value = 4,
+						range = {1, 8},
+					},
+					{
+						setting_id = "server_password",
+						type = "text",
+						default_value = "",
+						validate = function (value)
+							return #value <= 1024 and string.find(value, "%s") == nil
+						end,
+					},
+				},
 			},
 		},
 	},

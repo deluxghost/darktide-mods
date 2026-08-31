@@ -7,6 +7,7 @@ local Session = mod._session
 local definitions = mod:io_dofile("Realms/scripts/mods/Realms/views/join_view/join_view_definitions")
 
 local SERVER_ADDRESS_SETTING_ID = "join_server_address"
+local HIDE_SERVER_ADDRESS_SETTING_ID = "hide_join_server_address"
 local FOCUS_WIDGET_NAMES = {
 	"server_address_input",
 	"password_input",
@@ -56,6 +57,7 @@ RealmsJoinView.on_enter = function (self)
 	local address_content = self._widgets_by_name.server_address_input.content
 
 	set_input_value(address_content, server_address)
+	address_content.mask_input = mod:get(HIDE_SERVER_ADDRESS_SETTING_ID)
 
 	self._focus_index = 1
 	self._server_address = server_address
