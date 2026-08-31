@@ -66,15 +66,37 @@ local function send_to_host(message_type, data)
 	if Preparation.is_waiting() then
 		return Preparation.send_to_host(message_type, data)
 	end
+	if not GameplayControl.is_available() then
+		return false, "Gameplay-control profile channel is unavailable", true
+	end
 
 	return GameplayControl.send_to_host(message_type, data)
 end
 
+local function fail_client_transport(message)
+	mod:error("Failed sending the local Realms profile update: %s", tostring(message))
+
+	local_change = nil
+	pending_notice = nil
+	pending_cancel = nil
+	pending_delivery = nil
+
+	local manager = Managers.multiplayer_session
+
+	if manager then
+		manager:leave("realms_profile_update_failed")
+	end
+end
+
 local function flush_client_messages()
 	if pending_notice then
-		local sent = send_to_host("profile_pending", pending_notice)
+		local sent, send_error, retryable = send_to_host("profile_pending", pending_notice)
 
 		if not sent then
+			if not retryable then
+				fail_client_transport(send_error)
+			end
+
 			return
 		end
 
@@ -88,11 +110,13 @@ local function flush_client_messages()
 		return
 	end
 
-	local sent = send_to_host(message_type, data)
+	local sent, send_error, retryable = send_to_host(message_type, data)
 
 	if sent then
 		pending_delivery = nil
 		pending_cancel = nil
+	elseif not retryable then
+		fail_client_transport(send_error)
 	end
 end
 

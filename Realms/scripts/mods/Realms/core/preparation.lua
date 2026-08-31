@@ -732,14 +732,14 @@ end
 
 function Preparation.send_to_host(message_type, data)
 	if state.role ~= "client" or state.phase ~= "waiting" then
-		return false, "Preparation client channel is unavailable"
+		return false, "Preparation client channel is unavailable", true
 	end
 
 	local connection = active_client_connection()
 	local channel_id = connection and connection:host_channel()
 
 	if not channel_id or not registered_channels[channel_id] then
-		return false, "Preparation host channel is unavailable"
+		return false, "Preparation host channel is unavailable", true
 	end
 
 	return send_message(channel_id, message_type, data)
