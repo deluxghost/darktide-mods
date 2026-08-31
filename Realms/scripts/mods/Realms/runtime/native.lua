@@ -18,6 +18,8 @@ local instances = mod:persistent_table("instances")
 instances.native = instances.native or {}
 
 local state = instances.native
+local poll_error_buffer
+local poll_event
 
 local function new_error_buffer()
 	return ffi.new("char[?]", ERROR_CAPACITY)
@@ -46,6 +48,10 @@ local function load_runtime()
 end
 
 function Native.initialize()
+	if state.initialized then
+		return true
+	end
+
 	local runtime, load_error = load_runtime()
 
 	if not runtime then
@@ -57,6 +63,8 @@ function Native.initialize()
 	if runtime.RealmsRuntime_Initialize(error_buffer, ERROR_CAPACITY) == 0 then
 		return false, read_error(error_buffer)
 	end
+
+	state.initialized = true
 
 	return true
 end
@@ -209,26 +217,27 @@ function Native.poll_event()
 		return nil, runtime_error
 	end
 
-	local event = ffi.new("RealmsRuntimeEvent")
-	local error_buffer = new_error_buffer()
+	poll_event = poll_event or ffi.new("RealmsRuntimeEvent")
+	poll_error_buffer = poll_error_buffer or new_error_buffer()
+	poll_error_buffer[0] = 0
 
-	event.struct_size = ffi.sizeof(event)
+	poll_event.struct_size = ffi.sizeof(poll_event)
 
-	local result = runtime.RealmsRuntime_PollEvent(event, error_buffer, ERROR_CAPACITY)
+	local result = runtime.RealmsRuntime_PollEvent(poll_event, poll_error_buffer, ERROR_CAPACITY)
 
 	if result < 0 then
-		return nil, read_error(error_buffer)
+		return nil, read_error(poll_error_buffer)
 	end
 	if result == 0 then
 		return false
 	end
 
 	return {
-		channel_id = tonumber(event.channel_id),
-		code = tonumber(event.code),
-		message = ffi.string(event.message),
-		peer_id = ffi.string(event.peer_id),
-		type = tonumber(event.type),
+		channel_id = tonumber(poll_event.channel_id),
+		code = tonumber(poll_event.code),
+		message = ffi.string(poll_event.message),
+		peer_id = ffi.string(poll_event.peer_id),
+		type = tonumber(poll_event.type),
 	}
 end
 

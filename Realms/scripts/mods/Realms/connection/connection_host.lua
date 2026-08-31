@@ -8,6 +8,7 @@ local DisconnectReason = mod:io_dofile("Realms/scripts/mods/Realms/protocol/disc
 local SessionTicket = mod:io_dofile("Realms/scripts/mods/Realms/protocol/session_ticket")
 
 local ABANDONED_PEER_TIMEOUT_MS = 30000
+local NATIVE_EVENT_POLL_INTERVAL = 0.05
 
 local function remote_for_peer(self, peer_id)
 	for _, remote in pairs(self._remote_connections) do
@@ -43,6 +44,7 @@ ConnectionHost.init = function (self, event_delegate, approve_delegate, engine_l
 	self._pending_channel_closes = {}
 	self._installed = false
 	self._destroyed = false
+	self._native_event_poll_elapsed = NATIVE_EVENT_POLL_INTERVAL
 	self._native_maintenance_elapsed = 0
 	self._realms_protocol = SessionTicket.PROTOCOL_VERSION
 	self._profile_synchronizer_host = ProfileSynchronizerHost:new(event_delegate)
@@ -422,6 +424,10 @@ ConnectionHost.set_admission_policy = function (self, accept_new_connections, ma
 end
 
 ConnectionHost._close_pending_channels = function (self)
+	if not next(self._pending_channel_closes) then
+		return
+	end
+
 	local channel_ids = table.keys(self._pending_channel_closes)
 
 	for i = 1, #channel_ids do
@@ -455,7 +461,14 @@ ConnectionHost._maintain_native_state = function (self, dt)
 	end
 end
 
-ConnectionHost._poll_native_events = function (self)
+ConnectionHost._poll_native_events = function (self, dt)
+	self._native_event_poll_elapsed = self._native_event_poll_elapsed + dt
+
+	if self._native_event_poll_elapsed < NATIVE_EVENT_POLL_INTERVAL then
+		return
+	end
+
+	self._native_event_poll_elapsed = self._native_event_poll_elapsed % NATIVE_EVENT_POLL_INTERVAL
 	while true do
 		local event, event_error = Native.poll_event()
 
@@ -488,7 +501,7 @@ end
 
 ConnectionHost.update = function (self, dt)
 	self:_close_pending_channels()
-	self:_poll_native_events()
+	self:_poll_native_events(dt)
 	self:_maintain_native_state(dt)
 	self._profile_synchronizer_host:update(dt)
 
