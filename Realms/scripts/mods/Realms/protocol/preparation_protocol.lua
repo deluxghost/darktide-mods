@@ -7,7 +7,6 @@ local PreparationProtocol = {}
 
 PreparationProtocol.NAME = "realms-preparation"
 PreparationProtocol.VERSION = SessionTicket.PROTOCOL_VERSION
-PreparationProtocol.MAX_FRAME_SIZE = 500
 PreparationProtocol.MAX_MESSAGE_SIZE = 96 * 1024
 
 local MESSAGE_TYPES = table.set({

@@ -1,4 +1,5 @@
 local mod = get_mod("Realms")
+local ModNetworkProtocol = mod:io_dofile("Realms/scripts/mods/Realms/protocol/mod_network_protocol")
 
 local MAX_ARGUMENTS = 32
 local MAX_NAME_LENGTH = 64
@@ -10,7 +11,7 @@ local state = mod:persistent_table("mod_network")
 state.registrations = state.registrations or {}
 
 local ModNetwork = {}
-local GameplayControl
+local SessionControl
 local remote_capabilities = {}
 
 local function normalize_peer_id(peer_id)
@@ -148,7 +149,7 @@ local function supports(peer_id, mod_name, rpc_name)
 end
 
 local function publish_manifest()
-	if not GameplayControl or not GameplayControl.is_available() then
+	if not SessionControl or not SessionControl.is_available() then
 		return true
 	end
 
@@ -158,10 +159,10 @@ local function publish_manifest()
 	local connection = Managers.connection
 
 	if connection and connection:is_host() then
-		return GameplayControl.send_to_clients("mod_network_manifest", data)
+		return SessionControl.send_to_clients(ModNetworkProtocol.NAME, "mod_network_manifest", data)
 	end
 	if connection and connection:is_client() then
-		return GameplayControl.send_to_host("mod_network_manifest", data)
+		return SessionControl.send_to_host(ModNetworkProtocol.NAME, "mod_network_manifest", data)
 	end
 
 	return false, "Realms network session is unavailable"
@@ -173,14 +174,14 @@ local function send_manifest(channel_id, role)
 	}
 
 	if role == "host" then
-		return GameplayControl.send_to_client(channel_id, "mod_network_manifest", data)
+		return SessionControl.send_to_client(channel_id, ModNetworkProtocol.NAME, "mod_network_manifest", data)
 	end
 
-	return GameplayControl.send_to_host("mod_network_manifest", data)
+	return SessionControl.send_to_host(ModNetworkProtocol.NAME, "mod_network_manifest", data)
 end
 
 local function send_route_error(channel_id, data, reason)
-	local sent, send_error = GameplayControl.send_to_client(channel_id, "mod_network_error", {
+	local sent, send_error = SessionControl.send_to_client(channel_id, ModNetworkProtocol.NAME, "mod_network_error", {
 		mod_name = data.mod_name,
 		reason = reason,
 		rpc_name = data.rpc_name,
@@ -192,20 +193,21 @@ local function send_route_error(channel_id, data, reason)
 end
 
 local function send_to_peer(peer_id, mod_name, rpc_name, sender_peer_id, arguments)
-	if not GameplayControl.is_peer_available(peer_id) then
+	if not SessionControl.is_peer_available(peer_id) then
 		return false, ROUTE_ERROR_PEER_UNAVAILABLE
 	end
 	if not supports(peer_id, mod_name, rpc_name) then
 		return false, ROUTE_ERROR_RPC_UNSUPPORTED
 	end
 
-	local sent, send_error = GameplayControl.send_to_peer(
+	local sent, send_error = SessionControl.send_to_peer(
 		peer_id,
+		ModNetworkProtocol.NAME,
 		"mod_network_delivery",
 		delivery(mod_name, rpc_name, sender_peer_id, arguments)
 	)
 
-	if not sent and not GameplayControl.is_peer_available(peer_id) then
+	if not sent and not SessionControl.is_peer_available(peer_id) then
 		return false, ROUTE_ERROR_PEER_UNAVAILABLE
 	end
 
@@ -213,7 +215,7 @@ local function send_to_peer(peer_id, mod_name, rpc_name, sender_peer_id, argumen
 end
 
 local function send_to_capable_clients(mod_name, rpc_name, sender_peer_id, arguments, excluded_peer_id)
-	local peer_ids = GameplayControl.ready_peer_ids()
+	local peer_ids = SessionControl.ready_peer_ids()
 
 	excluded_peer_id = excluded_peer_id and normalize_peer_id(excluded_peer_id) or nil
 
@@ -234,6 +236,12 @@ end
 
 local function receive_manifest(channel_id, sender_peer_id, data)
 	store_manifest(sender_peer_id, data.rpcs)
+
+	local connection = Managers.connection
+
+	if connection and connection:is_host() then
+		return send_manifest(channel_id, "host")
+	end
 
 	return true
 end
@@ -306,24 +314,29 @@ local function receive_client_error(channel_id, sender_peer_id, data)
 	return true
 end
 
-function ModNetwork.install(gameplay_control)
-	GameplayControl = gameplay_control
+function ModNetwork.install(session_control)
+	SessionControl = session_control
 
-	GameplayControl.register_host_handler("mod_network_manifest", receive_manifest)
-	GameplayControl.register_host_handler("mod_network_request", receive_host_request)
-	GameplayControl.register_client_handler("mod_network_delivery", receive_client_delivery)
-	GameplayControl.register_client_handler("mod_network_error", receive_client_error)
-	GameplayControl.register_client_handler("mod_network_manifest", receive_manifest)
-	GameplayControl.register_disconnect_handler("mod_network", function (peer_id)
+	SessionControl.register_protocol(ModNetworkProtocol)
+	SessionControl.register_host_handler(ModNetworkProtocol.NAME, "mod_network_manifest", receive_manifest)
+	SessionControl.register_host_handler(ModNetworkProtocol.NAME, "mod_network_request", receive_host_request)
+	SessionControl.register_client_handler(ModNetworkProtocol.NAME, "mod_network_delivery", receive_client_delivery)
+	SessionControl.register_client_handler(ModNetworkProtocol.NAME, "mod_network_error", receive_client_error)
+	SessionControl.register_client_handler(ModNetworkProtocol.NAME, "mod_network_manifest", receive_manifest)
+	SessionControl.register_disconnect_handler("mod_network", function (peer_id)
 		remote_capabilities[normalize_peer_id(peer_id)] = nil
 	end)
-	GameplayControl.register_ready_handler("mod_network", function (channel_id, peer_id, role)
-		return send_manifest(channel_id, role)
+	SessionControl.register_ready_handler("mod_network", function (channel_id, peer_id, role)
+		if role == "client" then
+			return send_manifest(channel_id, role)
+		end
+
+		return true
 	end)
 end
 
 function ModNetwork.is_available()
-	if not GameplayControl.is_available() then
+	if not SessionControl.is_available() then
 		return false
 	end
 
@@ -426,7 +439,7 @@ function ModNetwork.send(owner_mod, rpc_name, recipient, ...)
 		normalized_recipient = "others"
 	end
 
-	return GameplayControl.send_to_host("mod_network_request", {
+	return SessionControl.send_to_host(ModNetworkProtocol.NAME, "mod_network_request", {
 		arguments = arguments,
 		mod_name = mod_name,
 		recipient = normalized_recipient,

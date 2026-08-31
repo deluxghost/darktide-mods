@@ -9,6 +9,7 @@ local MechanismContext = mod:io_dofile("Realms/scripts/mods/Realms/protocol/mech
 local Native = mod:io_dofile("Realms/scripts/mods/Realms/runtime/native")
 local Preparation = mod._preparation
 local GameplayControl = mod._gameplay_control
+local SessionControl = mod._session_control
 local PreparationState = mod:io_dofile("Realms/scripts/mods/Realms/game_states/realms_preparation_state")
 local SessionTicket = mod:io_dofile("Realms/scripts/mods/Realms/protocol/session_ticket")
 
@@ -296,14 +297,8 @@ function Session.replace_singleplayer_boot(manager, original_boot)
 		max_members = mod:get("max_players"),
 		mission_name = mission_name,
 		on_installed = Session.host_mechanism_changed,
-		on_remote_connected = function (...)
-			Preparation.remote_connected(...)
-			GameplayControl.remote_connected(...)
-		end,
-		on_remote_disconnected = function (...)
-			Preparation.remote_disconnected(...)
-			GameplayControl.remote_disconnected(...)
-		end,
+		on_remote_connected = SessionControl.remote_connected,
+		on_remote_disconnected = SessionControl.remote_disconnected,
 		password = mod:get("server_password") or "",
 	})
 

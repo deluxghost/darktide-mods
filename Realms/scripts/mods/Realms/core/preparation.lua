@@ -1,7 +1,6 @@
 local mod = get_mod("Realms")
 local MissionTemplates = require("scripts/settings/mission/mission_templates")
 local Views = require("scripts/ui/views/views")
-local DisconnectReason = mod:io_dofile("Realms/scripts/mods/Realms/protocol/disconnect_reason")
 local PreparationProtocol = mod:io_dofile("Realms/scripts/mods/Realms/protocol/preparation_protocol")
 local SessionTicket = mod:io_dofile("Realms/scripts/mods/Realms/protocol/session_ticket")
 local PreparationViewModel = mod:io_dofile("Realms/scripts/mods/Realms/views/preparation_view/model")
@@ -10,18 +9,14 @@ local Preparation = {
 	__class_name = "RealmsPreparationController",
 }
 local state = mod:persistent_table("preparation_state")
-local client_member_peers = {}
-local registered_channels = {}
 local client_hello_sent = false
 local view_open_failure_logged = false
 local Session
+local SessionControl
 local ProfileUpdates
 
-local CLIENT_TO_HOST_RPC = "rpc_check_mechanism"
-local HOST_TO_CLIENT_RPC = "rpc_check_mechanism_reply"
 local VIEW_NAME = "realms_preparation_view"
 local COUNTDOWN_DURATION = 5
-local REASSEMBLY_TIMEOUT = 10
 local PREPARATION_BYPASS_GAME_MODES = {
 	hub = true,
 	hub_singleplay = true,
@@ -71,25 +66,6 @@ local function realms_boot_in_progress()
 	return class_name == "RealmsHostSessionBoot" or class_name == "RealmsClientSessionBoot"
 end
 
-local function client_connected_to_host(connection)
-	local connection_manager = Managers.connection
-
-	if not connection_manager then
-		return false
-	end
-
-	table.clear(client_member_peers)
-	connection_manager:member_peers(client_member_peers)
-
-	return table.contains(client_member_peers, connection:host())
-end
-
-local function control_delegate()
-	local connection_manager = Managers.connection
-
-	return connection_manager and connection_manager:network_event_delegate() or nil
-end
-
 local function close_view()
 	local ui_manager = Managers.ui
 
@@ -120,99 +96,12 @@ local function open_view()
 	return opened
 end
 
-local function unregister_channel(channel_id)
-	local registration = registered_channels[channel_id]
-
-	if not registration then
-		return
-	end
-
-	local delegate = control_delegate()
-	local objects = delegate and delegate._registered_channel_objects[registration.rpc_name]
-
-	if objects and objects[channel_id] == Preparation then
-		delegate:unregister_channel_events(channel_id, registration.rpc_name)
-	end
-
-	registered_channels[channel_id] = nil
-end
-
-local function unregister_all_channels()
-	local channel_ids = table.keys(registered_channels)
-
-	for i = 1, #channel_ids do
-		unregister_channel(channel_ids[i])
-	end
-
-	client_hello_sent = false
-end
-
-local function register_channel(channel_id, peer_id)
-	if type(channel_id) ~= "number" then
-		return false, "Preparation control channel is unavailable"
-	end
-
-	if registered_channels[channel_id] then
-		return true
-	end
-
-	local delegate = control_delegate()
-
-	if not delegate then
-		return false, "Network event delegate is unavailable"
-	end
-
-	local rpc_name = state.role == "host" and CLIENT_TO_HOST_RPC or HOST_TO_CLIENT_RPC
-	local objects = delegate._registered_channel_objects[rpc_name]
-	local existing = objects and objects[channel_id]
-
-	if existing and existing ~= Preparation then
-		if existing.__class_name ~= Preparation.__class_name then
-			return false, string.format("RPC %s is still owned by %s", rpc_name, tostring(existing.__class_name))
-		end
-
-		delegate:unregister_channel_events(channel_id, rpc_name)
-	end
-
-	delegate:register_connection_channel_events(Preparation, channel_id, rpc_name)
-	registered_channels[channel_id] = {
-		peer_id = peer_id and normalize_peer_id(peer_id) or nil,
-		receive_chunks = nil,
-		receive_size = 0,
-		receive_started_at = nil,
-		rpc_name = rpc_name,
-	}
-
-	return true
-end
-
-local function send_frames(payload, send_frame)
-	for offset = 1, #payload, PreparationProtocol.MAX_FRAME_SIZE do
-		local chunk = string.sub(payload, offset, offset + PreparationProtocol.MAX_FRAME_SIZE - 1)
-		local is_last = offset + PreparationProtocol.MAX_FRAME_SIZE > #payload
-
-		send_frame(chunk, is_last)
-	end
-
-	return true
-end
-
 local function send_message(channel_id, message_type, data)
-	local payload, encode_error = PreparationProtocol.encode(message_type, data)
-
-	if not payload then
-		mod:error("Failed encoding %s message: %s", message_type, encode_error)
-
-		return false, encode_error
+	if state.role == "host" then
+		return SessionControl.send_to_client(channel_id, PreparationProtocol.NAME, message_type, data)
 	end
 
-	return send_frames(payload, function (chunk, is_last)
-		if state.role == "host" then
-			RPC.rpc_check_mechanism_reply(channel_id, is_last, chunk)
-		else
-			RPC.rpc_check_mechanism(channel_id, chunk, is_last)
-		end
-	end)
+	return SessionControl.send_to_host(PreparationProtocol.NAME, message_type, data)
 end
 
 local function ready_peer_ids()
@@ -257,16 +146,12 @@ local function send_snapshot(channel_id)
 end
 
 local function broadcast_snapshot()
-	local channel_ids = table.keys(registered_channels)
-
-	for i = 1, #channel_ids do
-		send_snapshot(channel_ids[i])
-	end
+	return SessionControl.send_to_clients(PreparationProtocol.NAME, "snapshot", snapshot_data())
 end
 
 local function reset(role, phase, mission_name)
-	unregister_all_channels()
 	close_view()
+	client_hello_sent = false
 	state.mission_name = mission_name
 	state.phase = phase
 	state.countdown_end_time = nil
@@ -322,21 +207,6 @@ local function set_host_ready(peer_id, ready)
 	broadcast_snapshot()
 end
 
-local function fail_control_channel(channel_id, reason)
-	mod:info("Rejected preparation control channel=%s: %s", tostring(channel_id), reason)
-
-	if state.role == "host" then
-		local connection = active_host_connection()
-
-		if connection and connection:is_realms_channel(channel_id) then
-			connection:kick(channel_id, DisconnectReason.CLIENT_DATA_REJECTED)
-		end
-	else
-		mod:error(mod:localize("preparation_control_failed"))
-		Managers.multiplayer_session:leave("realms_invalid_preparation_control")
-	end
-end
-
 local function apply_snapshot(data)
 	if data.revision < state.revision then
 		return
@@ -357,7 +227,6 @@ local function apply_snapshot(data)
 		state.phase = "started"
 		state.countdown_end_time = nil
 		state.finalizing = false
-		unregister_all_channels()
 	else
 		state.phase = "waiting"
 		state.countdown_end_time = data.countdown_remaining_ms > 0
@@ -433,16 +302,6 @@ function Preparation.remote_connected(channel_id, peer_id)
 	peer_id = normalize_peer_id(peer_id)
 
 	if state.phase == "started" then
-		unregister_channel(channel_id)
-
-		return
-	end
-
-	local registered, register_error = register_channel(channel_id, peer_id)
-
-	if not registered then
-		fail_control_channel(channel_id, register_error)
-
 		return
 	end
 
@@ -454,7 +313,6 @@ end
 
 function Preparation.remote_disconnected(channel_id, peer_id)
 	peer_id = normalize_peer_id(peer_id)
-	unregister_channel(channel_id)
 
 	if state.role == "host" and state.phase == "waiting" and state.ready_by_peer[peer_id] ~= nil then
 		state.ready_by_peer[peer_id] = nil
@@ -473,128 +331,56 @@ function Preparation.server_settings_changed()
 	broadcast_snapshot()
 end
 
-local function receive_message(channel_id, payload)
-	local message, decode_error = PreparationProtocol.decode(payload)
-
-	if not message then
-		fail_control_channel(channel_id, decode_error)
-
-		return
+local function receive_hello(channel_id)
+	if state.role ~= "host" or state.phase ~= "waiting" and state.phase ~= "started" then
+		return true
 	end
 
-	if state.role == "host" then
-		local registration = registered_channels[channel_id]
-		local peer_id = registration and registration.peer_id
-
-		if state.phase ~= "waiting" and state.phase ~= "started" or type(peer_id) ~= "string" then
-			fail_control_channel(channel_id, "Host received preparation control outside an active phase")
-
-			return
-		end
-		if message.type == "hello" then
-			send_snapshot(channel_id)
-
-			if state.phase == "started" then
-				unregister_channel(channel_id)
-			end
-		elseif state.phase == "waiting" and message.type == "profile_cancel" then
-			local accepted, accept_error = ProfileUpdates.receive_cancel(channel_id, peer_id, message.data)
-
-			if accepted == false then
-				fail_control_channel(channel_id, accept_error)
-			end
-		elseif state.phase == "waiting" and message.type == "profile_pending" then
-			local accepted, accept_error = ProfileUpdates.receive_pending(channel_id, peer_id, message.data)
-
-			if accepted == false then
-				fail_control_channel(channel_id, accept_error)
-			end
-		elseif state.phase == "waiting" and message.type == "profile_update" then
-			local accepted, accept_error = ProfileUpdates.receive_update(channel_id, peer_id, message.data)
-
-			if accepted == false then
-				fail_control_channel(channel_id, accept_error)
-			end
-		elseif state.phase == "waiting" and message.type == "ready" then
-			set_host_ready(peer_id, message.data.ready)
-		else
-			fail_control_channel(channel_id, "Host received an invalid preparation message type")
-		end
-	elseif state.role == "client" then
-		if message.type ~= "snapshot" then
-			fail_control_channel(channel_id, "Client received an invalid preparation message type")
-
-			return
-		end
-
-		apply_snapshot(message.data)
-	end
+	return send_snapshot(channel_id)
 end
 
-local function receive_frame(channel_id, is_last, chunk)
-	local registration = registered_channels[channel_id]
-
-	if not registration
-		or type(is_last) ~= "boolean"
-		or type(chunk) ~= "string"
-		or #chunk == 0
-		or #chunk > PreparationProtocol.MAX_FRAME_SIZE
-	then
-		fail_control_channel(channel_id, "Preparation control frame is invalid")
-
-		return
+local function receive_profile_cancel(channel_id, peer_id, data)
+	if state.role ~= "host" or state.phase ~= "waiting" then
+		return true
 	end
 
-	if not registration.receive_chunks then
-		registration.receive_chunks = {}
-		registration.receive_size = 0
-		registration.receive_started_at = Managers.time:time("main")
-	end
-
-	registration.receive_chunks[#registration.receive_chunks + 1] = chunk
-	registration.receive_size = registration.receive_size + #chunk
-
-	if registration.receive_size > PreparationProtocol.MAX_MESSAGE_SIZE then
-		fail_control_channel(channel_id, "Preparation control message exceeds the size limit")
-
-		return
-	end
-	if not is_last then
-		return
-	end
-
-	local payload = table.concat(registration.receive_chunks)
-
-	registration.receive_chunks = nil
-	registration.receive_size = 0
-	registration.receive_started_at = nil
-
-	receive_message(channel_id, payload)
+	return ProfileUpdates.receive_cancel(channel_id, peer_id, data)
 end
 
-local function expire_partial_messages()
-	if not next(registered_channels) then
-		return
+local function receive_profile_pending(channel_id, peer_id, data)
+	if state.role ~= "host" or state.phase ~= "waiting" then
+		return true
 	end
 
-	local t = Managers.time:time("main")
+	return ProfileUpdates.receive_pending(channel_id, peer_id, data)
+end
 
-	for channel_id, registration in pairs(registered_channels) do
-		if registration.receive_started_at and t - registration.receive_started_at > REASSEMBLY_TIMEOUT then
-			registration.receive_chunks = nil
-			registration.receive_size = 0
-			registration.receive_started_at = nil
-			fail_control_channel(channel_id, "Preparation control message reassembly timed out")
-		end
+local function receive_profile_update(channel_id, peer_id, data)
+	if state.role ~= "host" or state.phase ~= "waiting" then
+		return true
 	end
+
+	return ProfileUpdates.receive_update(channel_id, peer_id, data)
 end
 
-function Preparation.rpc_check_mechanism(self, channel_id, payload, is_last)
-	receive_frame(channel_id, is_last, payload)
+local function receive_ready(channel_id, peer_id, data)
+	if state.role ~= "host" or state.phase ~= "waiting" then
+		return true
+	end
+
+	set_host_ready(normalize_peer_id(peer_id), data.ready)
+
+	return true
 end
 
-function Preparation.rpc_check_mechanism_reply(self, channel_id, is_last, payload)
-	receive_frame(channel_id, is_last, payload)
+local function receive_snapshot(channel_id, peer_id, data)
+	if state.role ~= "client" or state.phase ~= "waiting" and state.phase ~= "started" then
+		return true
+	end
+
+	apply_snapshot(data)
+
+	return true
 end
 
 function Preparation.local_ready()
@@ -725,9 +511,38 @@ function Preparation.mission_details()
 	return PreparationViewModel.mission_details(state.mission_name)
 end
 
-function Preparation.install(session, profile_updates)
+function Preparation.install(session, profile_updates, session_control)
 	Session = session
 	ProfileUpdates = profile_updates
+	SessionControl = session_control
+
+	SessionControl.register_protocol(PreparationProtocol)
+	SessionControl.register_host_handler(PreparationProtocol.NAME, "hello", receive_hello)
+	SessionControl.register_host_handler(PreparationProtocol.NAME, "profile_cancel", receive_profile_cancel)
+	SessionControl.register_host_handler(PreparationProtocol.NAME, "profile_pending", receive_profile_pending)
+	SessionControl.register_host_handler(PreparationProtocol.NAME, "profile_update", receive_profile_update)
+	SessionControl.register_host_handler(PreparationProtocol.NAME, "ready", receive_ready)
+	SessionControl.register_client_handler(PreparationProtocol.NAME, "snapshot", receive_snapshot)
+	SessionControl.register_connected_handler("preparation", function (channel_id, peer_id, role)
+		if role == "host" then
+			Preparation.remote_connected(channel_id, peer_id)
+		end
+	end)
+	SessionControl.register_ready_handler("preparation", function (channel_id, peer_id, role)
+		if role == "host" and state.role == "host" and (state.phase == "waiting" or state.phase == "started") then
+			return send_snapshot(channel_id)
+		end
+		if role == "client" and state.role == "client" and state.phase == "waiting" then
+			client_hello_sent = send_message(channel_id, "hello", {})
+
+			return client_hello_sent
+		end
+
+		return true
+	end)
+	SessionControl.register_disconnect_handler("preparation", function (peer_id, channel_id)
+		Preparation.remote_disconnected(channel_id, peer_id)
+	end)
 end
 
 function Preparation.send_to_host(message_type, data)
@@ -735,14 +550,11 @@ function Preparation.send_to_host(message_type, data)
 		return false, "Preparation client channel is unavailable", true
 	end
 
-	local connection = active_client_connection()
-	local channel_id = connection and connection:host_channel()
-
-	if not channel_id or not registered_channels[channel_id] then
+	if not SessionControl.is_available() then
 		return false, "Preparation host channel is unavailable", true
 	end
 
-	return send_message(channel_id, message_type, data)
+	return SessionControl.send_to_host(PreparationProtocol.NAME, message_type, data)
 end
 
 function Preparation.player_rows()
@@ -750,20 +562,10 @@ function Preparation.player_rows()
 end
 
 function Preparation.update()
-	expire_partial_messages()
-
 	if state.role == "host" then
 		local connection = active_host_connection()
 
 		if state.phase == "waiting" and connection then
-			local connected_peers = connection:connected_peers()
-
-			for channel_id, peer_id in pairs(connected_peers) do
-				if not registered_channels[channel_id] then
-					Preparation.remote_connected(channel_id, peer_id)
-				end
-			end
-
 			if state.countdown_end_time and Managers.time:time("main") >= state.countdown_end_time then
 				state.finalizing = true
 				state.countdown_end_time = nil
@@ -777,7 +579,6 @@ function Preparation.update()
 				state.finalizing = false
 				state.revision = state.revision + 1
 				broadcast_snapshot()
-				unregister_all_channels()
 				Managers.mechanism:trigger_event("all_players_ready")
 
 				return
@@ -792,20 +593,8 @@ function Preparation.update()
 	elseif state.role == "client" then
 		local connection = active_client_connection()
 
-		if connection then
-			if state.phase == "started" or not client_connected_to_host(connection) then
-				return
-			end
-
-			local channel_id = connection:host_channel()
-			local registered, register_error = register_channel(channel_id, connection:host())
-
-			if not registered then
-				fail_control_channel(channel_id, register_error)
-			elseif not client_hello_sent then
-				client_hello_sent = send_message(channel_id, "hello", {})
-			end
-
+		if connection and state.phase == "waiting" and not client_hello_sent and SessionControl.is_available() then
+			client_hello_sent = SessionControl.send_to_host(PreparationProtocol.NAME, "hello", {})
 		elseif state.phase == "client_booting" then
 			local manager = Managers.multiplayer_session
 

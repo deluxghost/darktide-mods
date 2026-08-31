@@ -13,7 +13,10 @@ local Preparation = mod:io_dofile("Realms/scripts/mods/Realms/core/preparation")
 mod._preparation = Preparation
 local GameplayControl = mod:io_dofile("Realms/scripts/mods/Realms/core/gameplay_control")
 mod._gameplay_control = GameplayControl
+local SessionControl = mod:io_dofile("Realms/scripts/mods/Realms/core/session_control")
+mod._session_control = SessionControl
 local ModNetwork = mod:io_dofile("Realms/scripts/mods/Realms/core/mod_network")
+local Chat = mod:io_dofile("Realms/scripts/mods/Realms/core/chat")
 
 mod.network_register = function (owner_mod, rpc_name, callback)
 	return ModNetwork.register(owner_mod, rpc_name, callback)
@@ -34,6 +37,7 @@ local UnitRpcLifetime = mod:io_dofile("Realms/scripts/mods/Realms/core/unit_rpc_
 local Workarounds = mod:io_dofile("Realms/scripts/mods/Realms/workarounds/workarounds")
 local Loading = mod:io_dofile("Realms/scripts/mods/Realms/views/loading")
 local EndViewPatch = mod:io_dofile("Realms/scripts/mods/Realms/views/end_view")
+local ChatView = mod:io_dofile("Realms/scripts/mods/Realms/views/chat")
 local PreparationChat = mod:io_dofile("Realms/scripts/mods/Realms/views/preparation_view/chat")
 mod._preparation_chat = PreparationChat
 local SocialMenu = mod:io_dofile("Realms/scripts/mods/Realms/views/social_menu")
@@ -44,17 +48,20 @@ mod:io_dofile("Realms/scripts/mods/Realms/views/join_view/register")
 mod:io_dofile("Realms/scripts/mods/Realms/views/preparation_view/register")
 
 LoadingClients.install(Session, Preparation)
-Preparation.install(Session, ProfileUpdates)
+SessionControl.install(Session)
+Preparation.install(Session, ProfileUpdates, SessionControl)
 BotBackfill.install(Session)
 DisconnectErrors.install()
-GameplayControl.install(Session, Preparation)
+GameplayControl.install(Session, Preparation, SessionControl)
 ProfileUpdates.install(Session, Preparation, GameplayControl)
-ModNetwork.install(GameplayControl)
+ModNetwork.install(SessionControl)
+Chat.install(Session, SessionControl)
 UnitRpcLifetime.install(Session)
 Workarounds.install(Session, GameplayControl)
 SystemMenu.install(Preparation, Session)
 Loading.install(Session)
 EndViewPatch.install(Session)
+ChatView.install(Chat)
 PreparationChat.install()
 SocialMenu.install(Session)
 
@@ -213,8 +220,10 @@ mod:hook(CLASS.StateMainMenu, "update", function (func, self, main_dt, main_t)
 end)
 
 mod.update = function ()
+	SessionControl.update()
 	Session.update()
 	GameplayControl.update()
+	Chat.update()
 	ProfileUpdates.update()
 	Workarounds.update()
 end

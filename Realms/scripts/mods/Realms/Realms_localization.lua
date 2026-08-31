@@ -173,9 +173,25 @@ local localization = {
 		en = "The preparation session received invalid network data.",
 		["zh-cn"] = "准备会话收到了无效的网络数据。",
 	},
+	chat_message_invalid = {
+		en = "Chat messages must contain between 1 and 200 characters.",
+		["zh-cn"] = "聊天消息必须包含 1 到 200 个字符。",
+	},
+	chat_queue_full = {
+		en = "The chat message queue is full. Please try again after the connection is ready.",
+		["zh-cn"] = "聊天消息队列已满，请在连接就绪后重试。",
+	},
+	chat_sender_unavailable = {
+		en = "The chat message could not be sent because the player is not available.",
+		["zh-cn"] = "玩家当前不可用，无法发送聊天消息。",
+	},
 }
 
 local native_localization = {
+	loc_realms_chat_channel = {
+		en = "Realm",
+		["zh-cn"] = "领域",
+	},
 	loc_realms_connection_error_title = {
 		en = "Realms connection error",
 		["zh-cn"] = "领域连接错误",

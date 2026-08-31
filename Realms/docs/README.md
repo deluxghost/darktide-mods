@@ -35,9 +35,9 @@ Use `Managers.connection` to determine the connection role. For authoritative ga
 
 ## Network API
 
-The optional API sends named messages between mods over an active Realms gameplay session. Each receiving peer must have the same mod enabled and register the same RPC name.
+The optional API sends named messages between mods over an active Realms session. Each receiving peer must have the same mod enabled and register the same RPC name.
 
-Get the Realms mod object and register RPCs in `on_all_mods_loaded`. Registration does not require an active session. Messages can be sent only when `network_is_available()` returns `true`. The public API is unavailable during preparation or loading.
+Get the Realms mod object and register RPCs in `on_all_mods_loaded`. Registration does not require an active session. Messages can be sent only when `network_is_available()` returns `true`. The API remains available during preparation, loading, gameplay, and end-of-round while the Realms session remains connected. A callback can therefore run when `Managers.state.game_session` is absent; mods must check any game-state APIs they use.
 
 ### `network_register`
 
@@ -59,7 +59,7 @@ Returns `true` on success or `false, error_message` when the arguments are inval
 local available = realms.network_is_available()
 ```
 
-Returns `true` when the Realms gameplay channel and peer capability exchange are ready.
+Returns `true` when the Realms session-control channel and peer capability exchange are ready.
 
 ### `network_send`
 
@@ -78,7 +78,7 @@ A capable peer is one that has the same mod enabled and has registered that RPC.
 
 A `true` result means that Realms accepted the message for dispatch, not that the remote callback completed. Use a reply RPC when an acknowledgment is required.
 
-Arguments must be JSON-serializable. Top-level `nil` arguments are preserved. Each call supports up to 32 arguments and a maximum encoded size of 64 KiB.
+Arguments must be JSON-serializable. Top-level `nil` arguments are preserved. Each call supports up to 32 arguments and a maximum encoded size of 96 KiB.
 
 ## Complete Example
 

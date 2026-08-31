@@ -285,7 +285,7 @@ ConnectionHost.remote_connected = function (self, remote)
 	local peer_id = remote:peer_id()
 
 	if not remote:handoff_rpc("rpc_check_mechanism") then
-		remote:fail("Failed handing off the Realms preparation RPC", DisconnectReason.SERVER_ERROR)
+		remote:fail("Failed handing off the Realms session-control RPC", DisconnectReason.SERVER_ERROR)
 
 		return
 	end
