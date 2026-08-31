@@ -187,6 +187,22 @@ RemoteConnection.profile_source = function (self)
 	}
 end
 
+RemoteConnection.update_profile_source = function (self, local_player_id, profile_chunks)
+	if not self._local_player_id_array or not self._profile_chunks_array then
+		return false
+	end
+
+	for i = 1, #self._local_player_id_array do
+		if self._local_player_id_array[i] == local_player_id then
+			self._profile_chunks_array[i] = profile_chunks
+
+			return true
+		end
+	end
+
+	return false
+end
+
 RemoteConnection.status_line = function (self)
 	return string.format("  remote=peer:%s channel:%s stage:%d connected:%s failed:%s", self._peer_id, tostring(self._channel_id), self._stage, tostring(self._connected), tostring(self._failed))
 end
@@ -503,6 +519,7 @@ RemoteConnection._start_profile_sync = function (self)
 	local sources = self._owner:initial_profile_sources(self)
 
 	synchronizer:register_rpcs(self._channel_id)
+	synchronizer:peer_connected(self._peer_id, self._channel_id)
 
 	for i = 1, #sources do
 		local source = sources[i]

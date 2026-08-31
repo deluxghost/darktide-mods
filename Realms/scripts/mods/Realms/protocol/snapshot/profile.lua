@@ -34,6 +34,18 @@ function ProfileSection.capture(context)
 	}
 end
 
+function ProfileSection.capture_profile(profile)
+	local packed_profile = ProfileUtils.pack_profile(profile)
+	local chunks = {}
+
+	ProfileUtils.split_for_network(packed_profile, chunks)
+
+	return {
+		chunks = chunks,
+		format = FORMAT,
+	}
+end
+
 function ProfileSection.validate(value, identity)
 	if type(value) ~= "table" or not has_only_fields(value) or value.format ~= FORMAT then
 		return nil, "Profile snapshot envelope is invalid"

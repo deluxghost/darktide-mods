@@ -1,15 +1,20 @@
 local mod = get_mod("Realms")
 local ScriptCJson = require("scripts/foundation/utilities/script_cjson")
+local ProfileUpdate = mod:io_dofile("Realms/scripts/mods/Realms/protocol/profile_update")
 local SessionTicket = mod:io_dofile("Realms/scripts/mods/Realms/protocol/session_ticket")
 
 local PreparationProtocol = {}
 
 PreparationProtocol.NAME = "realms-preparation"
 PreparationProtocol.VERSION = SessionTicket.PROTOCOL_VERSION
-PreparationProtocol.MAX_PAYLOAD_SIZE = 4096
+PreparationProtocol.MAX_FRAME_SIZE = 500
+PreparationProtocol.MAX_MESSAGE_SIZE = 96 * 1024
 
 local MESSAGE_TYPES = table.set({
 	"hello",
+	"profile_cancel",
+	"profile_pending",
+	"profile_update",
 	"ready",
 	"snapshot",
 })
@@ -50,12 +55,16 @@ local function validate_message(message)
 		if table.size(data) == 0 then
 			return true
 		end
+	elseif message.type == "profile_cancel" or message.type == "profile_pending" then
+		return ProfileUpdate.valid_pending_data(data)
+	elseif message.type == "profile_update" then
+		return ProfileUpdate.valid_update_data(data)
 	elseif message.type == "ready" then
 		if table.size(data) == 1 and type(data.ready) == "boolean" then
 			return true
 		end
 	else
-		if table.size(data) == 5
+		if table.size(data) == 6
 			and type(data.countdown_remaining_ms) == "number"
 			and data.countdown_remaining_ms % 1 == 0
 			and data.countdown_remaining_ms >= 0
@@ -68,6 +77,7 @@ local function validate_message(message)
 			and data.max_members % 1 == 0
 			and data.max_members >= 2
 			and data.max_members <= 8
+			and type(data.finalizing) == "boolean"
 			and type(data.started) == "boolean"
 			and valid_ready_peer_ids(data.ready_peer_ids)
 		then
@@ -91,18 +101,21 @@ function PreparationProtocol.encode(message_type, data)
 		return nil, validation_error
 	end
 
-	local payload = ScriptCJson.encode_lua_to_json_for_lua(message)
+	local encoded, payload = pcall(ScriptCJson.encode_lua_to_json_for_lua, message)
 
-	if #payload > PreparationProtocol.MAX_PAYLOAD_SIZE then
-		return nil, "Preparation protocol payload exceeds the size limit"
+	if not encoded then
+		return nil, "Preparation protocol message is not JSON serializable: " .. tostring(payload)
+	end
+	if #payload > PreparationProtocol.MAX_MESSAGE_SIZE then
+		return nil, "Preparation protocol message exceeds the size limit"
 	end
 
 	return payload
 end
 
 function PreparationProtocol.decode(payload)
-	if type(payload) ~= "string" or #payload == 0 or #payload > PreparationProtocol.MAX_PAYLOAD_SIZE then
-		return nil, "Invalid preparation protocol payload size"
+	if type(payload) ~= "string" or #payload == 0 or #payload > PreparationProtocol.MAX_MESSAGE_SIZE then
+		return nil, "Invalid preparation protocol message size"
 	end
 
 	local decoded, message = pcall(cjson.decode, payload)

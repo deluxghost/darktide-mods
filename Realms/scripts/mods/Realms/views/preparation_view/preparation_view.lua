@@ -402,6 +402,7 @@ RealmsPreparationView._refresh = function (self, force)
 
 	button_content.original_text = button_text
 	button_content.text = button_text
+	button_content.hotspot.disabled = Preparation.is_finalizing()
 
 	self:_present_player_rows(force)
 	self:_present_mission_rows(force)
@@ -579,8 +580,9 @@ end
 RealmsPreparationView.cb_on_action_pressed = function (self)
 	local ready = Preparation.local_ready()
 
-	self:_play_sound(ready and UISoundEvents.mission_lobby_unready or UISoundEvents.mission_lobby_ready_up)
-	Preparation.perform_action()
+	if Preparation.perform_action() then
+		self:_play_sound(ready and UISoundEvents.mission_lobby_unready or UISoundEvents.mission_lobby_ready_up)
+	end
 	self:_refresh(false)
 end
 

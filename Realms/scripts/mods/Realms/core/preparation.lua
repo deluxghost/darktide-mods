@@ -15,11 +15,13 @@ local registered_channels = {}
 local client_hello_sent = false
 local view_open_failure_logged = false
 local Session
+local ProfileUpdates
 
 local CLIENT_TO_HOST_RPC = "rpc_check_mechanism"
 local HOST_TO_CLIENT_RPC = "rpc_check_mechanism_reply"
 local VIEW_NAME = "realms_preparation_view"
 local COUNTDOWN_DURATION = 5
+local REASSEMBLY_TIMEOUT = 10
 local PREPARATION_BYPASS_GAME_MODES = {
 	hub = true,
 	hub_singleplay = true,
@@ -27,6 +29,7 @@ local PREPARATION_BYPASS_GAME_MODES = {
 }
 
 state.phase = state.phase or "inactive"
+state.finalizing = state.finalizing or false
 state.ready_by_peer = state.ready_by_peer or {}
 state.revision = state.revision or 0
 state.role = state.role or "none"
@@ -174,8 +177,22 @@ local function register_channel(channel_id, peer_id)
 	delegate:register_connection_channel_events(Preparation, channel_id, rpc_name)
 	registered_channels[channel_id] = {
 		peer_id = peer_id and normalize_peer_id(peer_id) or nil,
+		receive_chunks = nil,
+		receive_size = 0,
+		receive_started_at = nil,
 		rpc_name = rpc_name,
 	}
+
+	return true
+end
+
+local function send_frames(payload, send_frame)
+	for offset = 1, #payload, PreparationProtocol.MAX_FRAME_SIZE do
+		local chunk = string.sub(payload, offset, offset + PreparationProtocol.MAX_FRAME_SIZE - 1)
+		local is_last = offset + PreparationProtocol.MAX_FRAME_SIZE > #payload
+
+		send_frame(chunk, is_last)
+	end
 
 	return true
 end
@@ -186,16 +203,16 @@ local function send_message(channel_id, message_type, data)
 	if not payload then
 		mod:error("Failed encoding %s message: %s", message_type, encode_error)
 
-		return false
+		return false, encode_error
 	end
 
-	if state.role == "host" then
-		RPC.rpc_check_mechanism_reply(channel_id, true, payload)
-	else
-		RPC.rpc_check_mechanism(channel_id, payload, true)
-	end
-
-	return true
+	return send_frames(payload, function (chunk, is_last)
+		if state.role == "host" then
+			RPC.rpc_check_mechanism_reply(channel_id, is_last, chunk)
+		else
+			RPC.rpc_check_mechanism(channel_id, chunk, is_last)
+		end
+	end)
 end
 
 local function ready_peer_ids()
@@ -227,6 +244,7 @@ local function snapshot_data()
 
 	return {
 		countdown_remaining_ms = countdown_remaining_ms(),
+		finalizing = state.finalizing,
 		max_members = connection:max_members(),
 		ready_peer_ids = ready_peer_ids(),
 		revision = state.revision,
@@ -252,6 +270,7 @@ local function reset(role, phase, mission_name)
 	state.mission_name = mission_name
 	state.phase = phase
 	state.countdown_end_time = nil
+	state.finalizing = false
 	state.ready_by_peer = {}
 	state.revision = 0
 	state.role = role
@@ -276,7 +295,10 @@ local function all_session_players_ready()
 end
 
 local function update_host_countdown()
-	local should_count_down = state.role == "host" and state.phase == "waiting" and all_session_players_ready()
+	local should_count_down = state.role == "host"
+		and state.phase == "waiting"
+		and not state.finalizing
+		and all_session_players_ready()
 
 	if should_count_down == (state.countdown_end_time ~= nil) then
 		return
@@ -286,6 +308,10 @@ local function update_host_countdown()
 end
 
 local function set_host_ready(peer_id, ready)
+	if state.finalizing then
+		return
+	end
+
 	if state.ready_by_peer[peer_id] == ready then
 		return
 	end
@@ -324,11 +350,13 @@ local function apply_snapshot(data)
 
 	state.ready_by_peer = ready_by_peer
 	state.revision = data.revision
+	state.finalizing = data.finalizing
 	Session.apply_remote_max_members(data.max_members)
 
 	if data.started then
 		state.phase = "started"
 		state.countdown_end_time = nil
+		state.finalizing = false
 		unregister_all_channels()
 	else
 		state.phase = "waiting"
@@ -445,13 +473,7 @@ function Preparation.server_settings_changed()
 	broadcast_snapshot()
 end
 
-local function receive_message(channel_id, valid_frame, payload)
-	if not valid_frame then
-		fail_control_channel(channel_id, "Preparation control frame was marked invalid")
-
-		return
-	end
-
+local function receive_message(channel_id, payload)
 	local message, decode_error = PreparationProtocol.decode(payload)
 
 	if not message then
@@ -475,6 +497,24 @@ local function receive_message(channel_id, valid_frame, payload)
 			if state.phase == "started" then
 				unregister_channel(channel_id)
 			end
+		elseif state.phase == "waiting" and message.type == "profile_cancel" then
+			local accepted, accept_error = ProfileUpdates.receive_cancel(channel_id, peer_id, message.data)
+
+			if accepted == false then
+				fail_control_channel(channel_id, accept_error)
+			end
+		elseif state.phase == "waiting" and message.type == "profile_pending" then
+			local accepted, accept_error = ProfileUpdates.receive_pending(channel_id, peer_id, message.data)
+
+			if accepted == false then
+				fail_control_channel(channel_id, accept_error)
+			end
+		elseif state.phase == "waiting" and message.type == "profile_update" then
+			local accepted, accept_error = ProfileUpdates.receive_update(channel_id, peer_id, message.data)
+
+			if accepted == false then
+				fail_control_channel(channel_id, accept_error)
+			end
 		elseif state.phase == "waiting" and message.type == "ready" then
 			set_host_ready(peer_id, message.data.ready)
 		else
@@ -491,12 +531,70 @@ local function receive_message(channel_id, valid_frame, payload)
 	end
 end
 
-function Preparation.rpc_check_mechanism(self, channel_id, payload, is_last)
-	receive_message(channel_id, is_last, payload)
+local function receive_frame(channel_id, is_last, chunk)
+	local registration = registered_channels[channel_id]
+
+	if not registration
+		or type(is_last) ~= "boolean"
+		or type(chunk) ~= "string"
+		or #chunk == 0
+		or #chunk > PreparationProtocol.MAX_FRAME_SIZE
+	then
+		fail_control_channel(channel_id, "Preparation control frame is invalid")
+
+		return
+	end
+
+	if not registration.receive_chunks then
+		registration.receive_chunks = {}
+		registration.receive_size = 0
+		registration.receive_started_at = Managers.time:time("main")
+	end
+
+	registration.receive_chunks[#registration.receive_chunks + 1] = chunk
+	registration.receive_size = registration.receive_size + #chunk
+
+	if registration.receive_size > PreparationProtocol.MAX_MESSAGE_SIZE then
+		fail_control_channel(channel_id, "Preparation control message exceeds the size limit")
+
+		return
+	end
+	if not is_last then
+		return
+	end
+
+	local payload = table.concat(registration.receive_chunks)
+
+	registration.receive_chunks = nil
+	registration.receive_size = 0
+	registration.receive_started_at = nil
+
+	receive_message(channel_id, payload)
 end
 
-function Preparation.rpc_check_mechanism_reply(self, channel_id, valid_frame, payload)
-	receive_message(channel_id, valid_frame, payload)
+local function expire_partial_messages()
+	if not next(registered_channels) then
+		return
+	end
+
+	local t = Managers.time:time("main")
+
+	for channel_id, registration in pairs(registered_channels) do
+		if registration.receive_started_at and t - registration.receive_started_at > REASSEMBLY_TIMEOUT then
+			registration.receive_chunks = nil
+			registration.receive_size = 0
+			registration.receive_started_at = nil
+			fail_control_channel(channel_id, "Preparation control message reassembly timed out")
+		end
+	end
+end
+
+function Preparation.rpc_check_mechanism(self, channel_id, payload, is_last)
+	receive_frame(channel_id, is_last, payload)
+end
+
+function Preparation.rpc_check_mechanism_reply(self, channel_id, is_last, payload)
+	receive_frame(channel_id, is_last, payload)
 end
 
 function Preparation.local_ready()
@@ -556,8 +654,12 @@ function Preparation.is_started()
 	return state.phase == "started"
 end
 
+function Preparation.is_finalizing()
+	return state.finalizing
+end
+
 function Preparation.allows_profile_changes()
-	return Preparation.is_waiting()
+	return Preparation.is_waiting() and not state.finalizing
 end
 
 function Preparation.action_label()
@@ -565,8 +667,8 @@ function Preparation.action_label()
 end
 
 function Preparation.perform_action()
-	if not Preparation.is_waiting() then
-		return
+	if not Preparation.is_waiting() or state.finalizing then
+		return false
 	end
 
 	local ready = Preparation.local_ready()
@@ -583,9 +685,15 @@ function Preparation.perform_action()
 			})
 		end
 	end
+
+	return true
 end
 
 function Preparation.open_inventory(view)
+	if state.finalizing then
+		return
+	end
+
 	local player_manager = Managers.player
 	local player = player_manager and player_manager:local_player(1)
 
@@ -617,8 +725,24 @@ function Preparation.mission_details()
 	return PreparationViewModel.mission_details(state.mission_name)
 end
 
-function Preparation.install(session)
+function Preparation.install(session, profile_updates)
 	Session = session
+	ProfileUpdates = profile_updates
+end
+
+function Preparation.send_to_host(message_type, data)
+	if state.role ~= "client" or state.phase ~= "waiting" then
+		return false, "Preparation client channel is unavailable"
+	end
+
+	local connection = active_client_connection()
+	local channel_id = connection and connection:host_channel()
+
+	if not channel_id or not registered_channels[channel_id] then
+		return false, "Preparation host channel is unavailable"
+	end
+
+	return send_message(channel_id, message_type, data)
 end
 
 function Preparation.player_rows()
@@ -626,6 +750,8 @@ function Preparation.player_rows()
 end
 
 function Preparation.update()
+	expire_partial_messages()
+
 	if state.role == "host" then
 		local connection = active_host_connection()
 
@@ -639,8 +765,16 @@ function Preparation.update()
 			end
 
 			if state.countdown_end_time and Managers.time:time("main") >= state.countdown_end_time then
-				state.phase = "started"
+				state.finalizing = true
 				state.countdown_end_time = nil
+				state.revision = state.revision + 1
+				broadcast_snapshot()
+
+				return
+			end
+			if state.finalizing and ProfileUpdates.ready_to_start(connection) then
+				state.phase = "started"
+				state.finalizing = false
 				state.revision = state.revision + 1
 				broadcast_snapshot()
 				unregister_all_channels()

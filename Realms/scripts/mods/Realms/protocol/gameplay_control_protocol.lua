@@ -1,5 +1,6 @@
 local mod = get_mod("Realms")
 local ScriptCJson = require("scripts/foundation/utilities/script_cjson")
+local ProfileUpdate = mod:io_dofile("Realms/scripts/mods/Realms/protocol/profile_update")
 local SessionTicket = mod:io_dofile("Realms/scripts/mods/Realms/protocol/session_ticket")
 
 local GameplayControlProtocol = {}
@@ -7,7 +8,7 @@ local GameplayControlProtocol = {}
 GameplayControlProtocol.NAME = "realms-gameplay-control"
 GameplayControlProtocol.VERSION = SessionTicket.PROTOCOL_VERSION
 GameplayControlProtocol.MAX_FRAME_SIZE = 500
-GameplayControlProtocol.MAX_MESSAGE_SIZE = 64 * 1024
+GameplayControlProtocol.MAX_MESSAGE_SIZE = 96 * 1024
 
 local MAX_ARGUMENTS = 32
 local MAX_MOD_NAME_LENGTH = 64
@@ -111,6 +112,9 @@ local MESSAGE_VALIDATORS = {
 			and valid_string(data.rpc_name, MAX_RPC_NAME_LENGTH)
 			and valid_string(data.recipient, MAX_RECIPIENT_LENGTH)
 	end,
+	profile_pending = ProfileUpdate.valid_pending_data,
+	profile_cancel = ProfileUpdate.valid_pending_data,
+	profile_update = ProfileUpdate.valid_update_data,
 	server_settings = function (data)
 		return table.size(data) == 1
 			and type(data.max_members) == "number"

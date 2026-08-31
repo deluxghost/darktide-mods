@@ -2,8 +2,10 @@ local mod = get_mod("Realms")
 local LocalMechanismVerificationState = require("scripts/multiplayer/connection/local_states/local_mechanism_verification_state")
 local LoadingManager = require("scripts/managers/loading/loading_manager")
 local MechanismManager = require("scripts/managers/mechanism/mechanism_manager")
+local ConnectionManager = require("scripts/managers/multiplayer/connection_manager")
 local MultiplayerSessionManager = require("scripts/managers/multiplayer/multiplayer_session_manager")
 local PartyImmateriumManager = require("scripts/managers/party_immaterium/party_immaterium_manager")
+local ProfileSynchronizerHost = require("scripts/loading/profile_synchronizer_host")
 local BotBackfill = mod:io_dofile("Realms/scripts/mods/Realms/core/bot_backfill")
 local DisconnectErrors = mod:io_dofile("Realms/scripts/mods/Realms/core/disconnect_errors")
 local LoadingClients = mod:io_dofile("Realms/scripts/mods/Realms/core/loading_clients")
@@ -27,6 +29,7 @@ end
 
 local Session = mod:io_dofile("Realms/scripts/mods/Realms/core/session")
 mod._session = Session
+local ProfileUpdates = mod:io_dofile("Realms/scripts/mods/Realms/core/profile_updates")
 local UnitRpcLifetime = mod:io_dofile("Realms/scripts/mods/Realms/core/unit_rpc_lifetime")
 local Workarounds = mod:io_dofile("Realms/scripts/mods/Realms/workarounds/workarounds")
 local Loading = mod:io_dofile("Realms/scripts/mods/Realms/views/loading")
@@ -41,10 +44,11 @@ mod:io_dofile("Realms/scripts/mods/Realms/views/join_view/register")
 mod:io_dofile("Realms/scripts/mods/Realms/views/preparation_view/register")
 
 LoadingClients.install(Session, Preparation)
-Preparation.install(Session)
+Preparation.install(Session, ProfileUpdates)
 BotBackfill.install(Session)
 DisconnectErrors.install()
 GameplayControl.install(Session, Preparation)
+ProfileUpdates.install(Session, Preparation, GameplayControl)
 ModNetwork.install(GameplayControl)
 UnitRpcLifetime.install(Session)
 Workarounds.install(Session, GameplayControl)
@@ -171,6 +175,22 @@ mod:hook(MechanismManager, "profile_changes_are_allowed", function (func, self)
 	return func(self)
 end)
 
+mod:hook(ConnectionManager, "send_rpc_server", function (func, self, rpc_name, ...)
+	if rpc_name == "rpc_notify_profile_changed" and ProfileUpdates.intercept_client_notification(...) then
+		return
+	end
+
+	return func(self, rpc_name, ...)
+end)
+
+mod:hook(ProfileSynchronizerHost, "profile_changed", function (func, self, peer_id, local_player_id)
+	if ProfileUpdates.intercept_host_profile_change(self, peer_id, local_player_id) then
+		return
+	end
+
+	return func(self, peer_id, local_player_id)
+end)
+
 mod:hook(LocalMechanismVerificationState, "rpc_check_mechanism_reply", function (func, self, channel_id, mechanism_matched, reply_data)
 	local captured = Session.capture_mechanism_reply(channel_id, mechanism_matched, reply_data)
 
@@ -195,6 +215,7 @@ end)
 mod.update = function ()
 	Session.update()
 	GameplayControl.update()
+	ProfileUpdates.update()
 	Workarounds.update()
 end
 

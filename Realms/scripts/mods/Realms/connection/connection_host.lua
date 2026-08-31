@@ -97,6 +97,33 @@ ConnectionHost.profile_synchronizer = function (self)
 	return self._profile_synchronizer_host
 end
 
+ConnectionHost.update_local_profile = function (self, local_player_id, profile)
+	local player = Managers.player:player(self._peer_id, local_player_id)
+
+	if not player or player:peer_id() ~= self._peer_id then
+		return false, "Realms host profile identity is unavailable"
+	end
+
+	self._profile_synchronizer_host:override_singleplay_profile(self._peer_id, local_player_id, profile)
+
+	return true
+end
+
+ConnectionHost.update_remote_profile = function (self, channel_id, peer_id, local_player_id, profile, profile_chunks)
+	local remote = self._remote_connections[channel_id]
+
+	if not remote or not remote:is_connected() or remote:peer_id() ~= peer_id then
+		return false, "Realms profile update channel is unavailable"
+	end
+	if not remote:update_profile_source(local_player_id, profile_chunks) then
+		return false, "Realms profile update player is unavailable"
+	end
+
+	self._profile_synchronizer_host:override_singleplay_profile(peer_id, local_player_id, profile)
+
+	return true
+end
+
 ConnectionHost.is_installed = function (self)
 	return self._installed
 end
@@ -268,7 +295,6 @@ ConnectionHost.remote_connected = function (self, remote)
 
 	bot_synchronizer_host:add_peer(channel_id)
 
-	self._profile_synchronizer_host:peer_connected(peer_id, channel_id)
 	RPC.rpc_sync_host_local_players(
 		channel_id,
 		host_sync_data.local_player_id_array,
