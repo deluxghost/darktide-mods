@@ -104,7 +104,7 @@ function TeamHud.install(Session)
 	end)
 
 	mod:hook(PlayerCompositions, "players", function (func, composition_name, result_table, dont_clear_table)
-		if composition_name == "party" and Session.is_active() then
+		if composition_name == "party" and Session.is_active() and uses_training_grounds_hud() then
 			return realms_human_players(result_table, dont_clear_table)
 		end
 
@@ -114,7 +114,7 @@ function TeamHud.install(Session)
 	mod:hook(PlayerCompositions, "player_from_unique_id", function (func, composition_name, unique_id)
 		local player = func(composition_name, unique_id)
 
-		if not player and composition_name == "party" and Session.is_active() then
+		if not player and composition_name == "party" and Session.is_active() and uses_training_grounds_hud() then
 			return Managers.player:player_from_unique_id(unique_id)
 		end
 
