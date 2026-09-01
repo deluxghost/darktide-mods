@@ -3,6 +3,8 @@ local SystemView = require("scripts/ui/views/system_view/system_view")
 
 local REALMS_OWNER = "_realms_system_menu_owner"
 local SOCIAL_TEXT = "loc_social_view_display_name"
+local SYSTEM_MENU_SCENEGRAPH_ID = "grid_content_pivot"
+local SYSTEM_MENU_CALLBACK = "_on_entry_pressed_cb"
 local SystemMenu = {}
 local missing_canonical_logged = false
 local missing_social_logged = false
@@ -208,7 +210,7 @@ end
 
 function SystemMenu.install(Preparation, Session)
 	mod:hook(SystemView, "_setup_content_widgets", function (func, self, content, scenegraph_id, callback_name)
-		if not Session.is_active() or not content or not content.default then
+		if not Session.is_active() or scenegraph_id ~= SYSTEM_MENU_SCENEGRAPH_ID or callback_name ~= SYSTEM_MENU_CALLBACK or not content or not content.default then
 			return func(self, content, scenegraph_id, callback_name)
 		end
 
