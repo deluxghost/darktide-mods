@@ -20,6 +20,7 @@ local COUNTDOWN_DURATION = 5
 local PREPARATION_BYPASS_GAME_MODES = {
 	hub = true,
 	hub_singleplay = true,
+	prologue_hub = true,
 	shooting_range = true,
 }
 
@@ -260,6 +261,9 @@ function Preparation.host_mechanism_configured(mission_name)
 	end
 
 	state.mission_name = mission_name or state.mission_name
+	if not state.mission_name then
+		return
+	end
 
 	if should_bypass_preparation(state.mission_name) then
 		state.phase = "bypassed"
