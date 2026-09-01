@@ -1,7 +1,7 @@
 local mod = get_mod("Realms")
-local BuffExtensionBase = require("scripts/extension_systems/buff/buff_extension_base")
-local PlayerUnitBuffExtension = require("scripts/extension_systems/buff/player_unit_buff_extension")
-local OutlineSystem = require("scripts/extension_systems/outline/outline_system")
+local BuffExtensionBase = "BuffExtensionBase"
+local PlayerUnitBuffExtension = "PlayerUnitBuffExtension"
+local OutlineSystem = "OutlineSystem"
 
 local PrivateOutlines = {}
 local Session
