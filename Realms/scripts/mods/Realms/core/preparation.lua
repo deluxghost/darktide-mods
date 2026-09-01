@@ -255,8 +255,8 @@ function Preparation.client_context_received(mission_name, preparation_phase)
 	return true
 end
 
-function Preparation.host_mechanism_configured(mission_name)
-	if state.role ~= "host" or state.phase ~= "host_booting" then
+function Preparation.host_mechanism_configured(mission_name, mechanism_changed)
+	if state.role ~= "host" or state.phase ~= "host_booting" or not mechanism_changed then
 		return
 	end
 

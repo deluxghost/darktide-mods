@@ -645,14 +645,14 @@ local function host_mechanism_data()
 	return mechanism_manager:mechanism_data()
 end
 
-function Session.host_mechanism_changed()
+function Session.host_mechanism_changed(mechanism_changed)
 	if state.deferred_host_mechanism_change then
 		return
 	end
 
 	local mechanism_data = host_mechanism_data()
 
-	Preparation.host_mechanism_configured(mechanism_data and mechanism_data.mission_name)
+	Preparation.host_mechanism_configured(mechanism_data and mechanism_data.mission_name, mechanism_changed)
 
 	if not Session.is_active_host() then
 		return

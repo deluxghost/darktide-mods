@@ -137,7 +137,7 @@ mod:hook(MechanismManager, "change_mechanism", function (func, self, mechanism_n
 
 	local result = func(self, mechanism_name, context)
 
-	Session.host_mechanism_changed()
+	Session.host_mechanism_changed(true)
 
 	return result
 end)
