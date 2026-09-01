@@ -282,6 +282,11 @@ function Session.official_party_join_started(party_manager, join_parameter, is_r
 end
 
 function Session.replace_singleplayer_boot(manager, original_boot)
+	if Session.is_active_host() then
+		mod:info("Releasing the outgoing Realms host before re-hosting")
+		Managers.connection:shutdown_connections("realms_rehost")
+	end
+
 	local new_session = original_boot(manager)
 	local mission_name = state.pending_host_mission_name
 
