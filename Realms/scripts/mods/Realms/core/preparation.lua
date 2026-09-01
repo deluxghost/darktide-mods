@@ -261,6 +261,10 @@ function Preparation.host_mechanism_configured(mission_name)
 
 	state.mission_name = mission_name or state.mission_name
 
+	if not state.mission_name then
+		return
+	end
+
 	if should_bypass_preparation(state.mission_name) then
 		state.phase = "bypassed"
 
