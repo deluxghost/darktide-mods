@@ -6,15 +6,18 @@ local Text = require("scripts/utilities/ui/text")
 local ViewElementGrid = require("scripts/ui/view_elements/view_element_grid/view_element_grid")
 local ViewElementInputLegend = require("scripts/ui/view_elements/view_element_input_legend/view_element_input_legend")
 local ViewElementWeaponStats = require("scripts/ui/view_elements/view_element_weapon_stats/view_element_weapon_stats")
+local UIRenderer = require("scripts/managers/ui/ui_renderer")
 local UISettings = require("scripts/settings/ui/ui_settings")
 local UISoundEvents = require("scripts/settings/ui/ui_sound_events")
 local Preparation = mod._preparation
 local definitions = mod:io_dofile("Realms/scripts/mods/Realms/views/preparation_view/preparation_view_definitions")
 local Layout = mod:io_dofile("Realms/scripts/mods/Realms/views/preparation_view/preparation_view_layout")
+local ViewElementTalentTooltip = mod:io_dofile("Realms/scripts/mods/Realms/views/preparation_view/view_element_talent_tooltip")
 
 local SYSTEM_VIEW_NAME = "system_view"
 local REFRESH_INTERVAL = 0.25
 local GRID_DRAW_LAYER = 10
+local GRID_RENDER_PADDING = 20
 local WEAPON_STATS_DRAW_LAYER = 160
 local READY_ICON = ""
 local NOT_READY_ICON = ""
@@ -28,6 +31,70 @@ local PLAYER_SIGNATURE_FIELDS = {
 local MISSION_SIGNATURE_FIELDS = {
 	"key",
 }
+
+local RealmsPreparationGrid = class("RealmsPreparationGrid", "ViewElementGrid")
+
+RealmsPreparationGrid._update_window_size = function (self)
+	RealmsPreparationGrid.super._update_window_size(self)
+
+	local viewport_width, viewport_height = self:_scenegraph_size("grid_mask")
+	local mask_width = viewport_width + GRID_RENDER_PADDING * 2
+	local mask_height = viewport_height + GRID_RENDER_PADDING * 2
+
+	self:_set_scenegraph_size("grid_mask", mask_width, mask_height)
+	self:set_grid_interaction_offset(GRID_RENDER_PADDING, GRID_RENDER_PADDING)
+
+	self._realms_render_viewport_size = self._realms_render_viewport_size or {}
+	self._realms_render_viewport_size[1] = viewport_width
+	self._realms_render_viewport_size[2] = viewport_height
+	local uv_x = GRID_RENDER_PADDING / mask_width
+	local uv_y = GRID_RENDER_PADDING / mask_height
+
+	self._realms_render_uvs = {
+		{
+			uv_x,
+			uv_y,
+		},
+		{
+			1 - uv_x,
+			1 - uv_y,
+		},
+	}
+end
+
+RealmsPreparationGrid._draw_render_target = function (self, render_settings)
+	local ui_grid_renderer = self._ui_grid_renderer
+	local material = self._ui_resource_renderer.render_target_material
+	local scale = self._render_scale or 1
+	local position = self:scenegraph_world_position("grid_mask")
+	local viewport_size = self._realms_render_viewport_size
+	local start_layer = (render_settings.start_layer or 0) + self._draw_layer
+	local gui_position = Vector3(
+		(position[1] + GRID_RENDER_PADDING) * scale,
+		(position[2] + GRID_RENDER_PADDING) * scale,
+		(position[3] or 0) + start_layer
+	)
+	local gui_size = Vector3(viewport_size[1] * scale, viewport_size[2] * scale, 0)
+	local renderer = self._realms_render_target_renderer
+
+	if not renderer then
+		renderer = {
+			base_render_pass = "to_screen",
+			gui = ui_grid_renderer.gui,
+			render_settings = {
+				alpha_multiplier = 1,
+				color_intensity_multiplier = 1,
+				material_flags = 0,
+				start_layer = 0,
+			},
+			scale = 1,
+		}
+		self._realms_render_target_renderer = renderer
+	end
+
+	UIRenderer.script_draw_bitmap_uv(renderer, material, gui_position, gui_size, self._realms_render_uvs, Color(255, 255, 255, 255))
+end
+
 local PORTRAIT_PROFILE_SLOTS = {
 	"slot_body_face",
 	"slot_body_hair",
@@ -95,10 +162,16 @@ RealmsPreparationView.on_enter = function (self)
 	self._countdown_active = false
 	self._is_main_menu_open = Managers.ui:view_active(SYSTEM_VIEW_NAME)
 	self._widgets_by_name.action_button.content.hotspot.pressed_callback = callback(self, "cb_on_action_pressed")
+	self:_setup_talent_tooltip_element()
 	self:_setup_grids()
 	self:_setup_weapon_stats()
 	self:_setup_input_legend()
 	self:_refresh(true)
+end
+
+RealmsPreparationView._setup_talent_tooltip_element = function (self)
+	self._talent_tooltip = self:_add_element(ViewElementTalentTooltip, "talent_tooltip", WEAPON_STATS_DRAW_LAYER)
+	self._talent_tooltip:set_visibility(false)
 end
 
 RealmsPreparationView._sync_player_sounds = function (self, rows)
@@ -247,7 +320,7 @@ RealmsPreparationView._sync_portraits = function (self, rows)
 	end
 end
 
-RealmsPreparationView._setup_grid = function (self, scenegraph_id, grid_size)
+RealmsPreparationView._setup_grid = function (self, scenegraph_id, grid_size, bottom_chin)
 	local grid_settings = {
 		edge_padding = 0,
 		enable_gamepad_scrolling = true,
@@ -266,14 +339,14 @@ RealmsPreparationView._setup_grid = function (self, scenegraph_id, grid_size)
 			Layout.row_spacing,
 		},
 		top_padding = 4,
-		bottom_chin = 4,
+		bottom_chin = bottom_chin or 4,
 		grid_size = grid_size,
 		mask_size = {
 			grid_size[1],
 			grid_size[2],
 		},
 	}
-	local grid = self:_add_element(ViewElementGrid, scenegraph_id, GRID_DRAW_LAYER, grid_settings, scenegraph_id)
+	local grid = self:_add_element(RealmsPreparationGrid, scenegraph_id, GRID_DRAW_LAYER, grid_settings, scenegraph_id)
 
 	self:_update_element_position(scenegraph_id, grid)
 	grid:set_empty_message("")
@@ -283,7 +356,7 @@ end
 
 RealmsPreparationView._setup_grids = function (self)
 	self._player_grid = self:_setup_grid("player_grid", definitions.player_grid_size)
-	self._info_grid = self:_setup_grid("info_grid", definitions.info_grid_size)
+	self._info_grid = self:_setup_grid("info_grid", definitions.info_grid_size, 20)
 end
 
 RealmsPreparationView._setup_input_legend = function (self)
@@ -407,7 +480,7 @@ RealmsPreparationView._refresh = function (self, force)
 end
 
 RealmsPreparationView._row_anchor = function (self, widget, style_id)
-	local grid_position = self._player_grid:scenegraph_world_position("grid_mask")
+	local grid_position = self._player_grid:scenegraph_world_position("grid_content_pivot")
 	local style = widget.style[style_id]
 
 	return grid_position[1] + widget.offset[1] + style.offset[1],
@@ -418,8 +491,7 @@ end
 
 RealmsPreparationView._position_talent_tooltip = function (self, widget, style_id)
 	local anchor_x, anchor_y, anchor_width, anchor_height = self:_row_anchor(widget, style_id)
-	local tooltip_widget = self._widgets_by_name.talent_tooltip
-	local tooltip_width, tooltip_height = self:_scenegraph_size(tooltip_widget.scenegraph_id)
+	local tooltip_width, tooltip_height = self._talent_tooltip:size()
 	local screen_width = Layout.screen_size[1]
 	local screen_height = Layout.screen_size[2]
 	local margin = 20
@@ -430,8 +502,15 @@ RealmsPreparationView._position_talent_tooltip = function (self, widget, style_i
 		x = anchor_x - tooltip_width - gap
 	end
 
-	tooltip_widget.offset[1] = math.clamp(x, margin, screen_width - tooltip_width - margin)
-	tooltip_widget.offset[2] = math.clamp(anchor_y + anchor_height * 0.5 - tooltip_height * 0.5, margin, screen_height - tooltip_height - margin)
+	self._talent_tooltip:set_position(
+		math.clamp(x, margin, screen_width - tooltip_width - margin),
+		math.clamp(anchor_y + anchor_height * 0.5 - tooltip_height * 0.5, margin, screen_height - tooltip_height - margin)
+	)
+
+	if not self._talent_tooltip:visible() then
+		self._talent_tooltip:_force_update_scenegraph()
+		self._talent_tooltip:set_visibility(true)
+	end
 end
 
 RealmsPreparationView._position_weapon_stats = function (self, widget, style_id)
@@ -453,6 +532,16 @@ RealmsPreparationView._position_weapon_stats = function (self, widget, style_id)
 	self._weapon_stats:set_pivot_offset(math.clamp(x, margin, screen_width - grid_width - margin), y)
 end
 
+RealmsPreparationView._show_weapon_stats = function (self, hover)
+	if self._hover ~= hover then
+		return
+	end
+
+	self:_position_weapon_stats(hover.widget, "weapon_" .. hover.index .. "_icon")
+	self._weapon_stats:_force_update_scenegraph()
+	self._weapon_stats:set_visibility(true)
+end
+
 RealmsPreparationView._setup_talent_tooltip = function (self, skill)
 	local talent = skill.talent
 
@@ -460,7 +549,7 @@ RealmsPreparationView._setup_talent_tooltip = function (self, skill)
 		return false
 	end
 
-	local widget = self._widgets_by_name.talent_tooltip
+	local widget = self._talent_tooltip:widget()
 	local content = widget.content
 	local style = widget.style
 	local node_settings = TalentBuilderViewSettings.settings_by_node_type[skill.node_type]
@@ -481,7 +570,7 @@ RealmsPreparationView._setup_talent_tooltip = function (self, skill)
 	text_offset = text_offset + style.description.size[2] + 20
 	content.visible = true
 	widget.alpha_multiplier = 1
-	self:_set_scenegraph_size(widget.scenegraph_id, nil, text_offset)
+	self._talent_tooltip:set_height(text_offset)
 
 	return true
 end
@@ -489,11 +578,10 @@ end
 RealmsPreparationView._clear_hover = function (self)
 	self._hover = nil
 
-	local talent_tooltip = self._widgets_by_name and self._widgets_by_name.talent_tooltip
+	local talent_tooltip = self._talent_tooltip
 
 	if talent_tooltip then
-		talent_tooltip.content.visible = false
-		talent_tooltip.alpha_multiplier = 0
+		talent_tooltip:set_visibility(false)
 	end
 
 	if self._weapon_stats then
@@ -516,14 +604,13 @@ RealmsPreparationView._set_hover = function (self, hover)
 				return
 			end
 		else
-			self._weapon_stats:present_item(hover.data.item)
-			self._weapon_stats:set_visibility(true)
+			self._weapon_stats:present_item(hover.data.item, nil, callback(self, "_show_weapon_stats", hover))
 		end
 	end
 
 	if hover.kind == "skill" then
 		self:_position_talent_tooltip(hover.widget, "skill_" .. hover.index)
-	else
+	elseif self._weapon_stats:visible() then
 		self:_position_weapon_stats(hover.widget, "weapon_" .. hover.index .. "_icon")
 	end
 end

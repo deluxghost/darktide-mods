@@ -96,7 +96,7 @@ local scenegraph_definition = {
 		size = INFO_GRID_SIZE,
 		position = {
 			PANEL_INSET,
-			PANEL_INSET,
+			Layout.info_grid_top,
 			4,
 		},
 	},
@@ -128,10 +128,7 @@ local scenegraph_definition = {
 			30,
 		},
 	},
-	talent_tooltip = table.clone(LobbyViewDefinitions.scenegraph_definition.talent_tooltip),
 }
-
-scenegraph_definition.talent_tooltip.position[3] = 220
 
 local function header_text_style(font_size)
 	local style = table.clone(UIFontSettings.body)
@@ -285,13 +282,16 @@ local widget_definitions = {
 	action_button = UIWidget.create_definition(action_button_pass_template, "action_button", {
 		original_text = "",
 	}),
-	talent_tooltip = table.clone(LobbyViewDefinitions.widget_definitions.talent_tooltip),
 }
+
+local item_stats_grid_settings = table.clone(LobbyViewDefinitions.item_stats_grid_settings)
+
+item_stats_grid_settings.resource_renderer_background = true
 
 return {
 	blueprints = Blueprints.blueprints,
 	info_grid_size = INFO_GRID_SIZE,
-	item_stats_grid_settings = table.clone(LobbyViewDefinitions.item_stats_grid_settings),
+	item_stats_grid_settings = item_stats_grid_settings,
 	max_skills = Blueprints.max_skills,
 	player_grid_size = PLAYER_GRID_SIZE,
 	scenegraph_definition = scenegraph_definition,

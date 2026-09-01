@@ -100,7 +100,7 @@ local player_pass_template = {
 			},
 			size = {
 				COLUMNS.portrait.width,
-				64,
+				COLUMNS.portrait.height,
 			},
 		},
 	},
