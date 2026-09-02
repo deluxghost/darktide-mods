@@ -204,6 +204,39 @@ function Session.is_host_channel(channel_id)
 	return connection and connection._realms_protocol == SessionTicket.PROTOCOL_VERSION and connection:is_realms_channel(channel_id) or false
 end
 
+local function active_host_peer(peer_id)
+	local connection_manager = Managers.connection
+	local connection = connection_manager and connection_manager._connection_host
+
+	if not peer_id or not connection or connection._realms_protocol ~= SessionTicket.PROTOCOL_VERSION then
+		return
+	end
+
+	local channel_id = connection_manager:peer_to_channel(peer_id)
+
+	if not channel_id or not connection:is_realms_channel(channel_id) or connection:connected_peers()[channel_id] ~= peer_id then
+		return
+	end
+
+	return connection_manager
+end
+
+function Session.can_kick_peer(peer_id)
+	return active_host_peer(peer_id) ~= nil
+end
+
+function Session.kick_peer(peer_id)
+	local connection_manager = active_host_peer(peer_id)
+
+	if not connection_manager then
+		return false, "Player is no longer connected to this Realms session"
+	end
+
+	connection_manager:kick(peer_id, DisconnectReason.KICKED_BY_HOST)
+
+	return true
+end
+
 local function clear_host_party_tracking()
 	state.pending_official_party_id = nil
 	state.official_party_session = nil

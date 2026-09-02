@@ -57,6 +57,14 @@ local localization = {
 		en = "Connect",
 		["zh-cn"] = "连接",
 	},
+	social_kick_confirmation_title = {
+		en = "Kick {#color(239,193,82)}%s{#reset()} from Realm",
+		["zh-cn"] = "将{#color(239,193,82)}%s{#reset()}踢出领域",
+	},
+	social_kick_confirmation_description = {
+		en = "Do you want to kick %s from the Realm?",
+		["zh-cn"] = "确定要将%s从领域中踢出吗？",
+	},
 	error_join_target_format = {
 		en = "Enter the server as address:port or [IPv6]:port.",
 		["zh-cn"] = "服务器地址格式应为 地址:端口 或 [IPv6]:端口。",
@@ -243,6 +251,14 @@ local native_localization = {
 	loc_realms_host_boot_failed = {
 		en = "Failed to start the Realms listen server.",
 		["zh-cn"] = "无法启动领域监听服务器。",
+	},
+	loc_realms_kicked_by_host = {
+		en = "You were removed from the Realm by the host.",
+		["zh-cn"] = "你已被主机移出领域。",
+	},
+	loc_realms_social_kick_player = {
+		en = "Kick from Realm",
+		["zh-cn"] = "从领域中踢出",
 	},
 }
 

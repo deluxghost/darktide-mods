@@ -4,7 +4,9 @@ local SocialMenu = {}
 local Session
 
 local DEFINITIONS_PATH = "scripts/ui/views/social_menu_roster_view/social_menu_roster_view_definitions"
+local PLAYER_POPUP_CONTENT_PATH = "scripts/ui/view_elements/view_element_player_social_popup/view_element_player_social_popup_content_list"
 local ROSTER_VIEW_PATH = "scripts/ui/views/social_menu_roster_view/social_menu_roster_view"
+local ROSTER_VIEW_SETTINGS_PATH = "scripts/ui/views/social_menu_roster_view/social_menu_roster_view_settings"
 local SCROLLBAR_PASS_TEMPLATES_PATH = "scripts/ui/pass_templates/scrollbar_pass_templates"
 local STYLES_PATH = "scripts/ui/views/social_menu_roster_view/social_menu_roster_view_styles"
 local UI_WIDGET_GRID_PATH = "scripts/ui/widget_logic/ui_widget_grid"
@@ -19,6 +21,72 @@ local PARTY_GRID_MASK_ID = "realms_party_grid_mask"
 local PARTY_SCROLLBAR_ID = "realms_party_scrollbar"
 local PARTY_GRID_MASK_EXPANSION = 40
 local installed_roster_views = setmetatable({}, { __mode = "k" })
+
+local function kickable_peer_id(player_info)
+	if not Session.is_active_host() or not player_info or player_info:is_own_player() then
+		return
+	end
+
+	local peer_id = player_info:peer_id()
+
+	return peer_id and Session.can_kick_peer(peer_id) and peer_id or nil
+end
+
+local function configure_kick_item(item, parent, player_info)
+	item.blueprint = "button"
+	item.label = Managers.localization:localize("loc_realms_social_kick_player")
+	item.callback = callback(parent, "cb_realms_kick_player", player_info)
+	item.is_disabled = false
+	item.reason_for_disabled = nil
+	item.on_pressed_sound = nil
+end
+
+local function prepend_kick_item(menu_items, num_menu_items, parent, player_info)
+	local use_existing_divider = num_menu_items > 0 and menu_items[1].blueprint == "group_divider"
+	local added_items = use_existing_divider and 1 or 2
+
+	for i = num_menu_items, 1, -1 do
+		menu_items[i + added_items] = menu_items[i]
+	end
+
+	menu_items[1] = {}
+	configure_kick_item(menu_items[1], parent, player_info)
+
+	if not use_existing_divider then
+		menu_items[2] = {
+			blueprint = "group_divider",
+			label = "divider_realms_kick",
+		}
+	end
+
+	return num_menu_items + added_items
+end
+
+local function install_player_popup_hook(PlayerPopupContent)
+	mod:hook(PlayerPopupContent, "from_player_info", function (func, parent, player_info)
+		local menu_items, num_menu_items = func(parent, player_info)
+
+		if not kickable_peer_id(player_info) then
+			return menu_items, num_menu_items
+		end
+
+		local original_kick_label = Managers.localization:localize("loc_social_menu_vote_to_kick_from_party")
+
+		for i = 1, num_menu_items do
+			local item = menu_items[i]
+
+			if item.label == original_kick_label then
+				configure_kick_item(item, parent, player_info)
+
+				return menu_items, num_menu_items
+			end
+		end
+
+		num_menu_items = prepend_kick_item(menu_items, num_menu_items, parent, player_info)
+
+		return menu_items, num_menu_items
+	end)
+end
 
 local function realms_visible(content)
 	return content.realms_active
@@ -151,7 +219,7 @@ local function extend_party_panel_definition(Definitions, RosterViewStyles, Scro
 	widget_definitions[PARTY_SCROLLBAR_ID].visible = false
 end
 
-local function install_view_hooks(SocialMenuRosterView, Definitions, RosterViewStyles, UIWidget, UIWidgetGrid)
+local function install_view_hooks(SocialMenuRosterView, Definitions, RosterViewStyles, ViewSettings, UIWidget, UIWidgetGrid)
 	if installed_roster_views[SocialMenuRosterView] then
 		return
 	end
@@ -183,6 +251,60 @@ local function install_view_hooks(SocialMenuRosterView, Definitions, RosterViewS
 			},
 		},
 	}, PARTY_GRID_CONTENT_ID, nil, player_size)
+
+	local function kick_player(player_info)
+		local peer_id = kickable_peer_id(player_info)
+
+		if not peer_id then
+			return
+		end
+
+		local kicked, kick_error = Session.kick_peer(peer_id)
+
+		if not kicked then
+			mod:info("Could not kick Realms player: %s", kick_error)
+		end
+	end
+
+	local function show_kick_confirmation(self, player_info)
+		local player_name = self:formatted_character_name(player_info)
+
+		if type(player_name) ~= "string" or player_name == "" then
+			player_name = player_info:user_display_name()
+		end
+
+		local confirmation_settings = ViewSettings.command_confirmation_params.initiate_kick_vote
+		local context = {
+			title_text_unlocalized = mod:localize("social_kick_confirmation_title", player_name),
+			description_text_unlocalized = mod:localize("social_kick_confirmation_description", player_name),
+			options = {
+				{
+					callback = function ()
+						kick_player(player_info)
+					end,
+					close_on_pressed = true,
+					on_pressed_sound = confirmation_settings.on_confirm_sound,
+					text = "loc_social_menu_confirmation_popup_confirm_button",
+				},
+				{
+					close_on_pressed = true,
+					hotkey = "back",
+					template_type = "terminal_button_small",
+					text = "loc_social_menu_confirmation_popup_decline_button",
+				},
+			},
+		}
+
+		Managers.event:trigger("event_show_ui_popup", context)
+	end
+
+	SocialMenuRosterView.cb_realms_kick_player = function (self, player_info)
+		if kickable_peer_id(player_info) then
+			show_kick_confirmation(self, player_info)
+		end
+
+		self:_close_popup_menu()
+	end
 
 	local function current_capacity(self)
 		local configured = Session.max_members() or 4
@@ -471,6 +593,8 @@ end
 function SocialMenu.install(session)
 	Session = session
 
+	mod:hook_require(PLAYER_POPUP_CONTENT_PATH, install_player_popup_hook)
+
 	mod:hook_require(DEFINITIONS_PATH, function (Definitions)
 		local RosterViewStyles = require(STYLES_PATH)
 		local ScrollbarPassTemplates = require(SCROLLBAR_PASS_TEMPLATES_PATH)
@@ -482,10 +606,11 @@ function SocialMenu.install(session)
 	mod:hook_require(ROSTER_VIEW_PATH, function (SocialMenuRosterView)
 		local Definitions = require(DEFINITIONS_PATH)
 		local RosterViewStyles = require(STYLES_PATH)
+		local ViewSettings = require(ROSTER_VIEW_SETTINGS_PATH)
 		local UIWidget = require(UI_WIDGET_PATH)
 		local UIWidgetGrid = require(UI_WIDGET_GRID_PATH)
 
-		install_view_hooks(SocialMenuRosterView, Definitions, RosterViewStyles, UIWidget, UIWidgetGrid)
+		install_view_hooks(SocialMenuRosterView, Definitions, RosterViewStyles, ViewSettings, UIWidget, UIWidgetGrid)
 	end)
 end
 
