@@ -9,6 +9,7 @@ local MechanismContext = mod:io_dofile("Realms/scripts/mods/Realms/protocol/mech
 local Native = mod:io_dofile("Realms/scripts/mods/Realms/runtime/native")
 local Preparation = mod._preparation
 local GameplayControl = mod._gameplay_control
+local ReusedHostSessionBoot = mod:io_dofile("Realms/scripts/mods/Realms/session/reused_host_session_boot")
 local SessionControl = mod._session_control
 local PreparationState = mod:io_dofile("Realms/scripts/mods/Realms/game_states/realms_preparation_state")
 local SessionTicket = mod:io_dofile("Realms/scripts/mods/Realms/protocol/session_ticket")
@@ -16,6 +17,11 @@ local SessionTicket = mod:io_dofile("Realms/scripts/mods/Realms/protocol/session
 local Session = {}
 local state = mod:persistent_table("session_state")
 local applying_deferred_mechanism_change = false
+-- Local mission launchers call reset and boot separately. Keep the host alive only when boot follows before the next update.
+local pending_host_reset
+local reused_host_boot_pending_change = false
+local reused_host_session_boot
+local applying_explicit_session_reset = false
 
 local function current_connection()
 	local connection_manager = Managers.connection
@@ -69,7 +75,26 @@ local function accepted_client_context()
 	return connection and connection._realms_mechanism_context or state.client_mechanism_context
 end
 
+local function release_reused_host_session_boot()
+	local session_boot = reused_host_session_boot
+
+	if not session_boot then
+		return
+	end
+
+	reused_host_session_boot = nil
+
+	local manager = Managers.multiplayer_session
+
+	if manager and manager._session_boot == session_boot then
+		session_boot:delete()
+		manager._session_boot = nil
+	end
+end
+
 local function clear_transition_state()
+	release_reused_host_session_boot()
+	reused_host_boot_pending_change = false
 	state.deferred_mission_transition = nil
 	state.deferred_host_mechanism_change = nil
 	state.queued_mission_transition = nil
@@ -77,6 +102,17 @@ local function clear_transition_state()
 	state.preparation_loading_requested = false
 	state.host_preparation_loading = false
 	state.host_preparation_no_level_ready = false
+end
+
+local function apply_pending_host_reset()
+	local pending_reset = pending_host_reset
+
+	if not pending_reset then
+		return
+	end
+
+	pending_host_reset = nil
+	pending_reset.original_reset(pending_reset.manager, pending_reset.reason)
 end
 
 local function begin_client_boot(options)
@@ -90,7 +126,10 @@ local function begin_client_boot(options)
 		return false, mod:localize("error_join_already_pending")
 	end
 	if not options.transition_from_gameplay and (current_connection() or multiplayer_session_manager:has_session()) then
+		pending_host_reset = nil
+		applying_explicit_session_reset = true
 		multiplayer_session_manager:reset("realms_switch_session")
+		applying_explicit_session_reset = false
 	end
 
 	clear_transition_state()
@@ -323,11 +362,22 @@ function Session.official_party_join_started(party_manager, join_parameter, is_r
 end
 
 function Session.replace_singleplayer_boot(manager, original_boot)
-	if Session.is_active_host() then
-		mod:info("Releasing the outgoing Realms host before re-hosting")
-		Managers.connection:shutdown_connections("realms_rehost")
+	if Session.is_active_host() and manager._session then
+		pending_host_reset = nil
+		release_reused_host_session_boot()
+
+		local leaving_game_session = Managers.state and Managers.state.game_session ~= nil
+		local session_boot = ReusedHostSessionBoot:new(manager._session, leaving_game_session)
+
+		manager._session_boot = session_boot
+		reused_host_session_boot = session_boot
+		reused_host_boot_pending_change = true
+		mod:info("Reusing the active Realms host for the next local mission")
+
+		return manager._session
 	end
 
+	apply_pending_host_reset()
 	local new_session = original_boot(manager)
 	local mission_name = state.pending_host_mission_name
 
@@ -349,6 +399,29 @@ function Session.replace_singleplayer_boot(manager, original_boot)
 	})
 
 	return new_session
+end
+
+function Session.intercept_host_reset(manager, original_reset, reason)
+	if applying_explicit_session_reset or not Session.is_active_host() or not manager._session then
+		return false
+	end
+	if pending_host_reset then
+		apply_pending_host_reset()
+
+		return false
+	end
+
+	pending_host_reset = {
+		manager = manager,
+		original_reset = original_reset,
+		reason = reason,
+	}
+
+	return true
+end
+
+function Session.flush_host_reset()
+	apply_pending_host_reset()
 end
 
 function Session.prepare_local_mission(mission_name)
@@ -420,7 +493,31 @@ function Session.queue_mission_transition(owner_mod, mission_context)
 end
 
 function Session.intercept_host_mechanism_change(mechanism_name, context)
-	if applying_deferred_mechanism_change or Preparation.role() ~= "host" or not Managers.state or not Managers.state.game_session then
+	if applying_deferred_mechanism_change or not Session.is_active_host() then
+		return false
+	end
+	if reused_host_boot_pending_change then
+		release_reused_host_session_boot()
+		reused_host_boot_pending_change = false
+		state.pending_host_mission_name = nil
+
+		local mission_name = type(context) == "table" and context.mission_name
+
+		if not Managers.state or not Managers.state.game_session then
+			Preparation.host_transition_started(mission_name)
+
+			return false
+		end
+
+		local queued, queue_error = Session.queue_mission_transition(mod, context)
+
+		if not queued then
+			mod:error("Failed queueing the next local mission: %s", queue_error)
+		end
+
+		return true
+	end
+	if not Managers.state or not Managers.state.game_session then
 		return false
 	end
 	if state.queued_mission_transition then
@@ -437,6 +534,10 @@ function Session.intercept_host_mechanism_change(mechanism_name, context)
 end
 
 function Session.intercept_host_all_players_ready()
+	if state.queued_mission_transition then
+		return true
+	end
+
 	local deferred_change = state.deferred_host_mechanism_change
 
 	if not deferred_change then
@@ -571,6 +672,12 @@ function Session.start_client(server_address, server_port_text, password)
 end
 
 function Session.update()
+	apply_pending_host_reset()
+
+	if reused_host_session_boot and (not Managers.state or not Managers.state.game_session) then
+		release_reused_host_session_boot()
+	end
+
 	Preparation.update()
 
 	update_official_party_transition()
@@ -885,6 +992,7 @@ function Session.leave()
 	end
 
 	clear_client_join()
+	pending_host_reset = nil
 	clear_transition_state()
 	state.remote_max_members = nil
 	Managers.multiplayer_session:leave("realms_disconnect")

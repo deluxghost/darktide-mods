@@ -1,6 +1,5 @@
 local mod = get_mod("Realms")
 local BotSpawning = require("scripts/managers/bot/bot_spawning")
-local MultiplayerSessionManager = require("scripts/managers/multiplayer/multiplayer_session_manager")
 local PlayerUnitSpawnManager = require("scripts/managers/player/player_unit_spawn_manager")
 
 local BotBackfill = {}
@@ -67,26 +66,27 @@ local function fallback_profile_name()
 	return #candidates > 0 and candidates[math.random(#candidates)] or nil
 end
 
+function BotBackfill.reset_session(Session, original_reset, manager, reason)
+	if not Session.is_active_host() then
+		return original_reset(manager, reason)
+	end
+
+	-- A reset disconnects clients while the old gameplay state is still updating.
+	-- Its replacement-bot queue belongs to the session being destroyed.
+	local player_unit_spawn = Managers.state and Managers.state.player_unit_spawn
+
+	resetting_host_session = true
+	local result = original_reset(manager, reason)
+	resetting_host_session = false
+
+	if player_unit_spawn then
+		player_unit_spawn._queued_bots_n = 0
+	end
+
+	return result
+end
+
 function BotBackfill.install(Session)
-	mod:hook(MultiplayerSessionManager, "reset", function (func, self, reason)
-		if not Session.is_active_host() then
-			return func(self, reason)
-		end
-
-		-- A reset disconnects clients while the old gameplay state is still updating.
-		-- Its replacement-bot queue belongs to the session being destroyed.
-		local player_unit_spawn = Managers.state and Managers.state.player_unit_spawn
-
-		resetting_host_session = true
-		local result = func(self, reason)
-		resetting_host_session = false
-
-		if player_unit_spawn then
-			player_unit_spawn._queued_bots_n = 0
-		end
-
-		return result
-	end)
 
 	mod:hook(BotSpawning, "despawn_best_bot", function (func, despawn_safe)
 		return func(active_host(Session) or despawn_safe)

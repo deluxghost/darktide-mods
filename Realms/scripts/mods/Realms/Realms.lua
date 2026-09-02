@@ -104,6 +104,18 @@ mod:hook(MultiplayerSessionManager, "start_singleplayer_session", function (func
 	return func(self, mission_name, singleplay_type)
 end)
 
+mod:hook(MultiplayerSessionManager, "reset", function (func, self, reason)
+	local reset_session = function (manager, reset_reason)
+		return BotBackfill.reset_session(Session, func, manager, reset_reason)
+	end
+
+	if Session.intercept_host_reset(self, reset_session, reason) then
+		return
+	end
+
+	return reset_session(self, reason)
+end)
+
 mod:hook(MultiplayerSessionManager, "boot_singleplayer_session", function (func, self)
 	return Session.replace_singleplayer_boot(self, func)
 end)
@@ -151,6 +163,12 @@ mod:hook(MechanismManager, "change_mechanism", function (func, self, mechanism_n
 	Session.host_mechanism_changed()
 
 	return result
+end)
+
+mod:hook(MechanismManager, "leave_mechanism", function (func, self, ...)
+	Session.flush_host_reset()
+
+	return func(self, ...)
 end)
 
 mod:hook(MechanismManager, "wanted_transition", function (func, self)
