@@ -27,13 +27,7 @@ local function guard_callback(delegate, callback_name)
 		if registered_objects and registered_objects[unit_id] then
 			return original_callback(event_table, sender, unit_id, ...)
 		end
-		if not Session.is_active_client() then
-			return original_callback(event_table, sender, unit_id, ...)
-		end
-
-		local unit_spawner = Managers.state and Managers.state.unit_spawner
-
-		if unit_spawner and unit_spawner:unit(unit_id) then
+		if not Session.is_active() then
 			return original_callback(event_table, sender, unit_id, ...)
 		end
 
