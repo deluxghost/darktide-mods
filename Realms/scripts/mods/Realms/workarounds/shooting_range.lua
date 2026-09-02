@@ -16,17 +16,18 @@ local installed_interactable_events = setmetatable({}, { __mode = "k" })
 local GAME_MODE_NAME = "shooting_range"
 local INVENTORY_VIEW_NAME = "inventory_background_view"
 local OPEN_TIMEOUT = 5
+local PENDING_TIMEOUT = OPEN_TIMEOUT + 1
 local UNPERCEIVABLE_BUFF_NAME = "tg_player_unperceivable"
 local UNPERCEIVABLE_KEYWORD = BuffSettings.keywords.unperceivable
 
 local runtime = {
-	allow_next_success = false,
 	chest_open = false,
 	close_pending = false,
 	closing_animation = false,
 	local_open_pending = false,
 	local_view_opened = false,
 	open_by_peer = {},
+	pending_by_peer = {},
 }
 
 local function normalize_peer_id(peer_id)
@@ -81,24 +82,43 @@ local function find_loadout_unit()
 	return nil
 end
 
-local function set_peer_open(peer_id, open)
-	peer_id = normalize_peer_id(peer_id)
-
-	if (runtime.open_by_peer[peer_id] or false) == open then
-		return
-	end
-
+local function update_chest_occupancy()
 	local was_open = runtime.chest_open
 
-	runtime.open_by_peer[peer_id] = open and true or nil
-	runtime.chest_open = next(runtime.open_by_peer) ~= nil
+	runtime.chest_open = next(runtime.open_by_peer) ~= nil or next(runtime.pending_by_peer) ~= nil
 
-	if runtime.chest_open and not was_open then
-		runtime.allow_next_success = true
+	if runtime.chest_open then
 		runtime.close_pending = false
 	elseif was_open and not runtime.chest_open then
 		runtime.close_pending = true
 	end
+end
+
+local function set_peer_pending(peer_id)
+	peer_id = normalize_peer_id(peer_id)
+	runtime.pending_by_peer[peer_id] = Managers.time:time("main")
+
+	update_chest_occupancy()
+end
+
+local function set_peer_open(peer_id, open)
+	peer_id = normalize_peer_id(peer_id)
+
+	if open then
+		runtime.pending_by_peer[peer_id] = nil
+	end
+
+	runtime.open_by_peer[peer_id] = open and true or nil
+
+	update_chest_occupancy()
+end
+
+local function clear_peer_chest_state(peer_id)
+	peer_id = normalize_peer_id(peer_id)
+	runtime.pending_by_peer[peer_id] = nil
+	runtime.open_by_peer[peer_id] = nil
+
+	update_chest_occupancy()
 end
 
 local function local_peer_id()
@@ -107,7 +127,7 @@ end
 
 local function reset_runtime()
 	table.clear(runtime.open_by_peer)
-	runtime.allow_next_success = false
+	table.clear(runtime.pending_by_peer)
 	runtime.chest_open = false
 	runtime.chest_unit = nil
 	runtime.close_pending = false
@@ -214,7 +234,9 @@ local function update_local_inventory()
 			runtime.local_open_started_at = nil
 			runtime.local_view_opened = true
 
-			if Session.is_active_client() then
+			if Session.is_active_host() then
+				set_peer_open(local_peer_id(), true)
+			elseif Session.is_active_client() then
 				local sent, send_error = GameplayControl.send_to_host("shooting_range_inventory", {
 					open = true,
 				})
@@ -229,7 +251,7 @@ local function update_local_inventory()
 			runtime.local_open_started_at = nil
 
 			if Session.is_active_host() then
-				set_peer_open(local_peer_id(), false)
+				clear_peer_chest_state(local_peer_id())
 			elseif Session.is_active_client() then
 				GameplayControl.send_to_host("shooting_range_inventory", {
 					open = false,
@@ -257,13 +279,35 @@ local function handle_inventory_message(channel_id, peer_id, data)
 	if not Session.is_active_host() or not is_shooting_range() then
 		return false, "Shooting-range inventory state arrived outside a Realms shooting-range session"
 	end
-	if data.open and not runtime.open_by_peer[normalize_peer_id(peer_id)] then
+	local normalized_peer_id = normalize_peer_id(peer_id)
+
+	if data.open and not runtime.pending_by_peer[normalized_peer_id] and not runtime.open_by_peer[normalized_peer_id] then
 		return false, "Shooting-range inventory opened without a successful chest interaction"
 	end
 
 	set_peer_open(peer_id, data.open)
 
 	return true
+end
+
+local function expire_pending_interactions()
+	if not Session.is_active_host() or not next(runtime.pending_by_peer) then
+		return
+	end
+
+	local t = Managers.time:time("main")
+	local changed = false
+
+	for peer_id, started_at in pairs(runtime.pending_by_peer) do
+		if t - started_at >= PENDING_TIMEOUT then
+			runtime.pending_by_peer[peer_id] = nil
+			changed = true
+		end
+	end
+
+	if changed then
+		update_chest_occupancy()
+	end
 end
 
 local function apply_pending_local_status()
@@ -479,7 +523,7 @@ function ShootingRange.install(session, gameplay_control)
 	GameplayControl.register_host_handler("shooting_range_inventory", handle_inventory_message)
 	GameplayControl.register_client_handler("shooting_range_status", handle_status_message)
 	GameplayControl.register_disconnect_handler("shooting_range", function (peer_id)
-		set_peer_open(peer_id, false)
+		clear_peer_chest_state(peer_id)
 	end)
 
 	mod:hook(CLASS.ModManager, "update", function (func, self, dt)
@@ -554,7 +598,7 @@ function ShootingRange.install(session, gameplay_control)
 		end
 
 		if Session.is_active_host() then
-			set_peer_open(player:peer_id(), true)
+			set_peer_pending(player:peer_id())
 
 			if not player.remote then
 				start_local_loadout()
@@ -586,11 +630,6 @@ function ShootingRange.install(session, gameplay_control)
 				if runtime.closing_animation then
 					return func(self, interaction_type, interactor_unit)
 				end
-				if runtime.allow_next_success then
-					runtime.allow_next_success = false
-
-					return func(self, interaction_type, interactor_unit)
-				end
 				if runtime.chest_open then
 					return
 				end
@@ -618,6 +657,7 @@ function ShootingRange.update()
 	apply_pending_local_status()
 	find_loadout_unit()
 	update_local_inventory()
+	expire_pending_interactions()
 end
 
 return ShootingRange
