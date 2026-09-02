@@ -1,7 +1,10 @@
 local mod = get_mod("SoloPlay")
 local PlayerUnitSpawnManager = require("scripts/managers/player/player_unit_spawn_manager")
+local UIHud = require("scripts/managers/ui/ui_hud")
 
 local GAME_MODE_NAME = "shooting_range"
+local NAMEPLATES_NAME = "HudElementNameplates"
+local PLAYER_WEAPON_HANDLER_NAME = "HudElementPlayerWeaponHandler"
 
 local function is_shooting_range()
 	local game_mode_manager = Managers.state and Managers.state.game_mode
@@ -25,6 +28,38 @@ local function initial_spawn_points(spawn_manager)
 	end
 
 	return spawn_points
+end
+
+local function refresh_hud_player_unit(hud)
+	local extensions = hud._extensions
+	local player_unit = hud:player_unit()
+	local unit_changed = not extensions or extensions.unit ~= player_unit
+	local nameplates = hud._elements[NAMEPLATES_NAME]
+
+	if nameplates and nameplates._extensions and nameplates._extensions.unit ~= player_unit then
+		nameplates._extensions = nil
+	end
+
+	if not unit_changed then
+		return
+	end
+
+	hud._extensions = nil
+
+	local handler = hud._elements[PLAYER_WEAPON_HANDLER_NAME]
+
+	if not handler then
+		return
+	end
+
+	local player_weapons = handler._player_weapons
+
+	for _, data in pairs(player_weapons) do
+		data.hud_element_player_weapon:destroy(hud._ui_renderer)
+	end
+
+	table.clear(player_weapons)
+	table.clear(handler._player_weapons_array)
 end
 
 mod:hook(PlayerUnitSpawnManager, "spawn_player", function (func, self, player, position, rotation, parent, force_spawn, optional_side_name, breed_name_optional, character_state_optional, is_respawn, optional_damage, optional_permanent_damage)
@@ -72,4 +107,12 @@ mod:hook(PlayerUnitSpawnManager, "fixed_update", function (func, self, dt, t)
 	end
 
 	self._num_players_to_spawn = #players_to_spawn
+end)
+
+mod:hook(UIHud, "update", function (func, self, dt, t, input_service)
+	if is_shooting_range() then
+		refresh_hud_player_unit(self)
+	end
+
+	return func(self, dt, t, input_service)
 end)
