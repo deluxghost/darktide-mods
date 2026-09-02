@@ -309,7 +309,7 @@ function Session.replace_singleplayer_boot(manager, original_boot)
 		accept_new_connections = not mod:get("private_mode"),
 		max_members = mod:get("max_players"),
 		mission_name = mission_name,
-		on_installed = Session.host_mechanism_changed,
+		on_installed = Session.host_connection_installed,
 		on_remote_connected = SessionControl.remote_connected,
 		on_remote_disconnected = SessionControl.remote_disconnected,
 		password = mod:get("server_password") or "",
@@ -774,15 +774,7 @@ local function host_mechanism_data()
 	return mechanism_manager:mechanism_data()
 end
 
-function Session.host_mechanism_changed()
-	if state.deferred_host_mechanism_change then
-		return
-	end
-
-	local mechanism_data = host_mechanism_data()
-
-	Preparation.host_mechanism_configured(mechanism_data and mechanism_data.mission_name)
-
+local function sync_host_mechanism(mechanism_data)
 	if not Session.is_active_host() then
 		return
 	end
@@ -800,7 +792,25 @@ function Session.host_mechanism_changed()
 	if Preparation.host_installed() and not state.preparation_loading_requested then
 		state.main_menu_transition = "realms_host"
 	end
+end
 
+function Session.host_connection_installed()
+	if state.deferred_host_mechanism_change or Preparation.phase() == "host_booting" then
+		return
+	end
+
+	sync_host_mechanism(host_mechanism_data())
+end
+
+function Session.host_mechanism_changed()
+	if state.deferred_host_mechanism_change then
+		return
+	end
+
+	local mechanism_data = host_mechanism_data()
+
+	Preparation.host_mechanism_configured(mechanism_data and mechanism_data.mission_name)
+	sync_host_mechanism(mechanism_data)
 end
 
 function Session.apply_settings()
