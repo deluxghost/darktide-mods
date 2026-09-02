@@ -1,4 +1,5 @@
 local mod = get_mod("Realms")
+local NetworkEventDelegate = require("scripts/managers/multiplayer/network_event_delegate")
 local DisconnectReason = mod:io_dofile("Realms/scripts/mods/Realms/protocol/disconnect_reason")
 local SessionControlProtocol = mod:io_dofile("Realms/scripts/mods/Realms/protocol/session_control_protocol")
 
@@ -84,7 +85,7 @@ local function unregister_channel(channel_id, notify_handlers)
 		return
 	end
 
-	local delegate = control_delegate()
+	local delegate = registration.delegate
 	local objects = delegate and delegate._registered_channel_objects[registration.rpc_name]
 
 	if objects and objects[channel_id] == SessionControl then
@@ -95,6 +96,19 @@ local function unregister_channel(channel_id, notify_handlers)
 
 	if notify_handlers then
 		notify(disconnect_handlers, registration.peer_id, channel_id, registration.role)
+	end
+end
+
+local function unregister_delegate_channels(delegate)
+	local channel_ids = table.keys(registered_channels)
+
+	for i = 1, #channel_ids do
+		local channel_id = channel_ids[i]
+		local registration = registered_channels[channel_id]
+
+		if registration.delegate == delegate then
+			unregister_channel(channel_id, true)
+		end
 	end
 end
 
@@ -147,6 +161,7 @@ local function register_channel(channel_id, peer_id, role)
 	delegate:register_connection_channel_events(SessionControl, channel_id, rpc_name)
 
 	registration = {
+		delegate = delegate,
 		hello_sent_at = nil,
 		peer_id = peer_id,
 		ready = false,
@@ -376,6 +391,12 @@ end
 function SessionControl.install(session)
 	Session = session
 	SessionControl.register_protocol(SessionControlProtocol)
+
+	mod:hook(NetworkEventDelegate, "destroy", function (func, self, ...)
+		unregister_delegate_channels(self)
+
+		return func(self, ...)
+	end)
 end
 
 function SessionControl.register_protocol(protocol)
