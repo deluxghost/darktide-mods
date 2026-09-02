@@ -33,7 +33,11 @@ local MESSAGE_VALIDATORS = {
 		return table.size(data) == 1 and type(data.open) == "boolean"
 	end,
 	shooting_range_status = function (data)
-		return table.size(data) == 1 and type(data.invulnerable) == "boolean"
+		return table.size(data) == 4
+			and type(data.sync_invulnerability) == "boolean"
+			and type(data.invulnerable) == "boolean"
+			and type(data.sync_sound_muffling) == "boolean"
+			and type(data.sound_muffled) == "boolean"
 	end,
 }
 

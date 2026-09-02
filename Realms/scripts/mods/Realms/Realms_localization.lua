@@ -101,6 +101,34 @@ local localization = {
 		en = "Require this password for new connections. Leave empty to disable password protection. Changing it does not affect connected players.",
 		["zh-cn"] = "新的连接必须提供此密码。留空表示不启用密码保护。修改密码不会影响已经连接的玩家。",
 	},
+	shooting_range_settings = {
+		en = "Realms Psykhanium",
+		["zh-cn"] = "领域灵能室",
+	},
+	shooting_range_sync_invulnerability = {
+		en = "Sync invulnerability to clients",
+		["zh-cn"] = "同步无敌状态到客机",
+	},
+	shooting_range_sync_invulnerability_description = {
+		en = "Make clients follow the host's invulnerability state in the Psykhanium.",
+		["zh-cn"] = "使客机跟随主机在灵能室中的无敌状态。",
+	},
+	shooting_range_sync_invisibility = {
+		en = "Sync invisibility to clients",
+		["zh-cn"] = "同步隐身状态到客机",
+	},
+	shooting_range_sync_invisibility_description = {
+		en = "Make clients follow the host's invisibility state in the Psykhanium.",
+		["zh-cn"] = "使客机跟随主机在灵能室中的隐身状态。",
+	},
+	shooting_range_sync_sound_muffling = {
+		en = "Sync sound muffling to clients",
+		["zh-cn"] = "同步声音屏蔽到客机",
+	},
+	shooting_range_sync_sound_muffling_description = {
+		en = "Make clients follow the host's sound-muffling state in the Psykhanium.",
+		["zh-cn"] = "使客机跟随主机在灵能室中的声音屏蔽状态。",
+	},
 	command_status_description = {
 		en = "Show the current Realms session status.",
 		["zh-cn"] = "显示当前领域会话状态。",

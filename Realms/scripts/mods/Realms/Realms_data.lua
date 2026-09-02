@@ -54,6 +54,27 @@ return {
 					},
 				},
 			},
+			{
+				setting_id = "shooting_range_settings",
+				type = "group",
+				sub_widgets = {
+					{
+						setting_id = "shooting_range_sync_invulnerability",
+						type = "checkbox",
+						default_value = true,
+					},
+					{
+						setting_id = "shooting_range_sync_invisibility",
+						type = "checkbox",
+						default_value = true,
+					},
+					{
+						setting_id = "shooting_range_sync_sound_muffling",
+						type = "checkbox",
+						default_value = true,
+					},
+				},
+			},
 		},
 	},
 }

@@ -15,6 +15,8 @@ local installed_interactable_events = setmetatable({}, { __mode = "k" })
 
 local GAME_MODE_NAME = "shooting_range"
 local INVENTORY_VIEW_NAME = "inventory_background_view"
+local MUSIC_ZONE_STATE_GROUP = "music_zone"
+local MUSIC_ZONE_UNMUFFLED = "on"
 local OPEN_TIMEOUT = 5
 local PENDING_TIMEOUT = OPEN_TIMEOUT + 1
 local UNPERCEIVABLE_BUFF_NAME = "tg_player_unperceivable"
@@ -26,6 +28,10 @@ local runtime = {
 	closing_animation = false,
 	local_open_pending = false,
 	local_view_opened = false,
+	host_sound_muffled = true,
+	local_invulnerability_sync = false,
+	local_sound_muffled = true,
+	local_sound_muffling_sync = false,
 	open_by_peer = {},
 	pending_by_peer = {},
 }
@@ -136,6 +142,10 @@ local function reset_runtime()
 	runtime.local_open_started_at = nil
 	runtime.local_status_pending = nil
 	runtime.local_view_opened = false
+	runtime.host_sound_muffled = true
+	runtime.local_invulnerability_sync = false
+	runtime.local_sound_muffled = true
+	runtime.local_sound_muffling_sync = false
 	runtime.session_active = false
 end
 
@@ -149,6 +159,12 @@ local function discard_client_init_scenarios(scenario_system)
 			table.remove(queued_scenarios, i)
 		end
 	end
+end
+
+local function apply_local_sound_muffling()
+	local sound_muffled = not runtime.local_sound_muffling_sync or runtime.local_sound_muffled
+
+	Wwise.set_state(MUSIC_ZONE_STATE_GROUP, sound_muffled and GAME_MODE_NAME or MUSIC_ZONE_UNMUFFLED)
 end
 
 local function initialize_client(scenario_system)
@@ -170,7 +186,7 @@ local function initialize_client(scenario_system)
 		return false
 	end
 
-	Wwise.set_state("music_zone", GAME_MODE_NAME)
+	apply_local_sound_muffling()
 	PlayerMovement.teleport_fixed_update(player_unit, Unit.local_position(directional_unit, 1), Unit.local_rotation(directional_unit, 1))
 	scenario_system:spawn_attached_units_in_spawn_group("shooting_range_units")
 	discard_client_init_scenarios(scenario_system)
@@ -325,7 +341,13 @@ local function apply_pending_local_status()
 		return
 	end
 
-	health_extension:set_invulnerable(pending.invulnerable)
+	runtime.local_invulnerability_sync = pending.sync_invulnerability
+
+	if pending.sync_invulnerability then
+		health_extension:set_invulnerable(pending.invulnerable)
+	else
+		health_extension._realms_invulnerable = nil
+	end
 
 	runtime.local_status_pending = nil
 end
@@ -336,8 +358,15 @@ local function handle_status_message(channel_id, peer_id, data)
 	end
 
 	runtime.local_status_pending = {
+		sync_invulnerability = data.sync_invulnerability,
 		invulnerable = data.invulnerable,
 	}
+	runtime.local_invulnerability_sync = data.sync_invulnerability
+
+	runtime.local_sound_muffled = data.sound_muffled
+	runtime.local_sound_muffling_sync = data.sync_sound_muffling
+	apply_local_sound_muffling()
+
 	apply_pending_local_status()
 
 	return true
@@ -374,29 +403,64 @@ local function read_status(unit)
 	return health_extension:is_invulnerable(), buff_extension:has_keyword(UNPERCEIVABLE_KEYWORD)
 end
 
-local function apply_status(unit, scenario_system, invulnerable, unperceivable, t)
+local function apply_status(unit, scenario_system, sync_invulnerability, invulnerable, sync_invisibility, unperceivable, t, applied)
 	local health_extension = ScriptUnit.extension(unit, "health_system")
 	local buff_extension = ScriptUnit.extension(unit, "buff_system")
 
-	health_extension:set_invulnerable(invulnerable)
+	if sync_invulnerability then
+		if applied and not applied.invulnerability_active then
+			applied.invulnerability_active = true
+			applied.original_invulnerability = health_extension:is_invulnerable()
+		end
+
+		health_extension:set_invulnerable(invulnerable)
+
+		if applied then
+			applied.invulnerability = invulnerable
+		end
+	elseif applied and applied.invulnerability_active then
+		if health_extension:is_invulnerable() == applied.invulnerability then
+			health_extension:set_invulnerable(applied.original_invulnerability)
+		end
+
+		applied.invulnerability_active = nil
+		applied.original_invulnerability = nil
+		applied.invulnerability = nil
+	end
 
 	local currently_unperceivable = buff_extension:has_keyword(UNPERCEIVABLE_KEYWORD)
 	local scenario_buff = scenario_system:has_scenario_buff(unit, UNPERCEIVABLE_BUFF_NAME)
 
-	if unperceivable then
-		if not currently_unperceivable then
-			if scenario_buff then
-				scenario_system:remove_scenario_buff(unit, UNPERCEIVABLE_BUFF_NAME)
-			end
-
-			scenario_system:add_scenario_buff(unit, UNPERCEIVABLE_BUFF_NAME, t)
+	if sync_invisibility then
+		if applied and not applied.invisibility_active then
+			applied.invisibility_active = true
+			applied.original_scenario_buff = scenario_buff
 		end
-	elseif scenario_buff then
-		scenario_system:remove_scenario_buff(unit, UNPERCEIVABLE_BUFF_NAME)
+
+		if unperceivable then
+			if not currently_unperceivable then
+				if scenario_buff then
+					scenario_system:remove_scenario_buff(unit, UNPERCEIVABLE_BUFF_NAME)
+				end
+
+				scenario_system:add_scenario_buff(unit, UNPERCEIVABLE_BUFF_NAME, t)
+			end
+		elseif scenario_buff then
+			scenario_system:remove_scenario_buff(unit, UNPERCEIVABLE_BUFF_NAME)
+		end
+	elseif applied and applied.invisibility_active then
+		if applied.original_scenario_buff and not scenario_buff then
+			scenario_system:add_scenario_buff(unit, UNPERCEIVABLE_BUFF_NAME, t)
+		elseif not applied.original_scenario_buff and scenario_buff then
+			scenario_system:remove_scenario_buff(unit, UNPERCEIVABLE_BUFF_NAME)
+		end
+
+		applied.invisibility_active = nil
+		applied.original_scenario_buff = nil
 	end
 end
 
-local function send_status_to_peer(peer_id, invulnerable)
+local function send_status_to_peer(peer_id, sync)
 	local connection_host = Managers.connection and Managers.connection._connection_host
 	local connected_peers = connection_host and connection_host:connected_peers()
 
@@ -409,7 +473,10 @@ local function send_status_to_peer(peer_id, invulnerable)
 	for channel_id, connected_peer_id in pairs(connected_peers) do
 		if normalize_peer_id(connected_peer_id) == peer_id then
 			return GameplayControl.send_to_client(channel_id, "shooting_range_status", {
-				invulnerable = invulnerable,
+				sync_invulnerability = sync.sync_invulnerability,
+				invulnerable = sync.invulnerable,
+				sync_sound_muffling = sync.sync_sound_muffling,
+				sound_muffled = sync.sound_muffled,
 			})
 		end
 	end
@@ -417,13 +484,47 @@ local function send_status_to_peer(peer_id, invulnerable)
 	return false
 end
 
-local function send_remote_status(player, invulnerable, version, applied)
-	if not player.remote or applied.client_version == version then
+local function send_remote_status(player, sync, applied)
+	if not player.remote or applied.client_version == sync.version then
 		return
 	end
 
-	if send_status_to_peer(player:peer_id(), invulnerable) then
-		applied.client_version = version
+	if send_status_to_peer(player:peer_id(), sync) then
+		applied.client_version = sync.version
+	end
+end
+
+local function read_sync_state(host_unit)
+	local invulnerable, unperceivable = read_status(host_unit)
+	local sync_invulnerability = mod:get("shooting_range_sync_invulnerability") == true
+	local sync_invisibility = mod:get("shooting_range_sync_invisibility") == true
+	local sync_sound_muffling = mod:get("shooting_range_sync_sound_muffling") == true
+
+	return sync_invulnerability, sync_invulnerability and invulnerable or false,
+		sync_invisibility, sync_invisibility and unperceivable or false,
+		sync_sound_muffling, sync_sound_muffling and runtime.host_sound_muffled or false
+end
+
+local function update_sync_state(sync, host_unit)
+	local sync_invulnerability, invulnerable, sync_invisibility, unperceivable, sync_sound_muffling, sound_muffled = read_sync_state(host_unit)
+	local changed = sync.host_unit ~= host_unit
+		or sync.sync_invulnerability ~= sync_invulnerability
+		or sync.invulnerable ~= invulnerable
+		or sync.sync_invisibility ~= sync_invisibility
+		or sync.unperceivable ~= unperceivable
+		or sync.sync_sound_muffling ~= sync_sound_muffling
+		or sync.sound_muffled ~= sound_muffled
+
+	sync.host_unit = host_unit
+	sync.sync_invulnerability = sync_invulnerability
+	sync.invulnerable = invulnerable
+	sync.sync_invisibility = sync_invisibility
+	sync.unperceivable = unperceivable
+	sync.sync_sound_muffling = sync_sound_muffling
+	sync.sound_muffled = sound_muffled
+
+	if changed then
+		sync.version = sync.version + 1
 	end
 end
 
@@ -440,23 +541,12 @@ local function synchronize_player_status(spawn_manager, t)
 
 	local sync = status_sync(spawn_manager)
 
-	if sync.host_unit ~= host_unit then
-		if sync.host_unit and sync.invulnerable ~= nil then
-			apply_status(host_unit, scenario_system, sync.invulnerable, sync.unperceivable, t)
-		end
-
-		sync.host_unit = host_unit
-		sync.invulnerable, sync.unperceivable = read_status(host_unit)
-		sync.version = sync.version + 1
-	else
-		local invulnerable, unperceivable = read_status(host_unit)
-
-		if sync.invulnerable ~= invulnerable or sync.unperceivable ~= unperceivable then
-			sync.invulnerable = invulnerable
-			sync.unperceivable = unperceivable
-			sync.version = sync.version + 1
-		end
+	if sync.host_unit and sync.host_unit ~= host_unit and sync.invulnerable ~= nil then
+		apply_status(host_unit, scenario_system, mod:get("shooting_range_sync_invulnerability") == true, sync.invulnerable,
+			mod:get("shooting_range_sync_invisibility") == true, sync.unperceivable, t)
 	end
+
+	update_sync_state(sync, host_unit)
 
 	local present = {}
 
@@ -478,20 +568,24 @@ local function synchronize_player_status(spawn_manager, t)
 				end
 
 				if needs_update then
-					if player_unit ~= host_unit then
-						apply_status(player_unit, scenario_system, sync.invulnerable, sync.unperceivable, t)
+					if not applied or applied.unit ~= player_unit then
+						applied = {
+							client_version = client_version,
+							unit = player_unit,
+						}
 					end
 
-					applied = {
-						client_version = client_version,
-						unit = player_unit,
-						version = sync.version,
-					}
+					if player_unit ~= host_unit then
+						apply_status(player_unit, scenario_system, sync.sync_invulnerability, sync.invulnerable,
+							sync.sync_invisibility, sync.unperceivable, t, applied)
+					end
+
+					applied.version = sync.version
 					sync.applied[unique_id] = applied
 				end
 
 				if player_unit ~= host_unit then
-					send_remote_status(player, sync.invulnerable, sync.version, applied)
+					send_remote_status(player, sync, applied)
 				end
 			end
 		end
@@ -531,8 +625,20 @@ function ShootingRange.install(session, gameplay_control)
 		update_player_status()
 	end)
 
+	mod:hook(Wwise, "set_state", function (func, group_name, state_name, ...)
+		if Session.is_active_host() and is_shooting_range() and group_name == MUSIC_ZONE_STATE_GROUP then
+			if state_name == GAME_MODE_NAME then
+				runtime.host_sound_muffled = true
+			elseif state_name == MUSIC_ZONE_UNMUFFLED then
+				runtime.host_sound_muffled = false
+			end
+		end
+
+		return func(group_name, state_name, ...)
+	end)
+
 	mod:hook(PlayerHuskHealthExtension, "set_invulnerable", function (func, self, should_be_invulnerable)
-		if is_local_client_health_extension(self) then
+		if runtime.local_invulnerability_sync and is_local_client_health_extension(self) then
 			self._realms_invulnerable = should_be_invulnerable
 
 			return
@@ -542,7 +648,7 @@ function ShootingRange.install(session, gameplay_control)
 	end)
 
 	mod:hook(PlayerHuskHealthExtension, "is_invulnerable", function (func, self)
-		if is_local_client_health_extension(self) and self._realms_invulnerable ~= nil then
+		if runtime.local_invulnerability_sync and is_local_client_health_extension(self) and self._realms_invulnerable ~= nil then
 			return self._realms_invulnerable
 		end
 
