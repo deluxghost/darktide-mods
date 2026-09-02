@@ -17,6 +17,8 @@ local SessionTicket = mod:io_dofile("Realms/scripts/mods/Realms/protocol/session
 local Session = {}
 local state = mod:persistent_table("session_state")
 local applying_deferred_mechanism_change = false
+local pending_client_boot_options
+
 -- Local mission launchers call reset and boot separately. Keep the host alive only when boot follows before the next update.
 local pending_host_reset
 local reused_host_boot_pending_change = false
@@ -53,7 +55,7 @@ local function set_client_native_support(enabled)
 end
 
 local function update_client_native_support()
-	local needed = client_boot_in_progress() or Session.is_active_client()
+	local needed = pending_client_boot_options ~= nil or client_boot_in_progress() or Session.is_active_client()
 	local changed, change_error = set_client_native_support(needed)
 
 	if not changed then
@@ -62,8 +64,8 @@ local function update_client_native_support()
 end
 
 local function clear_client_join()
+	pending_client_boot_options = nil
 	state.client_join_in_progress = false
-	state.client_gameplay_transition = false
 	state.client_mechanism_context = nil
 	state.client_context_activated = false
 end
@@ -115,6 +117,13 @@ local function apply_pending_host_reset()
 	pending_reset.original_reset(pending_reset.manager, pending_reset.reason)
 end
 
+local function reset_current_session(multiplayer_session_manager)
+	pending_host_reset = nil
+	applying_explicit_session_reset = true
+	multiplayer_session_manager:reset("realms_switch_session")
+	applying_explicit_session_reset = false
+end
+
 local function begin_client_boot(options)
 	local multiplayer_session_manager = Managers.multiplayer_session
 	local connection_manager = Managers.connection
@@ -125,16 +134,12 @@ local function begin_client_boot(options)
 	if multiplayer_session_manager:is_booting_session() then
 		return false, mod:localize("error_join_already_pending")
 	end
-	if not options.transition_from_gameplay and (current_connection() or multiplayer_session_manager:has_session()) then
-		pending_host_reset = nil
-		applying_explicit_session_reset = true
-		multiplayer_session_manager:reset("realms_switch_session")
-		applying_explicit_session_reset = false
+	if current_connection() or multiplayer_session_manager:has_session() then
+		return false, "The previous multiplayer session is still active"
 	end
 
 	clear_transition_state()
 	state.client_join_in_progress = true
-	state.client_gameplay_transition = options.transition_from_gameplay or false
 	state.client_context_activated = false
 
 	local new_session = MultiplayerSession:new()
@@ -193,7 +198,6 @@ local function update_client_join()
 	end
 
 	state.client_join_in_progress = false
-	state.client_gameplay_transition = false
 end
 
 function Session.is_active()
@@ -504,6 +508,7 @@ function Session.intercept_host_mechanism_change(mechanism_name, context)
 		local mission_name = type(context) == "table" and context.mission_name
 
 		if not Managers.state or not Managers.state.game_session then
+			clear_transition_state()
 			Preparation.host_transition_started(mission_name)
 
 			return false
@@ -604,7 +609,7 @@ local function host_preparation_loading_transition()
 end
 
 function Session.start_client(server_address, server_port_text, password)
-	if state.client_gameplay_transition or client_boot_in_progress() then
+	if pending_client_boot_options or client_boot_in_progress() then
 		return false, mod:localize("error_join_already_pending")
 	end
 
@@ -633,6 +638,9 @@ function Session.start_client(server_address, server_port_text, password)
 	if not connection_manager:client() then
 		return false, mod:localize("error_connection_client_unavailable")
 	end
+	if multiplayer_session_manager:is_booting_session() then
+		return false, mod:localize("error_join_already_pending")
+	end
 
 	local resolved_addresses, resolve_error = Native.resolve_addresses(server_address)
 
@@ -648,7 +656,6 @@ function Session.start_client(server_address, server_port_text, password)
 		password = password,
 		server_addresses = resolved_addresses,
 		server_port = server_port,
-		transition_from_gameplay = game_session_active,
 		transition_to_loading = not game_session_active,
 	}
 	state.remote_max_members = nil
@@ -658,6 +665,16 @@ function Session.start_client(server_address, server_port_text, password)
 		mod:error("Failed enabling native client support: %s", native_error)
 
 		return false, mod:localize("client_boot_failed")
+	end
+
+	if game_session_active or current_connection() or multiplayer_session_manager:has_session() then
+		pending_client_boot_options = options
+
+		if game_session_active then
+			Managers.mechanism:trigger_event("client_exit_gameplay")
+		end
+
+		return true, nil, resolved_addresses[1]
 	end
 
 	local started, start_error = begin_client_boot(options)
@@ -673,6 +690,25 @@ end
 
 function Session.update()
 	apply_pending_host_reset()
+	if pending_client_boot_options and (not Managers.state or not Managers.state.game_session) then
+		local multiplayer_session_manager = Managers.multiplayer_session
+
+		if current_connection() or multiplayer_session_manager:has_session() then
+			reset_current_session(multiplayer_session_manager)
+		elseif not multiplayer_session_manager:is_booting_session() then
+			local options = pending_client_boot_options
+
+			pending_client_boot_options = nil
+
+			local started, start_error = begin_client_boot(options)
+
+			if not started then
+				clear_client_join()
+				set_client_native_support(false)
+				mod:error("Failed starting deferred Realms client boot: %s", start_error)
+			end
+		end
+	end
 
 	if reused_host_session_boot and (not Managers.state or not Managers.state.game_session) then
 		release_reused_host_session_boot()
@@ -753,6 +789,9 @@ end
 
 function Session.route_mechanism_transition(next_state, state_context)
 	local game_session = Managers.state and Managers.state.game_session
+	if pending_client_boot_options and game_session then
+		return StateLoading, {}
+	end
 
 	if state.queued_mission_transition then
 		if game_session then
@@ -780,6 +819,12 @@ function Session.route_mechanism_transition(next_state, state_context)
 
 			return host_preparation_loading_transition()
 		end
+	end
+
+	if state.main_menu_transition == "realms_host" and Preparation.is_waiting() and not state.preparation_loading_requested then
+		state.main_menu_transition = nil
+
+		return host_preparation_loading_transition()
 	end
 
 	if not next_state or not Preparation.is_waiting() or state.preparation_loading_requested then
