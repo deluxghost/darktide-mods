@@ -66,12 +66,37 @@ local function append_circumstance(details, circumstance)
 	}
 end
 
-local function append_havoc_circumstances(details, havoc_data)
+local function parse_havoc_data(havoc_data)
 	if type(havoc_data) ~= "string" then
 		return
 	end
 
-	local parsed_data = Havoc.parse_data(havoc_data)
+	return Havoc.parse_data(havoc_data)
+end
+
+local function append_havoc_rank(details, parsed_data)
+	if not parsed_data then
+		return
+	end
+
+	local havoc_rank = parsed_data.havoc_rank
+
+	if havoc_rank then
+		details[#details + 1] = {
+			key = "havoc_rank:" .. tostring(havoc_rank),
+			widget_data = {
+				havoc_rank = havoc_rank,
+			},
+			widget_type = "havoc_rank",
+		}
+	end
+end
+
+local function append_havoc_circumstances(details, parsed_data)
+	if not parsed_data then
+		return
+	end
+
 	local circumstances = parsed_data.circumstances
 
 	for i = 1, #circumstances do
@@ -84,6 +109,9 @@ function PreparationViewModel.mission_details(fallback_mission_name)
 	local details = {}
 	local side_mission = mechanism_data.side_mission
 	local side_missions = MissionObjectiveTemplates.side_mission.objectives
+	local havoc_data = parse_havoc_data(mechanism_data.havoc_data)
+
+	append_havoc_rank(details, havoc_data)
 
 	if side_mission and side_mission ~= "default" and side_missions[side_mission] then
 		details[#details + 1] = {
@@ -96,7 +124,7 @@ function PreparationViewModel.mission_details(fallback_mission_name)
 	end
 
 	append_circumstance(details, mechanism_data.circumstance_name)
-	append_havoc_circumstances(details, mechanism_data.havoc_data)
+	append_havoc_circumstances(details, havoc_data)
 
 	return details
 end

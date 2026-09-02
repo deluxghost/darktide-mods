@@ -1,6 +1,7 @@
 local mod = get_mod("Realms")
 local ButtonPassTemplates = require("scripts/ui/pass_templates/button_pass_templates")
 local MissionDetailsBlueprints = require("scripts/ui/views/mission_voting_view/mission_voting_view_blueprints")
+local Text = require("scripts/utilities/ui/text")
 local UIFontSettings = require("scripts/managers/ui/ui_font_settings")
 local UISettings = require("scripts/settings/ui/ui_settings")
 local Layout = mod:io_dofile("Realms/scripts/mods/Realms/views/preparation_view/preparation_view_layout")
@@ -17,6 +18,9 @@ local SKILL_SPACING = 4
 local WEAPON_WIDTH = 144
 local WEAPON_HEIGHT = 44
 local WEAPON_SPACING = 8
+local HAVOC_RANK_ROW_HEIGHT = 64
+local HAVOC_RANK_ICON_SIZE = 50
+local HAVOC_RANK_SPACING = 5
 
 local function text_style(font_size, color)
 	local style = table.clone(UIFontSettings.body)
@@ -408,10 +412,92 @@ local function official_blueprint(template_name)
 	}
 end
 
+local havoc_rank_text_style = table.clone(UIFontSettings.header_2)
+
+havoc_rank_text_style.font_size = 40
+havoc_rank_text_style.horizontal_alignment = "left"
+havoc_rank_text_style.text_horizontal_alignment = "left"
+havoc_rank_text_style.text_vertical_alignment = "center"
+havoc_rank_text_style.vertical_alignment = "center"
+havoc_rank_text_style.text_color = Color.golden_rod(255, true)
+havoc_rank_text_style.size = {
+	INFO_ROW_WIDTH,
+	HAVOC_RANK_ROW_HEIGHT,
+}
+
+local havoc_rank_pass_template = {
+	{
+		pass_type = "texture",
+		style_id = "havoc_icon_drop_shadow",
+		value = "content/ui/materials/icons/generic/havoc",
+		style = {
+			horizontal_alignment = "left",
+			vertical_alignment = "center",
+			color = Color.black(255, true),
+			offset = {
+				1,
+				1,
+				0,
+			},
+			size = {
+				HAVOC_RANK_ICON_SIZE,
+				HAVOC_RANK_ICON_SIZE,
+			},
+		},
+	},
+	{
+		pass_type = "texture",
+		style_id = "havoc_icon",
+		value = "content/ui/materials/icons/generic/havoc",
+		style = {
+			horizontal_alignment = "left",
+			vertical_alignment = "center",
+			color = Color.golden_rod(255, true),
+			offset = {
+				0,
+				0,
+				1,
+			},
+			size = {
+				HAVOC_RANK_ICON_SIZE,
+				HAVOC_RANK_ICON_SIZE,
+			},
+		},
+	},
+	{
+		pass_type = "text",
+		style_id = "havoc_rank",
+		value = "",
+		value_id = "havoc_rank",
+		style = havoc_rank_text_style,
+	},
+}
+
+local function init_havoc_rank(parent, widget, element, callback_name, secondary_callback_name, ui_renderer)
+	local havoc_rank = tostring(element.widget_data.havoc_rank)
+	local style = widget.style
+	local text_width = Text.text_size(ui_renderer, havoc_rank, style.havoc_rank, style.havoc_rank.size)
+	local content_width = HAVOC_RANK_ICON_SIZE + HAVOC_RANK_SPACING + text_width
+	local icon_offset = (INFO_ROW_WIDTH - content_width) * 0.5
+
+	widget.content.havoc_rank = havoc_rank
+	style.havoc_icon.offset[1] = icon_offset
+	style.havoc_icon_drop_shadow.offset[1] = icon_offset + 1
+	style.havoc_rank.offset[1] = icon_offset + HAVOC_RANK_ICON_SIZE + HAVOC_RANK_SPACING
+end
+
 return {
 	max_skills = MAX_SKILLS,
 	blueprints = {
 		circumstance = official_blueprint("circumstance"),
+		havoc_rank = {
+			init = init_havoc_rank,
+			pass_template = havoc_rank_pass_template,
+			size = {
+				INFO_ROW_WIDTH,
+				HAVOC_RANK_ROW_HEIGHT,
+			},
+		},
 		player = {
 			init = init_player,
 			pass_template = player_pass_template,
