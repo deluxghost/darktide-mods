@@ -7,7 +7,7 @@
     "kofi": "https://ko-fi.com/deluxghost",
     "bilibili": "https://space.bilibili.com/4712698"
   },
-  "version": "0.2.0",
+  "version": "0.3.0",
   "author": "deluxghost",
   "dependencies": {
     "required": [

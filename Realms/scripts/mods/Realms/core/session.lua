@@ -62,9 +62,17 @@ local function clear_client_join()
 	state.client_context_activated = false
 end
 
+local function accepted_client_context()
+	local connection_manager = Managers.connection
+	local connection = connection_manager and connection_manager._connection_client
+
+	return connection and connection._realms_mechanism_context or state.client_mechanism_context
+end
+
 local function clear_transition_state()
 	state.deferred_mission_transition = nil
 	state.deferred_host_mechanism_change = nil
+	state.queued_mission_transition = nil
 	state.main_menu_transition = nil
 	state.preparation_loading_requested = false
 	state.host_preparation_loading = false
@@ -112,7 +120,7 @@ end
 local function update_client_join()
 	local connection_manager = Managers.connection
 	local connection = connection_manager and connection_manager._connection_client
-	local context = state.client_mechanism_context
+	local context = accepted_client_context()
 
 	if connection
 		and connection._realms_protocol == SessionTicket.PROTOCOL_VERSION
@@ -314,9 +322,76 @@ function Session.prepare_local_mission(mission_name)
 	state.pending_host_mission_name = mission_name
 end
 
+local function owner_name(owner_mod)
+	if type(owner_mod) ~= "table"
+		or type(owner_mod.get_name) ~= "function"
+		or type(owner_mod.is_enabled) ~= "function"
+		or type(owner_mod.pcall) ~= "function"
+	then
+		return nil, "Mission transition owner must be a DMF mod"
+	end
+
+	local name = owner_mod:get_name()
+
+	if type(name) ~= "string" or name == "" then
+		return nil, "Mission transition owner name is invalid"
+	end
+
+	return name
+end
+
+function Session.queue_mission_transition(owner_mod, mission_context)
+	local mod_name, owner_error = owner_name(owner_mod)
+
+	if not mod_name then
+		return false, owner_error
+	end
+	if type(mission_context) ~= "table" then
+		return false, "Mission transition context must be a table"
+	end
+
+	local mission_name = mission_context.mission_name
+	local mission_template = type(mission_name) == "string" and MissionTemplates[mission_name]
+
+	if not mission_template or type(mission_template.mechanism_name) ~= "string" then
+		return false, "Mission transition context has an invalid mission name"
+	end
+	if not Session.is_active_host() then
+		return false, "Mission transitions require an active Realms host"
+	end
+
+	local session_manager = Managers.multiplayer_session
+	local mechanism_manager = Managers.mechanism
+	local game_session = Managers.state and Managers.state.game_session
+	local current_mechanism = mechanism_manager and mechanism_manager._mechanism
+
+	if not session_manager or session_manager:is_leaving() or session_manager:is_booting_session() then
+		return false, "The Realms session is already changing"
+	end
+	if not game_session or not current_mechanism or type(current_mechanism.client_exit_gameplay) ~= "function" then
+		return false, "Mission transitions require an active gameplay session"
+	end
+	if state.queued_mission_transition or state.deferred_host_mechanism_change or state.main_menu_transition then
+		return false, "A Realms mission transition is already pending"
+	end
+
+	state.queued_mission_transition = {
+		context = table.clone(mission_context),
+		mechanism_name = mission_template.mechanism_name,
+		mission_name = mission_name,
+	}
+	mod:info("%s queued mission transition to %s", mod_name, mission_name)
+	mechanism_manager:trigger_event("client_exit_gameplay")
+
+	return true
+end
+
 function Session.intercept_host_mechanism_change(mechanism_name, context)
 	if applying_deferred_mechanism_change or Preparation.role() ~= "host" or not Managers.state or not Managers.state.game_session then
 		return false
+	end
+	if state.queued_mission_transition then
+		return true
 	end
 
 	state.deferred_host_mechanism_change = {
@@ -355,6 +430,31 @@ local function apply_deferred_host_mechanism_change()
 	if deferred_change.all_players_ready then
 		Managers.mechanism:trigger_event("all_players_ready")
 	end
+
+	return true
+end
+
+local function apply_queued_mission_transition()
+	local transition = state.queued_mission_transition
+
+	if not transition then
+		return false
+	end
+
+	state.queued_mission_transition = nil
+	state.deferred_mission_transition = nil
+	state.deferred_host_mechanism_change = nil
+	state.main_menu_transition = nil
+	state.preparation_loading_requested = false
+	state.host_preparation_loading = false
+	state.host_preparation_no_level_ready = false
+	Preparation.host_transition_started(transition.mission_name)
+	Preparation.host_mechanism_configured(transition.mission_name)
+	applying_deferred_mechanism_change = true
+	Managers.mechanism:change_mechanism(transition.mechanism_name, transition.context)
+	applying_deferred_mechanism_change = false
+	Managers.mechanism:trigger_event("all_players_ready")
+	mod:info("Applied queued mission transition to %s", transition.mission_name)
 
 	return true
 end
@@ -450,7 +550,7 @@ function Session.client_mechanism_context(channel_id, mechanism_name)
 		return nil
 	end
 
-	local saved = state.client_mechanism_context
+	local saved = accepted_client_context()
 
 	if saved and saved.channel_id ~= channel_id then
 		return nil
@@ -506,14 +606,27 @@ function Session.capture_mechanism_reply(channel_id, mechanism_matched, reply_da
 
 	context.channel_id = channel_id
 	state.client_mechanism_context = context
-
-	session_boot:admission_accepted()
+	session_boot:admission_accepted(context)
 
 	return true
 end
 
 function Session.route_mechanism_transition(next_state, state_context)
 	local game_session = Managers.state and Managers.state.game_session
+
+	if state.queued_mission_transition then
+		if game_session then
+			return next_state or StateLoading, state_context or {}
+		end
+
+		apply_queued_mission_transition()
+
+		if state.main_menu_transition == "realms_host" then
+			state.main_menu_transition = nil
+
+			return host_preparation_loading_transition()
+		end
+	end
 
 	if state.deferred_host_mechanism_change then
 		if game_session then
@@ -560,6 +673,22 @@ function Session.route_mechanism_transition(next_state, state_context)
 	return StateLoading, {
 		next_state = PreparationState,
 	}
+end
+
+function Session.client_mission_transition_started(mission_name)
+	state.deferred_mission_transition = nil
+	state.main_menu_transition = nil
+	state.preparation_loading_requested = false
+	state.host_preparation_loading = false
+	state.host_preparation_no_level_ready = false
+
+	local mission_template = MissionTemplates[mission_name]
+	local context = accepted_client_context()
+
+	if mission_template and context then
+		context.mechanism_name = mission_template.mechanism_name
+		context.mission_name = mission_name
+	end
 end
 
 function Session.official_session_boot_started()

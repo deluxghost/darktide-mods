@@ -1,7 +1,4 @@
 local mod = get_mod("Realms")
-local BuffExtensionBase = require("scripts/extension_systems/buff/buff_extension_base")
-local PlayerUnitBuffExtension = require("scripts/extension_systems/buff/player_unit_buff_extension")
-local OutlineSystem = require("scripts/extension_systems/outline/outline_system")
 
 local PrivateOutlines = {}
 local Session
@@ -243,14 +240,8 @@ local function sync_rendered_source()
 	end
 end
 
-function PrivateOutlines.install(session)
-	Session = session
-
+local function install_buff_extension_hooks(BuffExtensionBase)
 	mod:hook(BuffExtensionBase, "_add_buff", function (func, self, ...)
-		return call_in_context(func, self._buff_context, self, self, ...)
-	end)
-
-	mod:hook(PlayerUnitBuffExtension, "fixed_update", function (func, self, ...)
 		return call_in_context(func, self._buff_context, self, self, ...)
 	end)
 
@@ -265,7 +256,15 @@ function PrivateOutlines.install(session)
 
 		return result
 	end)
+end
 
+local function install_player_unit_buff_hooks(PlayerUnitBuffExtension)
+	mod:hook(PlayerUnitBuffExtension, "fixed_update", function (func, self, ...)
+		return call_in_context(func, self._buff_context, self, self, ...)
+	end)
+end
+
+local function install_outline_system_hooks(OutlineSystem)
 	mod:hook(OutlineSystem, "add_outline", function (func, self, unit, outline_name)
 		if replay_depth > 0 then
 			return func(self, unit, outline_name)
@@ -324,6 +323,14 @@ function PrivateOutlines.install(session)
 
 		return result
 	end)
+end
+
+function PrivateOutlines.install(session)
+	Session = session
+
+	mod:hook_require("scripts/extension_systems/buff/buff_extension_base", install_buff_extension_hooks)
+	mod:hook_require("scripts/extension_systems/buff/player_unit_buff_extension", install_player_unit_buff_hooks)
+	mod:hook_require("scripts/extension_systems/outline/outline_system", install_outline_system_hooks)
 end
 
 function PrivateOutlines.update()

@@ -22,6 +22,14 @@ mod.network_register = function (owner_mod, rpc_name, callback)
 	return ModNetwork.register(owner_mod, rpc_name, callback)
 end
 
+mod.network_on_peer_joined = function (owner_mod, callback)
+	return ModNetwork.on_peer_joined(owner_mod, callback)
+end
+
+mod.network_on_peer_left = function (owner_mod, callback)
+	return ModNetwork.on_peer_left(owner_mod, callback)
+end
+
 mod.network_is_available = function ()
 	return ModNetwork.is_available()
 end
@@ -32,6 +40,9 @@ end
 
 local Session = mod:io_dofile("Realms/scripts/mods/Realms/core/session")
 mod._session = Session
+mod.queue_mission_transition = function (owner_mod, mission_context)
+	return Session.queue_mission_transition(owner_mod, mission_context)
+end
 local ProfileUpdates = mod:io_dofile("Realms/scripts/mods/Realms/core/profile_updates")
 local UnitRpcLifetime = mod:io_dofile("Realms/scripts/mods/Realms/core/unit_rpc_lifetime")
 local Workarounds = mod:io_dofile("Realms/scripts/mods/Realms/workarounds/workarounds")

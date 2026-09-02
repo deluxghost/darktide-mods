@@ -22,6 +22,7 @@ ClientSessionBoot.init = function (self, event_object, options)
 	self._buffered_connection_events = {}
 	self._admission_accepted = false
 	self._elapsed = 0
+	self._mechanism_context = nil
 	self._wan_client = Managers.connection:client()
 	event_object._realms_protocol = SessionTicket.PROTOCOL_VERSION
 
@@ -63,6 +64,7 @@ ClientSessionBoot._try_next_address = function (self, reason)
 	table.clear(self._buffered_connection_events)
 
 	self._admission_accepted = false
+	self._mechanism_context = nil
 	self._address_index = self._address_index + 1
 
 	if not self:_current_address() then
@@ -132,8 +134,9 @@ ClientSessionBoot._create_connection = function (self)
 	self:_set_state(STATES.validating)
 end
 
-ClientSessionBoot.admission_accepted = function (self)
+ClientSessionBoot.admission_accepted = function (self, mechanism_context)
 	if self:state() == STATES.validating then
+		self._mechanism_context = mechanism_context
 		self._admission_accepted = true
 	end
 end
@@ -164,8 +167,8 @@ end
 
 ClientSessionBoot._update_validation = function (self, dt)
 	if self._admission_accepted then
-		self:event_object():set_booted()
 		self:_set_state(STATES.ready)
+		self:event_object():set_booted()
 
 		return
 	end
@@ -258,6 +261,8 @@ ClientSessionBoot.result = function (self)
 
 	local connection_client = self._connection_client
 
+	connection_client._realms_mechanism_context = self._mechanism_context
+
 	for i = #self._buffered_connection_events, 1, -1 do
 		table.insert(connection_client._events, 1, self._buffered_connection_events[i])
 	end
@@ -289,6 +294,7 @@ ClientSessionBoot.destroy = function (self)
 
 	self:_clear()
 	self._options = nil
+	self._mechanism_context = nil
 	self._wan_client = nil
 end
 

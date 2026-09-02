@@ -136,9 +136,10 @@ local function snapshot_data()
 		countdown_remaining_ms = countdown_remaining_ms(),
 		finalizing = state.finalizing,
 		max_members = connection:max_members(),
+		mission_name = state.mission_name,
 		ready_peer_ids = ready_peer_ids(),
 		revision = state.revision,
-		started = state.phase == "started",
+		started = state.phase == "started" or state.phase == "bypassed",
 	}
 end
 
@@ -212,6 +213,12 @@ local function apply_snapshot(data)
 	if data.revision < state.revision then
 		return
 	end
+	if data.revision > state.revision
+		and state.phase ~= "client_booting"
+		and (state.phase == "started" or state.mission_name ~= data.mission_name)
+	then
+		Session.client_mission_transition_started(data.mission_name)
+	end
 
 	local ready_by_peer = {}
 
@@ -222,6 +229,7 @@ local function apply_snapshot(data)
 	state.ready_by_peer = ready_by_peer
 	state.revision = data.revision
 	state.finalizing = data.finalizing
+	state.mission_name = data.mission_name
 	Session.apply_remote_max_members(data.max_members)
 
 	if data.started then
@@ -238,6 +246,13 @@ end
 
 function Preparation.host_boot_started(mission_name)
 	reset("host", "host_booting", mission_name)
+end
+
+function Preparation.host_transition_started(mission_name)
+	local revision = state.revision
+
+	reset("host", "host_booting", mission_name)
+	state.revision = revision
 end
 
 function Preparation.client_boot_started()
@@ -265,15 +280,33 @@ function Preparation.host_mechanism_configured(mission_name)
 		return
 	end
 
+	local connection = active_host_connection()
+
 	if should_bypass_preparation(state.mission_name) then
 		state.phase = "bypassed"
+		state.revision = state.revision + 1
+
+		if connection then
+			broadcast_snapshot()
+		end
 
 		return
 	end
 
 	state.phase = "waiting"
 	state.ready_by_peer[local_peer_id()] = false
+
+	if connection then
+		for _, peer_id in pairs(connection:connected_peers()) do
+			state.ready_by_peer[normalize_peer_id(peer_id)] = false
+		end
+	end
+
 	state.revision = state.revision + 1
+
+	if connection then
+		broadcast_snapshot()
+	end
 end
 
 function Preparation.host_installed()

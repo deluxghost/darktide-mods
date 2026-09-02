@@ -1,4 +1,5 @@
 local mod = get_mod("Realms")
+local MissionTemplates = require("scripts/settings/mission/mission_templates")
 local ScriptCJson = require("scripts/foundation/utilities/script_cjson")
 local ProfileUpdate = mod:io_dofile("Realms/scripts/mods/Realms/protocol/profile_update")
 local SessionTicket = mod:io_dofile("Realms/scripts/mods/Realms/protocol/session_ticket")
@@ -63,7 +64,7 @@ local function validate_message(message)
 			return true
 		end
 	else
-		if table.size(data) == 6
+		if table.size(data) == 7
 			and type(data.countdown_remaining_ms) == "number"
 			and data.countdown_remaining_ms % 1 == 0
 			and data.countdown_remaining_ms >= 0
@@ -76,6 +77,8 @@ local function validate_message(message)
 			and data.max_members % 1 == 0
 			and data.max_members >= 2
 			and data.max_members <= 8
+			and type(data.mission_name) == "string"
+			and MissionTemplates[data.mission_name] ~= nil
 			and type(data.finalizing) == "boolean"
 			and type(data.started) == "boolean"
 			and valid_ready_peer_ids(data.ready_peer_ids)

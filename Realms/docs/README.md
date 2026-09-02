@@ -70,6 +70,7 @@ local sent, send_error = realms.network_send(mod, rpc_name, recipient, ...)
 The RPC must be registered locally before it can be sent. Recipient values are:
 
 - `"local"`: only the sender.
+- `"host"`: the session host. On the host, this targets the sender itself.
 - `"all"`: the sender and every capable peer.
 - `"others"`: every capable peer except the sender.
 - A peer ID: that peer only. The host routes client-to-client messages.
@@ -80,7 +81,47 @@ A `true` result means that Realms accepted the message for dispatch, not that th
 
 Arguments must be JSON-serializable. Top-level `nil` arguments are preserved. Each call supports up to 32 arguments and a maximum encoded size of 96 KiB.
 
-## Complete Example
+Peer callback registration returns `true` or `false, error_message`. Registering the same callback type again replaces the calling mod's previous callback.
+
+### `network_on_peer_joined`
+
+```lua
+local registered, register_error = realms.network_on_peer_joined(mod, callback)
+```
+
+Registers a callback for remote Realms peers after their RPC capabilities are known:
+
+```lua
+callback(peer_id)
+```
+
+Existing peers are reported immediately. Register RPCs before registering this callback.
+
+### `network_on_peer_left`
+
+```lua
+local registered, register_error = realms.network_on_peer_left(mod, callback)
+```
+
+Registers a callback for remote peers leaving. The callback receives the departed peer ID, which is no longer a valid `network_send` recipient.
+
+## Mission Transition API
+
+### `queue_mission_transition`
+
+```lua
+local queued, queue_error = realms.queue_mission_transition(mod, mission_context)
+```
+
+Queues the next mission while hosting an active Realms gameplay session. Pass the mission context used by `Managers.mechanism:change_mechanism`; it must contain a valid `mission_name`.
+
+Connected peers remain in the Realms session. The next mission follows the normal Realms preparation rules; retained peers do not trigger join or leave callbacks.
+
+Only the host can queue a transition, and only one can be pending. Returns `true` when accepted or `false, error_message` otherwise.
+
+Start the first local mission normally; use this API only to continue an existing Realms session.
+
+## Example
 
 This entry file registers one RPC. The host sends a string to all capable clients, while a client sends it to the host.
 
@@ -120,6 +161,6 @@ mod.send_message = function (message)
 		return realms.network_send(mod, RPC_MESSAGE, "others", message)
 	end
 
-	return realms.network_send(mod, RPC_MESSAGE, connection:host(), message)
+	return realms.network_send(mod, RPC_MESSAGE, "host", message)
 end
 ```

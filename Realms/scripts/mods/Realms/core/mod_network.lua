@@ -9,6 +9,8 @@ local ROUTE_ERROR_RPC_UNSUPPORTED = "target_rpc_unsupported"
 
 local state = mod:persistent_table("mod_network")
 state.registrations = state.registrations or {}
+state.peer_joined_callbacks = state.peer_joined_callbacks or {}
+state.peer_left_callbacks = state.peer_left_callbacks or {}
 
 local ModNetwork = {}
 local SessionControl
@@ -44,6 +46,22 @@ local function owner_name(owner_mod)
 	end
 
 	return name
+end
+
+local function notify_peer_callbacks(callbacks, peer_id)
+	for _, registration in pairs(callbacks) do
+		if registration.owner:is_enabled() then
+			registration.owner:pcall(registration.callback, peer_id)
+		end
+	end
+end
+
+local function notify_peer_joined(peer_id)
+	notify_peer_callbacks(state.peer_joined_callbacks, normalize_peer_id(peer_id))
+end
+
+local function notify_peer_left(peer_id)
+	notify_peer_callbacks(state.peer_left_callbacks, normalize_peer_id(peer_id))
 end
 
 local function pack_arguments(...)
@@ -235,12 +253,22 @@ local function send_to_capable_clients(mod_name, rpc_name, sender_peer_id, argum
 end
 
 local function receive_manifest(channel_id, sender_peer_id, data)
+	local peer_id = normalize_peer_id(sender_peer_id)
+	local was_joined = remote_capabilities[peer_id] ~= nil
+
 	store_manifest(sender_peer_id, data.rpcs)
 
 	local connection = Managers.connection
 
 	if connection and connection:is_host() then
-		return send_manifest(channel_id, "host")
+		local sent, send_error = send_manifest(channel_id, "host")
+
+		if not sent then
+			return false, send_error
+		end
+	end
+	if not was_joined then
+		notify_peer_joined(peer_id)
 	end
 
 	return true
@@ -268,7 +296,7 @@ local function receive_host_request(channel_id, sender_peer_id, data)
 			excluded_peer_id
 		)
 	end
-	if recipient == self_peer_id then
+	if recipient == "host" or recipient == self_peer_id then
 		if not registration(data.mod_name, data.rpc_name) then
 			send_route_error(channel_id, data, ROUTE_ERROR_RPC_UNSUPPORTED)
 
@@ -324,7 +352,12 @@ function ModNetwork.install(session_control)
 	SessionControl.register_client_handler(ModNetworkProtocol.NAME, "mod_network_error", receive_client_error)
 	SessionControl.register_client_handler(ModNetworkProtocol.NAME, "mod_network_manifest", receive_manifest)
 	SessionControl.register_disconnect_handler("mod_network", function (peer_id)
-		remote_capabilities[normalize_peer_id(peer_id)] = nil
+		peer_id = normalize_peer_id(peer_id)
+
+		if remote_capabilities[peer_id] then
+			remote_capabilities[peer_id] = nil
+			notify_peer_left(peer_id)
+		end
 	end)
 	SessionControl.register_ready_handler("mod_network", function (channel_id, peer_id, role)
 		if role == "client" then
@@ -333,6 +366,50 @@ function ModNetwork.install(session_control)
 
 		return true
 	end)
+end
+
+local function register_peer_callback(owner_mod, callback, callbacks)
+	local mod_name, owner_error = owner_name(owner_mod)
+
+	if not mod_name then
+		return false, owner_error
+	end
+	if type(callback) ~= "function" then
+		return false, "Network peer callback must be a function"
+	end
+
+	callbacks[mod_name] = {
+		callback = callback,
+		owner = owner_mod,
+	}
+
+	return true
+end
+
+function ModNetwork.on_peer_joined(owner_mod, callback)
+	local registered, register_error = register_peer_callback(owner_mod, callback, state.peer_joined_callbacks)
+
+	if not registered then
+		return false, register_error
+	end
+
+	local peer_ids = table.keys(remote_capabilities)
+
+	table.sort(peer_ids)
+
+	for i = 1, #peer_ids do
+		local peer_id = peer_ids[i]
+
+		if not SessionControl or SessionControl.is_peer_available(peer_id) then
+			owner_mod:pcall(callback, peer_id)
+		end
+	end
+
+	return true
+end
+
+function ModNetwork.on_peer_left(owner_mod, callback)
+	return register_peer_callback(owner_mod, callback, state.peer_left_callbacks)
 end
 
 function ModNetwork.is_available()
@@ -387,7 +464,7 @@ function ModNetwork.send(owner_mod, rpc_name, recipient, ...)
 		return false, "Attempted to send an unregistered network RPC"
 	end
 	if type(recipient) ~= "string" or recipient == "" then
-		return false, "Network recipient must be all, local, others, or a peer id"
+		return false, "Network recipient must be all, host, local, others, or a peer id"
 	end
 
 	local arguments, arguments_error = pack_arguments(...)
@@ -404,7 +481,7 @@ function ModNetwork.send(owner_mod, rpc_name, recipient, ...)
 
 	local normalized_recipient = recipient
 
-	if recipient ~= "all" and recipient ~= "local" and recipient ~= "others" then
+	if recipient ~= "all" and recipient ~= "host" and recipient ~= "local" and recipient ~= "others" then
 		normalized_recipient = normalize_peer_id(recipient)
 	end
 	if normalized_recipient == "local" or normalized_recipient == sender_peer_id then
@@ -414,6 +491,9 @@ function ModNetwork.send(owner_mod, rpc_name, recipient, ...)
 	local connection = Managers.connection
 
 	if connection and connection:is_host() then
+		if normalized_recipient == "host" then
+			return dispatch(mod_name, rpc_name, sender_peer_id, arguments)
+		end
 		if normalized_recipient == "all" then
 			dispatch(mod_name, rpc_name, sender_peer_id, arguments)
 
@@ -431,7 +511,9 @@ function ModNetwork.send(owner_mod, rpc_name, recipient, ...)
 
 	local host_peer_id = normalize_peer_id(connection:host())
 
-	if normalized_recipient == host_peer_id and not supports(host_peer_id, mod_name, rpc_name) then
+	if (normalized_recipient == "host" or normalized_recipient == host_peer_id)
+		and not supports(host_peer_id, mod_name, rpc_name)
+	then
 		return false, ROUTE_ERROR_RPC_UNSUPPORTED
 	end
 	if normalized_recipient == "all" then
