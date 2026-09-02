@@ -205,8 +205,8 @@ local native_localization = {
 		["zh-cn"] = "领域连接错误",
 	},
 	loc_realms_connection_failed = {
-		en = "Failed to connect to the Realms server.",
-		["zh-cn"] = "无法连接到领域服务器。",
+		en = "Failed to connect to the Realms server. Check that the server address is correct.",
+		["zh-cn"] = "无法连接到领域服务器。请检查服务器地址是否正确。",
 	},
 	loc_realms_connection_lost = {
 		en = "The connection to the Realms server was lost.",

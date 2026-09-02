@@ -86,8 +86,10 @@ ClientSessionBoot._fail = function (self, reason, disconnect_reason)
 		return
 	end
 
-	mod:error("Client boot failed: %s", tostring(reason))
-	self:event_object():failed_to_boot(true, "game", disconnect_reason or DisconnectReason.CONNECTION_FAILED, tostring(reason))
+	disconnect_reason = disconnect_reason or DisconnectReason.CONNECTION_FAILED
+
+	mod:info("Client boot failed: %s", tostring(reason))
+	self:event_object():failed_to_boot(true, "game", disconnect_reason, tostring(reason))
 
 	if self._options.on_failed then
 		self._options.on_failed()
