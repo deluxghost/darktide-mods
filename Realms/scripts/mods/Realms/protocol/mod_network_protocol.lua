@@ -100,6 +100,12 @@ local MESSAGE_VALIDATORS = {
 	mod_network_manifest = function (data)
 		return table.size(data) == 1 and valid_manifest(data.rpcs)
 	end,
+	mod_network_peer_joined = function (data)
+		return table.size(data) == 1 and valid_string(data.peer_id, MAX_RECIPIENT_LENGTH)
+	end,
+	mod_network_peer_left = function (data)
+		return table.size(data) == 1 and valid_string(data.peer_id, MAX_RECIPIENT_LENGTH)
+	end,
 	mod_network_request = function (data)
 		return table.size(data) == 4
 			and valid_arguments(data.arguments)

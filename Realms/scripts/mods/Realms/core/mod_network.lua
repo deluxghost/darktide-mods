@@ -14,6 +14,7 @@ state.peer_left_callbacks = state.peer_left_callbacks or {}
 
 local ModNetwork = {}
 local SessionControl
+local known_peers = {}
 local remote_capabilities = {}
 
 local function normalize_peer_id(peer_id)
@@ -62,6 +63,45 @@ end
 
 local function notify_peer_left(peer_id)
 	notify_peer_callbacks(state.peer_left_callbacks, normalize_peer_id(peer_id))
+end
+
+local function add_known_peer(peer_id)
+	peer_id = normalize_peer_id(peer_id)
+
+	if peer_id == local_peer_id() or known_peers[peer_id] then
+		return false
+	end
+
+	known_peers[peer_id] = true
+	notify_peer_joined(peer_id)
+
+	return true
+end
+
+local function remove_known_peer(peer_id)
+	peer_id = normalize_peer_id(peer_id)
+	local was_known = known_peers[peer_id] == true
+
+	known_peers[peer_id] = nil
+	remote_capabilities[peer_id] = nil
+
+	if not was_known then
+		return false
+	end
+
+	notify_peer_left(peer_id)
+
+	return true
+end
+
+local function clear_known_peers()
+	local peer_ids = table.keys(known_peers)
+
+	table.sort(peer_ids)
+
+	for i = 1, #peer_ids do
+		remove_known_peer(peer_ids[i])
+	end
 end
 
 local function pack_arguments(...)
@@ -198,6 +238,34 @@ local function send_manifest(channel_id, role)
 	return SessionControl.send_to_host(ModNetworkProtocol.NAME, "mod_network_manifest", data)
 end
 
+local function send_peer_event(channel_id, message_type, peer_id)
+	return SessionControl.send_to_client(channel_id, ModNetworkProtocol.NAME, message_type, {
+		peer_id = normalize_peer_id(peer_id),
+	})
+end
+
+local function send_existing_peers(channel_id)
+	local peer_ids = table.keys(known_peers)
+
+	table.sort(peer_ids)
+
+	for i = 1, #peer_ids do
+		local sent, send_error = send_peer_event(channel_id, "mod_network_peer_joined", peer_ids[i])
+
+		if not sent then
+			return false, send_error
+		end
+	end
+
+	return true
+end
+
+local function broadcast_peer_event(message_type, peer_id)
+	return SessionControl.send_to_clients(ModNetworkProtocol.NAME, message_type, {
+		peer_id = normalize_peer_id(peer_id),
+	}, peer_id)
+end
+
 local function send_route_error(channel_id, data, reason)
 	local sent, send_error = SessionControl.send_to_client(channel_id, ModNetworkProtocol.NAME, "mod_network_error", {
 		mod_name = data.mod_name,
@@ -254,7 +322,7 @@ end
 
 local function receive_manifest(channel_id, sender_peer_id, data)
 	local peer_id = normalize_peer_id(sender_peer_id)
-	local was_joined = remote_capabilities[peer_id] ~= nil
+	local was_joined = known_peers[peer_id] == true
 
 	store_manifest(sender_peer_id, data.rpcs)
 
@@ -266,10 +334,32 @@ local function receive_manifest(channel_id, sender_peer_id, data)
 		if not sent then
 			return false, send_error
 		end
+
+		local peers_sent, peers_error = send_existing_peers(channel_id)
+
+		if not peers_sent then
+			return false, peers_error
+		end
 	end
 	if not was_joined then
-		notify_peer_joined(peer_id)
+		add_known_peer(peer_id)
+
+		if connection and connection:is_host() then
+			return broadcast_peer_event("mod_network_peer_joined", peer_id)
+		end
 	end
+
+	return true
+end
+
+local function receive_peer_joined(channel_id, sender_peer_id, data)
+	add_known_peer(data.peer_id)
+
+	return true
+end
+
+local function receive_peer_left(channel_id, sender_peer_id, data)
+	remove_known_peer(data.peer_id)
 
 	return true
 end
@@ -351,12 +441,22 @@ function ModNetwork.install(session_control)
 	SessionControl.register_client_handler(ModNetworkProtocol.NAME, "mod_network_delivery", receive_client_delivery)
 	SessionControl.register_client_handler(ModNetworkProtocol.NAME, "mod_network_error", receive_client_error)
 	SessionControl.register_client_handler(ModNetworkProtocol.NAME, "mod_network_manifest", receive_manifest)
-	SessionControl.register_disconnect_handler("mod_network", function (peer_id)
+	SessionControl.register_client_handler(ModNetworkProtocol.NAME, "mod_network_peer_joined", receive_peer_joined)
+	SessionControl.register_client_handler(ModNetworkProtocol.NAME, "mod_network_peer_left", receive_peer_left)
+	SessionControl.register_disconnect_handler("mod_network", function (peer_id, channel_id, role)
 		peer_id = normalize_peer_id(peer_id)
 
-		if remote_capabilities[peer_id] then
-			remote_capabilities[peer_id] = nil
-			notify_peer_left(peer_id)
+		if role == "client" then
+			clear_known_peers()
+
+			return
+		end
+		if remove_known_peer(peer_id) and SessionControl.is_available() then
+			local sent, send_error = broadcast_peer_event("mod_network_peer_left", peer_id)
+
+			if not sent then
+				mod:info("Could not publish peer departure: %s", send_error)
+			end
 		end
 	end)
 	SessionControl.register_ready_handler("mod_network", function (channel_id, peer_id, role)
@@ -393,16 +493,14 @@ function ModNetwork.on_peer_joined(owner_mod, callback)
 		return false, register_error
 	end
 
-	local peer_ids = table.keys(remote_capabilities)
+	local peer_ids = table.keys(known_peers)
 
 	table.sort(peer_ids)
 
 	for i = 1, #peer_ids do
 		local peer_id = peer_ids[i]
 
-		if not SessionControl or SessionControl.is_peer_available(peer_id) then
-			owner_mod:pcall(callback, peer_id)
-		end
+		owner_mod:pcall(callback, peer_id)
 	end
 
 	return true

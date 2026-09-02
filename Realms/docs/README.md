@@ -89,13 +89,13 @@ Peer callback registration returns `true` or `false, error_message`. Registering
 local registered, register_error = realms.network_on_peer_joined(mod, callback)
 ```
 
-Registers a callback for remote Realms peers after their RPC capabilities are known:
+Registers a callback when a remote peer becomes available to Realms message routing:
 
 ```lua
 callback(peer_id)
 ```
 
-Existing peers are reported immediately. Register RPCs before registering this callback.
+Existing peers are reported immediately. Every node observes the host and all other clients, but never itself. Register RPCs before registering this callback.
 
 ### `network_on_peer_left`
 
@@ -103,7 +103,7 @@ Existing peers are reported immediately. Register RPCs before registering this c
 local registered, register_error = realms.network_on_peer_left(mod, callback)
 ```
 
-Registers a callback for remote peers leaving. The callback receives the departed peer ID, which is no longer a valid `network_send` recipient.
+Registers a callback for remote peers leaving. Every remaining node receives the departed peer ID, which is no longer a valid `network_send` recipient.
 
 ## Mission Transition API
 
