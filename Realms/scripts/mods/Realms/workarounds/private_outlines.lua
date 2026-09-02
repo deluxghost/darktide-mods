@@ -3,6 +3,7 @@ local mod = get_mod("Realms")
 local PrivateOutlines = {}
 local Session
 local context_stack = {}
+local installed_hook_targets = setmetatable({}, { __mode = "k" })
 local replay_depth = 0
 local state = mod:persistent_table("private_outline_state")
 
@@ -241,6 +242,10 @@ local function sync_rendered_source()
 end
 
 local function install_buff_extension_hooks(BuffExtensionBase)
+	if installed_hook_targets[BuffExtensionBase] then
+		return
+	end
+
 	mod:hook(BuffExtensionBase, "_add_buff", function (func, self, ...)
 		return call_in_context(func, self._buff_context, self, self, ...)
 	end)
@@ -256,15 +261,27 @@ local function install_buff_extension_hooks(BuffExtensionBase)
 
 		return result
 	end)
+
+	installed_hook_targets[BuffExtensionBase] = true
 end
 
 local function install_player_unit_buff_hooks(PlayerUnitBuffExtension)
+	if installed_hook_targets[PlayerUnitBuffExtension] then
+		return
+	end
+
 	mod:hook(PlayerUnitBuffExtension, "fixed_update", function (func, self, ...)
 		return call_in_context(func, self._buff_context, self, self, ...)
 	end)
+
+	installed_hook_targets[PlayerUnitBuffExtension] = true
 end
 
 local function install_outline_system_hooks(OutlineSystem)
+	if installed_hook_targets[OutlineSystem] then
+		return
+	end
+
 	mod:hook(OutlineSystem, "add_outline", function (func, self, unit, outline_name)
 		if replay_depth > 0 then
 			return func(self, unit, outline_name)
@@ -323,6 +340,8 @@ local function install_outline_system_hooks(OutlineSystem)
 
 		return result
 	end)
+
+	installed_hook_targets[OutlineSystem] = true
 end
 
 function PrivateOutlines.install(session)

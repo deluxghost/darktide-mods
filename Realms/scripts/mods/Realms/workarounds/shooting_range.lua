@@ -11,6 +11,7 @@ local ShootingRangeSteps = require("scripts/extension_systems/training_grounds/s
 local ShootingRange = {}
 local Session
 local GameplayControl
+local installed_interactable_events = setmetatable({}, { __mode = "k" })
 
 local GAME_MODE_NAME = "shooting_range"
 local INVENTORY_VIEW_NAME = "inventory_background_view"
@@ -566,7 +567,13 @@ function ShootingRange.install(session, gameplay_control)
 	end)
 
 	mod:hook_require("scripts/components/interactable", function (Interactable)
-		mod:hook(Interactable.events, "interaction_started", function (func, self, interaction_type, interactor_unit)
+		local events = Interactable.events
+
+		if installed_interactable_events[events] then
+			return
+		end
+
+		mod:hook(events, "interaction_started", function (func, self, interaction_type, interactor_unit)
 			if Session.is_active_host() and is_shooting_range() and is_loadout_unit(self._unit) and runtime.chest_open then
 				return true
 			end
@@ -574,7 +581,7 @@ function ShootingRange.install(session, gameplay_control)
 			return func(self, interaction_type, interactor_unit)
 		end)
 
-		mod:hook(Interactable.events, "interaction_success", function (func, self, interaction_type, interactor_unit)
+		mod:hook(events, "interaction_success", function (func, self, interaction_type, interactor_unit)
 			if Session.is_active_host() and is_shooting_range() and is_loadout_unit(self._unit) then
 				if runtime.closing_animation then
 					return func(self, interaction_type, interactor_unit)
@@ -591,6 +598,8 @@ function ShootingRange.install(session, gameplay_control)
 
 			return func(self, interaction_type, interactor_unit)
 		end)
+
+		installed_interactable_events[events] = true
 	end)
 end
 

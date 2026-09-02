@@ -20,6 +20,7 @@ local PARTY_GRID_INTERACTION_ID = "realms_party_grid_interaction"
 local PARTY_GRID_MASK_ID = "realms_party_grid_mask"
 local PARTY_SCROLLBAR_ID = "realms_party_scrollbar"
 local PARTY_GRID_MASK_EXPANSION = 40
+local installed_player_popup_contents = setmetatable({}, { __mode = "k" })
 local installed_roster_views = setmetatable({}, { __mode = "k" })
 
 local function kickable_peer_id(player_info)
@@ -63,6 +64,10 @@ local function prepend_kick_item(menu_items, num_menu_items, parent, player_info
 end
 
 local function install_player_popup_hook(PlayerPopupContent)
+	if installed_player_popup_contents[PlayerPopupContent] then
+		return
+	end
+
 	mod:hook(PlayerPopupContent, "from_player_info", function (func, parent, player_info)
 		local menu_items, num_menu_items = func(parent, player_info)
 
@@ -86,6 +91,8 @@ local function install_player_popup_hook(PlayerPopupContent)
 
 		return menu_items, num_menu_items
 	end)
+
+	installed_player_popup_contents[PlayerPopupContent] = true
 end
 
 local function realms_visible(content)
