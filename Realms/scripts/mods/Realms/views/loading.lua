@@ -6,8 +6,14 @@ local Loading = {}
 local Session
 local Preparation
 
+local function preparation_allows_loading_views()
+	local phase = Preparation.phase()
+
+	return phase == "started" or phase == "bypassed"
+end
+
 local function mission_intro_available()
-	if not Session.is_active() or not Preparation.is_started() or Managers.ui:view_active("lobby_view") then
+	if not Session.is_active() or not preparation_allows_loading_views() or Managers.ui:view_active("lobby_view") then
 		return false
 	end
 
@@ -31,7 +37,7 @@ local function mission_intro_available()
 end
 
 local function waiting_for_preparation()
-	return Session.is_active() and not Preparation.is_started()
+	return Session.is_active() and not preparation_allows_loading_views()
 end
 
 local function realms_view_settings(state_view_settings)
