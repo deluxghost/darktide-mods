@@ -6,8 +6,8 @@ local localization = {
 		["zh-cn"] = "领域服务器",
 	},
 	mod_description = {
-		en = "Adds LAN multiplayer support to Darktide. Every local single-player game also starts a LAN listen server.",
-		["zh-cn"] = "为暗潮提供局域网联机功能。所有本地单人游戏都会同时启动局域网监听服务器。",
+		en = "Adds LAN multiplayer support to Darktide. A local single-player game can also run as a LAN listen server.",
+		["zh-cn"] = "为暗潮提供局域网联机功能。本地单人游戏可以作为局域网监听服务器运行。",
 	},
 	join_server = {
 		en = "Join server",
