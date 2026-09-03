@@ -33,6 +33,14 @@ local localization = {
 		en = "Server settings",
 		["zh-cn"] = "服务器设置",
 	},
+	enable_server = {
+		en = "Enable Realms server",
+		["zh-cn"] = "启用领域服务器",
+	},
+	enable_server_description = {
+		en = "Turn newly started local games into Realms listen servers. When disabled, local games retain their original single-player behavior.",
+		["zh-cn"] = "将新启动的本地游戏作为领域监听服务器运行。禁用后，本地游戏保持原有的单人行为。",
+	},
 	mission_preparation = {
 		en = "Mission preparation",
 		["zh-cn"] = "任务准备",
@@ -140,6 +148,10 @@ local localization = {
 	host_listening = {
 		en = "Realms server is listening on UDP port %d.",
 		["zh-cn"] = "领域服务器正在监听 UDP 端口 %d。",
+	},
+	host_disabled = {
+		en = "The Realms server is not enabled. Other players cannot join.",
+		["zh-cn"] = "当前未启用领域服务器，其他玩家无法加入。",
 	},
 	client_boot_failed = {
 		en = "Failed to join the server.",

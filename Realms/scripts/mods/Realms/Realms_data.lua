@@ -23,6 +23,11 @@ return {
 				type = "group",
 				sub_widgets = {
 					{
+						setting_id = "enable_server",
+						type = "checkbox",
+						default_value = true,
+					},
+					{
 						setting_id = "mission_preparation",
 						type = "checkbox",
 						default_value = true,

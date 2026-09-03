@@ -98,7 +98,7 @@ HostSessionBoot.init = function (self, event_object, options)
 	self._engine_lobby = nil
 	self:_set_state(STATES.ready)
 
-	mod:echo(mod:localize("host_listening", local_port))
+	mod:notify(mod:localize("host_listening", local_port))
 end
 
 HostSessionBoot._fail = function (self, reason)

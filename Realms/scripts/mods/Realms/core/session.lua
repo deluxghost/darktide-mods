@@ -366,6 +366,17 @@ function Session.official_party_join_started(party_manager, join_parameter, is_r
 end
 
 function Session.replace_singleplayer_boot(manager, original_boot)
+	if not mod:get("enable_server") then
+		apply_pending_host_reset()
+		state.pending_host_mission_name = nil
+
+		reset_host_party_tracking()
+		clear_transition_state()
+		mod:echo(mod:localize("host_disabled"))
+
+		return original_boot(manager)
+	end
+
 	if Session.is_active_host() and manager._session then
 		pending_host_reset = nil
 		release_reused_host_session_boot()
@@ -406,7 +417,7 @@ function Session.replace_singleplayer_boot(manager, original_boot)
 end
 
 function Session.intercept_host_reset(manager, original_reset, reason)
-	if applying_explicit_session_reset or not Session.is_active_host() or not manager._session then
+	if not mod:get("enable_server") or applying_explicit_session_reset or not Session.is_active_host() or not manager._session then
 		return false
 	end
 	if pending_host_reset then
