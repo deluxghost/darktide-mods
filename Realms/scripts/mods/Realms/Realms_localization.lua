@@ -123,11 +123,11 @@ local localization = {
 	},
 	shooting_range_sync_sound_muffling = {
 		en = "Sync sound muffling to clients",
-		["zh-cn"] = "同步声音屏蔽到客机",
+		["zh-cn"] = "同步消音状态到客机",
 	},
 	shooting_range_sync_sound_muffling_description = {
 		en = "Make clients follow the host's sound-muffling state in the Psykhanium.",
-		["zh-cn"] = "使客机跟随主机在灵能室中的声音屏蔽状态。",
+		["zh-cn"] = "使客机跟随主机在灵能室中的消音状态。",
 	},
 	command_status_description = {
 		en = "Show the current Realms session status.",
