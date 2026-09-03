@@ -351,12 +351,20 @@ end
 function Preparation.remote_disconnected(channel_id, peer_id)
 	peer_id = normalize_peer_id(peer_id)
 
-	if state.role == "host" and state.phase == "waiting" and state.ready_by_peer[peer_id] ~= nil then
-		state.ready_by_peer[peer_id] = nil
-		update_host_countdown()
-		state.revision = state.revision + 1
-		broadcast_snapshot()
+	if state.role ~= "host" or state.phase ~= "waiting" then
+		return
 	end
+
+	ProfileUpdates.remote_disconnected(peer_id)
+
+	if state.ready_by_peer[peer_id] == nil then
+		return
+	end
+
+	state.ready_by_peer[peer_id] = nil
+	update_host_countdown()
+	state.revision = state.revision + 1
+	broadcast_snapshot()
 end
 
 function Preparation.server_settings_changed()
