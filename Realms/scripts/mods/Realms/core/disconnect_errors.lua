@@ -6,6 +6,24 @@ local RealmsConnectionError = mod:io_dofile("Realms/scripts/mods/Realms/errors/r
 
 local DisconnectErrors = {}
 
+local ENGINE_LEFT_SESSION_REASON = "leave_to_hub"
+
+function DisconnectErrors.normalize_left_session_reason(mechanism_name, context)
+	if mechanism_name ~= "left_session" or type(context) ~= "table" then
+		return
+	end
+
+	local reason = context.left_session_reason
+
+	if not DisconnectReason.is_known(reason) then
+		return
+	end
+
+	mod:info("Mapping left session reason %s to %s", tostring(reason), ENGINE_LEFT_SESSION_REASON)
+
+	context.left_session_reason = ENGINE_LEFT_SESSION_REASON
+end
+
 function DisconnectErrors.install()
 	mod:hook(MultiplayerSession, "disconnected_from_host", function (func, self, is_error, source, reason, details)
 		local session_manager = Managers.multiplayer_session
