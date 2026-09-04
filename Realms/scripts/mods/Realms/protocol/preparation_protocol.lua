@@ -64,7 +64,7 @@ local function validate_message(message)
 			return true
 		end
 	else
-		if table.size(data) == 7
+		if table.size(data) == 8
 			and type(data.countdown_remaining_ms) == "number"
 			and data.countdown_remaining_ms % 1 == 0
 			and data.countdown_remaining_ms >= 0
@@ -77,6 +77,7 @@ local function validate_message(message)
 			and data.max_members % 1 == 0
 			and data.max_members >= 2
 			and data.max_members <= 8
+			and type(data.loadout_changes_allowed) == "boolean"
 			and type(data.mission_name) == "string"
 			and MissionTemplates[data.mission_name] ~= nil
 			and type(data.finalizing) == "boolean"

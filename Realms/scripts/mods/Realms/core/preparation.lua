@@ -136,6 +136,7 @@ local function snapshot_data()
 	return {
 		countdown_remaining_ms = countdown_remaining_ms(),
 		finalizing = state.finalizing,
+		loadout_changes_allowed = Session.loadout_changes_allowed(),
 		max_members = connection:max_members(),
 		mission_name = state.mission_name,
 		ready_peer_ids = ready_peer_ids(),
@@ -231,7 +232,7 @@ local function apply_snapshot(data)
 	state.revision = data.revision
 	state.finalizing = data.finalizing
 	state.mission_name = data.mission_name
-	Session.apply_remote_max_members(data.max_members)
+	Session.apply_remote_server_settings(data.max_members, data.loadout_changes_allowed)
 
 	if data.started then
 		state.phase = "started"

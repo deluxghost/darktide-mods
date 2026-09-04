@@ -17,11 +17,12 @@ local MESSAGE_VALIDATORS = {
 	profile_cancel = ProfileUpdate.valid_pending_data,
 	profile_update = ProfileUpdate.valid_update_data,
 	server_settings = function (data)
-		return table.size(data) == 1
+		return table.size(data) == 2
 			and type(data.max_members) == "number"
 			and data.max_members % 1 == 0
 			and data.max_members >= 2
 			and data.max_members <= 8
+			and type(data.loadout_changes_allowed) == "boolean"
 	end,
 	gameplay_time_scale = function (data)
 		return table.size(data) == 1

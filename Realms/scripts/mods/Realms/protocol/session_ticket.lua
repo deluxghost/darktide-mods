@@ -4,7 +4,7 @@ local DisconnectReason = mod:io_dofile("Realms/scripts/mods/Realms/protocol/disc
 
 local SessionTicket = {}
 
-local PROTOCOL_VERSION = 10
+local PROTOCOL_VERSION = 11
 local MAX_TICKET_SIZE = 196608
 local MAX_PASSWORD_SIZE = 1024
 local HEADER_FIELDS = {

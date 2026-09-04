@@ -49,6 +49,14 @@ local localization = {
 		en = "Require all players to ready up before the host loads a mission. The Mourningstar and the Psykhanium always load immediately.",
 		["zh-cn"] = "主机加载任务前要求所有玩家完成准备。哀星号和灵能室始终直接加载。",
 	},
+	allow_in_mission_loadout_changes = {
+		en = "Allow in-mission loadout changes",
+		["zh-cn"] = "允许任务中切换战斗配备",
+	},
+	allow_in_mission_loadout_changes_description = {
+		en = "Allow every player to change their loadout while a Realms mission is in progress.",
+		["zh-cn"] = "允许所有玩家在领域任务进行期间切换战斗配备。",
+	},
 	join_server_address = {
 		en = "Server address",
 		["zh-cn"] = "服务器地址",

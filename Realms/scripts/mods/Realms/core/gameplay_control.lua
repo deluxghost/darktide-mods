@@ -119,6 +119,7 @@ function GameplayControl.install(session, preparation, session_control)
 		ready_peers[peer_id] = true
 
 		local sent, send_error = SessionControl.send_to_client(channel_id, GameplayControlProtocol.NAME, "server_settings", {
+			loadout_changes_allowed = Session.loadout_changes_allowed(),
 			max_members = Session.max_members(),
 		})
 
@@ -136,7 +137,7 @@ function GameplayControl.install(session, preparation, session_control)
 	end)
 
 	GameplayControl.register_client_handler("server_settings", function (channel_id, peer_id, data)
-		local applied, apply_error = Session.apply_remote_max_members(data.max_members)
+		local applied, apply_error = Session.apply_remote_server_settings(data.max_members, data.loadout_changes_allowed)
 
 		if not applied then
 			return false, apply_error
@@ -272,6 +273,7 @@ function GameplayControl.broadcast_server_settings()
 
 	for peer_id in pairs(ready_peers) do
 		local sent, send_error = SessionControl.send_to_peer(peer_id, GameplayControlProtocol.NAME, "server_settings", {
+			loadout_changes_allowed = Session.loadout_changes_allowed(),
 			max_members = Session.max_members(),
 		})
 

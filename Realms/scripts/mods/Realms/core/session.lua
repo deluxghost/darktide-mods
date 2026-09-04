@@ -231,12 +231,30 @@ function Session.max_members()
 	return connection and connection:max_members() or nil
 end
 
-function Session.apply_remote_max_members(max_members)
-	if not Session.is_active_client() or type(max_members) ~= "number" or max_members % 1 ~= 0 or max_members < 2 or max_members > 8 then
+function Session.loadout_changes_allowed()
+	if Session.is_active_host() then
+		return mod:get("allow_in_mission_loadout_changes") == true
+	end
+	if Session.is_active_client() then
+		return state.remote_loadout_changes_allowed == true
+	end
+
+	return false
+end
+
+function Session.apply_remote_server_settings(max_members, loadout_changes_allowed)
+	if not Session.is_active_client() then
+		return false, "Realms server settings arrived without an active client session"
+	end
+	if type(max_members) ~= "number" or max_members % 1 ~= 0 or max_members < 2 or max_members > 8 then
 		return false, "Realms server sent an invalid player limit"
+	end
+	if type(loadout_changes_allowed) ~= "boolean" then
+		return false, "Realms server sent an invalid loadout-change policy"
 	end
 
 	state.remote_max_members = max_members
+	state.remote_loadout_changes_allowed = loadout_changes_allowed
 
 	return true
 end
@@ -690,6 +708,7 @@ function Session.start_client(server_address, server_port_text, password)
 		transition_to_loading = not game_session_active,
 	}
 	state.remote_max_members = nil
+	state.remote_loadout_changes_allowed = nil
 	local native_ready, native_error = set_client_native_support(true)
 
 	if not native_ready then
@@ -1068,6 +1087,7 @@ function Session.leave()
 	pending_host_reset = nil
 	clear_transition_state()
 	state.remote_max_members = nil
+	state.remote_loadout_changes_allowed = nil
 	Managers.multiplayer_session:leave("realms_disconnect")
 
 	return true

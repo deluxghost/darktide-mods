@@ -7,6 +7,7 @@ local Preparation
 local GameplayControl
 local observed_connection
 local local_change
+local local_sequence = 0
 local pending_notice
 local pending_cancel
 local pending_delivery
@@ -30,6 +31,7 @@ end
 local function reset()
 	observed_connection = active_connection()
 	local_change = nil
+	local_sequence = 0
 	pending_notice = nil
 	pending_cancel = nil
 	pending_delivery = nil
@@ -45,6 +47,21 @@ local function ensure_session()
 	end
 
 	return connection
+end
+
+local function profile_changes_allowed()
+	return Preparation.allows_profile_changes() or Session.loadout_changes_allowed()
+end
+
+local function discard_disallowed_updates()
+	local_change = nil
+	pending_notice = nil
+	pending_cancel = nil
+	pending_delivery = nil
+
+	if Session.is_active_host() then
+		table.clear(pending_by_peer)
+	end
 end
 
 local function local_player(local_player_id)
@@ -242,17 +259,18 @@ end
 local function request_local_update(local_player_id, role)
 	local connection = ensure_session()
 
+	local_sequence = local_sequence + 1
+
 	if not local_change or local_change.role ~= role or local_change.local_player_id ~= local_player_id then
 		local_change = {
 			connection = connection,
 			fetching = false,
 			local_player_id = local_player_id,
 			role = role,
-			sequence = 0,
 		}
 	end
 
-	local_change.sequence = local_change.sequence + 1
+	local_change.sequence = local_sequence
 
 	if role == "host" then
 		mark_host_pending(local_peer_id(), local_player_id, local_change.sequence, false)
@@ -301,7 +319,7 @@ function ProfileUpdates.intercept_client_notification(local_player_id)
 	if not Session.is_active_client() then
 		return false
 	end
-	if not Managers.mechanism:profile_changes_are_allowed() then
+	if not profile_changes_allowed() then
 		return true
 	end
 
@@ -343,6 +361,9 @@ function ProfileUpdates.intercept_host_profile_change(synchronizer, peer_id, loc
 	if not connection or connection:profile_synchronizer() ~= synchronizer then
 		return false
 	end
+	if not profile_changes_allowed() then
+		return true
+	end
 
 	request_local_update(local_player_id, "host")
 
@@ -351,6 +372,13 @@ end
 
 function ProfileUpdates.receive_pending(channel_id, peer_id, data)
 	peer_id = normalize_peer_id(peer_id)
+
+	if not profile_changes_allowed() then
+		latest_sequence_by_peer[peer_id] = math.max(latest_sequence_by_peer[peer_id] or 0, data.sequence)
+		pending_by_peer[peer_id] = nil
+
+		return true
+	end
 
 	local expected_identity = expected_remote_identity(peer_id, data.local_player_id)
 
@@ -372,6 +400,13 @@ end
 
 function ProfileUpdates.receive_update(channel_id, peer_id, data)
 	peer_id = normalize_peer_id(peer_id)
+
+	if not profile_changes_allowed() then
+		latest_sequence_by_peer[peer_id] = math.max(latest_sequence_by_peer[peer_id] or 0, data.sequence)
+		pending_by_peer[peer_id] = nil
+
+		return true
+	end
 
 	local expected_identity = expected_remote_identity(peer_id, data.identity.local_player_id)
 
@@ -454,6 +489,11 @@ function ProfileUpdates.update()
 		if connection or local_change or next(pending_by_peer) then
 			reset()
 		end
+
+		return
+	end
+	if not profile_changes_allowed() then
+		discard_disallowed_updates()
 
 		return
 	end

@@ -44,6 +44,7 @@ mod.queue_mission_transition = function (owner_mod, mission_context)
 	return Session.queue_mission_transition(owner_mod, mission_context)
 end
 local ProfileUpdates = mod:io_dofile("Realms/scripts/mods/Realms/core/profile_updates")
+local LoadoutChanges = mod:io_dofile("Realms/scripts/mods/Realms/core/loadout_changes")
 local Presence = mod:io_dofile("Realms/scripts/mods/Realms/core/presence")
 local UnitRpcLifetime = mod:io_dofile("Realms/scripts/mods/Realms/core/unit_rpc_lifetime")
 local Workarounds = mod:io_dofile("Realms/scripts/mods/Realms/workarounds/workarounds")
@@ -66,6 +67,7 @@ BotBackfill.install(Session)
 DisconnectErrors.install()
 GameplayControl.install(Session, Preparation, SessionControl)
 ProfileUpdates.install(Session, Preparation, GameplayControl)
+LoadoutChanges.install(Session, Preparation)
 Presence.install(Session)
 ModNetwork.install(SessionControl)
 Chat.install(Session, SessionControl)
@@ -208,7 +210,7 @@ mod:hook(MechanismManager, "trigger_event", function (func, self, event, ...)
 end)
 
 mod:hook(MechanismManager, "profile_changes_are_allowed", function (func, self)
-	if Preparation.allows_profile_changes() then
+	if Preparation.allows_profile_changes() or Session.loadout_changes_allowed() then
 		return true
 	end
 
@@ -258,6 +260,7 @@ mod.update = function ()
 	GameplayControl.update()
 	Chat.update()
 	ProfileUpdates.update()
+	LoadoutChanges.update()
 	Workarounds.update()
 end
 
@@ -272,6 +275,12 @@ end)
 mod.on_setting_changed = function (setting_id)
 	if setting_id == "bot_fill_target" then
 		BotBackfill.apply_settings(Session)
+
+		return
+	end
+	if setting_id == "allow_in_mission_loadout_changes" then
+		Preparation.server_settings_changed()
+		GameplayControl.broadcast_server_settings()
 
 		return
 	end

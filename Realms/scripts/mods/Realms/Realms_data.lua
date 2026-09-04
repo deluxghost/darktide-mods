@@ -43,6 +43,11 @@ return {
 						default_value = true,
 					},
 					{
+						setting_id = "allow_in_mission_loadout_changes",
+						type = "checkbox",
+						default_value = false,
+					},
+					{
 						setting_id = "private_mode",
 						type = "checkbox",
 						default_value = false,
