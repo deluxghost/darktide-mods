@@ -156,6 +156,8 @@ mod:hook(MechanismManager, "rpc_set_mechanism", function (func, self, channel_id
 end)
 
 mod:hook(MechanismManager, "change_mechanism", function (func, self, mechanism_name, context)
+	DisconnectErrors.normalize_left_session_reason(mechanism_name, context)
+
 	if Session.intercept_host_mechanism_change(mechanism_name, context) then
 		return
 	end
