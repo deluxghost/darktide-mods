@@ -20,6 +20,7 @@ local COUNTDOWN_DURATION = 5
 local PREPARATION_BYPASS_GAME_MODES = {
 	hub = true,
 	hub_singleplay = true,
+	prologue = true,
 	prologue_hub = true,
 	shooting_range = true,
 }
@@ -272,12 +273,12 @@ end
 
 function Preparation.host_mechanism_configured(mission_name)
 	if state.role ~= "host" or state.phase ~= "host_booting" then
-		return
+		return false
 	end
 
 	state.mission_name = mission_name or state.mission_name
 	if not state.mission_name then
-		return
+		return false
 	end
 
 	local connection = active_host_connection()
@@ -290,7 +291,7 @@ function Preparation.host_mechanism_configured(mission_name)
 			broadcast_snapshot()
 		end
 
-		return
+		return false
 	end
 
 	state.phase = "waiting"
@@ -307,16 +308,6 @@ function Preparation.host_mechanism_configured(mission_name)
 	if connection then
 		broadcast_snapshot()
 	end
-end
-
-function Preparation.host_installed()
-	if state.role ~= "host" or state.phase ~= "waiting" or not active_host_connection() then
-		return false
-	end
-
-	local mechanism_data = Managers.mechanism and Managers.mechanism:mechanism_data()
-
-	state.mission_name = mechanism_data and mechanism_data.mission_name or state.mission_name
 
 	return true
 end

@@ -584,6 +584,12 @@ local function apply_deferred_host_mechanism_change()
 	return true
 end
 
+local function configure_host_preparation(mission_name)
+	if Preparation.host_mechanism_configured(mission_name) and not state.preparation_loading_requested then
+		state.main_menu_transition = "realms_host"
+	end
+end
+
 local function apply_queued_mission_transition()
 	local transition = state.queued_mission_transition
 
@@ -599,7 +605,7 @@ local function apply_queued_mission_transition()
 	state.host_preparation_loading = false
 	state.host_preparation_no_level_ready = false
 	Preparation.host_transition_started(transition.mission_name)
-	Preparation.host_mechanism_configured(transition.mission_name)
+	configure_host_preparation(transition.mission_name)
 	applying_deferred_mechanism_change = true
 	Managers.mechanism:change_mechanism(transition.mechanism_name, transition.context)
 	applying_deferred_mechanism_change = false
@@ -985,9 +991,6 @@ local function sync_host_mechanism(mechanism_data)
 	end
 
 	connection:set_mission_name(mechanism_data and mechanism_data.mission_name)
-	if Preparation.host_installed() and not state.preparation_loading_requested then
-		state.main_menu_transition = "realms_host"
-	end
 end
 
 function Session.host_connection_installed()
@@ -1005,7 +1008,7 @@ function Session.host_mechanism_changed()
 
 	local mechanism_data = host_mechanism_data()
 
-	Preparation.host_mechanism_configured(mechanism_data and mechanism_data.mission_name)
+	configure_host_preparation(mechanism_data and mechanism_data.mission_name)
 	sync_host_mechanism(mechanism_data)
 end
 
