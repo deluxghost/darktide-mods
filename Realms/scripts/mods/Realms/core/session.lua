@@ -7,6 +7,7 @@ local DisconnectReason = mod:io_dofile("Realms/scripts/mods/Realms/protocol/disc
 local HostSessionBoot = mod:io_dofile("Realms/scripts/mods/Realms/session/host_session_boot")
 local MechanismContext = mod:io_dofile("Realms/scripts/mods/Realms/protocol/mechanism_context")
 local Native = mod:io_dofile("Realms/scripts/mods/Realms/runtime/native")
+local RealmsConnectionError = mod:io_dofile("Realms/scripts/mods/Realms/errors/realms_connection_error")
 local Preparation = mod._preparation
 local GameplayControl = mod._gameplay_control
 local ReusedHostSessionBoot = mod:io_dofile("Realms/scripts/mods/Realms/session/reused_host_session_boot")
@@ -405,8 +406,10 @@ function Session.replace_singleplayer_boot(manager, original_boot)
 	manager._session_boot:delete()
 	manager._session_boot = HostSessionBoot:new(new_session, {
 		accept_new_connections = not mod:get("private_mode"),
+		listen_port = mod:get("listen_port") or "",
 		max_members = mod:get("max_players"),
 		mission_name = mission_name,
+		on_fatal_error = Session.host_transport_failed,
 		on_installed = Session.host_connection_installed,
 		on_remote_connected = SessionControl.remote_connected,
 		on_remote_disconnected = SessionControl.remote_disconnected,
@@ -582,6 +585,17 @@ local function apply_deferred_host_mechanism_change()
 	end
 
 	return true
+end
+
+function Session.host_transport_failed(details)
+	if not Session.is_active_host() then
+		return
+	end
+
+	local connection = Managers.connection._connection_host
+
+	connection:close_all_channels(DisconnectReason.SERVER_CLOSED)
+	Managers.error:report_error(RealmsConnectionError:new("native", DisconnectReason.LISTEN_ENDPOINT_FAILED, details))
 end
 
 local function configure_host_preparation(mission_name)

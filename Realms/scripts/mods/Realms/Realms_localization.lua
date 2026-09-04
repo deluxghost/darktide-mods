@@ -101,6 +101,14 @@ local localization = {
 		en = "Fill empty places with bots until the total number of players and bots reaches this value. Bots are not added while the number of players is at or above the target.\n\nMore than 4 players may affect performance.",
 		["zh-cn"] = "使用机器人补位，直到玩家和机器人的总数达到此值。玩家数达到或超过目标时不会添加机器人。\n\n超过 4 个玩家可能会影响性能。",
 	},
+	listen_port = {
+		en = "Listening port (UDP)",
+		["zh-cn"] = "监听端口（UDP）",
+	},
+	listen_port_description = {
+		en = "Use a fixed UDP port between 1 and 65535 for new Realms servers. Leave empty to use the random port selected by the game.",
+		["zh-cn"] = "为新启动的领域服务器指定 1 到 65535 之间的固定 UDP 端口。留空时使用游戏随机选择的端口。",
+	},
 	server_password = {
 		en = "Server password",
 		["zh-cn"] = "服务器密码",
@@ -291,6 +299,14 @@ local native_localization = {
 	loc_realms_host_boot_failed = {
 		en = "Failed to start the Realms listen server.",
 		["zh-cn"] = "无法启动领域监听服务器。",
+	},
+	loc_realms_listen_port_unavailable = {
+		en = "The configured UDP listening port is unavailable.",
+		["zh-cn"] = "配置的 UDP 监听端口不可用。",
+	},
+	loc_realms_listen_endpoint_failed = {
+		en = "The Realms UDP listening endpoint stopped working. Connected players will be disconnected.",
+		["zh-cn"] = "领域 UDP 监听端点已停止工作，已连接的玩家将断开连接。",
 	},
 	loc_realms_kicked_by_host = {
 		en = "You were removed from the Realm by the host.",

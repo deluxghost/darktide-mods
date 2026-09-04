@@ -34,6 +34,7 @@ ConnectionHost.init = function (self, event_delegate, approve_delegate, engine_l
 	self._local_port = options.local_port
 	self._mission_name = options.mission_name
 	self._on_installed = options.on_installed
+	self._on_fatal_error = options.on_fatal_error
 	self._on_remote_connected = options.on_remote_connected
 	self._on_remote_disconnected = options.on_remote_disconnected
 	self._session_seed = math.random_seed()
@@ -46,6 +47,7 @@ ConnectionHost.init = function (self, event_delegate, approve_delegate, engine_l
 	self._destroyed = false
 	self._native_event_poll_elapsed = NATIVE_EVENT_POLL_INTERVAL
 	self._native_maintenance_elapsed = 0
+	self._relay_failed = false
 	self._realms_protocol = SessionTicket.PROTOCOL_VERSION
 	self._profile_synchronizer_host = ProfileSynchronizerHost:new(event_delegate)
 
@@ -81,6 +83,7 @@ ConnectionHost.destroy = function (self)
 	self._approve_delegate = nil
 	self._event_delegate = nil
 	self._on_installed = nil
+	self._on_fatal_error = nil
 	self._on_remote_connected = nil
 	self._on_remote_disconnected = nil
 end
@@ -143,6 +146,9 @@ ConnectionHost.validate_session_ticket = function (self, ticket)
 end
 
 ConnectionHost.can_accept_peer = function (self, peer_id)
+	if self._relay_failed then
+		return false, DisconnectReason.SERVER_ERROR
+	end
 	if not self._accept_new_connections then
 		return false, DisconnectReason.SERVER_PRIVATE
 	end
@@ -442,7 +448,7 @@ ConnectionHost.close_all_channels = function (self, reason, optional_details)
 end
 
 ConnectionHost.set_admission_policy = function (self, accept_new_connections, max_members, password)
-	self._accept_new_connections = accept_new_connections
+	self._accept_new_connections = accept_new_connections and not self._relay_failed
 	self._max_members = max_members
 	self._password = password
 
@@ -509,6 +515,15 @@ ConnectionHost._poll_native_events = function (self, dt)
 
 		if event.type == Native.EVENT_TYPES.error then
 			mod:error("Native event failed code=%d peer=%s channel=%d message=%s", event.code, event.peer_id, event.channel_id, event.message)
+
+			if event.code == Native.ERROR_CODES.relay_fatal and not self._relay_failed then
+				self._relay_failed = true
+				self._accept_new_connections = false
+
+				if self._on_fatal_error then
+					self._on_fatal_error(event.message)
+				end
+			end
 		elseif event.type == Native.EVENT_TYPES.peer_rejected then
 			if not remote_for_peer(self, event.peer_id) then
 				local released, release_error = Native.release_peer_transport_state(event.peer_id)
@@ -664,7 +679,7 @@ ConnectionHost.connected_peers = function (self)
 end
 
 ConnectionHost.status_lines = function (self)
-	local lines = {}
+	local lines = self._relay_failed and {"relay=failed"} or {}
 	local channel_ids = table.keys(self._remote_connections)
 
 	table.sort(channel_ids)

@@ -1,5 +1,15 @@
 local mod = get_mod("Realms")
 
+local function validate_listen_port(value)
+	if value == "" then
+		return true
+	end
+
+	local port = string.match(value, "^%d+$") and tonumber(value)
+
+	return port ~= nil and port >= 1 and port <= 65535
+end
+
 return {
 	name = mod:localize("mod_name"),
 	description = mod:localize("mod_description"),
@@ -48,6 +58,12 @@ return {
 						type = "numeric",
 						default_value = 4,
 						range = {1, 8},
+					},
+					{
+						setting_id = "listen_port",
+						type = "text",
+						default_value = "",
+						validate = validate_listen_port,
 					},
 					{
 						setting_id = "server_password",

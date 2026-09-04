@@ -12,6 +12,8 @@ DisconnectReason.SERVER_CONTEXT_INVALID = "realms_server_context_invalid"
 DisconnectReason.CLIENT_DATA_REJECTED = "realms_client_data_rejected"
 DisconnectReason.SERVER_ERROR = "realms_server_error"
 DisconnectReason.HOST_BOOT_FAILED = "realms_host_boot_failed"
+DisconnectReason.LISTEN_PORT_UNAVAILABLE = "realms_listen_port_unavailable"
+DisconnectReason.LISTEN_ENDPOINT_FAILED = "realms_listen_endpoint_failed"
 DisconnectReason.KICKED_BY_HOST = "realms_kicked_by_host"
 
 local LOCALIZATION_KEYS = {
@@ -27,6 +29,8 @@ local LOCALIZATION_KEYS = {
 	[DisconnectReason.CLIENT_DATA_REJECTED] = "loc_realms_client_data_rejected",
 	[DisconnectReason.SERVER_ERROR] = "loc_realms_server_error",
 	[DisconnectReason.HOST_BOOT_FAILED] = "loc_realms_host_boot_failed",
+	[DisconnectReason.LISTEN_PORT_UNAVAILABLE] = "loc_realms_listen_port_unavailable",
+	[DisconnectReason.LISTEN_ENDPOINT_FAILED] = "loc_realms_listen_endpoint_failed",
 	[DisconnectReason.KICKED_BY_HOST] = "loc_realms_kicked_by_host",
 }
 

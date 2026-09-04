@@ -22,7 +22,7 @@ if not pcall(ffi.typeof, "RealmsRuntime_CDEF") then
 			char* error, int error_capacity);
 		int RealmsRuntime_SetClientIpv6MemberAddressSupport(int enabled, char* error, int error_capacity);
 		int RealmsRuntime_StartLocalSession(const char* local_account_id, const char* local_peer_id,
-			int* local_udp_port, char* error, int error_capacity);
+			int requested_listen_port, int* listen_udp_port, int* start_error_code, char* error, int error_capacity);
 		int RealmsRuntime_IsPeerConnected(const char* peer_id, int* connected, char* error, int error_capacity);
 		int RealmsRuntime_ReleasePeerTransportState(const char* peer_id, char* error, int error_capacity);
 		int RealmsRuntime_AdoptPeerTransportState(const char* peer_id, char* error, int error_capacity);

@@ -13,6 +13,12 @@ local EVENT_TYPES = {
 	peer_joined = 3,
 	peer_rejected = 4,
 }
+local ERROR_CODES = {
+	relay_fatal = 1010,
+}
+local START_ERROR_CODES = {
+	listen_port_unavailable = 1,
+}
 local instances = mod:persistent_table("instances")
 
 instances.native = instances.native or {}
@@ -120,25 +126,38 @@ function Native.set_client_ipv6_member_address_support(enabled)
 	return true
 end
 
-function Native.start_local_session(account_id, peer_id)
+function Native.start_local_session(account_id, peer_id, listen_port)
 	local runtime, runtime_error = initialized_runtime()
 
 	if not runtime then
 		return nil, runtime_error
 	end
 
+	local requested_listen_port = listen_port == "" and 0 or tonumber(listen_port)
+
+	if not requested_listen_port
+		or requested_listen_port % 1 ~= 0
+		or requested_listen_port < 0
+		or requested_listen_port > 65535
+	then
+		return nil, "Listen UDP port is invalid"
+	end
+
 	local port = ffi.new("int[1]")
+	local start_error_code = ffi.new("int[1]")
 	local error_buffer = new_error_buffer()
 	local result = runtime.RealmsRuntime_StartLocalSession(
 		account_id,
 		peer_id,
+		requested_listen_port,
 		port,
+		start_error_code,
 		error_buffer,
 		ERROR_CAPACITY
 	)
 
 	if result == 0 then
-		return nil, read_error(error_buffer)
+		return nil, read_error(error_buffer), tonumber(start_error_code[0])
 	end
 
 	return tonumber(port[0])
@@ -258,5 +277,7 @@ function Native.close_local_session()
 end
 
 Native.EVENT_TYPES = EVENT_TYPES
+Native.ERROR_CODES = ERROR_CODES
+Native.START_ERROR_CODES = START_ERROR_CODES
 
 return Native

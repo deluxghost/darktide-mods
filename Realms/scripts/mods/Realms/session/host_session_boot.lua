@@ -67,10 +67,14 @@ HostSessionBoot.init = function (self, event_object, options)
 		return
 	end
 
-	local local_port, start_error = Native.start_local_session(account_id, peer_id)
+	local local_port, start_error, start_error_code = Native.start_local_session(account_id, peer_id, options.listen_port)
 
 	if not local_port then
-		self:_fail(start_error)
+		local disconnect_reason = start_error_code == Native.START_ERROR_CODES.listen_port_unavailable
+			and DisconnectReason.LISTEN_PORT_UNAVAILABLE
+			or DisconnectReason.HOST_BOOT_FAILED
+
+		self:_fail(start_error, disconnect_reason)
 
 		return
 	end
@@ -88,6 +92,7 @@ HostSessionBoot.init = function (self, event_object, options)
 			mission_name = options.mission_name,
 			network_hash = connection_manager.combined_hash,
 			on_installed = options.on_installed,
+			on_fatal_error = options.on_fatal_error,
 			on_remote_connected = options.on_remote_connected,
 			on_remote_disconnected = options.on_remote_disconnected,
 			password = options.password,
@@ -104,9 +109,9 @@ HostSessionBoot.init = function (self, event_object, options)
 	mod:notify(message)
 end
 
-HostSessionBoot._fail = function (self, reason)
+HostSessionBoot._fail = function (self, reason, disconnect_reason)
 	mod:error("Local-session boot failed: %s", tostring(reason))
-	self:event_object():failed_to_boot(true, "game", DisconnectReason.HOST_BOOT_FAILED, tostring(reason))
+	self:event_object():failed_to_boot(true, "game", disconnect_reason or DisconnectReason.HOST_BOOT_FAILED, tostring(reason))
 
 	if self._engine_lobby then
 		Network.leave_lan_lobby(self._engine_lobby)
