@@ -106,9 +106,9 @@ int RealmsRuntime_ResolveAddresses(const char *address, RealmsResolvedAddresses 
     return resolved->count > 0 ? 1 : 0;
 }
 
-bool get_local_udp_port(int *port, char *error, int error_capacity) {
-    if (port == nullptr) {
-        write_error(error, error_capacity, "Local UDP port output is null");
+bool get_local_udp_target(int *port, sockaddr_storage *target, int *target_size, char *error, int error_capacity) {
+    if (port == nullptr || target == nullptr || target_size == nullptr) {
+        write_error(error, error_capacity, "Local UDP target output is null");
         return 0;
     }
 
@@ -140,18 +140,29 @@ bool get_local_udp_port(int *port, char *error, int error_capacity) {
         return 0;
     }
 
-    sockaddr_storage address{};
-    int address_size = sizeof(address);
+    std::memset(target, 0, sizeof(*target));
+    *target_size = sizeof(*target);
 
-    if (getsockname(socket_handle, reinterpret_cast<sockaddr *>(&address), &address_size) != 0) {
+    if (getsockname(socket_handle, reinterpret_cast<sockaddr *>(target), target_size) != 0) {
         write_formatted_error(error, error_capacity, "getsockname failed with WSA error %lu", WSAGetLastError());
         return 0;
     }
 
-    if (address.ss_family == AF_INET6) {
-        *port = ntohs(reinterpret_cast<const SOCKADDR_IN6 *>(&address)->sin6_port);
-    } else if (address.ss_family == AF_INET) {
-        *port = ntohs(reinterpret_cast<const SOCKADDR_IN *>(&address)->sin_port);
+    if (target->ss_family == AF_INET6 && *target_size >= static_cast<int>(sizeof(sockaddr_in6))) {
+        auto *ipv6 = reinterpret_cast<sockaddr_in6 *>(target);
+        *port = ntohs(ipv6->sin6_port);
+        if (IN6_IS_ADDR_UNSPECIFIED(&ipv6->sin6_addr)) {
+            ipv6->sin6_addr = in6addr_loopback;
+            ipv6->sin6_scope_id = 0;
+        }
+        *target_size = sizeof(sockaddr_in6);
+    } else if (target->ss_family == AF_INET && *target_size >= static_cast<int>(sizeof(sockaddr_in))) {
+        auto *ipv4 = reinterpret_cast<sockaddr_in *>(target);
+        *port = ntohs(ipv4->sin_port);
+        if (ipv4->sin_addr.s_addr == htonl(INADDR_ANY)) {
+            ipv4->sin_addr.s_addr = htonl(INADDR_LOOPBACK);
+        }
+        *target_size = sizeof(sockaddr_in);
     } else {
         write_error(error, error_capacity, "Darktide UDP socket has an unsupported address family");
         return 0;
@@ -455,13 +466,18 @@ int fail_start_after_cleanup(char *error, int error_capacity) {
     return 0;
 }
 
-int RealmsRuntime_StartLocalSession(const char *local_account_id, const char *local_peer_id, int *local_udp_port,
-                                    char *error, int error_capacity) {
-    if (local_udp_port == nullptr) {
-        write_error(error, error_capacity, "Local UDP port output is null");
+int RealmsRuntime_StartLocalSession(const char *local_account_id, const char *local_peer_id, int requested_listen_port,
+                                    int *listen_udp_port, int *start_error_code, char *error, int error_capacity) {
+    if (listen_udp_port == nullptr || start_error_code == nullptr) {
+        write_error(error, error_capacity, "Local-session start output is null");
         return 0;
     }
-    *local_udp_port = 0;
+    *listen_udp_port = 0;
+    *start_error_code = REALMS_RUNTIME_START_ERROR_NONE;
+    if (requested_listen_port < 0 || requested_listen_port > 65535) {
+        write_error(error, error_capacity, "Requested listen UDP port is outside the valid range");
+        return 0;
+    }
     if (g_host_listener_registered.load(std::memory_order_acquire) ||
         g_local_session_active.load(std::memory_order_acquire)) {
         write_error(error, error_capacity, "A Realms local session is already active");
@@ -482,7 +498,10 @@ int RealmsRuntime_StartLocalSession(const char *local_account_id, const char *lo
     }
 
     int native_port = 0;
-    if (!get_local_udp_port(&native_port, error, error_capacity) || native_port <= 0 || native_port > 65535) {
+    sockaddr_storage native_target{};
+    int native_target_size = 0;
+    if (!get_local_udp_target(&native_port, &native_target, &native_target_size, error, error_capacity) ||
+        native_port <= 0 || native_port > 65535) {
         if (native_port <= 0 || native_port > 65535) {
             write_error(error, error_capacity, "Darktide UDP socket reported an invalid port");
         }
@@ -494,7 +513,17 @@ int RealmsRuntime_StartLocalSession(const char *local_account_id, const char *lo
         return fail_start_after_cleanup(error, error_capacity);
     }
 
-    *local_udp_port = native_port;
+    if (requested_listen_port != 0 && requested_listen_port != native_port) {
+        RealmsRuntimeStartError start_error = REALMS_RUNTIME_START_ERROR_NONE;
+        if (!start_udp_relay(static_cast<uint16_t>(requested_listen_port),
+                             reinterpret_cast<const sockaddr *>(&native_target), native_target_size, &start_error,
+                             error, error_capacity)) {
+            *start_error_code = static_cast<int>(start_error);
+            return fail_start_after_cleanup(error, error_capacity);
+        }
+    }
+
+    *listen_udp_port = requested_listen_port != 0 ? requested_listen_port : native_port;
     return 1;
 }
 
@@ -548,13 +577,17 @@ int RealmsRuntime_ReleasePeerTransportState(const char *peer_id_text, char *erro
     HostPeerSlot *slot = find_host_peer_slot(peer_id);
 
     if (slot == nullptr) {
+        release_udp_relay_peer(peer_id);
         return 1;
     }
 
-    return remove_host_peer_slot_listeners(*slot, g_host_listener_connection.load(std::memory_order_acquire), error,
-                                           error_capacity)
-               ? 1
-               : 0;
+    if (!remove_host_peer_slot_listeners(*slot, g_host_listener_connection.load(std::memory_order_acquire), error,
+                                         error_capacity)) {
+        return 0;
+    }
+
+    release_udp_relay_peer(peer_id);
+    return 1;
 }
 
 int RealmsRuntime_AdoptPeerTransportState(const char *peer_id_text, char *error, int error_capacity) {
@@ -573,6 +606,7 @@ int RealmsRuntime_AdoptPeerTransportState(const char *peer_id_text, char *error,
 
     slot->last_activity_tick.store(GetTickCount64(), std::memory_order_relaxed);
     slot->adopted.store(true, std::memory_order_release);
+    adopt_udp_relay_peer(peer_id);
     return 1;
 }
 
@@ -599,6 +633,7 @@ int RealmsRuntime_ReapAbandonedPeerTransportState(uint32_t idle_timeout_ms, int 
             return 0;
         }
 
+        release_udp_relay_peer(peer_id);
         ++*reaped_count;
     }
 
@@ -645,6 +680,9 @@ int RealmsRuntime_CloseLocalSession(char *error, int error_capacity) {
             return 0;
         }
     }
+
+    stop_udp_relay();
+
     for (HostPeerSlot &slot : g_host_peer_slots) {
         if (!remove_host_peer_slot_listeners(slot, connection, error, error_capacity)) {
             return 0;

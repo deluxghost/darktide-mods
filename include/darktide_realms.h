@@ -35,9 +35,16 @@ typedef enum RealmsRuntimeEventCode {
     REALMS_RUNTIME_ERROR_SEND = 1006,
     REALMS_RUNTIME_ERROR_PEER_CAPACITY = 1007,
     REALMS_RUNTIME_ERROR_EVENT_OVERFLOW = 1008,
+    REALMS_RUNTIME_ERROR_RELAY = 1009,
+    REALMS_RUNTIME_ERROR_RELAY_FATAL = 1010,
     REALMS_RUNTIME_REJECT_CAPACITY = 2002,
     REALMS_RUNTIME_REJECT_LOBBY = 2003
 } RealmsRuntimeEventCode;
+
+typedef enum RealmsRuntimeStartError {
+    REALMS_RUNTIME_START_ERROR_NONE = 0,
+    REALMS_RUNTIME_START_ERROR_LISTEN_PORT_UNAVAILABLE = 1
+} RealmsRuntimeStartError;
 
 typedef struct RealmsRuntimeEvent {
     uint32_t struct_size;
@@ -69,9 +76,11 @@ REALMS_RUNTIME_API int RealmsRuntime_SetClientIpv6MemberAddressSupport(int enabl
                                                                        int error_capacity);
 
 // Starts native listening for the one officially constructed local-session lobby.
-// The returned UDP port belongs to Darktide's existing transport.
+// requested_listen_port is 0 to expose Darktide's existing random port directly.
+// A non-zero value starts the fixed-port relay and returns that public UDP port.
 REALMS_RUNTIME_API int RealmsRuntime_StartLocalSession(const char *local_account_id, const char *local_peer_id,
-                                                       int *local_udp_port, char *error, int error_capacity);
+                                                       int requested_listen_port, int *listen_udp_port,
+                                                       int *start_error_code, char *error, int error_capacity);
 
 REALMS_RUNTIME_API int RealmsRuntime_IsPeerConnected(const char *peer_id, int *connected, char *error,
                                                      int error_capacity);

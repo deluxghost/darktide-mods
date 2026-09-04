@@ -156,6 +156,11 @@ bool locate_lobby_member_helpers(AddLobbyMemberFunction *add_member, DestroyLobb
                                  char *error, int error_capacity);
 bool locate_read_bits(ReadBitsFunction *read_bits, char *error, int error_capacity);
 bool set_client_ipv6_member_address_support(bool enabled, char *error, int error_capacity);
+bool start_udp_relay(uint16_t listen_port, const sockaddr *game_address, int game_address_size,
+                     RealmsRuntimeStartError *start_error, char *error, int error_capacity);
+void adopt_udp_relay_peer(uint64_t peer_id);
+void release_udp_relay_peer(uint64_t peer_id);
+void stop_udp_relay();
 bool ensure_initialized(char *error, int error_capacity);
 bool read_pointer(const uint8_t *location, void **value, const char *description, char *error, int error_capacity);
 bool current_network_manager(void **manager, char *error, int error_capacity);

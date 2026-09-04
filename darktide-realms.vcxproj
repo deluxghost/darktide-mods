@@ -81,6 +81,7 @@
     <ClCompile Include="src\realms_events.cpp" />
     <ClCompile Include="src\realms_ipv6.cpp" />
     <ClCompile Include="src\realms_protocol.cpp" />
+    <ClCompile Include="src\realms_relay.cpp" />
     <ClCompile Include="src\realms_state.cpp" />
   </ItemGroup>
   <ItemGroup>
