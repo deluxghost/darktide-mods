@@ -13,6 +13,29 @@ local function active_host(Session)
 	return not resetting_host_session and Session.is_active_host() and game_session and game_session:is_server() and session_manager and not session_manager:is_leaving()
 end
 
+local function pending_removal_ids(bot_synchronizer_host)
+	local pending = {}
+
+	for _, local_player_id in pairs(bot_synchronizer_host._bots_queued_for_removal) do
+		pending[local_player_id] = true
+	end
+
+	return pending
+end
+
+local function num_pending_removals(bot_synchronizer_host, bot_ids)
+	local pending = pending_removal_ids(bot_synchronizer_host)
+	local count = 0
+
+	for local_player_id in pairs(pending) do
+		if bot_ids[local_player_id] then
+			count = count + 1
+		end
+	end
+
+	return count
+end
+
 local function available_bot_slots(self, maximum_desired_bots, Session)
 	if not active_host(Session) then
 		return 0
@@ -25,7 +48,8 @@ local function available_bot_slots(self, maximum_desired_bots, Session)
 
 	local bot_synchronizer_host = Managers.bot:synchronizer_host()
 	local num_humans = Managers.player:num_ready_human_players()
-	local num_bots = bot_synchronizer_host:num_bots() + self._queued_bots_n
+	local bot_ids = bot_synchronizer_host:active_bot_ids()
+	local num_bots = bot_synchronizer_host:num_bots() - num_pending_removals(bot_synchronizer_host, bot_ids) + self._queued_bots_n
 	local desired_bot_count = math.max(mod:get("bot_fill_target") - num_humans, 0)
 	if maximum_desired_bots then
 		desired_bot_count = math.min(desired_bot_count, maximum_desired_bots)
@@ -89,7 +113,19 @@ end
 function BotBackfill.install(Session)
 
 	mod:hook(BotSpawning, "despawn_best_bot", function (func, despawn_safe)
-		return func(active_host(Session) or despawn_safe)
+		if not active_host(Session) then
+			return func(despawn_safe)
+		end
+
+		local bot_synchronizer_host = Managers.bot:synchronizer_host()
+		local bot_ids = bot_synchronizer_host:active_bot_ids()
+		local pending = pending_removal_ids(bot_synchronizer_host)
+
+		for local_player_id in pairs(bot_ids) do
+			if not pending[local_player_id] then
+				return BotSpawning.despawn_bot_character(local_player_id, true)
+			end
+		end
 	end)
 
 	mod:hook(PlayerUnitSpawnManager, "init", function (func, self, is_server, ...)
