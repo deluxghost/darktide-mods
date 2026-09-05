@@ -9,6 +9,7 @@ local ProfileSynchronizerHost = require("scripts/loading/profile_synchronizer_ho
 local BotBackfill = mod:io_dofile("Realms/scripts/mods/Realms/core/bot_backfill")
 local DisconnectErrors = mod:io_dofile("Realms/scripts/mods/Realms/core/disconnect_errors")
 local LoadingClients = mod:io_dofile("Realms/scripts/mods/Realms/core/loading_clients")
+local MissionSeed = mod:io_dofile("Realms/scripts/mods/Realms/core/mission_seed")
 local Preparation = mod:io_dofile("Realms/scripts/mods/Realms/core/preparation")
 mod._preparation = Preparation
 local GameplayControl = mod:io_dofile("Realms/scripts/mods/Realms/core/gameplay_control")
@@ -61,6 +62,7 @@ mod:io_dofile("Realms/scripts/mods/Realms/views/join_view/register")
 mod:io_dofile("Realms/scripts/mods/Realms/views/preparation_view/register")
 
 LoadingClients.install(Session, Preparation)
+MissionSeed.install(Session)
 SessionControl.install(Session)
 Preparation.install(Session, ProfileUpdates, SessionControl)
 BotBackfill.install(Session)
