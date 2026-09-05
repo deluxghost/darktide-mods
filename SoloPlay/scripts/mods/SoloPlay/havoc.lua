@@ -41,7 +41,7 @@ mod.gen_havoc_data = function (havoc_rank)
 	end
 
 	local theme
-	if use_theme then
+	if not use_theme then
 		theme = "default"
 	else
 		theme = themes[_random(1, #themes)]
