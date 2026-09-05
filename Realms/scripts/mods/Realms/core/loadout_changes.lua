@@ -1,5 +1,4 @@
 local mod = get_mod("Realms")
-local SoloPlay = get_mod("SoloPlay")
 
 local LoadoutChanges = {}
 local Session
@@ -29,6 +28,8 @@ end
 function LoadoutChanges.install(session, preparation)
 	Session = session
 	Preparation = preparation
+
+	local SoloPlay = get_mod("SoloPlay")
 
 	mod:hook(SoloPlay, "keybind_open_inventory", function (func, ...)
 		if not Session.is_active() then

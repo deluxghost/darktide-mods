@@ -69,7 +69,6 @@ BotBackfill.install(Session)
 DisconnectErrors.install()
 GameplayControl.install(Session, Preparation, SessionControl)
 ProfileUpdates.install(Session, Preparation, GameplayControl)
-LoadoutChanges.install(Session, Preparation)
 Presence.install(Session)
 ModNetwork.install(SessionControl)
 Chat.install(Session, SessionControl)
@@ -89,6 +88,8 @@ mod.load_package = function (package_name)
 end
 
 mod.on_all_mods_loaded = function ()
+	LoadoutChanges.install(Session, Preparation)
+
 	local packages = ViewPackages.all()
 
 	for i = 1, #packages do
