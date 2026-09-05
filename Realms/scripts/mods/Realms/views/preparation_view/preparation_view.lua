@@ -1,4 +1,5 @@
 local mod = get_mod("Realms")
+local ScriptWorld = require("scripts/foundation/utilities/script_world")
 local ScrollbarPassTemplates = require("scripts/ui/pass_templates/scrollbar_pass_templates")
 local TalentBuilderViewSettings = require("scripts/ui/views/talent_builder_view/talent_builder_view_settings")
 local TalentLayoutParser = require("scripts/ui/views/talent_builder_view/utilities/talent_layout_parser")
@@ -19,6 +20,9 @@ local REFRESH_INTERVAL = 0.25
 local GRID_DRAW_LAYER = 10
 local GRID_RENDER_PADDING = 20
 local WEAPON_STATS_DRAW_LAYER = 160
+local VIEW_WORLD_LAYER = 10
+local GRID_WORLD_LAYER = 11
+local TOOLTIP_WORLD_LAYER = 12
 local READY_ICON = ""
 local NOT_READY_ICON = ""
 local PLAYER_SIGNATURE_FIELDS = {
@@ -143,7 +147,35 @@ local function portrait_key(profile)
 end
 
 RealmsPreparationView.init = function (self, settings)
-	RealmsPreparationView.super.init(self, definitions, settings)
+	local ui_manager = Managers.ui
+	local world_name = self.__class_name .. "_ui_world"
+	local renderer_name = self.__class_name .. "_ui_renderer"
+	local viewport_name = world_name .. "_viewport"
+	local world = ui_manager:create_world(world_name, VIEW_WORLD_LAYER, "ui", settings.name)
+
+	self._ui_world = world
+	self._ui_viewport_name = viewport_name
+	ui_manager:create_viewport(world, viewport_name, "overlay", 1)
+
+	local ui_renderer = ui_manager:create_renderer(renderer_name, world)
+	RealmsPreparationView.super.init(self, definitions, settings, { ui_renderer = ui_renderer })
+
+	-- This full-screen view owns its entire draw stack, including its opaque background.
+	self._pass_draw = false
+end
+
+RealmsPreparationView.destroy = function (self)
+	RealmsPreparationView.super.destroy(self)
+	Managers.ui:destroy_renderer(self.__class_name .. "_ui_renderer")
+	ScriptWorld.destroy_viewport(self._ui_world, self._ui_viewport_name)
+	Managers.ui:destroy_world(self._ui_world)
+end
+
+RealmsPreparationView._set_element_world_layer = function (self, element, layer)
+	local world_name = Managers.world:world_name(element._world)
+
+	-- Keep separate grid render passes; only change their offsets within this view.
+	Managers.ui._view_handler:register_view_world(self.view_name, world_name, layer)
 end
 
 RealmsPreparationView.ui_renderer = function (self)
@@ -171,6 +203,7 @@ end
 
 RealmsPreparationView._setup_talent_tooltip_element = function (self)
 	self._talent_tooltip = self:_add_element(ViewElementTalentTooltip, "talent_tooltip", WEAPON_STATS_DRAW_LAYER)
+	self:_set_element_world_layer(self._talent_tooltip, TOOLTIP_WORLD_LAYER)
 	self._talent_tooltip:set_visibility(false)
 end
 
@@ -213,6 +246,7 @@ end
 
 RealmsPreparationView._setup_weapon_stats = function (self)
 	self._weapon_stats = self:_add_element(ViewElementWeaponStats, "weapon_stats", WEAPON_STATS_DRAW_LAYER, definitions.item_stats_grid_settings)
+	self:_set_element_world_layer(self._weapon_stats, TOOLTIP_WORLD_LAYER)
 	self._weapon_stats:set_visibility(false)
 end
 
@@ -357,6 +391,8 @@ end
 RealmsPreparationView._setup_grids = function (self)
 	self._player_grid = self:_setup_grid("player_grid", definitions.player_grid_size)
 	self._info_grid = self:_setup_grid("info_grid", definitions.info_grid_size, 20)
+	self:_set_element_world_layer(self._player_grid, GRID_WORLD_LAYER)
+	self:_set_element_world_layer(self._info_grid, GRID_WORLD_LAYER)
 end
 
 RealmsPreparationView._setup_input_legend = function (self)
