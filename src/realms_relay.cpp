@@ -1,5 +1,6 @@
 #include "realms_internal.h"
 
+#include <MSWSock.h>
 #include <ws2tcpip.h>
 
 #include <array>
@@ -84,6 +85,22 @@ bool set_nonblocking(SOCKET socket_handle, char *error, int error_capacity) {
     if (error != nullptr && error_capacity > 0) {
         std::snprintf(error, static_cast<size_t>(error_capacity),
                       "Could not make the Realms UDP relay socket non-blocking (WSA error %d)", socket_error);
+    }
+    return false;
+}
+
+bool disable_udp_connection_reset(SOCKET socket_handle, char *error, int error_capacity) {
+    BOOL enabled = FALSE;
+    DWORD bytes_returned = 0;
+    if (WSAIoctl(socket_handle, SIO_UDP_CONNRESET, &enabled, sizeof(enabled), nullptr, 0, &bytes_returned, nullptr,
+                 nullptr) == 0) {
+        return true;
+    }
+
+    const int socket_error = WSAGetLastError();
+    if (error != nullptr && error_capacity > 0) {
+        std::snprintf(error, static_cast<size_t>(error_capacity),
+                      "Could not disable UDP connection reset notifications (WSA error %d)", socket_error);
     }
     return false;
 }
@@ -494,6 +511,13 @@ bool start_udp_relay(uint16_t listen_port, const sockaddr *game_address, int gam
     }
 
     if (!set_nonblocking(public_socket, error, error_capacity)) {
+        closesocket(public_socket);
+        WSACleanup();
+        g_relay_winsock_started = false;
+        return false;
+    }
+
+    if (!disable_udp_connection_reset(public_socket, error, error_capacity)) {
         closesocket(public_socket);
         WSACleanup();
         g_relay_winsock_started = false;
