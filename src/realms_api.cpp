@@ -17,6 +17,10 @@ int RealmsRuntime_Initialize(char *error, int error_capacity) {
     return ensure_initialized(error, error_capacity) ? 1 : 0;
 }
 
+uint32_t RealmsRuntime_MaximumHostMembers(void) {
+    return kMaximumHostMembers;
+}
+
 int RealmsRuntime_ResolveAddresses(const char *address, RealmsResolvedAddresses *resolved, char *error,
                                    int error_capacity) {
     if (resolved == nullptr || resolved->struct_size != sizeof(RealmsResolvedAddresses)) {

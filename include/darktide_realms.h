@@ -65,6 +65,9 @@ typedef struct RealmsResolvedAddresses {
 // Command functions return 1 on success and 0 on failure.
 REALMS_RUNTIME_API int RealmsRuntime_Initialize(char *error, int error_capacity);
 
+// Returns the native host capacity, including the host. Does not initialize or patch the engine.
+REALMS_RUNTIME_API uint32_t RealmsRuntime_MaximumHostMembers(void);
+
 // Resolves a host name or numeric address through the Windows system resolver.
 // Writes unique numeric IPv4 and IPv6 candidates in Windows resolver order.
 REALMS_RUNTIME_API int RealmsRuntime_ResolveAddresses(const char *address, RealmsResolvedAddresses *resolved,
