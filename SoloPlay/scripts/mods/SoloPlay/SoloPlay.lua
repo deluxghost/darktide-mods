@@ -229,12 +229,12 @@ mod:hook(PacingManager, "init", function (func, self, world, nav_world, level_se
 	end
 end)
 
-mod:hook(PickupSystem, "spawn_spread_pickups", function (func, self, distribution_type, pickup_pool, seed)
+mod:hook(PickupSystem, "spawn_spread_pickups", function (func, self, pickup_spawners, distribution_type, pickup_pool, seed)
 	if distribution_type == DISTRIBUTION_TYPES.side_mission and mod:get("random_side_mission_seed") then
-		self._seed = func(self, distribution_type, pickup_pool, self._seed)
+		self._seed = func(self, pickup_spawners, distribution_type, pickup_pool, self._seed)
 		return self._seed
 	end
-	return func(self, distribution_type, pickup_pool, seed)
+	return func(self, pickup_spawners, distribution_type, pickup_pool, seed)
 end)
 
 mod:hook(ExpeditionLevelsLoader, "start_loading", function (func, self, context)
