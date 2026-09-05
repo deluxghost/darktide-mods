@@ -1,8 +1,10 @@
 local mod = get_mod("Realms")
 local BotSpawning = require("scripts/managers/bot/bot_spawning")
+local PlayerManager = require("scripts/foundation/managers/player/player_manager")
 local PlayerUnitSpawnManager = require("scripts/managers/player/player_unit_spawn_manager")
 
 local BotBackfill = {}
+local MAX_BOTS = 7
 local MAX_INITIAL_BOTS = 6
 local resetting_host_session = false
 
@@ -50,10 +52,7 @@ local function available_bot_slots(self, maximum_desired_bots, Session)
 	local num_humans = Managers.player:num_ready_human_players()
 	local bot_ids = bot_synchronizer_host:active_bot_ids()
 	local num_bots = bot_synchronizer_host:num_bots() - num_pending_removals(bot_synchronizer_host, bot_ids) + self._queued_bots_n
-	local desired_bot_count = math.max(mod:get("bot_fill_target") - num_humans, 0)
-	if maximum_desired_bots then
-		desired_bot_count = math.min(desired_bot_count, maximum_desired_bots)
-	end
+	local desired_bot_count = math.min(math.max(mod:get("bot_fill_target") - num_humans, 0), maximum_desired_bots or MAX_BOTS)
 
 	return desired_bot_count - num_bots
 end
@@ -111,6 +110,27 @@ function BotBackfill.reset_session(Session, original_reset, manager, reason)
 end
 
 function BotBackfill.install(Session)
+	mod:hook(PlayerManager, "next_available_local_player_id", function (func, self, peer_id, start_index)
+		if not active_host(Session) or peer_id ~= Network.peer_id() then
+			return func(self, peer_id, start_index)
+		end
+
+		local players = self:players_at_peer(peer_id)
+		local bot_ids = Managers.bot:synchronizer_host():active_bot_ids()
+
+		for local_player_id = start_index or 2, MAX_BOTS do
+			if not players[local_player_id] and not bot_ids[local_player_id] then
+				return local_player_id
+			end
+		end
+
+		-- The host owns ID 1. ID 0 is the remaining slot in the three-bit network field.
+		if not players[0] and not bot_ids[0] then
+			return 0
+		end
+
+		error("No network local-player ID is available for another Realms bot")
+	end)
 
 	mod:hook(BotSpawning, "despawn_best_bot", function (func, despawn_safe)
 		if not active_host(Session) then
@@ -147,9 +167,25 @@ function BotBackfill.install(Session)
 		return result
 	end)
 
+	mod:hook(PlayerUnitSpawnManager, "_handle_bot_spawning", function (func, self)
+		if active_host(Session) and Managers.bot:synchronizer_host():num_bots() >= MAX_BOTS then
+			-- Pending removals still own their IDs until BotManager.post_update completes.
+			return
+		end
+
+		return func(self)
+	end)
+
 	mod:hook(BotSpawning, "spawn_bot_character", function (func, profile_name)
-		if profile_name == nil and active_host(Session) then
-			profile_name = fallback_profile_name()
+		if active_host(Session) then
+			if Managers.bot:synchronizer_host():num_bots() >= MAX_BOTS then
+				mod:warning("Cannot spawn another bot: the Realms bot limit is %d", MAX_BOTS)
+
+				return nil
+			end
+			if profile_name == nil then
+				profile_name = fallback_profile_name()
+			end
 		end
 
 		return func(profile_name)

@@ -98,16 +98,16 @@ local localization = {
 		["zh-cn"] = "最大玩家数",
 	},
 	max_players_description = {
-		en = "Reject new connections after reaching this limit. Lowering it does not disconnect existing players.\n\nMore than 4 players may affect performance.",
-		["zh-cn"] = "达到此人数上限后拒绝新的连接。降低上限不会断开现有玩家。\n\n超过 4 个玩家可能会影响性能。",
+		en = "Reject new connections after reaching this limit. Lowering it does not disconnect existing players.\n\nMore than 4 players in total may affect performance.",
+		["zh-cn"] = "达到此人数上限后拒绝新的连接。降低上限不会断开现有玩家。\n\n总玩家数超过 4 名可能会影响性能。",
 	},
 	bot_fill_target = {
 		en = "Bot fill target",
 		["zh-cn"] = "机器人补位目标人数",
 	},
 	bot_fill_target_description = {
-		en = "Fill empty places with bots until the total number of players and bots reaches this value. Bots are not added while the number of players is at or above the target.\n\nMore than 4 players may affect performance.",
-		["zh-cn"] = "使用机器人补位，直到玩家和机器人的总数达到此值。玩家数达到或超过目标时不会添加机器人。\n\n超过 4 个玩家可能会影响性能。",
+		en = "Use up to 7 bots to bring the total number of players and bots as close to this target as possible. Bots are not added while the number of players is at or above the target.\n\nMore than 4 players in total may affect performance.",
+		["zh-cn"] = "使用最多 7 个机器人尽可能补位，使玩家和机器人的总数接近目标人数。玩家数达到或超过目标时不会添加机器人。\n\n总玩家数超过 4 名可能会影响性能。",
 	},
 	listen_port = {
 		en = "Listening port (UDP)",
