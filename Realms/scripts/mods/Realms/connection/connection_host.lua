@@ -1,6 +1,5 @@
 local mod = get_mod("Realms")
 local MatchmakingConstants = require("scripts/settings/network/matchmaking_constants")
-local PlayerManager = require("scripts/foundation/managers/player/player_manager")
 local ProfileSynchronizerHost = require("scripts/loading/profile_synchronizer_host")
 local Native = mod:io_dofile("Realms/scripts/mods/Realms/runtime/native")
 local RemoteConnection = mod:io_dofile("Realms/scripts/mods/Realms/connection/remote_connection")
@@ -234,8 +233,6 @@ local function send_player_connected(channel_id, remote)
 	)
 end
 
-local BOT_NETWORK_STRING_PLACEHOLDER = ""
-
 local function create_host_sync_data(peer_id)
 	local data = Managers.player:create_sync_data(peer_id, true)
 	local player_count = #data.local_player_id_array
@@ -245,14 +242,47 @@ local function create_host_sync_data(peer_id)
 			assert(type(data.account_id_array[i]) == "string", "Realms host human player is missing an account ID")
 			assert(type(data.player_session_id_array[i]) == "string", "Realms host human player is missing a telemetry session ID")
 			assert(type(data.player_instance_id_array[i]) == "string", "Realms host human player is missing a telemetry instance ID")
-		else
-			data.account_id_array[i] = PlayerManager.NO_ACCOUNT_ID
-			data.player_session_id_array[i] = BOT_NETWORK_STRING_PLACEHOLDER
-			data.player_instance_id_array[i] = BOT_NETWORK_STRING_PLACEHOLDER
 		end
 	end
 
 	return data
+end
+
+local HOST_PLAYER_SYNC_FIELDS = {
+	"local_player_id_array",
+	"is_human_controlled_array",
+	"account_id_array",
+	"player_session_id_array",
+	"slot_array",
+	"player_instance_id_array",
+}
+
+local function send_host_local_players(channel_id, data, bot_synchronizer_host)
+	local human_data = {}
+
+	for field_index = 1, #HOST_PLAYER_SYNC_FIELDS do
+		local values = data[HOST_PLAYER_SYNC_FIELDS[field_index]]
+		local human_values = {}
+
+		for player_index = 1, #data.local_player_id_array do
+			if data.is_human_controlled_array[player_index] then
+				human_values[#human_values + 1] = values[player_index]
+			end
+		end
+
+		human_data[field_index] = human_values
+	end
+
+	-- The native snapshot arrays hold four entries. Bots have their own scalar RPC.
+	RPC.rpc_sync_host_local_players(channel_id, unpack(human_data))
+
+	for i = 1, #data.local_player_id_array do
+		local local_player_id = data.local_player_id_array[i]
+
+		if not data.is_human_controlled_array[i] and not bot_synchronizer_host:spawn_group_contains(local_player_id) then
+			RPC.rpc_add_bot_player(channel_id, local_player_id, data.slot_array[i])
+		end
+	end
 end
 
 ConnectionHost._start_peer_profile_sync = function (self, target_remote, source_remote)
@@ -301,15 +331,7 @@ ConnectionHost.remote_connected = function (self, remote)
 
 	bot_synchronizer_host:add_peer(channel_id)
 
-	RPC.rpc_sync_host_local_players(
-		channel_id,
-		host_sync_data.local_player_id_array,
-		host_sync_data.is_human_controlled_array,
-		host_sync_data.account_id_array,
-		host_sync_data.player_session_id_array,
-		host_sync_data.slot_array,
-		host_sync_data.player_instance_id_array
-	)
+	send_host_local_players(channel_id, host_sync_data, bot_synchronizer_host)
 
 	for other_channel_id, other_remote in pairs(self._remote_connections) do
 		if other_channel_id ~= channel_id and other_remote:is_connected() then
