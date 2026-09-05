@@ -1,27 +1,19 @@
 local mod = get_mod("Realms")
 local HudElementTeamPanelHandlerSettings = require("scripts/ui/hud/elements/team_panel_handler/hud_element_team_panel_handler_settings")
 
-local MINIMUM_PLAYER_PANELS = 8
-
-HudElementTeamPanelHandlerSettings.max_panels = math.max(HudElementTeamPanelHandlerSettings.max_panels, MINIMUM_PLAYER_PANELS)
-
 local HudElementTeamPanelHandler = require("scripts/ui/hud/elements/team_panel_handler/hud_element_team_panel_handler")
 local HudElementTeamPlayerPanel = require("scripts/ui/hud/elements/team_player_panel/hud_element_team_player_panel")
 local PlayerCompositions = require("scripts/utilities/players/player_compositions")
 
 local TeamHud = {}
 
-local function ensure_position_scenegraphs()
+local function ensure_position_scenegraphs(definitions, max_panels)
 	local settings = HudElementTeamPanelHandlerSettings
-
-	settings.max_panels = math.max(settings.max_panels, MINIMUM_PLAYER_PANELS)
-
-	local definitions = require("scripts/ui/hud/elements/team_panel_handler/hud_element_team_panel_handler_definitions")
 	local scenegraphs = definitions.scenegraph_definition
 	local panel_size = settings.panel_size
 	local panel_spacing = settings.panel_spacing
 
-	for i = 1, settings.max_panels - 1 do
+	for i = 1, max_panels - 1 do
 		local scenegraph_id = "player_" .. i
 
 		if not scenegraphs[scenegraph_id] then
@@ -56,6 +48,26 @@ local function ensure_position_scenegraphs()
 	end
 end
 
+local function grow_panel_capacity(self, ui_renderer, capacity)
+	local definitions = table.clone(self._definitions)
+
+	-- Rebuild only the handler's position graph; retain existing panel instances and live layout.
+	for id, definition in pairs(definitions.scenegraph_definition) do
+		local current = self._ui_scenegraph[id]
+
+		definition.position = table.clone(current.local_position)
+		definition.size = table.clone(current.size)
+		definition.horizontal_alignment = current.horizontal_alignment
+		definition.vertical_alignment = current.vertical_alignment
+	end
+
+	ensure_position_scenegraphs(definitions, capacity)
+	self._definitions = definitions
+	self._ui_scenegraph = self:_create_scenegraph(definitions, ui_renderer.scale or 1)
+	self._max_panels = capacity
+	self._position_scenegraphs = self:_setup_position_scenegraphs()
+end
+
 local function uses_training_grounds_hud()
 	local game_mode_manager = Managers.state and Managers.state.game_mode
 	local game_mode_name = game_mode_manager and game_mode_manager:game_mode_name()
@@ -77,9 +89,24 @@ end
 
 function TeamHud.install(Session)
 	mod:hook(HudElementTeamPanelHandler, "init", function (func, self, ...)
-		ensure_position_scenegraphs()
+		local definitions = require("scripts/ui/hud/elements/team_panel_handler/hud_element_team_panel_handler_definitions")
+
+		ensure_position_scenegraphs(definitions, HudElementTeamPanelHandlerSettings.max_panels)
 
 		return func(self, ...)
+	end)
+
+	local temp_players = {}
+
+	mod:hook(HudElementTeamPanelHandler, "_player_scan", function (func, self, ui_renderer)
+		local players = PlayerCompositions.players(self._player_composition_name, temp_players)
+		local capacity = table.size(players)
+
+		if capacity > self._max_panels then
+			grow_panel_capacity(self, ui_renderer, capacity)
+		end
+
+		return func(self, ui_renderer)
 	end)
 
 	mod:hook(HudElementTeamPanelHandler, "_add_panel", function (func, self, unique_id, ui_renderer, fixed_scenegraph_id)

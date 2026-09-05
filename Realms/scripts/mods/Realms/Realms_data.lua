@@ -56,13 +56,13 @@ return {
 						setting_id = "max_players",
 						type = "numeric",
 						default_value = 4,
-						range = {2, 8},
+						range = {2, 12},
 					},
 					{
 						setting_id = "bot_fill_target",
 						type = "numeric",
 						default_value = 4,
-						range = {1, 8},
+						range = {1, 12},
 					},
 					{
 						setting_id = "listen_port",

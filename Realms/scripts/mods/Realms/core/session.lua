@@ -246,7 +246,8 @@ function Session.apply_remote_server_settings(max_members, loadout_changes_allow
 	if not Session.is_active_client() then
 		return false, "Realms server settings arrived without an active client session"
 	end
-	if type(max_members) ~= "number" or max_members % 1 ~= 0 or max_members < 2 or max_members > 8 then
+	if type(max_members) ~= "number" or max_members % 1 ~= 0 or max_members < 2
+		or max_members > assert(Native.maximum_host_members()) then
 		return false, "Realms server sent an invalid player limit"
 	end
 	if type(loadout_changes_allowed) ~= "boolean" then

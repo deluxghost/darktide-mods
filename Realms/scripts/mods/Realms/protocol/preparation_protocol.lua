@@ -1,6 +1,7 @@
 local mod = get_mod("Realms")
 local MissionTemplates = require("scripts/settings/mission/mission_templates")
 local ScriptCJson = require("scripts/foundation/utilities/script_cjson")
+local Native = mod:io_dofile("Realms/scripts/mods/Realms/runtime/native")
 local ProfileUpdate = mod:io_dofile("Realms/scripts/mods/Realms/protocol/profile_update")
 local SessionTicket = mod:io_dofile("Realms/scripts/mods/Realms/protocol/session_ticket")
 
@@ -20,7 +21,8 @@ local MESSAGE_TYPES = table.set({
 })
 
 local function valid_ready_peer_ids(peer_ids)
-	if type(peer_ids) ~= "table" or #peer_ids > 8 then
+	-- Lowering the admission limit does not remove existing members.
+	if type(peer_ids) ~= "table" or #peer_ids > assert(Native.maximum_host_members()) then
 		return false
 	end
 
@@ -76,7 +78,7 @@ local function validate_message(message)
 			and type(data.max_members) == "number"
 			and data.max_members % 1 == 0
 			and data.max_members >= 2
-			and data.max_members <= 8
+			and data.max_members <= assert(Native.maximum_host_members())
 			and type(data.loadout_changes_allowed) == "boolean"
 			and type(data.mission_name) == "string"
 			and MissionTemplates[data.mission_name] ~= nil

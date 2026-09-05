@@ -53,6 +53,16 @@ local function load_runtime()
 	return runtime
 end
 
+function Native.maximum_host_members()
+	local runtime, load_error = load_runtime()
+
+	if not runtime then
+		return nil, load_error
+	end
+
+	return tonumber(runtime.RealmsRuntime_MaximumHostMembers())
+end
+
 function Native.initialize()
 	if state.initialized then
 		return true

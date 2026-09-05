@@ -1,5 +1,6 @@
 local mod = get_mod("Realms")
 local ScriptCJson = require("scripts/foundation/utilities/script_cjson")
+local Native = mod:io_dofile("Realms/scripts/mods/Realms/runtime/native")
 local ProfileUpdate = mod:io_dofile("Realms/scripts/mods/Realms/protocol/profile_update")
 local SessionTicket = mod:io_dofile("Realms/scripts/mods/Realms/protocol/session_ticket")
 
@@ -21,7 +22,7 @@ local MESSAGE_VALIDATORS = {
 			and type(data.max_members) == "number"
 			and data.max_members % 1 == 0
 			and data.max_members >= 2
-			and data.max_members <= 8
+			and data.max_members <= assert(Native.maximum_host_members())
 			and type(data.loadout_changes_allowed) == "boolean"
 	end,
 	gameplay_time_scale = function (data)

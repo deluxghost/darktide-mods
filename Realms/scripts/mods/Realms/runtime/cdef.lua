@@ -18,6 +18,7 @@ if not pcall(ffi.typeof, "RealmsRuntime_CDEF") then
 		} RealmsResolvedAddresses;
 
 		int RealmsRuntime_Initialize(char* error, int error_capacity);
+		uint32_t RealmsRuntime_MaximumHostMembers(void);
 		int RealmsRuntime_ResolveAddresses(const char* address, RealmsResolvedAddresses* resolved,
 			char* error, int error_capacity);
 		int RealmsRuntime_SetClientIpv6MemberAddressSupport(int enabled, char* error, int error_capacity);

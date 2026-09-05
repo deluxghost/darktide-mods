@@ -11,7 +11,6 @@ local SCROLLBAR_PASS_TEMPLATES_PATH = "scripts/ui/pass_templates/scrollbar_pass_
 local STYLES_PATH = "scripts/ui/views/social_menu_roster_view/social_menu_roster_view_styles"
 local UI_WIDGET_GRID_PATH = "scripts/ui/widget_logic/ui_widget_grid"
 local UI_WIDGET_PATH = "scripts/managers/ui/ui_widget"
-local MAX_PLAYERS = 8
 local PARTY_GRID_INDEX = 1
 local ROSTER_GRID_INDEX = 2
 local PARTY_GRID_ID = "party_grid"
@@ -313,23 +312,10 @@ local function install_view_hooks(SocialMenuRosterView, Definitions, RosterViewS
 		self:_close_popup_menu()
 	end
 
-	local function current_capacity(self)
-		local configured = Session.max_members() or 4
-		local current_members = self._party_widgets and #self._party_widgets or 0
+	local function empty_slot_widgets(self, capacity)
+		local widgets = self._realms_party_empty_widgets or {}
 
-		return math.clamp(math.max(configured, current_members), 2, MAX_PLAYERS)
-	end
-
-	local function empty_slot_widgets(self)
-		local widgets = self._realms_party_empty_widgets
-
-		if widgets then
-			return widgets
-		end
-
-		widgets = {}
-
-		for i = 1, MAX_PLAYERS do
+		for i = #widgets + 1, capacity do
 			widgets[i] = UIWidget.init("realms_party_empty_slot_" .. i, empty_slot_definition)
 		end
 
@@ -383,7 +369,7 @@ local function install_view_hooks(SocialMenuRosterView, Definitions, RosterViewS
 				alignment_widgets[#alignment_widgets + 1] = widget
 			end
 
-			local empty_widgets = empty_slot_widgets(self)
+			local empty_widgets = empty_slot_widgets(self, capacity)
 
 			for i = #party_widgets + 1, capacity do
 				alignment_widgets[#alignment_widgets + 1] = empty_widgets[i]
@@ -404,7 +390,8 @@ local function install_view_hooks(SocialMenuRosterView, Definitions, RosterViewS
 
 		local grid = UIWidgetGrid:new(party_widgets, alignment_widgets, self._ui_scenegraph, area_scenegraph_id, "down", grid_spacing, nil, true)
 		local scrollbar_widget = self._widgets_by_name[PARTY_SCROLLBAR_ID]
-		local content_length = capacity * player_height + math.max(capacity - 1, 0) * grid_spacing[2]
+		local num_rows = #alignment_widgets
+		local content_length = num_rows * player_height + math.max(num_rows - 1, 0) * grid_spacing[2]
 		local scrollable = active and panel_height == max_panel_height and content_length > grid_height
 
 		if scrollable then
@@ -427,7 +414,7 @@ local function install_view_hooks(SocialMenuRosterView, Definitions, RosterViewS
 
 	local function configure_party_panel(self)
 		local active = Session.is_active()
-		local capacity = active and current_capacity(self) or 4
+		local capacity = active and Session.max_members() or 4
 		local num_party_members = self._party_widgets and #self._party_widgets or 0
 		local signature = string.format("%s:%d:%d", tostring(active), capacity, num_party_members)
 
@@ -437,7 +424,7 @@ local function install_view_hooks(SocialMenuRosterView, Definitions, RosterViewS
 
 		self._realms_party_panel_signature = signature
 
-		local extra_slots = math.max(capacity - 4, 0)
+		local extra_slots = math.max(capacity, num_party_members, 4) - 4
 		local panel_height = active and math.min(default_panel_height + extra_slots * row_step, max_panel_height) or default_panel_height
 		local grid_height = active and panel_height - panel_grid_inset or default_grid_height
 		local panel_widget = self._widgets_by_name.party_panel
@@ -518,10 +505,6 @@ local function install_view_hooks(SocialMenuRosterView, Definitions, RosterViewS
 		end
 
 		local before = #self._party_widgets
-
-		if before >= MAX_PLAYERS then
-			return
-		end
 
 		local result = func(self, unique_id, player_info)
 

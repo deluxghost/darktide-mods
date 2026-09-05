@@ -30,7 +30,7 @@ local MESSAGE_VALIDATORS = {
 			and type(data.local_player_id) == "number"
 			and data.local_player_id % 1 == 0
 			and data.local_player_id >= 1
-			and data.local_player_id <= 8
+			and data.local_player_id <= 7
 			and valid_text(data.text)
 	end,
 	chat_deliver = function (data)
