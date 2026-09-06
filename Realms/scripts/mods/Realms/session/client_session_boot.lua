@@ -236,7 +236,9 @@ ClientSessionBoot.update = function (self, dt)
 				self:_set_state(STATES.joining)
 			end
 		elseif not self._browser:is_refreshing() then
-			self:_try_next_address("lobby browser did not return the requested Realms host")
+			-- LAN discovery sends one UDP request. Retry within the existing address deadline.
+			self:_reset_browser()
+			self._browser:establish_connection_to_server(self:_current_address(), self._options.server_port)
 		end
 	elseif self:state() == STATES.joining then
 		local lobby_state = self._engine_lobby:state()
