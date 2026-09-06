@@ -620,8 +620,7 @@ function ShootingRange.install(session, gameplay_control)
 		clear_peer_chest_state(peer_id)
 	end)
 
-	mod:hook(CLASS.ModManager, "update", function (func, self, dt)
-		func(self, dt)
+	mod:hook_safe(CLASS.ModManager, "update", function ()
 		update_player_status()
 	end)
 

@@ -1,6 +1,5 @@
 local mod = get_mod("SoloPlay")
 local PlayerUnitSpawnManager = require("scripts/managers/player/player_unit_spawn_manager")
-local UIHud = require("scripts/managers/ui/ui_hud")
 
 local GAME_MODE_NAME = "shooting_range"
 local NAMEPLATES_NAME = "HudElementNameplates"
@@ -30,9 +29,18 @@ local function initial_spawn_points(spawn_manager)
 	return spawn_points
 end
 
-local function refresh_hud_player_unit(hud)
+local function refresh_hud_player_unit(hud, changed_unit)
+	if not hud then
+		return
+	end
+
 	local extensions = hud._extensions
 	local player_unit = hud:player_unit()
+
+	if player_unit ~= changed_unit and (not extensions or extensions.unit ~= changed_unit) then
+		return
+	end
+
 	local unit_changed = not extensions or extensions.unit ~= player_unit
 	local nameplates = hud._elements[NAMEPLATES_NAME]
 
@@ -60,6 +68,17 @@ local function refresh_hud_player_unit(hud)
 
 	table.clear(player_weapons)
 	table.clear(handler._player_weapons_array)
+end
+
+local function refresh_player_huds(changed_unit)
+	local ui_manager = Managers.ui
+
+	if not ui_manager or not is_shooting_range() then
+		return
+	end
+
+	refresh_hud_player_unit(ui_manager:get_hud(), changed_unit)
+	refresh_hud_player_unit(ui_manager._spectator_hud, changed_unit)
 end
 
 mod:hook(PlayerUnitSpawnManager, "spawn_player", function (func, self, player, position, rotation, parent, force_spawn, optional_side_name, breed_name_optional, character_state_optional, is_respawn, optional_damage, optional_permanent_damage)
@@ -109,10 +128,12 @@ mod:hook(PlayerUnitSpawnManager, "fixed_update", function (func, self, dt, t)
 	self._num_players_to_spawn = #players_to_spawn
 end)
 
-mod:hook(UIHud, "update", function (func, self, dt, t, input_service)
-	if is_shooting_range() then
-		refresh_hud_player_unit(self)
+mod:hook_safe(PlayerUnitSpawnManager, "assign_unit_ownership", function (self, unit, player, is_player_unit)
+	if is_player_unit then
+		refresh_player_huds(unit)
 	end
+end)
 
-	return func(self, dt, t, input_service)
+mod:hook_safe(PlayerUnitSpawnManager, "relinquish_unit_ownership", function (self, unit)
+	refresh_player_huds(unit)
 end)

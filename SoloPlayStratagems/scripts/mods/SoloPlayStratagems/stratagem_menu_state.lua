@@ -169,33 +169,47 @@ mod.stratagem_menu_update = function ()
 	end
 end
 
+local reading_input_service
+local reading_input_action
+
 local function _handle_stratagem_direction_action(func, self, action_name)
-	local value = func(self, action_name)
-	local direction = mod.templates.input_directions_by_action[action_name]
+	local direction = self.type == "Ingame" and mod.templates.input_directions_by_action[action_name]
 
-	if self.type == "Ingame" and direction then
-		local is_down = value and value > 0
-		local was_down = mod.state.direction_key_down[action_name] == true
-		mod.state.direction_key_down[action_name] = is_down and true or false
-
-		if not mod.stratagem_menu_visible() then
-			return value
-		end
-
-		if is_down and not was_down then
-			_append_direction(action_name, direction.internal)
-		elseif not is_down and was_down and _can_trigger_pending_match(action_name) then
-			local triggered = mod.trigger_stratagem(mod.state.pending_stratagem_name)
-			if triggered then
-				mod.stratagem_menu_set_visible(false, SOUND_TRIGGER_SUCCESS)
-			else
-				mod.stratagem_menu_set_visible(false)
-			end
-		end
-
-		return self:get_default(action_name)
+	if not direction or (reading_input_service == self and reading_input_action == action_name) then
+		return func(self, action_name)
 	end
-	return value
+
+	local previous_service, previous_action = reading_input_service, reading_input_action
+	reading_input_service, reading_input_action = self, action_name
+
+	-- _get_simulate can re-enter _get; unwind the read scope even if a downstream hook fails.
+	local success, value = pcall(func, self, action_name)
+	reading_input_service, reading_input_action = previous_service, previous_action
+
+	if not success then
+		error(value, 0)
+	end
+
+	local is_down = value and value > 0
+	local was_down = mod.state.direction_key_down[action_name] == true
+	mod.state.direction_key_down[action_name] = is_down and true or false
+
+	if not mod.stratagem_menu_visible() then
+		return value
+	end
+
+	if is_down and not was_down then
+		_append_direction(action_name, direction.internal)
+	elseif not is_down and was_down and _can_trigger_pending_match(action_name) then
+		local triggered = mod.trigger_stratagem(mod.state.pending_stratagem_name)
+		if triggered then
+			mod.stratagem_menu_set_visible(false, SOUND_TRIGGER_SUCCESS)
+		else
+			mod.stratagem_menu_set_visible(false)
+		end
+	end
+
+	return self:get_default(action_name)
 end
 
 mod:hook("InputService", "_get", _handle_stratagem_direction_action)
