@@ -6,11 +6,37 @@ local SOUND_INPUT_CORRECT = "wwise/events/ui/play_ui_mastery_trait_unlocked"
 local SOUND_INPUT_WRONG = "wwise/events/player/play_device_auspex_bio_minigame_fail"
 local SOUND_TRIGGER_SUCCESS = "wwise/events/player/play_device_auspex_bio_minigame_progress_last"
 
+local direction_key_sets = { wasd = {}, arrows = {} }
+for key_set_name, key_set in pairs(direction_key_sets) do
+	for _, direction in pairs(mod.templates.input_directions) do
+		key_set[Keyboard.button_index(direction[key_set_name])] = direction
+	end
+end
+
+local reading_direction_keys = false
+
+local function _read_key(key_index)
+	local previous_reading = reading_direction_keys
+	reading_direction_keys = true
+	local success, value = pcall(Keyboard.button, key_index)
+	reading_direction_keys = previous_reading
+
+	if not success then
+		error(value, 0)
+	end
+
+	return value
+end
+
+local function _selected_direction_keys()
+	return direction_key_sets[mod:get("stratagem_direction_keys")]
+end
+
 mod.state.visible = mod.state.visible or false
 mod.state.sequence = mod.state.sequence or {}
 mod.state.direction_key_down = mod.state.direction_key_down or {}
 mod.state.pending_stratagem_name = mod.state.pending_stratagem_name or nil
-mod.state.pending_action_name = mod.state.pending_action_name or nil
+mod.state.pending_key_index = mod.state.pending_key_index or nil
 mod.state.active_stratagems = mod.state.active_stratagems or nil
 
 local function _clear_sequence()
@@ -19,7 +45,7 @@ end
 
 local function _clear_pending_match()
 	mod.state.pending_stratagem_name = nil
-	mod.state.pending_action_name = nil
+	mod.state.pending_key_index = nil
 end
 
 mod.stratagem_menu_set_visible = function (visible, close_sound_event)
@@ -69,7 +95,7 @@ local function _keybind_is_down(setting_id)
 	for i = 1, #keys do
 		local key = keys[i]
 		local button_index = key and Keyboard.button_index(key)
-		if button_index and Keyboard.button(button_index) > 0 then
+		if button_index and _read_key(button_index) > 0 then
 			return true
 		end
 	end
@@ -80,13 +106,13 @@ local function _is_hold_mode()
 	return mod:get("stratagem_menu_hold_mode") == true
 end
 
-local function _set_pending_match(stratagem_name, action_name)
+local function _set_pending_match(stratagem_name, key_index)
 	mod.state.pending_stratagem_name = stratagem_name
-	mod.state.pending_action_name = action_name
+	mod.state.pending_key_index = key_index
 end
 
 local function _has_pending_match()
-	return mod.state.pending_stratagem_name ~= nil and mod.state.pending_action_name ~= nil
+	return mod.state.pending_stratagem_name ~= nil and mod.state.pending_key_index ~= nil
 end
 
 local function _match_sequence(sequence)
@@ -114,7 +140,7 @@ local function _match_sequence(sequence)
 	return nil, has_prefix
 end
 
-local function _append_direction(action_name, symbol)
+local function _append_direction(key_index, symbol)
 	if _has_pending_match() then
 		return
 	end
@@ -132,12 +158,12 @@ local function _append_direction(action_name, symbol)
 	end
 
 	if matched_stratagem_name then
-		_set_pending_match(matched_stratagem_name, action_name)
+		_set_pending_match(matched_stratagem_name, key_index)
 	end
 end
 
-local function _can_trigger_pending_match(action_name)
-	return mod.state.pending_action_name == action_name and _has_pending_match() and mod.state.visible and (not _is_hold_mode() or _keybind_is_down("stratagem_menu_keybind"))
+local function _can_trigger_pending_match(key_index)
+	return mod.state.pending_key_index == key_index and _has_pending_match() and mod.state.visible and (not _is_hold_mode() or _keybind_is_down("stratagem_menu_keybind"))
 end
 
 mod.keybind_stratagem_menu = function ()
@@ -156,7 +182,32 @@ mod.stratagem_menu_visible = function ()
 	return mod.state.visible and _can_use_stratagem_menu()
 end
 
+local function _handle_direction(key_index, value, direction)
+	local is_down = value and value > 0
+	local was_down = mod.state.direction_key_down[key_index] == true
+	mod.state.direction_key_down[key_index] = is_down and true or false
+
+	if not mod.stratagem_menu_visible() then
+		return
+	end
+
+	if is_down and not was_down then
+		_append_direction(key_index, direction.internal)
+	elseif not is_down and was_down and _can_trigger_pending_match(key_index) then
+		local triggered = mod.trigger_stratagem(mod.state.pending_stratagem_name)
+		if triggered then
+			mod.stratagem_menu_set_visible(false, SOUND_TRIGGER_SUCCESS)
+		else
+			mod.stratagem_menu_set_visible(false)
+		end
+	end
+end
+
 mod.stratagem_menu_update = function ()
+	for key_index, direction in pairs(_selected_direction_keys()) do
+		_handle_direction(key_index, _read_key(key_index), direction)
+	end
+
 	if not _can_use_stratagem_menu() then
 		if mod.state.visible then
 			mod.stratagem_menu_set_visible(false)
@@ -169,48 +220,41 @@ mod.stratagem_menu_update = function ()
 	end
 end
 
-local reading_input_service
-local reading_input_action
-
-local function _handle_stratagem_direction_action(func, self, action_name)
-	local direction = self.type == "Ingame" and mod.templates.input_directions_by_action[action_name]
-
-	if not direction or (reading_input_service == self and reading_input_action == action_name) then
-		return func(self, action_name)
+mod.on_setting_changed = function (setting_id)
+	if setting_id ~= "stratagem_direction_keys" then
+		return
 	end
 
-	local previous_service, previous_action = reading_input_service, reading_input_action
-	reading_input_service, reading_input_action = self, action_name
-
-	-- _get_simulate can re-enter _get; unwind the read scope even if a downstream hook fails.
-	local success, value = pcall(func, self, action_name)
-	reading_input_service, reading_input_action = previous_service, previous_action
-
-	if not success then
-		error(value, 0)
+	_clear_sequence()
+	_clear_pending_match()
+	table.clear(mod.state.direction_key_down)
+	for key_index in pairs(_selected_direction_keys()) do
+		mod.state.direction_key_down[key_index] = _read_key(key_index) > 0
 	end
-
-	local is_down = value and value > 0
-	local was_down = mod.state.direction_key_down[action_name] == true
-	mod.state.direction_key_down[action_name] = is_down and true or false
-
-	if not mod.stratagem_menu_visible() then
-		return value
-	end
-
-	if is_down and not was_down then
-		_append_direction(action_name, direction.internal)
-	elseif not is_down and was_down and _can_trigger_pending_match(action_name) then
-		local triggered = mod.trigger_stratagem(mod.state.pending_stratagem_name)
-		if triggered then
-			mod.stratagem_menu_set_visible(false, SOUND_TRIGGER_SUCCESS)
-		else
-			mod.stratagem_menu_set_visible(false)
-		end
-	end
-
-	return self:get_default(action_name)
 end
 
-mod:hook("InputService", "_get", _handle_stratagem_direction_action)
-mod:hook("InputService", "_get_simulate", _handle_stratagem_direction_action)
+local function _blocks_key(key_index)
+	return not reading_direction_keys
+		and mod.state.visible
+		and _selected_direction_keys()[key_index] ~= nil
+		and mod.stratagem_menu_visible()
+end
+
+mod:hook(Keyboard, "button", function (func, key_index)
+	if _blocks_key(key_index) then
+		return 0
+	end
+
+	return func(key_index)
+end)
+
+local function _filter_key_event(func, key_index)
+	if _blocks_key(key_index) then
+		return false
+	end
+
+	return func(key_index)
+end
+
+mod:hook(Keyboard, "pressed", _filter_key_event)
+mod:hook(Keyboard, "released", _filter_key_event)

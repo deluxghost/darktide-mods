@@ -52,6 +52,15 @@ return {
 						type = "checkbox",
 						default_value = true,
 					},
+					{
+						setting_id = "stratagem_direction_keys",
+						type = "dropdown",
+						default_value = "wasd",
+						options = {
+							{ text = "stratagem_direction_keys_wasd", value = "wasd" },
+							{ text = "stratagem_direction_keys_arrows", value = "arrows" },
+						},
+					},
 				},
 			},
 			{

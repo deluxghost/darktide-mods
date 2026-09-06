@@ -27,22 +27,26 @@ templates.input_directions = {
 	[templates.UP] = {
 		internal = templates.UP,
 		display = "",
-		action = "keyboard_move_forward",
+		wasd = "w",
+		arrows = "up",
 	},
 	[templates.DOWN] = {
 		internal = templates.DOWN,
 		display = "",
-		action = "keyboard_move_backward",
+		wasd = "s",
+		arrows = "down",
 	},
 	[templates.LEFT] = {
 		internal = templates.LEFT,
 		display = "",
-		action = "keyboard_move_left",
+		wasd = "a",
+		arrows = "left",
 	},
 	[templates.RIGHT] = {
 		internal = templates.RIGHT,
 		display = "",
-		action = "keyboard_move_right",
+		wasd = "d",
+		arrows = "right",
 	},
 }
 
@@ -107,11 +111,6 @@ templates.default_stratagems = {
 	"expedition_deployable_force_field_pocketable",
 	"motion_detection_mine_explosive_pocketable",
 }
-
-templates.input_directions_by_action = {}
-for _, direction in pairs(templates.input_directions) do
-	templates.input_directions_by_action[direction.action] = direction
-end
 
 for _, template in ipairs(templates.stratagems) do
 	template.input_sequence = {}

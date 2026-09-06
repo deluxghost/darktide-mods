@@ -24,6 +24,17 @@ local localization = {
 		en = "Hold to show menu",
 		["zh-cn"] = "按住显示菜单",
 	},
+	stratagem_direction_keys = {
+		en = "Direction keys",
+		["zh-cn"] = "方向键",
+	},
+	stratagem_direction_keys_wasd = {
+		en = "WASD",
+	},
+	stratagem_direction_keys_arrows = {
+		en = "Arrow keys",
+		["zh-cn"] = "箭头键",
+	},
 	stratagem_menu_title = {
 		en = "Stratagems",
 		["zh-cn"] = "战略配备",
