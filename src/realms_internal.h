@@ -69,13 +69,20 @@ inline constexpr size_t kLanLobbyMemberChannelOffset = 0x08;
 inline constexpr size_t kLanLobbyMemberAllocatorOffset = 0x40;
 inline constexpr size_t kLanLobbyMemberAllocatorMirrorOffset = 0x58;
 
+enum class HostPeerState {
+    Pending,
+    Adopted,
+    Released,
+};
+
 struct HostPeerSlot {
     std::atomic<uint64_t> peer_id{0};
     std::atomic<uint64_t> last_activity_tick{0};
     std::atomic<uint32_t> peer_listener_token{0};
     std::atomic<uint32_t> channel_listener_token{0};
     std::atomic<uint32_t> channel_id{0};
-    std::atomic<bool> adopted{false};
+    std::atomic<uint32_t> remote_channel_id{0};
+    std::atomic<HostPeerState> state{HostPeerState::Pending};
     std::atomic<bool> peer_listener_registered{false};
     std::atomic<bool> channel_listener_registered{false};
 };

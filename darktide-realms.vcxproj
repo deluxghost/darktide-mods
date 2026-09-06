@@ -74,9 +74,11 @@
   <ItemGroup>
     <ClInclude Include="include\darktide_realms.h" />
     <ClInclude Include="src\realms_internal.h" />
+    <ClInclude Include="src\realms_datagram.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\realms_api.cpp" />
+    <ClCompile Include="src\realms_datagram.cpp" />
     <ClCompile Include="src\realms_engine.cpp" />
     <ClCompile Include="src\realms_events.cpp" />
     <ClCompile Include="src\realms_ipv6.cpp" />

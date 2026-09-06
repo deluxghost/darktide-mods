@@ -1,4 +1,5 @@
 #include "realms_internal.h"
+#include "realms_datagram.h"
 
 #include <MSWSock.h>
 #include <ws2tcpip.h>
@@ -8,6 +9,7 @@
 #include <cstring>
 #include <mutex>
 #include <thread>
+#include <utility>
 #include <vector>
 
 namespace realms {
@@ -31,12 +33,15 @@ struct RelayPeerCommand {
 
 struct RelayPeer {
     uint64_t peer_id = 0;
+    uint32_t connection_id = 0;
     SOCKET game_socket = INVALID_SOCKET;
     sockaddr_storage external_address{};
     int external_address_size = 0;
     uint64_t created_tick = 0;
     bool adopted = false;
 };
+
+using RelayPeers = std::array<RelayPeer, kMaximumRemotePeers>;
 
 std::atomic<bool> g_relay_running{false};
 std::thread g_relay_thread;
@@ -130,28 +135,6 @@ bool same_endpoint(const sockaddr_storage &left, int left_size, const sockaddr_s
     return false;
 }
 
-bool connectionless_peer_id(const uint8_t *packet, int packet_size, uint64_t *peer_id) {
-    constexpr int kDatagramFrameHeaderSize = 1;
-    constexpr int kPeerIdOffset = kDatagramFrameHeaderSize + 5;
-    constexpr int kPeerHeaderSize = kPeerIdOffset + static_cast<int>(sizeof(uint64_t));
-
-    if (packet == nullptr || packet_size < kPeerHeaderSize || packet_size - kDatagramFrameHeaderSize > UINT8_MAX ||
-        packet[0] != static_cast<uint8_t>(packet_size - kDatagramFrameHeaderSize) || peer_id == nullptr) {
-        return false;
-    }
-
-    const uint16_t protocol = static_cast<uint16_t>(packet[1]) | static_cast<uint16_t>(packet[2] << 8);
-    const uint32_t connection_id = static_cast<uint32_t>(packet[3]) | static_cast<uint32_t>(packet[4] << 8) |
-                                   static_cast<uint32_t>(packet[5] << 16);
-
-    if (protocol != kWireProtocol || connection_id != 0) {
-        return false;
-    }
-
-    std::memcpy(peer_id, packet + kPeerIdOffset, sizeof(*peer_id));
-    return *peer_id != 0;
-}
-
 SOCKET create_game_socket(const sockaddr *game_address, int game_address_size, uint64_t peer_id) {
     const int family = game_address != nullptr ? game_address->sa_family : AF_UNSPEC;
     if ((family != AF_INET && family != AF_INET6) || game_address_size <= 0) {
@@ -208,7 +191,7 @@ void clear_peer(RelayPeer &peer) {
     peer = {};
 }
 
-void process_peer_commands(std::array<RelayPeer, kMaximumRemotePeers> &peers) {
+void process_peer_commands(RelayPeers &peers) {
     std::vector<RelayPeerCommand> commands;
     {
         std::lock_guard<std::mutex> lock(g_relay_command_mutex);
@@ -229,7 +212,7 @@ void process_peer_commands(std::array<RelayPeer, kMaximumRemotePeers> &peers) {
     }
 }
 
-void reap_unadopted_peers(std::array<RelayPeer, kMaximumRemotePeers> &peers, uint64_t now) {
+void reap_unadopted_peers(RelayPeers &peers, uint64_t now) {
     for (RelayPeer &peer : peers) {
         if (peer.peer_id != 0 && !peer.adopted && peer.created_tick != 0 &&
             now - peer.created_tick >= kUnadoptedPeerTimeoutMs) {
@@ -238,8 +221,7 @@ void reap_unadopted_peers(std::array<RelayPeer, kMaximumRemotePeers> &peers, uin
     }
 }
 
-RelayPeer *find_external_peer(std::array<RelayPeer, kMaximumRemotePeers> &peers,
-                              const sockaddr_storage &external_address, int external_address_size) {
+RelayPeer *find_external_peer(RelayPeers &peers, const sockaddr_storage &external_address, int external_address_size) {
     for (RelayPeer &peer : peers) {
         if (peer.peer_id != 0 &&
             same_endpoint(peer.external_address, peer.external_address_size, external_address,
@@ -250,16 +232,18 @@ RelayPeer *find_external_peer(std::array<RelayPeer, kMaximumRemotePeers> &peers,
     return nullptr;
 }
 
-RelayPeer *find_peer_id(std::array<RelayPeer, kMaximumRemotePeers> &peers, uint64_t peer_id) {
+RelayPeer *find_routed_peer(RelayPeers &peers, const DatagramRoute &route) {
     for (RelayPeer &peer : peers) {
-        if (peer.peer_id == peer_id) {
+        const bool matches = route.connection_id == 0 ? peer.peer_id == route.peer_id
+                                                       : peer.connection_id == route.connection_id;
+        if (peer.peer_id != 0 && matches) {
             return &peer;
         }
     }
     return nullptr;
 }
 
-RelayPeer *empty_peer(std::array<RelayPeer, kMaximumRemotePeers> &peers) {
+RelayPeer *empty_peer(RelayPeers &peers) {
     for (RelayPeer &peer : peers) {
         if (peer.peer_id == 0) {
             return &peer;
@@ -269,8 +253,8 @@ RelayPeer *empty_peer(std::array<RelayPeer, kMaximumRemotePeers> &peers) {
 }
 
 void receive_public_packets(SOCKET public_socket, const sockaddr *game_address, int game_address_size,
-                            std::array<RelayPeer, kMaximumRemotePeers> &peers,
-                            std::array<uint8_t, kMaximumUdpPacketSize> &packet) {
+                            RelayPeers &peers, std::array<uint8_t, kMaximumUdpPacketSize> &packet,
+                            const DatagramDecoder &decoder) {
     for (size_t packet_index = 0; packet_index < kMaximumDatagramsPerSocket; ++packet_index) {
         sockaddr_storage external_address{};
         int external_address_size = sizeof(external_address);
@@ -287,35 +271,52 @@ void receive_public_packets(SOCKET public_socket, const sockaddr *game_address, 
         }
 
         RelayPeer *peer = find_external_peer(peers, external_address, external_address_size);
-        uint64_t claimed_peer_id = 0;
-        const bool connectionless = connectionless_peer_id(packet.data(), packet_size, &claimed_peer_id);
+        DatagramRoute route{};
+        const bool route_decoded = decoder.read_route(packet.data(), packet_size, &route);
+        if (!route_decoded && peer == nullptr) {
+            continue;
+        }
+        const bool connectionless = route_decoded && route.connection_id == 0;
 
-        if (peer != nullptr && connectionless && peer->peer_id != claimed_peer_id) {
+        if (peer != nullptr && connectionless && peer->peer_id != route.peer_id) {
             continue;
         }
 
         if (peer == nullptr) {
-            if (!connectionless || find_peer_id(peers, claimed_peer_id) != nullptr) {
+            peer = find_routed_peer(peers, route);
+            if (peer == nullptr && !connectionless) {
                 continue;
             }
 
+            if (peer != nullptr) {
+                // Mirror the engine's connection-ID rebinding without changing its local endpoint.
+                peer->external_address = external_address;
+                peer->external_address_size = external_address_size;
+            }
+        }
+
+        if (peer == nullptr) {
             peer = empty_peer(peers);
             if (peer == nullptr) {
                 push_runtime_event(REALMS_RUNTIME_EVENT_PEER_REJECTED, REALMS_RUNTIME_REJECT_CAPACITY,
-                                   claimed_peer_id, 0, "No UDP relay peer slot is available");
+                                   route.peer_id, 0, "No UDP relay peer slot is available");
                 continue;
             }
 
-            const SOCKET game_socket = create_game_socket(game_address, game_address_size, claimed_peer_id);
+            const SOCKET game_socket = create_game_socket(game_address, game_address_size, route.peer_id);
             if (game_socket == INVALID_SOCKET) {
                 continue;
             }
 
-            peer->peer_id = claimed_peer_id;
+            peer->peer_id = route.peer_id;
             peer->game_socket = game_socket;
             peer->external_address = external_address;
             peer->external_address_size = external_address_size;
             peer->created_tick = GetTickCount64();
+        }
+
+        if (route_decoded && !connectionless) {
+            peer->connection_id = route.connection_id;
         }
 
         if (send(peer->game_socket, reinterpret_cast<const char *>(packet.data()), packet_size, 0) == SOCKET_ERROR) {
@@ -352,8 +353,8 @@ void receive_game_packets(SOCKET public_socket, RelayPeer &peer,
     }
 }
 
-void relay_main(SOCKET public_socket, sockaddr_storage game_address, int game_address_size) {
-    std::array<RelayPeer, kMaximumRemotePeers> peers{};
+void relay_main(SOCKET public_socket, sockaddr_storage game_address, int game_address_size, DatagramDecoder decoder) {
+    RelayPeers peers{};
     std::array<uint8_t, kMaximumUdpPacketSize> packet{};
 
     while (g_relay_running.load(std::memory_order_acquire)) {
@@ -390,7 +391,7 @@ void relay_main(SOCKET public_socket, sockaddr_storage game_address, int game_ad
 
         if ((poll_descriptors[0].revents & POLLRDNORM) != 0) {
             receive_public_packets(public_socket, reinterpret_cast<const sockaddr *>(&game_address),
-                                   game_address_size, peers, packet);
+                                   game_address_size, peers, packet, decoder);
         }
         if ((poll_descriptors[0].revents & (POLLERR | POLLHUP | POLLNVAL)) != 0) {
             relay_fatal_error("Polling the public UDP relay socket",
@@ -433,6 +434,11 @@ bool start_udp_relay(uint16_t listen_port, const sockaddr *game_address, int gam
     }
     if (g_relay_running.load(std::memory_order_acquire) || g_relay_thread.joinable()) {
         return write_error(error, error_capacity, "The Realms UDP relay is already active");
+    }
+
+    DatagramDecoder decoder;
+    if (!decoder.initialize(error, error_capacity)) {
+        return false;
     }
 
     WSADATA winsock_data{};
@@ -540,7 +546,7 @@ bool start_udp_relay(uint16_t listen_port, const sockaddr *game_address, int gam
 
     g_relay_running.store(true, std::memory_order_release);
     try {
-        g_relay_thread = std::thread(relay_main, public_socket, game_address_copy, game_address_size);
+        g_relay_thread = std::thread(relay_main, public_socket, game_address_copy, game_address_size, std::move(decoder));
     } catch (...) {
         g_relay_running.store(false, std::memory_order_release);
         closesocket(public_socket);

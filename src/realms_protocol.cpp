@@ -329,6 +329,8 @@ HostPeerSlot *claim_host_peer_slot(uint64_t peer_id) {
 
         if (current_peer == peer_id) {
             slot.last_activity_tick.store(GetTickCount64(), std::memory_order_relaxed);
+            HostPeerState released = HostPeerState::Released;
+            slot.state.compare_exchange_strong(released, HostPeerState::Pending, std::memory_order_acq_rel);
             return &slot;
         }
         if (current_peer == 0 && empty_slot == nullptr) {
@@ -341,7 +343,7 @@ HostPeerSlot *claim_host_peer_slot(uint64_t peer_id) {
     }
 
     empty_slot->last_activity_tick.store(GetTickCount64(), std::memory_order_relaxed);
-    empty_slot->adopted.store(false, std::memory_order_relaxed);
+    empty_slot->state.store(HostPeerState::Pending, std::memory_order_relaxed);
     empty_slot->peer_id.store(peer_id, std::memory_order_release);
     return empty_slot;
 }
@@ -351,7 +353,8 @@ void clear_host_peer_slot(HostPeerSlot &slot) {
     slot.peer_listener_token.store(0, std::memory_order_relaxed);
     slot.channel_listener_token.store(0, std::memory_order_relaxed);
     slot.channel_id.store(0, std::memory_order_relaxed);
-    slot.adopted.store(false, std::memory_order_relaxed);
+    slot.remote_channel_id.store(0, std::memory_order_relaxed);
+    slot.state.store(HostPeerState::Pending, std::memory_order_relaxed);
     slot.peer_listener_registered.store(false, std::memory_order_relaxed);
     slot.channel_listener_registered.store(false, std::memory_order_relaxed);
     slot.peer_id.store(0, std::memory_order_release);
@@ -460,7 +463,8 @@ uint64_t __fastcall host_lobby_peer_callback(void *context, uint64_t, uint64_t p
                            "Peer requested a control channel for a different local session");
         return 0;
     }
-    if (slot->channel_listener_registered.load(std::memory_order_acquire)) {
+    if (slot->channel_listener_registered.load(std::memory_order_acquire) &&
+        slot->remote_channel_id.load(std::memory_order_relaxed) == remote_channel_id) {
         return 0;
     }
     if (g_accept_channel == nullptr || g_register_channel_system_listener == nullptr) {
@@ -489,7 +493,12 @@ uint64_t __fastcall host_lobby_peer_callback(void *context, uint64_t, uint64_t p
         return 0;
     }
 
+    // A new lobby channel can arrive before Lua finishes removing the old game connection.
+    if (slot->channel_listener_registered.load(std::memory_order_acquire)) {
+        g_remove_listener(g_expected_connection, slot->channel_listener_token.load(std::memory_order_relaxed));
+    }
     slot->channel_id.store(local_channel_id, std::memory_order_relaxed);
+    slot->remote_channel_id.store(remote_channel_id, std::memory_order_relaxed);
     slot->channel_listener_token.store(listener_token, std::memory_order_relaxed);
     slot->channel_listener_registered.store(true, std::memory_order_release);
     return 0;
@@ -522,6 +531,8 @@ int register_host_lobby_peer_listener(void *connection, HostPeerSlot *slot) {
 
     slot->peer_listener_token.store(listener_token, std::memory_order_relaxed);
     slot->peer_listener_registered.store(true, std::memory_order_release);
+    // The engine peer, not successful game admission, now owns the relay lifetime.
+    adopt_udp_relay_peer(peer_id);
     return 0;
 }
 

@@ -581,16 +581,11 @@ int RealmsRuntime_ReleasePeerTransportState(const char *peer_id_text, char *erro
     HostPeerSlot *slot = find_host_peer_slot(peer_id);
 
     if (slot == nullptr) {
-        release_udp_relay_peer(peer_id);
         return 1;
     }
 
-    if (!remove_host_peer_slot_listeners(*slot, g_host_listener_connection.load(std::memory_order_acquire), error,
-                                         error_capacity)) {
-        return 0;
-    }
-
-    release_udp_relay_peer(peer_id);
+    // Leaving a lobby does not end the engine connection. Rejoining may already be using it.
+    slot->state.store(HostPeerState::Released, std::memory_order_release);
     return 1;
 }
 
@@ -609,8 +604,7 @@ int RealmsRuntime_AdoptPeerTransportState(const char *peer_id_text, char *error,
     }
 
     slot->last_activity_tick.store(GetTickCount64(), std::memory_order_relaxed);
-    slot->adopted.store(true, std::memory_order_release);
-    adopt_udp_relay_peer(peer_id);
+    slot->state.store(HostPeerState::Adopted, std::memory_order_release);
     return 1;
 }
 
@@ -623,14 +617,22 @@ int RealmsRuntime_ReapAbandonedPeerTransportState(uint32_t idle_timeout_ms, int 
 
     *reaped_count = 0;
     const uint64_t now = GetTickCount64();
-    void *connection = g_host_listener_connection.load(std::memory_order_acquire);
+    void *connection = nullptr;
+    IsPeerConnectedFunction is_peer_connected = nullptr;
+
+    if (!current_connection(&connection, &is_peer_connected, nullptr, nullptr, error, error_capacity)) {
+        return 0;
+    }
 
     for (HostPeerSlot &slot : g_host_peer_slots) {
         const uint64_t peer_id = slot.peer_id.load(std::memory_order_acquire);
         const uint64_t last_activity = slot.last_activity_tick.load(std::memory_order_relaxed);
+        const HostPeerState state = slot.state.load(std::memory_order_acquire);
 
-        if (peer_id == 0 || slot.adopted.load(std::memory_order_acquire) || last_activity == 0 ||
-            now - last_activity < idle_timeout_ms) {
+        if (peer_id == 0 || state == HostPeerState::Adopted || is_peer_connected(connection, peer_id) != 0) {
+            continue;
+        }
+        if (state == HostPeerState::Pending && now - last_activity < idle_timeout_ms) {
             continue;
         }
         if (!remove_host_peer_slot_listeners(slot, connection, error, error_capacity)) {

@@ -88,14 +88,14 @@ REALMS_RUNTIME_API int RealmsRuntime_StartLocalSession(const char *local_account
 REALMS_RUNTIME_API int RealmsRuntime_IsPeerConnected(const char *peer_id, int *connected, char *error,
                                                      int error_capacity);
 
-// Releases only the Realms listeners associated with this peer.
+// Ends RemoteConnection ownership without interrupting the reusable engine connection.
 // Higher layers remain responsible for closing channels and removing lobby/session members.
 REALMS_RUNTIME_API int RealmsRuntime_ReleasePeerTransportState(const char *peer_id, char *error, int error_capacity);
 
 // Marks a handshake peer slot as owned by the higher-level RemoteConnection lifecycle.
 REALMS_RUNTIME_API int RealmsRuntime_AdoptPeerTransportState(const char *peer_id, char *error, int error_capacity);
 
-// Releases handshake peer slots that were never adopted by a RemoteConnection.
+// Reaps released peers once disconnected, and unadopted peers after disconnection and the idle timeout.
 REALMS_RUNTIME_API int RealmsRuntime_ReapAbandonedPeerTransportState(uint32_t idle_timeout_ms, int *reaped_count,
                                                                     char *error, int error_capacity);
 
