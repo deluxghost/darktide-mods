@@ -1,4 +1,5 @@
 local mod = get_mod("SoloPlayStratagems")
+local PlayerUnitStatus = require("scripts/utilities/attack/player_unit_status")
 
 local SOUND_MENU_OPEN = "wwise/events/player/play_device_auspex_scanner_minigame_progress_last"
 local SOUND_MENU_CLOSE = "wwise/events/player/play_device_auspex_bio_minigame_progress"
@@ -83,7 +84,19 @@ local function _is_stratagem_menu_blocked()
 end
 
 local function _can_use_stratagem_menu()
-	return mod.is_local_game() and not _is_stratagem_menu_blocked()
+	if not mod.is_local_game() or _is_stratagem_menu_blocked() then
+		return false
+	end
+
+	local player = Managers.player:local_player(1)
+	local player_unit = player and player.player_unit
+	if not player_unit or not HEALTH_ALIVE[player_unit] then
+		return false
+	end
+
+	local unit_data_extension = ScriptUnit.extension(player_unit, "unit_data_system")
+	local character_state = unit_data_extension:read_component("character_state")
+	return not PlayerUnitStatus.is_disabled(character_state) and not PlayerUnitStatus.is_stunned(character_state)
 end
 
 local function _keybind_is_down(setting_id)
