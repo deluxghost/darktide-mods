@@ -79,3 +79,18 @@ mod:hook_require("scripts/settings/buff/havoc_buff_templates", function(template
 	_skip_stop_on_extension_destroyed(templates, "havoc_sticky_poxburster")
 	_skip_stop_on_extension_destroyed(templates, "mutator_rotten_armor")
 end)
+
+mod:hook("BtChaosMutatorDaemonhostPassiveAction", "leave", function (func, self, unit, breed, blackboard, scratchpad, action_data, t, reason, destroy, ...)
+	if not destroy then
+		return func(self, unit, breed, blackboard, scratchpad, action_data, t, reason, destroy, ...)
+	end
+
+	-- Despawning is not an awakening: players may already be gone during mission cleanup.
+	-- Release externally owned resources; the unit's extensions handle their own destruction.
+	if scratchpad.chanting_effect_id then
+		scratchpad.fx_system:stop_template_effect(scratchpad.chanting_effect_id)
+		scratchpad.chanting_effect_id = nil
+	end
+
+	Managers.state.nav_mesh:remove_nav_cost_map_volume(scratchpad.nav_cost_map_volume_id, scratchpad.nav_cost_map_id)
+end)
