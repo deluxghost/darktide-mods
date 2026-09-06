@@ -12,7 +12,6 @@ local STYLES_PATH = "scripts/ui/views/social_menu_roster_view/social_menu_roster
 local UI_WIDGET_GRID_PATH = "scripts/ui/widget_logic/ui_widget_grid"
 local UI_WIDGET_PATH = "scripts/managers/ui/ui_widget"
 local PARTY_GRID_INDEX = 1
-local ROSTER_GRID_INDEX = 2
 local PARTY_GRID_ID = "party_grid"
 local PARTY_GRID_CONTENT_ID = "realms_party_grid_content"
 local PARTY_GRID_INTERACTION_ID = "realms_party_grid_interaction"
@@ -353,6 +352,7 @@ local function install_view_hooks(SocialMenuRosterView, Definitions, RosterViewS
 
 	local function create_party_grid(self, active, capacity, panel_height, grid_height)
 		local party_widgets = self._party_widgets
+		local previous_renderer = self._realms_party_alignment_widgets and self._offscreen_renderer or self._ui_renderer
 		local area_scenegraph_id = PARTY_GRID_ID
 		local alignment_widgets = party_widgets
 		local portrait_renderer = self._ui_renderer
@@ -385,6 +385,11 @@ local function install_view_hooks(SocialMenuRosterView, Definitions, RosterViewS
 		end
 
 		for i = 1, #party_widgets do
+			if previous_renderer ~= portrait_renderer then
+				-- Pass materials belong to the renderer that created them.
+				UIWidget.destroy(previous_renderer, party_widgets[i])
+			end
+
 			use_portrait_renderer(self, party_widgets[i], portrait_renderer)
 		end
 
@@ -470,10 +475,6 @@ local function install_view_hooks(SocialMenuRosterView, Definitions, RosterViewS
 	end
 
 	local function draw_realms_party_grid(self, ui_renderer)
-		if not Session.is_active() then
-			return
-		end
-
 		local widgets = self._realms_party_alignment_widgets
 		local grid = self._grids[PARTY_GRID_INDEX]
 
@@ -540,7 +541,8 @@ local function install_view_hooks(SocialMenuRosterView, Definitions, RosterViewS
 	end)
 
 	mod:hook(SocialMenuRosterView, "_draw_widgets", function (func, self, dt, t, input_service, ui_renderer)
-		if not Session.is_active() or not self._grids[ROSTER_GRID_INDEX] then
+		-- Leaving a session can happen after layout update but before drawing.
+		if not self._realms_party_alignment_widgets then
 			return func(self, dt, t, input_service, ui_renderer)
 		end
 
