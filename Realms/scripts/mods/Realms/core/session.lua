@@ -1094,7 +1094,7 @@ function Session.leave()
 	return true
 end
 
-function Session.status_lines()
+function Session.status_lines(latency)
 	local lines = {
 		"Session status",
 		"  active=" .. tostring(Session.is_active()),
@@ -1103,19 +1103,26 @@ function Session.status_lines()
 	local connection = current_connection()
 
 	if connection and connection._realms_protocol == SessionTicket.PROTOCOL_VERSION then
+		local remote_lines
+
 		lines[#lines + 1] = "  protocol=" .. tostring(connection._realms_protocol)
 		lines[#lines + 1] = "  lobby=" .. tostring(connection:engine_lobby_id())
 
 		if Session.is_active_host() then
 			lines[#lines + 1] = string.format("  endpoint=udp:%d players:%d/%d private:%s mission:%s", connection:local_port(), connection:num_connections() + 1, connection:max_members(), tostring(mod:get("private_mode")), connection:mission_name() or "none")
-
-			local remote_lines = connection:status_lines()
-
-			for i = 1, #remote_lines do
-				lines[#lines + 1] = remote_lines[i]
-			end
+			remote_lines = connection:status_lines()
 		else
 			lines[#lines + 1] = "  host_channel=" .. tostring(connection:host_channel())
+		end
+
+		local player_lines = latency.status_lines(connection)
+
+		for i = 1, #player_lines do
+			lines[#lines + 1] = player_lines[i]
+		end
+
+		for i = 1, remote_lines and #remote_lines or 0 do
+			lines[#lines + 1] = remote_lines[i]
 		end
 	end
 

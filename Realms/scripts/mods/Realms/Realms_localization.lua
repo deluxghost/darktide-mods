@@ -222,8 +222,8 @@ local localization = {
 		["zh-cn"] = "武器",
 	},
 	preparation_status_header = {
-		en = "Ready",
-		["zh-cn"] = "准备",
+		en = "Status",
+		["zh-cn"] = "状态",
 	},
 	preparation_ready = {
 		en = "Ready",

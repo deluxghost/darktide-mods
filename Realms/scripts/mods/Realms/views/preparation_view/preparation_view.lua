@@ -422,6 +422,24 @@ RealmsPreparationView._present_player_rows = function (self, force)
 	local signature = rows_signature(rows, PLAYER_SIGNATURE_FIELDS)
 
 	if not force and signature == self._player_rows_signature then
+		local rows_by_peer = {}
+
+		for i = 1, #rows do
+			rows_by_peer[rows[i].peer_id] = rows[i]
+		end
+
+		local widgets = self._player_grid:widgets()
+
+		for i = 1, #widgets do
+			local widget = widgets[i]
+			local element = widget.content.element
+			local row = element and rows_by_peer[element.peer_id]
+
+			if row then
+				definitions.update_player_latency(widget, row.latency_ms)
+			end
+		end
+
 		return
 	end
 
@@ -435,6 +453,7 @@ RealmsPreparationView._present_player_rows = function (self, force)
 
 		layout[#layout + 1] = {
 			class_name = row.class_name,
+			latency_ms = row.latency_ms,
 			peer_id = row.peer_id,
 			player_name = row.name,
 			portrait_columns = portrait.columns,

@@ -16,6 +16,7 @@ local GameplayControl = mod:io_dofile("Realms/scripts/mods/Realms/core/gameplay_
 mod._gameplay_control = GameplayControl
 local SessionControl = mod:io_dofile("Realms/scripts/mods/Realms/core/session_control")
 mod._session_control = SessionControl
+local Latency = mod:io_dofile("Realms/scripts/mods/Realms/core/latency")
 local ModNetwork = mod:io_dofile("Realms/scripts/mods/Realms/core/mod_network")
 local Chat = mod:io_dofile("Realms/scripts/mods/Realms/core/chat")
 
@@ -64,7 +65,8 @@ mod:io_dofile("Realms/scripts/mods/Realms/views/preparation_view/register")
 LoadingClients.install(Session, Preparation)
 MissionSeed.install(Session)
 SessionControl.install(Session)
-Preparation.install(Session, ProfileUpdates, SessionControl)
+Latency.install(Session, SessionControl)
+Preparation.install(Session, ProfileUpdates, SessionControl, Latency)
 BotBackfill.install(Session)
 DisconnectErrors.install()
 GameplayControl.install(Session, Preparation, SessionControl)
@@ -260,6 +262,7 @@ end)
 mod.update = function ()
 	SessionControl.update()
 	Session.update()
+	Latency.update()
 	GameplayControl.update()
 	Chat.update()
 	ProfileUpdates.update()
@@ -268,11 +271,7 @@ mod.update = function ()
 end
 
 mod:command("realms_status", mod:localize("command_status_description"), function ()
-	local lines = Session.status_lines()
-
-	for i = 1, #lines do
-		mod:echo(lines[i])
-	end
+	mod:echo("\n" .. table.concat(Session.status_lines(Latency), "\n"))
 end)
 
 mod.on_setting_changed = function (setting_id)

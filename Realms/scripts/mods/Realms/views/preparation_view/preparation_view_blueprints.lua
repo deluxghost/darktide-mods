@@ -7,6 +7,7 @@ local UISettings = require("scripts/settings/ui/ui_settings")
 local Layout = mod:io_dofile("Realms/scripts/mods/Realms/views/preparation_view/preparation_view_layout")
 local Loadout = mod:io_dofile("Realms/scripts/mods/Realms/views/preparation_view/loadout")
 local Style = mod:io_dofile("Realms/scripts/mods/Realms/views/realms_view_style")
+local format_latency = mod:io_dofile("Realms/scripts/mods/Realms/core/latency_format")
 
 local PLAYER_ROW_HEIGHT = 80
 local PLAYER_ROW_WIDTH = Layout.player_row_width
@@ -146,15 +147,35 @@ local player_pass_template = {
 	},
 	{
 		pass_type = "text",
-		style = table.merge(text_style(32, Style.color("status_idle")), {
+		style = table.merge(text_style(16, Style.color("secondary_text")), {
+			vertical_alignment = "top",
 			offset = {
 				COLUMNS.status.x,
-				0,
+				5,
 				3,
 			},
 			size = {
 				COLUMNS.status.width,
-				PLAYER_ROW_HEIGHT,
+				24,
+			},
+			text_horizontal_alignment = "center",
+		}),
+		style_id = "latency",
+		value = "",
+		value_id = "latency",
+	},
+	{
+		pass_type = "text",
+		style = table.merge(text_style(32, Style.color("status_idle")), {
+			vertical_alignment = "top",
+			offset = {
+				COLUMNS.status.x,
+				23,
+				3,
+			},
+			size = {
+				COLUMNS.status.width,
+				PLAYER_ROW_HEIGHT - 23,
 			},
 			text_horizontal_alignment = "center",
 		}),
@@ -340,6 +361,23 @@ for i = 1, 2 do
 	}
 end
 
+local function update_player_latency(widget, latency_ms)
+	local content = widget.content
+	local style = widget.style.latency
+
+	content.latency = format_latency(latency_ms)
+
+	if type(latency_ms) ~= "number" then
+		style.text_color = Style.color("secondary_text")
+	elseif latency_ms < 100 then
+		style.text_color = Color.online_green(255, true)
+	elseif latency_ms < 200 then
+		style.text_color = Color.citadel_troll_slayer_orange(255, true)
+	else
+		style.text_color = Color.citadel_wild_rider_red(255, true)
+	end
+end
+
 local function init_player(parent, widget, element)
 	local content = widget.content
 	local portrait_style = widget.style.character_portrait
@@ -351,6 +389,7 @@ local function init_player(parent, widget, element)
 	content.class_name = element.class_name
 	content.player_name = element.player_name
 	content.ready_status = element.ready_status
+	update_player_latency(widget, element.latency_ms)
 	material_values.columns = element.portrait_columns
 	material_values.grid_index = element.portrait_grid_index
 	material_values.portrait_frame_texture = element.portrait_frame_texture
@@ -488,6 +527,7 @@ end
 
 return {
 	max_skills = MAX_SKILLS,
+	update_player_latency = update_player_latency,
 	blueprints = {
 		circumstance = official_blueprint("circumstance"),
 		havoc_rank = {

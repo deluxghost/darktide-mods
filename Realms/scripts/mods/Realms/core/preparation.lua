@@ -14,6 +14,7 @@ local view_open_failure_logged = false
 local Session
 local SessionControl
 local ProfileUpdates
+local Latency
 
 local VIEW_NAME = "realms_preparation_view"
 local COUNTDOWN_DURATION = 5
@@ -548,10 +549,11 @@ function Preparation.mission_details()
 	return PreparationViewModel.mission_details(state.mission_name)
 end
 
-function Preparation.install(session, profile_updates, session_control)
+function Preparation.install(session, profile_updates, session_control, latency)
 	Session = session
 	ProfileUpdates = profile_updates
 	SessionControl = session_control
+	Latency = latency
 
 	SessionControl.register_protocol(PreparationProtocol)
 	SessionControl.register_host_handler(PreparationProtocol.NAME, "hello", receive_hello)
@@ -595,7 +597,7 @@ function Preparation.send_to_host(message_type, data)
 end
 
 function Preparation.player_rows()
-	return PreparationViewModel.player_rows(state.ready_by_peer)
+	return PreparationViewModel.player_rows(state.ready_by_peer, Latency.values())
 end
 
 function Preparation.update()

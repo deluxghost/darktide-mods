@@ -129,7 +129,7 @@ function PreparationViewModel.mission_details(fallback_mission_name)
 	return details
 end
 
-function PreparationViewModel.player_rows(ready_by_peer)
+function PreparationViewModel.player_rows(ready_by_peer, latency_by_peer)
 	local rows = {}
 	local player_manager = Managers.player
 
@@ -145,6 +145,7 @@ function PreparationViewModel.player_rows(ready_by_peer)
 
 		rows[#rows + 1] = {
 			class_name = class_name,
+			latency_ms = latency_by_peer[peer_id],
 			loadout_key = loadout.loadout_key,
 			peer_id = peer_id,
 			name = player:name(),

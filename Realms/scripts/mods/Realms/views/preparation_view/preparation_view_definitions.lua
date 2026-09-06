@@ -295,5 +295,6 @@ return {
 	max_skills = Blueprints.max_skills,
 	player_grid_size = PLAYER_GRID_SIZE,
 	scenegraph_definition = scenegraph_definition,
+	update_player_latency = Blueprints.update_player_latency,
 	widget_definitions = widget_definitions,
 }
