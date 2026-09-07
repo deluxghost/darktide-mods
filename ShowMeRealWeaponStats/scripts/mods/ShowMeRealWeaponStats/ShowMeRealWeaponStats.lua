@@ -204,8 +204,8 @@ local function _apply_stat_bar_values(widget, item, init)
 			if bar_bg_style.size[1] > bar_width then
 				bar_bg_style.size[1] = bar_width
 			end
-			divider_1_style.offset[1] = bar_bg_style.offset[1] + value_bar_width_full - 2
-			divider_2_style.offset[1] = bar_bg_style.offset[1] + max_value_bar_width_full
+			divider_1_style.offset[1] = bar_bg_style.offset[1] + bar_style.size[1] - 2
+			divider_2_style.offset[1] = bar_bg_style.offset[1] + bar_bg_style.size[1]
 		end
 	end
 end
@@ -362,7 +362,7 @@ mod:hook(package.loaded, "scripts/ui/view_content_blueprints/item_stats_blueprin
 	return blueprints
 end)
 
-mod:hook(ViewElementWeaponInfo, "_get_stats_text", function (func, self, stat)
+mod:hook_origin(ViewElementWeaponInfo, "_get_stats_text", function (self, stat)
 	local override_data = stat.override_data or {}
 	local type_data = stat.type_data
 	local display_type = override_data.display_type or type_data.display_type
