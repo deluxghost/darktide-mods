@@ -101,6 +101,7 @@ REALMS_RUNTIME_API int RealmsRuntime_ReapAbandonedPeerTransportState(uint32_t id
 
 // Returns 1 when an event was written, 0 when the queue is empty, and -1 on API failure.
 // The caller must initialize event->struct_size to sizeof(RealmsRuntimeEvent).
+// Non-null output buffers are inspected only when an event is available; API failure does not consume the event.
 REALMS_RUNTIME_API int RealmsRuntime_PollEvent(RealmsRuntimeEvent *event, char *error, int error_capacity);
 
 // Must run before Darktide destroys the Connection and local-session lobby objects.

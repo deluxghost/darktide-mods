@@ -49,7 +49,21 @@ void push_runtime_event(RealmsRuntimeEventType type, RealmsRuntimeEventCode code
 }
 
 int poll_runtime_event(RealmsRuntimeEvent *event, char *error, int error_capacity) {
-    if (event == nullptr || !dtintutils_is_writable_range(event, sizeof(*event))) {
+    if (event == nullptr) {
+        write_error(error, error_capacity, "Event output is not writable");
+        return -1;
+    }
+
+    {
+        std::lock_guard<std::mutex> lock(g_events_mutex);
+        if (g_events.empty() && g_dropped_event_count.load(std::memory_order_relaxed) == 0) {
+            return 0;
+        }
+    }
+
+    // Validate only when an output is needed, without blocking event producers.
+    // Failed validation must leave both queued events and overflow reports intact.
+    if (!dtintutils_is_writable_range(event, sizeof(*event))) {
         write_error(error, error_capacity, "Event output is not writable");
         return -1;
     }

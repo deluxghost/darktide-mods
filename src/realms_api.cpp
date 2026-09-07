@@ -620,19 +620,22 @@ int RealmsRuntime_ReapAbandonedPeerTransportState(uint32_t idle_timeout_ms, int 
     void *connection = nullptr;
     IsPeerConnectedFunction is_peer_connected = nullptr;
 
-    if (!current_connection(&connection, &is_peer_connected, nullptr, nullptr, error, error_capacity)) {
-        return 0;
-    }
-
     for (HostPeerSlot &slot : g_host_peer_slots) {
         const uint64_t peer_id = slot.peer_id.load(std::memory_order_acquire);
         const uint64_t last_activity = slot.last_activity_tick.load(std::memory_order_relaxed);
         const HostPeerState state = slot.state.load(std::memory_order_acquire);
 
-        if (peer_id == 0 || state == HostPeerState::Adopted || is_peer_connected(connection, peer_id) != 0) {
+        if (peer_id == 0 || state == HostPeerState::Adopted) {
             continue;
         }
         if (state == HostPeerState::Pending && now - last_activity < idle_timeout_ms) {
+            continue;
+        }
+        if (connection == nullptr &&
+            !current_connection(&connection, &is_peer_connected, nullptr, nullptr, error, error_capacity)) {
+            return 0;
+        }
+        if (is_peer_connected(connection, peer_id) != 0) {
             continue;
         }
         if (!remove_host_peer_slot_listeners(slot, connection, error, error_capacity)) {
