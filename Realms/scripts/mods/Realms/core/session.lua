@@ -19,6 +19,12 @@ local Session = {}
 local state = mod:persistent_table("session_state")
 local applying_deferred_mechanism_change = false
 local pending_client_boot_options
+local UNRESTRICTED_LOADOUT_GAME_MODES = {
+	hub = true,
+	hub_singleplay = true,
+	prologue_hub = true,
+	shooting_range = true,
+}
 
 -- Local mission launchers call reset and boot separately. Keep the host alive only when boot follows before the next update.
 local pending_host_reset
@@ -231,7 +237,7 @@ function Session.max_members()
 	return connection and connection:max_members() or nil
 end
 
-function Session.loadout_changes_allowed()
+function Session.configured_loadout_changes_allowed()
 	if Session.is_active_host() then
 		return mod:get("allow_in_mission_loadout_changes") == true
 	end
@@ -240,6 +246,17 @@ function Session.loadout_changes_allowed()
 	end
 
 	return false
+end
+
+function Session.loadout_changes_allowed()
+	if not Session.is_active() then
+		return false
+	end
+
+	local game_mode = Managers.state and Managers.state.game_mode
+	local game_mode_name = game_mode and game_mode:game_mode_name()
+
+	return UNRESTRICTED_LOADOUT_GAME_MODES[game_mode_name] == true or Session.configured_loadout_changes_allowed()
 end
 
 function Session.apply_remote_server_settings(max_members, loadout_changes_allowed)

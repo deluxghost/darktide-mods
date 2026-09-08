@@ -137,7 +137,7 @@ local function snapshot_data()
 	return {
 		countdown_remaining_ms = countdown_remaining_ms(),
 		finalizing = state.finalizing,
-		loadout_changes_allowed = Session.loadout_changes_allowed(),
+		loadout_changes_allowed = Session.configured_loadout_changes_allowed(),
 		max_members = connection:max_members(),
 		mission_name = state.mission_name,
 		ready_peer_ids = ready_peer_ids(),
