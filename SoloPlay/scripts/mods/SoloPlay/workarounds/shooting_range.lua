@@ -18,6 +18,14 @@ local function can_respawn()
 	return game_mode_manager and game_mode_manager:game_mode_name() == GAME_MODE_NAME and game_mode and game_mode:state() == "in_game"
 end
 
+local function has_pending_profile_change(player)
+	local package_synchronizer = Managers.package_synchronization:synchronizer_host()
+	local peer_syncs = package_synchronizer._syncs[player:peer_id()]
+
+	-- Native profile changes own respawning until their full sync transaction completes.
+	return peer_syncs and peer_syncs[player:local_player_id()] ~= nil
+end
+
 local function initial_spawn_points(spawn_manager)
 	local spawn_points = spawn_manager._soloplay_shooting_range_initial_spawn_points
 
@@ -114,14 +122,14 @@ mod:hook(PlayerUnitSpawnManager, "fixed_update", function (func, self, dt, t)
 		local player = players_to_spawn[i]
 		local spawn_point = spawn_points and spawn_points[player:unique_id()]
 
-		if spawn_point then
+		if not spawn_point then
+			mod:error("Missing initial spawn point for player %s", player:unique_id())
+		elseif not has_pending_profile_change(player) then
 			local force_spawn = false
 			local is_respawn = true
 
 			self:spawn_player(player, spawn_point.position:unbox(), spawn_point.rotation:unbox(), nil, force_spawn, spawn_point.side, nil, "walking", is_respawn)
 			table.remove(players_to_spawn, i)
-		else
-			mod:error("Missing initial spawn point for player %s", player:unique_id())
 		end
 	end
 
