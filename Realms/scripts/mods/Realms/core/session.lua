@@ -19,7 +19,7 @@ local Session = {}
 local state = mod:persistent_table("session_state")
 local applying_deferred_mechanism_change = false
 local pending_client_boot_options
-local UNRESTRICTED_LOADOUT_GAME_MODES = {
+local HUB_AND_SHOOTING_RANGE_GAME_MODES = {
 	hub = true,
 	hub_singleplay = true,
 	prologue_hub = true,
@@ -248,15 +248,19 @@ function Session.configured_loadout_changes_allowed()
 	return false
 end
 
+function Session.is_hub_or_shooting_range()
+	local game_mode = Managers.state and Managers.state.game_mode
+	local game_mode_name = game_mode and game_mode:game_mode_name()
+
+	return HUB_AND_SHOOTING_RANGE_GAME_MODES[game_mode_name] == true
+end
+
 function Session.loadout_changes_allowed()
 	if not Session.is_active() then
 		return false
 	end
 
-	local game_mode = Managers.state and Managers.state.game_mode
-	local game_mode_name = game_mode and game_mode:game_mode_name()
-
-	return UNRESTRICTED_LOADOUT_GAME_MODES[game_mode_name] == true or Session.configured_loadout_changes_allowed()
+	return Session.is_hub_or_shooting_range() or Session.configured_loadout_changes_allowed()
 end
 
 function Session.apply_remote_server_settings(max_members, loadout_changes_allowed)
