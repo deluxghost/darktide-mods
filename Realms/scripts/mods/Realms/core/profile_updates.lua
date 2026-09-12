@@ -1,4 +1,5 @@
 local mod = get_mod("Realms")
+local PlayerManager = require("scripts/foundation/managers/player/player_manager")
 local ProfileUpdate = mod:io_dofile("Realms/scripts/mods/Realms/protocol/profile_update")
 
 local ProfileUpdates = {}
@@ -302,6 +303,50 @@ local function expected_remote_identity(peer_id, local_player_id)
 	}
 end
 
+local function remove_player_entry(entries, peer_id, local_player_id)
+	local player_entries = entries[peer_id]
+
+	if player_entries then
+		player_entries[local_player_id] = nil
+	end
+end
+
+local function remove_player(synchronizer, peer_id, local_player_id)
+	remove_player_entry(synchronizer._profile_updates, peer_id, local_player_id)
+	remove_player_entry(synchronizer._delayed_profile_changes, peer_id, local_player_id)
+
+	for _, peer_states in pairs(synchronizer._profile_sync_states) do
+		remove_player_entry(peer_states, peer_id, local_player_id)
+	end
+
+	-- Keep empty initial-sync groups so their normal completion path can finish.
+	for _, initial_syncs in pairs(synchronizer._initial_syncs) do
+		remove_player_entry(initial_syncs, peer_id, local_player_id)
+	end
+
+	-- Invalidate acknowledgements before the player ID can be reused. Leave queued
+	-- chunks intact: clients must finish receiving each started profile stream.
+	for _, sync_hashes in pairs(synchronizer._profile_sync_hashes) do
+		for sync_hash, sync_data in pairs(sync_hashes) do
+			if sync_data.sync_peer_id == peer_id and sync_data.sync_local_player_id == local_player_id then
+				sync_hashes[sync_hash] = nil
+			end
+		end
+	end
+
+	peer_id = normalize_peer_id(peer_id)
+
+	local pending = pending_by_peer[peer_id]
+
+	if pending and pending.local_player_id == local_player_id then
+		pending_by_peer[peer_id] = nil
+	end
+	if peer_id == local_peer_id() and local_change and local_change.local_player_id == local_player_id then
+		-- Invalidate an in-flight fetch even if the replacement has the same character.
+		local_change = nil
+	end
+end
+
 function ProfileUpdates.install(session, preparation, gameplay_control)
 	Session = session
 	Preparation = preparation
@@ -312,6 +357,18 @@ function ProfileUpdates.install(session, preparation, gameplay_control)
 	GameplayControl.register_host_handler("profile_update", ProfileUpdates.receive_update)
 	GameplayControl.register_disconnect_handler("profile_updates", function (peer_id)
 		ProfileUpdates.remote_disconnected(peer_id)
+	end)
+
+	mod:hook(PlayerManager, "remove_player", function (func, self, peer_id, local_player_id)
+		func(self, peer_id, local_player_id)
+
+		if not Session.is_active_host() then
+			return
+		end
+
+		local connection = Managers.connection._connection_host
+
+		remove_player(connection:profile_synchronizer(), peer_id, local_player_id)
 	end)
 end
 
