@@ -41,6 +41,22 @@ local localization = {
 		en = "Turn newly started local games into Realms listen servers. When disabled, local games retain their original single-player behavior.",
 		["zh-cn"] = "将新启动的本地游戏作为领域监听服务器运行。禁用后，本地游戏保持原有的单人行为。",
 	},
+	enable_hub_server = {
+		en = "Host local Mourningstar in Realms",
+		["zh-cn"] = "领域主持本地哀星号",
+	},
+	enable_hub_server_description = {
+		en = "Run newly started local Mourningstar sessions as Realms servers. When disabled, they remain single-player.",
+		["zh-cn"] = "将新启动的本地哀星号作为领域服务器运行。关闭后保持单人模式。",
+	},
+	enable_shooting_range_server = {
+		en = "Host local Psykhanium in Realms",
+		["zh-cn"] = "领域主持本地灵能室",
+	},
+	enable_shooting_range_server_description = {
+		en = "Run newly started local Psykhanium sessions as Realms servers. When disabled, they remain single-player.",
+		["zh-cn"] = "将新启动的本地灵能室作为领域服务器运行。关闭后保持单人模式。",
+	},
 	mission_preparation = {
 		en = "Mission preparation",
 		["zh-cn"] = "任务准备",

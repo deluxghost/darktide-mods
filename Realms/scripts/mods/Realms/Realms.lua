@@ -129,6 +129,10 @@ mod:hook(MultiplayerSessionManager, "boot_singleplayer_session", function (func,
 	return Session.replace_singleplayer_boot(self, func)
 end)
 
+mod:hook(CLASS.SingleplayerSessionBoot, "state", function (func, self)
+	return Session.singleplayer_boot_state(self, func(self))
+end)
+
 mod:hook(MultiplayerSessionManager, "party_immaterium_join_server", function (func, self, ...)
 	local session = func(self, ...)
 

@@ -247,6 +247,10 @@ local function apply_snapshot(data)
 	end
 end
 
+function Preparation.stop()
+	reset("none", "inactive")
+end
+
 function Preparation.host_boot_started(mission_name)
 	reset("host", "host_booting", mission_name)
 end

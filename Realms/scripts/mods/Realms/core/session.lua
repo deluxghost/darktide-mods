@@ -28,9 +28,14 @@ local HUB_AND_SHOOTING_RANGE_GAME_MODES = {
 
 -- Local mission launchers call reset and boot separately. Keep the host alive only when boot follows before the next update.
 local pending_host_reset
+local pending_local_boot
 local reused_host_boot_pending_change = false
 local reused_host_session_boot
 local applying_explicit_session_reset = false
+
+local function waiting_for_local_mission(session_boot)
+	return pending_local_boot and pending_local_boot.session_boot == session_boot
+end
 
 local function current_connection()
 	local connection_manager = Managers.connection
@@ -102,6 +107,7 @@ local function release_reused_host_session_boot()
 end
 
 local function clear_transition_state()
+	pending_local_boot = nil
 	release_reused_host_session_boot()
 	reused_host_boot_pending_change = false
 	state.deferred_mission_transition = nil
@@ -406,41 +412,26 @@ function Session.official_party_join_started(party_manager, join_parameter, is_r
 	mod:info("Host requested official party %s", party_id)
 end
 
-function Session.replace_singleplayer_boot(manager, original_boot)
+local function should_host_local_mission(mission_name)
 	if not mod:get("enable_server") then
-		apply_pending_host_reset()
-		state.pending_host_mission_name = nil
-
-		reset_host_party_tracking()
-		clear_transition_state()
-		mod:echo(mod:localize("host_disabled"))
-
-		return original_boot(manager)
+		return false
 	end
 
-	if Session.is_active_host() and manager._session then
-		pending_host_reset = nil
-		release_reused_host_session_boot()
+	local mission_template = MissionTemplates[mission_name]
+	local game_mode_name = mission_template and mission_template.game_mode_name
 
-		local leaving_game_session = Managers.state and Managers.state.game_session ~= nil
-		local session_boot = ReusedHostSessionBoot:new(manager._session, leaving_game_session)
-
-		manager._session_boot = session_boot
-		reused_host_session_boot = session_boot
-		reused_host_boot_pending_change = true
-		mod:info("Reusing the active Realms host for the next local mission")
-
-		return manager._session
+	if game_mode_name == "shooting_range" then
+		return mod:get("enable_shooting_range_server")
+	end
+	if (mission_template and mission_template.is_hub) or HUB_AND_SHOOTING_RANGE_GAME_MODES[game_mode_name] then
+		return mod:get("enable_hub_server")
 	end
 
-	apply_pending_host_reset()
-	local new_session = original_boot(manager)
-	local mission_name = state.pending_host_mission_name
+	return true
+end
 
-	state.pending_host_mission_name = nil
-
-	reset_host_party_tracking()
-	clear_transition_state()
+local function start_host_boot(manager, new_session, mission_name)
+	local leaving_game_session = manager._session_boot.leaving_game_session
 
 	Preparation.host_boot_started(mission_name)
 	manager._session_boot:delete()
@@ -455,8 +446,127 @@ function Session.replace_singleplayer_boot(manager, original_boot)
 		on_remote_disconnected = SessionControl.remote_disconnected,
 		password = mod:get("server_password") or "",
 	})
+	manager._session_boot.leaving_game_session = leaving_game_session
+end
+
+function Session.replace_singleplayer_boot(manager, original_boot)
+	local mission_name = state.pending_host_mission_name
+	local reuse_host = Session.is_active_host() and manager._session ~= nil
+
+	state.pending_host_mission_name = nil
+	if not mod:get("enable_server") or (not reuse_host and not should_host_local_mission(mission_name)) then
+		apply_pending_host_reset()
+
+		reset_host_party_tracking()
+		clear_transition_state()
+		Preparation.stop()
+		mod:echo(mod:localize("host_disabled"))
+
+		return original_boot(manager)
+	end
+
+	local defer_takeover = not mission_name
+		and (not mod:get("enable_hub_server") or not mod:get("enable_shooting_range_server"))
+
+	if reuse_host then
+		pending_host_reset = nil
+		release_reused_host_session_boot()
+
+		local leaving_game_session = Managers.state and Managers.state.game_session ~= nil
+		local session_boot = ReusedHostSessionBoot:new(manager._session, leaving_game_session)
+
+		manager._session_boot = session_boot
+		reused_host_session_boot = session_boot
+		reused_host_boot_pending_change = true
+		if defer_takeover or not should_host_local_mission(mission_name) then
+			pending_local_boot = {
+				manager = manager,
+				original_boot = original_boot,
+				session_boot = session_boot,
+				reuse_host = true,
+			}
+		end
+		mod:info("Reusing the active Realms host for the next local mission")
+
+		return manager._session
+	end
+
+	apply_pending_host_reset()
+	local new_session = original_boot(manager)
+
+	reset_host_party_tracking()
+	clear_transition_state()
+
+	if defer_takeover then
+		-- Local launchers can supply the target mission only after starting the session.
+		pending_local_boot = {
+			manager = manager,
+			session = new_session,
+			session_boot = manager._session_boot,
+		}
+	else
+		start_host_boot(manager, new_session, mission_name)
+	end
 
 	return new_session
+end
+
+function Session.singleplayer_boot_state(session_boot, boot_state)
+	-- Allow the old gameplay to exit, but do not install the session before its target is known.
+	if boot_state == "ready" and waiting_for_local_mission(session_boot)
+		and (not Managers.state or not Managers.state.game_session) then
+		return "waiting"
+	end
+
+	return boot_state
+end
+
+local function configure_local_mission(context)
+	local pending = pending_local_boot
+	local mission_name = context and context.mission_name
+
+	if not pending or not mission_name then
+		return
+	end
+
+	pending_local_boot = nil
+	local manager = pending.manager
+
+	if manager._session_boot ~= pending.session_boot then
+		return
+	end
+
+	if should_host_local_mission(mission_name) then
+		if not pending.reuse_host then
+			start_host_boot(manager, pending.session, mission_name)
+		end
+
+		return
+	end
+	if not pending.reuse_host then
+		Preparation.stop()
+
+		return
+	end
+	if Managers.state and Managers.state.game_session then
+		release_reused_host_session_boot()
+		reused_host_boot_pending_change = false
+		local queued, queue_error = Session.queue_mission_transition(mod, context)
+
+		if queued then
+			state.queued_mission_transition.singleplayer_boot = pending.original_boot
+		else
+			mod:error("Failed queueing the next local mission: %s", queue_error)
+		end
+
+		return true
+	end
+
+	reset_current_session(manager)
+	reset_host_party_tracking()
+	clear_transition_state()
+	Preparation.stop()
+	pending.original_boot(manager)
 end
 
 function Session.intercept_host_reset(manager, original_reset, reason)
@@ -551,7 +661,13 @@ function Session.queue_mission_transition(owner_mod, mission_context)
 end
 
 function Session.intercept_host_mechanism_change(mechanism_name, context)
-	if applying_deferred_mechanism_change or not Session.is_active_host() then
+	if applying_deferred_mechanism_change then
+		return false
+	end
+	if configure_local_mission(context) then
+		return true
+	end
+	if not Session.is_active_host() then
 		return false
 	end
 	if reused_host_boot_pending_change then
@@ -658,8 +774,18 @@ local function apply_queued_mission_transition()
 	state.preparation_loading_requested = false
 	state.host_preparation_loading = false
 	state.host_preparation_no_level_ready = false
-	Preparation.host_transition_started(transition.mission_name)
-	configure_host_preparation(transition.mission_name)
+	if transition.singleplayer_boot then
+		local manager = Managers.multiplayer_session
+
+		reset_current_session(manager)
+		reset_host_party_tracking()
+		clear_transition_state()
+		Preparation.stop()
+		transition.singleplayer_boot(manager)
+	else
+		Preparation.host_transition_started(transition.mission_name)
+		configure_host_preparation(transition.mission_name)
+	end
 	applying_deferred_mechanism_change = true
 	Managers.mechanism:change_mechanism(transition.mechanism_name, transition.context)
 	applying_deferred_mechanism_change = false
@@ -782,7 +908,8 @@ function Session.update()
 		end
 	end
 
-	if reused_host_session_boot and (not Managers.state or not Managers.state.game_session) then
+	if reused_host_session_boot and not waiting_for_local_mission(reused_host_session_boot)
+		and (not Managers.state or not Managers.state.game_session) then
 		release_reused_host_session_boot()
 	end
 

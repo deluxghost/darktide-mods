@@ -36,6 +36,18 @@ return {
 						setting_id = "enable_server",
 						type = "checkbox",
 						default_value = true,
+						sub_widgets = {
+							{
+								setting_id = "enable_hub_server",
+								type = "checkbox",
+								default_value = true,
+							},
+							{
+								setting_id = "enable_shooting_range_server",
+								type = "checkbox",
+								default_value = true,
+							},
+						},
 					},
 					{
 						setting_id = "mission_preparation",
