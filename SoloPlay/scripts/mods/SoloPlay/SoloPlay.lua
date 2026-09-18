@@ -452,14 +452,7 @@ mod.keybind_open_inventory = function()
 	if not mod.is_soloplay() then
 		return
 	end
-	local active = false
-	local active_views = Managers.ui:active_views()
-	for _, active_view in pairs(active_views) do
-		if active_view == "inventory_background_view" then
-			active = true
-		end
-	end
-	if active then
+	if Managers.ui:has_active_view() then
 		return
 	end
 	Managers.ui:open_view("inventory_background_view", nil, nil, nil, nil, nil)
