@@ -465,8 +465,10 @@ function Session.replace_singleplayer_boot(manager, original_boot)
 		return original_boot(manager)
 	end
 
+	local game_session_active = Managers.state and Managers.state.game_session ~= nil
 	local defer_takeover = not mission_name
-		and (not mod:get("enable_hub_server") or not mod:get("enable_shooting_range_server"))
+		and ((not reuse_host and not game_session_active)
+			or not mod:get("enable_hub_server") or not mod:get("enable_shooting_range_server"))
 
 	if reuse_host then
 		pending_host_reset = nil
@@ -498,11 +500,12 @@ function Session.replace_singleplayer_boot(manager, original_boot)
 	clear_transition_state()
 
 	if defer_takeover then
-		-- Local launchers can supply the target mission only after starting the session.
+		-- Local launchers can supply the target mission before the original boot is installed.
 		pending_local_boot = {
 			manager = manager,
 			session = new_session,
 			session_boot = manager._session_boot,
+			wait_for_target = game_session_active,
 		}
 	else
 		start_host_boot(manager, new_session, mission_name)
@@ -512,8 +515,9 @@ function Session.replace_singleplayer_boot(manager, original_boot)
 end
 
 function Session.singleplayer_boot_state(session_boot, boot_state)
-	-- Allow the old gameplay to exit, but do not install the session before its target is known.
+	-- An outgoing gameplay session must exit before a deferred target is installed.
 	if boot_state == "ready" and waiting_for_local_mission(session_boot)
+		and pending_local_boot.wait_for_target
 		and (not Managers.state or not Managers.state.game_session) then
 		return "waiting"
 	end
@@ -567,6 +571,36 @@ local function configure_local_mission(context)
 	clear_transition_state()
 	Preparation.stop()
 	pending.original_boot(manager)
+end
+
+function Session.local_loading_started(params)
+	local mechanism = Managers.mechanism
+	local mechanism_data = mechanism and mechanism:mechanism_data()
+	local mission_name = params and params.mission_name or mechanism_data and mechanism_data.mission_name
+	local manager = Managers.multiplayer_session
+
+	if not mission_name or not should_host_local_mission(mission_name) or not manager then
+		return
+	end
+
+	if pending_local_boot and manager._session_boot == pending_local_boot.session_boot then
+		configure_local_mission({ mission_name = mission_name })
+
+		return
+	end
+
+	local connection = Managers.connection and Managers.connection._connection_host
+
+	if not connection or connection.__class_name ~= "ConnectionSingleplayer"
+		or manager:is_booting_session() or not manager:has_session()
+		or (Managers.state and Managers.state.game_session) then
+		return
+	end
+
+	mod:info("Promoting confirmed local loading for %s", mission_name)
+	reset_current_session(manager)
+	Session.prepare_local_mission(mission_name)
+	manager:boot_singleplayer_session()
 end
 
 function Session.intercept_host_reset(manager, original_reset, reason)
@@ -888,6 +922,9 @@ end
 
 function Session.update()
 	apply_pending_host_reset()
+	if pending_local_boot and pending_local_boot.manager._session_boot ~= pending_local_boot.session_boot then
+		pending_local_boot = nil
+	end
 	if pending_client_boot_options and (not Managers.state or not Managers.state.game_session) then
 		local multiplayer_session_manager = Managers.multiplayer_session
 

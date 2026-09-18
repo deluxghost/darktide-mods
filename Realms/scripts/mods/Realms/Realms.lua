@@ -263,6 +263,12 @@ mod:hook(CLASS.StateMainMenu, "update", function (func, self, main_dt, main_t)
 	return func(self, main_dt, main_t)
 end)
 
+mod:hook(CLASS.StateLoading, "on_enter", function (func, self, parent, params, creation_context)
+	Session.local_loading_started(params)
+
+	return func(self, parent, params, creation_context)
+end)
+
 mod.update = function ()
 	SessionControl.update()
 	Session.update()
