@@ -574,9 +574,15 @@ local function configure_local_mission(context)
 end
 
 function Session.local_loading_started(params)
-	local mechanism = Managers.mechanism
-	local mechanism_data = mechanism and mechanism:mechanism_data()
-	local mission_name = params and params.mission_name or mechanism_data and mechanism_data.mission_name
+	local mission_name = params and params.mission_name
+
+	if not mission_name then
+		local mechanism = Managers.mechanism
+		local mechanism_data = mechanism and mechanism:current_mechanism() and mechanism:mechanism_data()
+
+		mission_name = mechanism_data and mechanism_data.mission_name
+	end
+
 	local manager = Managers.multiplayer_session
 
 	if not mission_name or not should_host_local_mission(mission_name) or not manager then
