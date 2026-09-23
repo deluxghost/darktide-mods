@@ -152,7 +152,8 @@ mod.gen_havoc_mission_context = function ()
 	if difficulty_circumstance ~= "default" then
 		chosen_circumstances_table[#chosen_circumstances_table+1] = difficulty_circumstance
 	end
-	local chosen_circumstances = table.concat(chosen_circumstances_table, ":")
+	-- Keep empty lists between semicolons; the native splitter drops empty fields but parses ":" as an empty list.
+	local chosen_circumstances = #chosen_circumstances_table > 0 and table.concat(chosen_circumstances_table, ":") or ":"
 
 	local chosen_modifiers_table = {}
 	for modifier_name in pairs(SoloPlaySettings.lookup.havoc_modifiers_max_level) do
@@ -162,7 +163,7 @@ mod.gen_havoc_mission_context = function ()
 			chosen_modifiers_table[#chosen_modifiers_table+1] = string.format("%d.%d", modifier_id, level)
 		end
 	end
-	local chosen_modifiers = table.concat(chosen_modifiers_table, ":")
+	local chosen_modifiers = #chosen_modifiers_table > 0 and table.concat(chosen_modifiers_table, ":") or ":"
 
 	local data = string.format("%s;%d;%s;%s;%s;%s;%s;%s", mission, rank, theme, faction, chosen_circumstances, chosen_modifiers, challenge, resistance)
 
