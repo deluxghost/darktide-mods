@@ -7,7 +7,32 @@ local SessionTicket = mod:io_dofile("Realms/scripts/mods/Realms/protocol/session
 
 local STATES = table.enum("ready", "failed")
 local BOOTSTRAP_LOBBY_ID = "0000000000000000"
+local DMF_NOTIFICATION_OUTPUTS = {[3] = true, [5] = true, [6] = true, [7] = true}
+local DMF_CHAT_OUTPUTS = {[2] = true, [4] = true, [6] = true, [7] = true}
 local HostSessionBoot = class("RealmsHostSessionBoot", "SessionBootBase")
+local chat_ready = false
+
+-- DMF captures chat on its first input update, not when the element is created.
+mod:hook_safe(CLASS.ConstantElementChat, "_handle_input", function ()
+	chat_ready = true
+	mod:hook_disable(CLASS.ConstantElementChat, "_handle_input")
+end)
+
+local function echo_shows_notification()
+	local dmf = get_mod("DMF")
+	local echo_output = dmf:get("logging_mode") == "custom" and dmf:get("output_mode_echo") or 4
+
+	if DMF_NOTIFICATION_OUTPUTS[echo_output] then
+		return true
+	end
+
+	if not DMF_CHAT_OUTPUTS[echo_output] then
+		return false
+	end
+
+	-- DMF echoes fall back to a notification when chat is unavailable.
+	return not chat_ready
+end
 
 local function current_account_id()
 	local backend = Managers.backend
@@ -105,8 +130,11 @@ HostSessionBoot.init = function (self, event_object, options)
 
 	local message = mod:localize("host_listening", local_port)
 
-	mod:echo(message)
-	mod:notify(message)
+	mod:echo("%s", message)
+
+	if not echo_shows_notification() then
+		mod:notify("%s", message)
+	end
 end
 
 HostSessionBoot._fail = function (self, reason, disconnect_reason)
