@@ -8,6 +8,15 @@ local definitions = mod:io_dofile("Realms/scripts/mods/Realms/views/join_view/jo
 
 local SERVER_ADDRESS_SETTING_ID = "join_server_address"
 local HIDE_SERVER_ADDRESS_SETTING_ID = "hide_join_server_address"
+local ADDRESS_CHARACTER_MAP = {
+	["。"] = ".",
+	["．"] = ".",
+	["｡"] = ".",
+	["："] = ":",
+	["［"] = "[",
+	["］"] = "]",
+	["　"] = " ",
+}
 local FOCUS_WIDGET_NAMES = {
 	"server_address_input",
 	"password_input",
@@ -142,7 +151,32 @@ RealmsJoinView.update = function (self, dt, t, input_service)
 		end
 	end
 
-	local server_address = self._widgets_by_name.server_address_input.content.input_text or ""
+	self:_update_input_values()
+
+	return pass_input, pass_draw
+end
+
+RealmsJoinView._update_input_values = function (self)
+	local content = self._widgets_by_name.server_address_input.content
+	local server_address = content.input_text or ""
+
+	if not content.is_writing and server_address ~= self._normalized_server_address then
+		local normalized = server_address
+
+		for character, replacement in pairs(ADDRESS_CHARACTER_MAP) do
+			normalized = string.gsub(normalized, character, replacement)
+		end
+
+		normalized = string.trim(normalized)
+		self._normalized_server_address = normalized
+
+		if normalized ~= server_address then
+			TextInputUtils.clear_selection(content)
+			set_input_value(content, normalized)
+			server_address = normalized
+		end
+	end
+
 	local input_signature = server_address
 		.. "\31"
 		.. (self._widgets_by_name.password_input.content.input_text or "")
@@ -156,8 +190,6 @@ RealmsJoinView.update = function (self, dt, t, input_service)
 		self._input_signature = input_signature
 		self:_set_error()
 	end
-
-	return pass_input, pass_draw
 end
 
 RealmsJoinView._set_error = function (self, message)
@@ -165,6 +197,9 @@ RealmsJoinView._set_error = function (self, message)
 end
 
 RealmsJoinView.cb_on_connect_pressed = function (self)
+	finish_editing(self._widgets_by_name.server_address_input.content)
+	self:_update_input_values()
+
 	local address_value = self._widgets_by_name.server_address_input.content.input_text or ""
 	local password = self._widgets_by_name.password_input.content.input_text or ""
 	local server_address, server_port, parse_error = JoinTarget.parse(address_value)
@@ -192,11 +227,18 @@ RealmsJoinView._on_back_pressed = function (self)
 
 	if input_content then
 		finish_editing(input_content)
+		self:_update_input_values()
 
 		return
 	end
 
 	Managers.ui:close_view(self.view_name)
+end
+
+RealmsJoinView.on_exit = function (self)
+	finish_editing(self._widgets_by_name.server_address_input.content)
+	self:_update_input_values()
+	RealmsJoinView.super.on_exit(self)
 end
 
 return RealmsJoinView
