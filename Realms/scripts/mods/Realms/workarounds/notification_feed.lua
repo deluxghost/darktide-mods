@@ -7,7 +7,17 @@ local player_snapshots = setmetatable({}, {__mode = "k"})
 local function snapshot_player(data)
 	local player = data.player
 
-	if not player or player.__deleted then
+	if type(player) ~= "table" or player.__deleted then
+		return nil
+	end
+
+	local player_class = getmetatable(player)
+
+	while player_class and player_class ~= CLASSES.HumanPlayer and player_class ~= CLASSES.RemotePlayer do
+		player_class = player_class.super
+	end
+
+	if not player_class then
 		return nil
 	end
 
