@@ -1,0 +1,18 @@
+{
+  "name": "Crosshair Remap",
+  "description": "Allows players to change crosshairs per weapon type.",
+  "homepage": "https://www.nexusmods.com/warhammer40kdarktide/mods/253",
+  "source": "https://github.com/deluxghost/darktide-mods/tree/main/crosshair_remap",
+  "funding": {
+    "kofi": "https://ko-fi.com/deluxghost",
+    "bilibili": "https://space.bilibili.com/4712698"
+  },
+  "version": "3.10.1",
+  "author": "deluxghost",
+  "localization": {
+    "zh-cn": {
+      "name": "准星自定义",
+      "description": "允许玩家按武器类型修改准星。"
+    }
+  }
+}

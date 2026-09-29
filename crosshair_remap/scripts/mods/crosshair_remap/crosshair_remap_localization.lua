@@ -230,7 +230,15 @@ local localization = {
 		["zh-cn"] = Localize("loc_weapon_family_shotgun_p1_m1") .. "（燃烧弹）",
 	},
 	assault_shotgun_class = {
-		en = Localize("loc_weapon_family_shotgun_p2_m1"),
+		en = Localize("loc_weapon_family_shotgun_p2_m1") .. " (Sawed-Off)",
+		["zh-cn"] = Localize("loc_weapon_family_shotgun_p2_m1") .. "（锯短）",
+	},
+	double_barrel_shotgun_standard_class = {
+		en = Localize("loc_weapon_family_shotgun_p2_m3") .. " (Standard)",
+		["zh-cn"] = Localize("loc_weapon_family_shotgun_p2_m3") .. "（标准）",
+	},
+	huntsman_shotgun_class = {
+		en = Localize("loc_weapon_family_shotgun_p3_m1"),
 	},
 	exterminator_shotgun_stun_class = {
 		en = Localize("loc_weapon_family_shotgun_p4_m1") .. " (Electric)",
@@ -260,6 +268,9 @@ local localization = {
 	},
 	rumbler_class = {
 		en = Localize("loc_weapon_family_ogryn_thumper_p1_m2"),
+	},
+	thugshot_class = {
+		en = Localize("loc_weapon_family_ogryn_thumper_p1_m3"),
 	},
 	dual_autopistols_class = {
 		en = Localize("loc_weapon_family_dual_autopistols_p1_m1"),

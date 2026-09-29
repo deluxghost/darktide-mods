@@ -40,6 +40,7 @@ mod.on_setting_changed = function ()
 end
 
 mod.on_all_mods_loaded = function ()
+	collect_settings()
 	mod.load_package("packages/ui/views/mission_board_view/mission_board_view")
 end
 
@@ -102,7 +103,13 @@ local weapon_class_filter = {
 		keywords = { "shotgun", "p1" },
 	},
 	assault_shotgun_class = {
-		keywords = { "shotgun", "p2" },
+		name = "shotgun_p2_m1",
+	},
+	double_barrel_shotgun_standard_class = {
+		name = "shotgun_p2_m3",
+	},
+	huntsman_shotgun_class = {
+		name = "shotgun_p3_m1",
 	},
 	exterminator_shotguns = {
 		keywords = { "shotgun", "p4" },
@@ -124,6 +131,9 @@ local weapon_class_filter = {
 	},
 	rumbler_class = {
 		name = "ogryn_thumper_p1_m2",
+	},
+	thugshot_class = {
+		name = "ogryn_thumper_p1_m3",
 	},
 	shotpistol_shield_class = {
 		keywords = { "shotpistol_shield" },
