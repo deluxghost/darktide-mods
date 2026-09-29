@@ -28,8 +28,9 @@ local function append_selected_keystones(profile, skills)
 
 	for i = 1, #nodes do
 		local node = nodes[i]
+		local selected_talent = selected_talents[node.talent]
 
-		if node.type == "keystone" and (selected_talents[node.talent] or 0) > 0 then
+		if node.type == "keystone" and selected_talent and selected_talent.tier > 0 then
 			skills[#skills + 1] = {
 				icon = node.icon,
 				loadout_id = "keystone",
@@ -92,8 +93,14 @@ function Loadout.presentation(profile)
 
 	for i = 1, #talent_names do
 		local talent_name = talent_names[i]
+		local talent_data = profile.talents[talent_name]
 
-		talent_signature[i] = talent_name .. "=" .. tostring(profile.talents[talent_name])
+		talent_signature[i] = table.concat({
+			talent_name,
+			tostring(talent_data.tier),
+			talent_data.target_slot or "",
+			talent_data.node_name or "",
+		}, "=")
 	end
 
 	return {

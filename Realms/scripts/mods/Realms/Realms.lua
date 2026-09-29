@@ -107,10 +107,10 @@ mod:hook(PartyImmateriumManager, "join_party", function (func, self, join_parame
 	return promise
 end)
 
-mod:hook(MultiplayerSessionManager, "start_singleplayer_session", function (func, self, mission_name, singleplay_type)
+mod:hook(MultiplayerSessionManager, "start_singleplayer_session", function (func, self, mission_name)
 	Session.prepare_local_mission(mission_name)
 
-	return func(self, mission_name, singleplay_type)
+	return func(self, mission_name)
 end)
 
 mod:hook(MultiplayerSessionManager, "reset", function (func, self, reason)
