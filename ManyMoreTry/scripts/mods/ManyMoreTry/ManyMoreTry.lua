@@ -86,7 +86,7 @@ local function get_start(start)
 end
 
 local function get_mission_difficulty(mission)
-	for _, difficulty in ipairs(DangerSettings) do
+	for _, difficulty in ipairs(DangerSettings.danger_levels) do
 		if difficulty.challenge == mission.challenge and difficulty.resistance == mission.resistance then
 			return difficulty
 		end

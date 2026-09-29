@@ -1,0 +1,26 @@
+{
+  "name": "Many More Try",
+  "description": "Mission ID saving/sharing mod. Check commands with '/mmt' prefix for details.",
+  "homepage": "https://www.nexusmods.com/warhammer40kdarktide/mods/175",
+  "source": "https://github.com/deluxghost/darktide-mods/tree/main/ManyMoreTry",
+  "funding": {
+    "kofi": "https://ko-fi.com/deluxghost",
+    "bilibili": "https://space.bilibili.com/4712698"
+  },
+  "version": "1.5.8",
+  "author": "deluxghost",
+  "localization": {
+    "zh-cn": {
+      "name": "再来很多局",
+      "description": "任务 ID 保存/分享模组。用法详见带有“/mmt”前缀的命令。"
+    },
+    "ru": {
+      "name": "Ещё больше попыток",
+      "description": "Many More Try - Мод позволяет сохранять и передавать идентификатор миссии. Для получения подробной информации проверьте команды с префиксом «/mmt»."
+    },
+    "zh-tw": {
+      "name": "繼續再來更多局",
+      "description": "任務 ID 儲存/分享模組，使用「/mmt」開頭的指令以查看詳情。"
+    }
+  }
+}
