@@ -2,6 +2,7 @@ local mod = get_mod("SoloPlay")
 local Promise = require("scripts/foundation/utilities/promise")
 local MissionTemplates = require("scripts/settings/mission/mission_templates")
 local DangerSettings = require("scripts/settings/difficulty/danger_settings")
+local DANGER_LEVELS = DangerSettings.danger_levels
 local MatchmakingConstants = require("scripts/settings/network/matchmaking_constants")
 local DifficultyManager = require("scripts/managers/difficulty/difficulty_manager")
 local GameModeSurvival = require("scripts/managers/game_mode/game_modes/game_mode_survival")
@@ -94,7 +95,7 @@ end
 
 mod.gen_normal_mission_context = function ()
 	local mission_name, params = mod.parse_mission_params(mod:get("choose_mission"))
-	local difficulty = DangerSettings[mod:get("choose_difficulty")]
+	local difficulty = DANGER_LEVELS[mod:get("choose_difficulty")]
 	local mission_context = {
 		mission_name = mission_name,
 		challenge = difficulty.challenge,

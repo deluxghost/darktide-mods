@@ -1,4 +1,5 @@
 local DangerSettings = require("scripts/settings/difficulty/danger_settings")
+local DANGER_LEVELS = DangerSettings.danger_levels
 local UISoundEvents = require("scripts/settings/ui/ui_sound_events")
 local ColorUtilities = require("scripts/utilities/ui/colors")
 
@@ -23,7 +24,7 @@ local function _make_difficulty_picker_rect_change_function(index)
 		local min_danger = content.min_danger or MIN_DANGER
 		local max_danger = content.max_danger or MAX_DANGER
 		local current_danger = content.hover_danger or content.danger
-		local danger_color = DangerSettings[current_danger] and DangerSettings[current_danger].color or DangerSettings[1].color
+		local danger_color = DANGER_LEVELS[current_danger] and DANGER_LEVELS[current_danger].color or DANGER_LEVELS[1].color
 
 		ColorUtilities.color_copy(danger_color, style.color, true)
 
@@ -89,7 +90,7 @@ StepperTemplates.difficulty_stepper = {
 				end
 
 				if content.last_danger ~= danger then
-					local danger_settings = DangerSettings[danger]
+					local danger_settings = DANGER_LEVELS[danger]
 
 					content.difficulty_text = Localize(danger_settings.display_name)
 					content.last_danger = danger
