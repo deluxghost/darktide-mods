@@ -85,11 +85,6 @@ mod.load_package = function (self, package_name)
 	end
 end
 
-mod.on_all_mods_loaded = function ()
-	mod:load_package("packages/ui/views/options_view/options_view")
-	mod:load_package("packages/ui/views/inventory_background_view/inventory_background_view")
-end
-
 local function get_max_distance(category)
 	return mod:get("max_distance_" .. category) or 15
 end
@@ -141,7 +136,9 @@ local function update_settings()
 	end
 end
 
-mod.on_enabled = function ()
+mod.on_all_mods_loaded = function ()
+	mod:load_package("packages/ui/views/options_view/options_view")
+	mod:load_package("packages/ui/views/inventory_background_view/inventory_background_view")
 	local legacy_max_distance = mod:get("max_distance")
 	if legacy_max_distance then
 		for _, category in ipairs(all_categories) do
@@ -149,6 +146,13 @@ mod.on_enabled = function ()
 		end
 		mod:set("max_distance", nil)
 	end
+	if mod:is_enabled() then
+		update_settings()
+		heretical_idols.sync_markers()
+	end
+end
+
+mod.on_enabled = function ()
 	update_settings()
 	heretical_idols.sync_markers()
 end
@@ -270,7 +274,7 @@ end)
 
 mod:hook_safe(DestructibleExtension, "set_collectible_data", function (self, data)
 	if data and data.unit then
-		self._owner_system:enable_update_function(self.__class_name, "update", data.unit, self)
+		self._owner_system:enable_update_function(data.unit, "update")
 	end
 
 	heretical_idols.sync_extension(self)

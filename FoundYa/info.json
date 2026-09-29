@@ -1,0 +1,22 @@
+{
+  "name": "Found Ya",
+  "description": "Adjust the view/tag distance of item interaction icons.",
+  "homepage": "https://www.nexusmods.com/warhammer40kdarktide/mods/95",
+  "source": "https://github.com/deluxghost/darktide-mods/tree/main/FoundYa",
+  "funding": {
+    "kofi": "https://ko-fi.com/deluxghost",
+    "bilibili": "https://space.bilibili.com/4712698"
+  },
+  "version": "1.10.1",
+  "author": "deluxghost",
+  "localization": {
+    "zh-cn": {
+      "name": "发现物品",
+      "description": "调整物品交互图标的可视与标记距离。"
+    },
+    "ru": {
+      "name": "Нашёл!",
+      "description": "Found Ya - Регулирует расстояние видимости/пометки значков взаимодействия с предметами."
+    }
+  }
+}
