@@ -367,15 +367,16 @@ mod:hook_origin(ViewElementWeaponInfo, "_get_stats_text", function (self, stat)
 	local type_data = stat.type_data
 	local display_type = override_data.display_type or type_data.display_type
 	local is_signed = type_data.signed
+	local is_inverted = type_data.inverted
 	local value = self:_scale_value_by_type(stat.value, display_type)
-	local value_text = self:_value_to_text(value, is_signed)
+	local value_text = self:_value_to_text(value, is_signed, is_inverted)
 	local range = ""
 	local min, max = stat.min, stat.max
 
 	if min and max then
 		min = self:_scale_value_by_type(min, display_type)
 		max = self:_scale_value_by_type(max, display_type)
-		range = string.format("{#color(150,150,150)}[%s | %s]", self:_value_to_text(min, is_signed), self:_value_to_text(max, is_signed))
+		range = string.format("{#color(150,150,150)}[%s | %s]", self:_value_to_text(min, is_signed, is_inverted), self:_value_to_text(max, is_signed, is_inverted))
 	end
 
 	local name = Localize(override_data.display_name or type_data.display_name)
@@ -392,7 +393,7 @@ mod:hook_origin(ViewElementWeaponInfo, "_get_stats_text", function (self, stat)
 	local stat_text = ""
 	if mod:get("current_substats_display_mode") == "potential" then
 		local potential = self:_scale_value_by_type(stat.potential or stat.value, display_type)
-		local potential_text = self:_value_to_text(potential, is_signed)
+		local potential_text = self:_value_to_text(potential, is_signed, is_inverted)
 		stat_text = string.format(
 			"%s %s%s%s%s:  {#color(250,189,73)}%s%s%s / %s%s%s   %s",
 			group_prefix, prefix, name, suffix, postfix,
