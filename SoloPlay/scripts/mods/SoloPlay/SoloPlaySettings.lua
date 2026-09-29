@@ -89,6 +89,11 @@ local campaign_circumstances = {
 		story_nomansland_02 = 2,
 		story_nomansland_03 = 3,
 	},
+	spillway = {
+		story_spillway_01 = 1,
+		story_spillway_02 = 2,
+		story_spillway_03 = 3,
+	},
 }
 local function get_campaign(name)
 	for campaign, names in pairs(campaign_circumstances) do
