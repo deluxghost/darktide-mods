@@ -23,6 +23,7 @@ local LIGHTER_ICON_COLOR = { 255, 232, 255, 204 }
 local interaction_types = {
 	default = "unknown",
 	ammunition = "supply",
+	deployable_marker = "supply",
 	chest = "chest",
 	door_control_panel = "button",
 	grenade = "supply",
