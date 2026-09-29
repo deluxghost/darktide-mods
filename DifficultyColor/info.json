@@ -1,0 +1,22 @@
+{
+  "name": "Difficulty Color",
+  "description": "Customize the color of each difficulty.",
+  "homepage": "https://www.nexusmods.com/warhammer40kdarktide/mods/251",
+  "source": "https://github.com/deluxghost/darktide-mods/tree/main/DifficultyColor",
+  "funding": {
+    "kofi": "https://ko-fi.com/deluxghost",
+    "bilibili": "https://space.bilibili.com/4712698"
+  },
+  "version": "1.0.4",
+  "author": "deluxghost",
+  "localization": {
+    "zh-cn": {
+      "name": "难度颜色",
+      "description": "自定义每个难度的颜色。"
+    },
+    "ru": {
+      "name": "Цвета сложности",
+      "description": "Difficulty Color - Настройте цвета каждой сложности."
+    }
+  }
+}
