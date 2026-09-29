@@ -8,7 +8,7 @@ local CampaignSettings = require("scripts/settings/campaign/campaign_settings")
 local MissionVotingView = require("scripts/ui/views/mission_voting_view/mission_voting_view")
 local MissionDetailsBlueprints = require("scripts/ui/views/mission_voting_view/mission_voting_view_blueprints")
 
-local AURIC_DANGER = DangerSettings[5]
+local AURIC_DANGER = DangerSettings.danger_levels_by_name.auric
 
 mod:hook_safe(MissionVotingView, "_set_mission_data", function (self, mission_data)
 	mod:dump(mission_data, "mission_data", 3)

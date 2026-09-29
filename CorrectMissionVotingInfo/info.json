@@ -1,0 +1,22 @@
+{
+  "name": "Correct Mission Voting Info",
+  "description": "When voting for a mission, shows correct auric info and total rewards.",
+  "homepage": "https://www.nexusmods.com/warhammer40kdarktide/mods/270",
+  "source": "https://github.com/deluxghost/darktide-mods/tree/main/CorrectMissionVotingInfo",
+  "funding": {
+    "kofi": "https://ko-fi.com/deluxghost",
+    "bilibili": "https://space.bilibili.com/4712698"
+  },
+  "version": "1.1.6",
+  "author": "deluxghost",
+  "localization": {
+    "zh-cn": {
+      "name": "正确的任务投票信息",
+      "description": "在任务投票时，显示正确的金级信息和总奖励。"
+    },
+    "ru": {
+      "name": "Исправление информации о миссии",
+      "description": "Correct Mission Voting Info - При голосовании за миссию отображается правильная информация о миссии и сумме награды."
+    }
+  }
+}
