@@ -263,7 +263,7 @@ end
 
 -- related to scripts/ui/views/talent_builder_view/talent_builder_view.lua
 
-mod:hook(CLASS.TalentBuilderView, "_setup_talents_summary_grid", function (func, self)
+mod:hook_origin(CLASS.TalentBuilderView, "_setup_talents_summary_grid", function (self)
 	mod:pcall(function ()
 		local definitions = self._definitions
 		if not self._summary_grid then
@@ -314,6 +314,7 @@ mod:hook(CLASS.TalentBuilderView, "_setup_talents_summary_grid", function (func,
 			}
 
 			local node_widget_tiers = self._node_widget_tiers
+			local widgets_by_name = self._widgets_by_name
 			local nodes_to_present = {}
 			local ability_added, blitz_added, aura_added = false, false, false
 
@@ -329,6 +330,14 @@ mod:hook(CLASS.TalentBuilderView, "_setup_talents_summary_grid", function (func,
 
 					if talent then
 						local node_type = node.type
+						local widget = widgets_by_name[node_name]
+						local target_slot = self:_target_slot_by_widget(widget)
+
+						if target_slot == "slot_combat_ability" then
+							node_type = "ability"
+						elseif target_slot == "slot_grenade_ability" then
+							node_type = "tactical"
+						end
 
 						-- # CHANGE START
 						if node_type == "stat" then
@@ -388,8 +397,9 @@ mod:hook(CLASS.TalentBuilderView, "_setup_talents_summary_grid", function (func,
 			}
 			local player = self._preview_player
 			local profile = player and player:profile()
+			local selected_talents = CharacterSheet.convert_selected_nodes_to_selected_talents(profile.archetype, node_widget_tiers)
 
-			CharacterSheet.class_loadout(profile, base_class_loadout, true)
+			CharacterSheet.class_loadout(profile, base_class_loadout, false, selected_talents, true)
 
 			local iconics = base_class_loadout.iconics
 

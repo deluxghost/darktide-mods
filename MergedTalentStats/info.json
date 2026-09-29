@@ -1,0 +1,22 @@
+{
+  "name": "Merged Talent Stats",
+  "description": "Merge [Operative Modifier] stats in the talents [Full Build] popup.",
+  "homepage": "https://www.nexusmods.com/warhammer40kdarktide/mods/263",
+  "source": "https://github.com/deluxghost/darktide-mods/tree/main/MergedTalentStats",
+  "funding": {
+    "kofi": "https://ko-fi.com/deluxghost",
+    "bilibili": "https://space.bilibili.com/4712698"
+  },
+  "version": "1.1.4",
+  "author": "deluxghost",
+  "localization": {
+    "zh-cn": {
+      "name": "合并天赋数据",
+      "description": "在「完整构筑」弹窗中合并「特工修正」数据。"
+    },
+    "ru": {
+      "name": "Объединённая статистика Талантов",
+      "description": "Merged Talent Stats - Мод объединяет Модификаторы оперативника в окне Полный билд."
+    }
+  }
+}
