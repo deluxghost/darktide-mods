@@ -1,0 +1,12 @@
+{
+  "life_time": 0.01,
+  "culling_distance": 100,
+  "use_random_seed": false,
+  "flag_10": false,
+  "field_14": 0,
+  "field_18": 30,
+  "casts_shadows": false,
+  "disable_culling": true,
+  "variables": [],
+  "systems": []
+}

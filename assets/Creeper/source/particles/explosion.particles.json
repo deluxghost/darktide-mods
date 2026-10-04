@@ -1,0 +1,328 @@
+{
+  "life_time": 0.4,
+  "culling_distance": 100,
+  "use_random_seed": true,
+  "flag_10": false,
+  "field_14": 0,
+  "field_18": 30,
+  "casts_shadows": false,
+  "disable_culling": true,
+  "variables": [],
+  "systems": [
+    {
+      "name": "creeper_explosion",
+      "capacity": 50,
+      "min_capacity_scaling": 0,
+      "channels": [
+        {
+          "name": "position",
+          "size": 16
+        },
+        {
+          "name": "velocity",
+          "size": 16
+        },
+        {
+          "name": "age",
+          "size": 4
+        },
+        {
+          "name": "life",
+          "size": 4
+        },
+        {
+          "name": "c28",
+          "size": 4
+        },
+        {
+          "name": "c2c",
+          "size": 4
+        },
+        {
+          "name": "c30",
+          "size": 4
+        },
+        {
+          "name": "c34",
+          "size": 4
+        }
+      ],
+      "position": "position",
+      "channel_5c": null,
+      "channel_60": null,
+      "collision_plane_offset": null,
+      "transform": [
+        1,
+        0,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        -1,
+        0,
+        0,
+        0,
+        0,
+        0,
+        1
+      ],
+      "max_radius": 1,
+      "casts_shadows": false,
+      "disable_culling": true,
+      "simulation_lod": {
+        "enabled": false,
+        "near": 0,
+        "far": 0,
+        "min_step": 0,
+        "curves": [
+          {
+            "x": [],
+            "y": []
+          },
+          {
+            "x": [],
+            "y": []
+          },
+          {
+            "x": [],
+            "y": []
+          },
+          {
+            "x": [],
+            "y": []
+          }
+        ]
+      },
+      "initializers": [
+        {
+          "type": "position_box",
+          "position": "position",
+          "min": [
+            -4,
+            -4,
+            -4
+          ],
+          "max": [
+            4,
+            4,
+            4
+          ]
+        },
+        {
+          "type": "random_float",
+          "channel": "c28",
+          "min": 2,
+          "max": 2
+        },
+        {
+          "type": "random_float",
+          "channel": "c2c",
+          "min": 0,
+          "max": 0
+        },
+        {
+          "type": "random_float",
+          "channel": "c30",
+          "min": 0.4,
+          "max": 1
+        },
+        {
+          "type": "random_float",
+          "channel": "c34",
+          "min": 1,
+          "max": 1
+        },
+        {
+          "type": "random_float",
+          "channel": "life",
+          "min": 0.3,
+          "max": 0.5
+        },
+        {
+          "type": "zero",
+          "channel": "age",
+          "size": 4
+        }
+      ],
+      "simulators": [
+        {
+          "type": "age_age",
+          "age": "age",
+          "life": "life"
+        },
+        {
+          "type": "rate_emitter",
+          "rate_min": 120,
+          "rate_max": 120,
+          "rate": {
+            "x": [
+              0,
+              1
+            ],
+            "y": [
+              1,
+              1
+            ]
+          }
+        }
+      ],
+      "field_234": 0,
+      "field_238": 2,
+      "visualizers": [
+        {
+          "type": "billboard",
+          "material": "#55f4ab2ac3be4399",
+          "sort": false,
+          "mode": 0,
+          "vertex": [
+            {
+              "component": "position",
+              "type": "float3",
+              "set": 0
+            },
+            {
+              "component": "color",
+              "type": "ubyte4",
+              "set": 0
+            },
+            {
+              "component": "texcoord",
+              "type": "float2",
+              "set": 7
+            },
+            {
+              "component": "texcoord",
+              "type": "float1",
+              "set": 1
+            },
+            {
+              "component": "texcoord",
+              "type": "float1",
+              "set": 5
+            },
+            {
+              "component": "texcoord",
+              "type": "float1",
+              "set": 8
+            },
+            {
+              "component": "texcoord",
+              "type": "float3",
+              "set": 6
+            }
+          ],
+          "field_f8": 0,
+          "writers": [
+            {
+              "type": "size",
+              "source": "c28",
+              "age": "age",
+              "life": "life",
+              "destination": "texcoord7",
+              "scale": {
+                "x": [
+                  0,
+                  1
+                ],
+                "y": [
+                  1,
+                  1
+                ]
+              },
+              "over_system_lifetime": false,
+              "component": 2
+            },
+            {
+              "type": "color",
+              "age": "age",
+              "life": "life",
+              "opacity": {
+                "x": [
+                  0,
+                  1
+                ],
+                "y": [
+                  1,
+                  1
+                ]
+              },
+              "gradient": {
+                "x": [
+                  0
+                ],
+                "rgb": [
+                  [
+                    255,
+                    255,
+                    255
+                  ]
+                ]
+              },
+              "destination": "color",
+              "luminance": 1,
+              "luminance_source": "c30"
+            },
+            {
+              "type": "write_float",
+              "value": 0.5,
+              "destination": "texcoord6",
+              "component": 0
+            },
+            {
+              "type": "write_float",
+              "value": 0.5,
+              "destination": "texcoord6",
+              "component": 1
+            },
+            {
+              "type": "write_float",
+              "value": 0,
+              "destination": "texcoord6",
+              "component": 2
+            },
+            {
+              "type": "size",
+              "source": "c34",
+              "age": "age",
+              "life": "life",
+              "destination": "texcoord5",
+              "scale": {
+                "x": [
+                  0,
+                  1
+                ],
+                "y": [
+                  0,
+                  15.999
+                ]
+              },
+              "over_system_lifetime": false,
+              "component": 0
+            },
+            {
+              "type": "copy_vector3",
+              "source": "position",
+              "destination": "position"
+            },
+            {
+              "type": "local_age",
+              "destination": "texcoord8",
+              "component": 0,
+              "age": "age",
+              "life": "life"
+            },
+            {
+              "type": "copy_float",
+              "source": "c2c",
+              "destination": "texcoord1",
+              "component": 0
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

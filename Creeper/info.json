@@ -1,0 +1,20 @@
+{
+  "name": "Creeper",
+  "description": "Replaces Poxbursters with Creepers.",
+  "version": "1.0.0",
+  "author": "deluxghost",
+  "dependencies": {
+    "required": [
+      "CustomAssets"
+    ],
+    "self_after": [
+      "CustomAssets"
+    ]
+  },
+  "localization": {
+    "zh-cn": {
+      "name": "苦力怕",
+      "description": "将瘟疫爆破者替换为苦力怕。"
+    }
+  }
+}

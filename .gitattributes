@@ -1,0 +1,2 @@
+/assets/*/source/**/*.png filter=lfs diff=lfs merge=lfs -text
+/assets/*/source/**/*.ogg filter=lfs diff=lfs merge=lfs -text
