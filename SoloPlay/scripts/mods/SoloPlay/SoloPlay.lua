@@ -15,10 +15,6 @@ local UISoundEvents = require("scripts/settings/ui/ui_sound_events")
 local WwiseGameSyncSettings = require("scripts/settings/wwise_game_sync/wwise_game_sync_settings")
 local ExpeditionLevelsLoader = require("scripts/loading/loaders/expedition_levels_loader")
 local SoloPlaySettings = mod:io_dofile("SoloPlay/scripts/mods/SoloPlay/SoloPlaySettings")
-mod:io_dofile("SoloPlay/scripts/mods/SoloPlay/havoc")
-mod:io_dofile("SoloPlay/scripts/mods/SoloPlay/mission_brief")
-mod:io_dofile("SoloPlay/scripts/mods/SoloPlay/system_menu")
-mod:io_dofile("SoloPlay/scripts/mods/SoloPlay/workarounds/workarounds")
 
 local HOST_TYPES = MatchmakingConstants.HOST_TYPES
 local DISTRIBUTION_TYPES = PickupSettings.distribution_types
@@ -72,6 +68,11 @@ mod.load_package = function (package_name)
 		Managers.package:load(package_name, "solo_play", nil, true)
 	end
 end
+
+mod:io_dofile("SoloPlay/scripts/mods/SoloPlay/havoc")
+mod:io_dofile("SoloPlay/scripts/mods/SoloPlay/mission_brief")
+mod:io_dofile("SoloPlay/scripts/mods/SoloPlay/system_menu")
+mod:io_dofile("SoloPlay/scripts/mods/SoloPlay/workarounds/workarounds")
 
 mod.parse_mission_params = function (mission_name_value)
 	local parts = string.split(mission_name_value, "|")
