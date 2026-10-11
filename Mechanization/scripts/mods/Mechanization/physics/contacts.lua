@@ -87,9 +87,13 @@ Contacts.update = function (vehicle, origin, rotation, time)
 			local health = ScriptUnit.extension(unit, "health_system")
 			local result = health:current_health() <= settings.damage and "died" or "damaged"
 			-- Apply a fixed amount before armor scaling; all enemy classes use the same crushing damage.
-			Damage.deal_damage(
+			local damage = Damage.deal_damage(
 				unit, contact.breed, driver, driver, result, "melee", DamageProfileTemplates.default,
 				settings.damage, 0, 0, nil, direction, "torso", nil, false, "physical", position, nil, false, 0
+			)
+			result = health:health_depleted() and "died" or "damaged"
+			Managers.state.attack_report:add_attack_result(
+				DamageProfileTemplates.default, unit, driver, direction, position, false, damage, result, "melee", "full", false
 			)
 			if HEALTH_ALIVE[unit] then
 				local locomotion = ScriptUnit.extension(unit, "locomotion_system")
