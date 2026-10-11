@@ -1,0 +1,17 @@
+{
+  "name": "Mechanization",
+  "description": "Drive vehicles in local missions.",
+  "version": "1.0.0",
+  "author": "deluxghost",
+  "dependencies": {
+    "required": [
+      "SoloPlay"
+    ]
+  },
+  "localization": {
+    "zh-cn": {
+      "name": "机械化",
+      "description": "在本地任务中驾驶载具。"
+    }
+  }
+}
