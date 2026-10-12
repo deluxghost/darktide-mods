@@ -28,7 +28,7 @@ GroundInertia.step = function (v, height, rotation, dt, vehicles)
 	local origin = v.position:unbox()
 	local clearance = v.airborne and CONTACT_EPSILON or v.type.settings.suspension_travel
 	local supported = height and origin.z - height <= clearance
-	if supported and (not v.airborne or height <= origin.z + CONTACT_EPSILON and v.vertical_speed <= 0) then
+	if supported and (not v.airborne or v.vertical_speed <= 0) then
 		if v.airborne then
 			local forward = Vector3.normalize(Vector3.flat(Quaternion.forward(rotation)))
 			v.drive_speed = Vector3.dot(v.horizontal_velocity:unbox(), forward)
@@ -43,14 +43,15 @@ GroundInertia.step = function (v, height, rotation, dt, vehicles)
 	local destination = origin + velocity * dt
 	local resistance = Contacts.resistance(v, destination, rotation)
 	destination = origin + (destination - origin) * resistance
-	destination.z = origin.z + v.vertical_speed * dt - v.type.settings.gravity * dt * dt * 0.5
+	destination = Motion.translate(v, destination, rotation, vehicles)
+	local next_height = origin.z + v.vertical_speed * dt - v.type.settings.gravity * dt * dt * 0.5
 	v.vertical_speed = v.vertical_speed - v.type.settings.gravity * dt
 	local floor = v.type.controller.support_height(v, destination, rotation)
-	local landing = floor and floor <= origin.z + CONTACT_EPSILON and destination.z <= floor and v.vertical_speed <= 0
+	local landing = floor and floor <= origin.z + CONTACT_EPSILON and next_height <= floor and v.vertical_speed <= 0
 	if landing then
-		destination.z = floor
+		next_height = floor
 	end
-	local position = Motion.translate(v, destination, rotation, vehicles)
+	local position = Motion.vertical(v, destination, next_height, rotation, vehicles)
 	local horizontal = Vector3.flat(position - origin) / dt
 	v.horizontal_velocity:store(horizontal / resistance)
 	local forward = Vector3.normalize(Vector3.flat(Quaternion.forward(rotation)))
@@ -60,7 +61,7 @@ GroundInertia.step = function (v, height, rotation, dt, vehicles)
 		v.airborne = false
 		v.vertical_speed = 0
 		v.drive_speed = longitudinal
-	elseif math.abs(position.z - destination.z) > CONTACT_EPSILON then
+	elseif math.abs(position.z - next_height) > CONTACT_EPSILON then
 		v.vertical_speed = (position.z - origin.z) / dt
 	end
 	v.position:store(position)

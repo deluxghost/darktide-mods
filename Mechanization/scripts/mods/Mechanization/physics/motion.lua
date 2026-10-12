@@ -215,6 +215,16 @@ Motion.translate = function (vehicle, destination, rotation, vehicles)
 	return slide(vehicle, vehicle.position:unbox(), destination, rotation, vehicles)
 end
 
+Motion.vertical = function (vehicle, position, height, rotation, vehicles)
+	local destination = Vector3(position.x, position.y, height)
+	local fraction = blocker(vehicle, position, destination, rotation)
+	local candidate = Vector3.lerp(position, destination, fraction)
+	if Collision.clear_vehicles(vehicle, candidate, rotation, vehicles) then
+		return candidate
+	end
+	return position
+end
+
 Motion.rotation_clear = function (vehicle, previous, rotation, vehicles)
 	local origin = vehicle.position:unbox()
 	if not Collision.clear_vehicles(vehicle, origin, rotation, vehicles) then

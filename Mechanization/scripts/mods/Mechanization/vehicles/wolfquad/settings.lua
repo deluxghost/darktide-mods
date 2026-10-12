@@ -4,6 +4,7 @@ local settings = {
 	forward_speed = 12,
 	reverse_speed = 4,
 	acceleration = 5,
+	coasting_deceleration = 2.5,
 	braking_deceleration = 12,
 	steering_angle = math.rad(30),
 	steering_speed = math.rad(100),

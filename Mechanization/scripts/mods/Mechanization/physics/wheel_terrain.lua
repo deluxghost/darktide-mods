@@ -13,7 +13,7 @@ local function wheel_contact (vehicle, position, rotation, wheel)
 	local settings = vehicle.type.settings
 	local offset = Quaternion.rotate(rotation, Vector3(unpack(wheel.position)))
 	local center = position + offset
-	local lift = settings.max_step_height + settings.suspension_travel
+	local lift = settings.max_step_height + settings.suspension_travel + settings.wheel_radius
 	local start = center + Vector3.up() * lift
 	local radius = settings.wheel_radius - CONTACT_GAP
 	local hits = PhysicsWorld.linear_sphere_sweep(
