@@ -5,6 +5,7 @@ local Collision = mod.load_module("physics/collision")
 local Terrain = mod.load_module("vehicles/lionheart/terrain")
 local Motion = mod.load_module("physics/motion")
 local GroundMotion = mod.load_module("physics/ground_motion")
+local GroundInertia = mod.load_module("physics/ground_inertia")
 local Contacts = mod.load_module("physics/contacts")
 local Vehicle = {}
 local TRACK_LINKS = 70
@@ -43,6 +44,10 @@ local function angle_delta (target, value)
 end
 
 Vehicle.spawn_position = Terrain.ground
+Vehicle.support_height = function (v, position, rotation)
+	return Terrain.height(v.world, position, rotation)
+end
+
 Vehicle.supports_contact = function (v, normal)
 	return normal.z >= math.cos(Settings.max_slope)
 end
@@ -127,6 +132,8 @@ Vehicle.create = function (world, position, yaw)
 		front_pitch = 0,
 		drive_speed = 0,
 		vertical_speed = 0,
+		horizontal_velocity = Vector3Box(Vector3.zero()),
+		airborne = false,
 		turn_velocity = 0,
 		speed = 0,
 		turn = 0,
@@ -188,20 +195,6 @@ Vehicle.can_spawn = function (v, vehicles, ignored_units)
 		and hull_clear(v, point, v.yaw, normal, vehicles, ignored_units, "filter_player_character_shooting_raycast")
 end
 
-local function support_height (v, position, height, dt)
-	if not height or position.z - height > Settings.suspension_travel then
-		v.vertical_speed = v.vertical_speed - Settings.gravity * dt
-		return position.z + v.vertical_speed * dt
-	end
-	-- A critically damped suspension retains velocity instead of snapping to each new contact.
-	local response = Settings.suspension_response
-	local offset = position.z - height
-	local velocity = v.vertical_speed + response * offset
-	local decay = math.exp(-response * dt)
-	v.vertical_speed = (v.vertical_speed - response * velocity * dt) * decay
-	return height + (offset + velocity * dt) * decay
-end
-
 local function project_support (v, position, rotation, vehicles, dt)
 	local height = Terrain.height(v.world, position, rotation)
 	if not height or position.z >= height - Settings.suspension_travel then
@@ -223,6 +216,18 @@ local function move (v, input, dt, vehicles)
 	steering_direction = steering_direction < 0 and -1 or 1
 	local target_turn = -steer * Settings.turn_speed * steering_direction
 	v.turn_velocity = drive_towards(v.turn_velocity, target_turn, Settings.turn_acceleration, Settings.turn_deceleration, dt)
+	local current_rotation = Terrain.rotation(v.yaw, v.normal:unbox())
+	if GroundInertia.step(v, Terrain.height(v.world, origin, current_rotation), current_rotation, dt, vehicles) then
+		v.turn = 0
+		if v.airborne then
+			v.left_speed = v.drive_speed + v.turn_velocity * Settings.track_half_width
+			v.right_speed = v.drive_speed - v.turn_velocity * Settings.track_half_width
+		else
+			v.turn_velocity = 0
+			v.left_speed, v.right_speed = v.speed, v.speed
+		end
+		return
+	end
 	local yaw = v.yaw + v.turn_velocity * dt
 	local forward = Quaternion.forward(Quaternion.from_yaw_pitch_roll(yaw, 0, 0))
 	local destination = origin + forward * v.drive_speed * dt
@@ -243,7 +248,7 @@ local function move (v, input, dt, vehicles)
 	yaw, normal = GroundMotion.turn(v, yaw, normal, vehicles, Terrain.rotation)
 	local rotation = Terrain.rotation(yaw, normal)
 	local height = Terrain.height(v.world, destination, rotation)
-	destination.z = support_height(v, origin, height, dt)
+	destination.z = GroundInertia.height(v, height, dt)
 	local position = Motion.translate(v, destination, rotation, vehicles)
 	if position.z > destination.z + GROUND_EPSILON and v.vertical_speed < 0 then
 		v.vertical_speed = 0
@@ -260,6 +265,7 @@ local function move (v, input, dt, vehicles)
 	v.turn_velocity = math.min(math.abs(v.turn_velocity), math.abs(v.turn) / resistance) * (v.turn_velocity < 0 and -1 or 1)
 	v.left_speed = v.speed + v.turn * Settings.track_half_width
 	v.right_speed = v.speed - v.turn * Settings.track_half_width
+	GroundInertia.record(v, origin, dt)
 end
 
 Vehicle.step = function (v, input, dt, vehicles)
