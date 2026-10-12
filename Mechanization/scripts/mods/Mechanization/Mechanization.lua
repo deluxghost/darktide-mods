@@ -10,11 +10,11 @@ end
 
 local Session = mod.load_module("session")
 local ScriptCamera = require("scripts/foundation/utilities/script_camera")
-local Crosshair = require("scripts/ui/utilities/crosshair")
 local View = mod.load_module("camera")
 local RiderPose = mod.load_module("players/rider_pose")
 local Collision = mod.load_module("physics/collision")
 mod.session = Session
+mod.load_module("ui/crosshair").install(Session)
 mod.load_module("physics/minions").install(Session)
 mod.load_module("players/protection").install(Session)
 
@@ -127,15 +127,6 @@ local function camera_pose (v, occupant)
 end
 
 mod.camera_pose = camera_pose
-
-mod:hook(Crosshair, "position", function (func, ...)
-	local v, occupant = Session.local_vehicle()
-	if v and not Session.personal_weapons(occupant) then
-		-- Vehicle aiming uses the camera center, independent of the player's held weapon.
-		return 0, 0
-	end
-	return func(...)
-end)
 
 mod:hook(CLASS.CameraManager, "_update_camera_properties", function (func, self, camera, shadow_camera, nodes, data, viewport)
 	local v, occupant = Session.for_unit(self:_current_node(nodes):root_unit())

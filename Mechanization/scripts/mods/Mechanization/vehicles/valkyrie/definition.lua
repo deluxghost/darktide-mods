@@ -8,6 +8,11 @@ local Valkyrie = {
 	max_health = 35000,
 	settings = Settings,
 	controller = Controller,
+	crosshairs = {
+		unarmed = { crosshair_type = "cross", spread_scalar = 0 },
+		laser = { crosshair_type = "cross", spread_scalar = 0 },
+		rocket = { crosshair_type = "cross", spread_scalar = 0 },
+	},
 	controls = {
 		throttle = { "move_forward", "move_backward" },
 		strafe = { "move_right", "move_left" },

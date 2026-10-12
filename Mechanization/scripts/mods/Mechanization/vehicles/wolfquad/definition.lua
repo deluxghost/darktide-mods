@@ -6,6 +6,9 @@ local Wolfquad = {
 	max_health = 2000,
 	settings = Settings,
 	controller = mod.load_module("vehicles/wolfquad/controller"),
+	crosshairs = {
+		unarmed = { crosshair_type = "cross", spread_scalar = 0 },
+	},
 	controls = {
 		throttle = { "move_forward", "move_backward" },
 		steer = { "move_right", "move_left" },
