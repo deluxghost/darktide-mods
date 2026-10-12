@@ -3,16 +3,14 @@ local Settings = mod.load_module("vehicles/valkyrie/settings")
 local Controller = mod.load_module("vehicles/valkyrie/controller")
 local Laser = mod.load_module("weapons/laser")
 local View = mod.load_module("camera")
-local Attack = require("scripts/utilities/attack/attack")
-local HitZone = require("scripts/utilities/attack/hit_zone")
-local DamageProfileTemplates = require("scripts/settings/damage/damage_profile_templates")
 local Damage = mod.load_module("weapons/damage")
+local DamageProfileTemplates = require("scripts/settings/damage/damage_profile_templates")
 local ProjectileTemplates = require("scripts/settings/projectile/projectile_templates")
 local ExplosionTemplates = require("scripts/settings/damage/explosion_templates")
 local ProjectileLocomotionSettings = require("scripts/settings/projectile_locomotion/projectile_locomotion_settings")
 local MasterItems = require("scripts/backend/master_items")
 local Weapons = {}
-local LASER_DAMAGE = Damage.profile(DamageProfileTemplates.default_lasgun_bfg, Settings.laser_power, Settings.laser_armor)
+local LASER_DAMAGE = Laser.profile(Settings.laser_power, Settings.laser_armor, Settings.laser_splash_radius, Settings.laser_splash_fraction)
 local LASER_EFFECT = { muzzle_scale = 4, beam_width = 5, trail_scale = 2.5, impact_scale = 3 }
 local ROCKET_TEMPLATE = table.clone(ProjectileTemplates.attack_valkyrie_missile)
 local ROCKET_EXPLOSION = table.clone(ExplosionTemplates.attack_valkyrie_missile)
@@ -81,13 +79,8 @@ Weapons.fire = function (v, action, control, time)
 	if action == "laser" then
 		local endpoint, hit = Laser.trace(v, position, rotation, Settings.shot_range, Settings.laser_radius)
 		event.endpoint, event.hit = { endpoint.x, endpoint.y, endpoint.z }, hit ~= nil
-		if hit and HEALTH_ALIVE[Actor.unit(hit[4])] then
-			Attack.execute(
-				Actor.unit(hit[4]), LASER_DAMAGE, "power_level", 500, "charge_level", 1,
-				"attacking_unit", control.unit, "attack_direction", Quaternion.forward(rotation),
-				"hit_actor", hit[4], "hit_zone_name", HitZone.get_name(Actor.unit(hit[4]), hit[4]),
-				"hit_world_position", endpoint, "attack_type", "ranged", "damage_type", "laser_bfg"
-			)
+		if hit then
+			Laser.damage(v, LASER_DAMAGE, hit, rotation, control.unit)
 		end
 	else
 		local template = ROCKET_TEMPLATE

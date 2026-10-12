@@ -1,11 +1,9 @@
 local mod = get_mod("Mechanization")
 local Settings = mod.load_module("vehicles/lionheart/settings")
-local Attack = require("scripts/utilities/attack/attack")
 local Explosion = require("scripts/utilities/attack/explosion")
 local ExplosionTemplates = require("scripts/settings/damage/explosion_templates")
 local DamageProfileTemplates = require("scripts/settings/damage/damage_profile_templates")
 local Damage = mod.load_module("weapons/damage")
-local HitZone = require("scripts/utilities/attack/hit_zone")
 local Weapons = {}
 local Laser = mod.load_module("weapons/laser")
 local LASER_EFFECT = {
@@ -16,7 +14,7 @@ local LASER_EFFECT = {
 }
 local SHELL_IMPACT = "content/fx/particles/explosions/tank_wall_explosion"
 local MAIN_DAMAGE = Damage.profile(DamageProfileTemplates.no_mans_land_tank_wall_explosion, Settings.main_attack_power, Settings.main_armor)
-local FRONT_DAMAGE = Damage.profile(DamageProfileTemplates.default_lasgun_bfg, Settings.front_attack_power, Settings.front_armor)
+local FRONT_DAMAGE = Laser.profile(Settings.front_attack_power, Settings.front_armor, Settings.front_splash_radius, Settings.front_splash_fraction)
 local MAIN_EXPLOSION = table.clone(ExplosionTemplates.tank_wall_explosion)
 MAIN_EXPLOSION.radius = Settings.main_explosion_radius
 MAIN_EXPLOSION.close_radius = Settings.main_explosion_close_radius
@@ -63,16 +61,7 @@ Weapons.fire = function (vehicle, v, secondary, time, attacker)
 		local delay = v.front_rounds == 0 and Settings.front_reload_time or Settings.front_shot_interval
 		v.next_front_shot = time + delay
 		if hit then
-			local actor = hit[4]
-			local unit = Actor.unit(actor)
-			if HEALTH_ALIVE[unit] then
-				Attack.execute(
-					unit, FRONT_DAMAGE, "power_level", 500, "charge_level", 1,
-					"attack_direction", Quaternion.forward(rotation), "hit_zone_name", HitZone.get_name(unit, actor),
-					"hit_actor", actor, "hit_world_position", endpoint, "attacking_unit", attacker,
-					"attack_type", "ranged", "damage_type", "laser_bfg"
-				)
-			end
+			Laser.damage(v, FRONT_DAMAGE, hit, rotation, attacker)
 		end
 	else
 		v.rounds = v.rounds - 1

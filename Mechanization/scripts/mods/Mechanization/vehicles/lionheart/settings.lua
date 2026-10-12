@@ -23,6 +23,8 @@ return {
 	front_shot_interval = 1,
 	front_magazine_size = 30,
 	front_attack_power = 1200,
+	front_splash_radius = 2,
+	front_splash_fraction = 0.4,
 	front_armor = {
 		unarmored = 1,
 		armored = 1,
