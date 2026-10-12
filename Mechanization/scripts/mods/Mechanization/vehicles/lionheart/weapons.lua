@@ -4,6 +4,7 @@ local Attack = require("scripts/utilities/attack/attack")
 local Explosion = require("scripts/utilities/attack/explosion")
 local ExplosionTemplates = require("scripts/settings/damage/explosion_templates")
 local DamageProfileTemplates = require("scripts/settings/damage/damage_profile_templates")
+local Damage = mod.load_module("weapons/damage")
 local HitZone = require("scripts/utilities/attack/hit_zone")
 local Weapons = {}
 local Laser = mod.load_module("weapons/laser")
@@ -14,15 +15,8 @@ local LASER_EFFECT = {
 	impact_scale = Settings.front_impact_scale,
 }
 local SHELL_IMPACT = "content/fx/particles/explosions/tank_wall_explosion"
-local MAIN_DAMAGE = table.clone(DamageProfileTemplates.no_mans_land_tank_wall_explosion)
-MAIN_DAMAGE.power_distribution.attack = Settings.main_attack_power
-local FRONT_DAMAGE = table.clone(DamageProfileTemplates.default_lasgun_bfg)
-FRONT_DAMAGE.power_distribution.attack = Settings.front_attack_power
-for _, range in pairs(FRONT_DAMAGE.armor_damage_modifier_ranged) do
-	for armor in pairs(range.attack) do
-		range.attack[armor] = 1
-	end
-end
+local MAIN_DAMAGE = Damage.profile(DamageProfileTemplates.no_mans_land_tank_wall_explosion, Settings.main_attack_power, Settings.main_armor)
+local FRONT_DAMAGE = Damage.profile(DamageProfileTemplates.default_lasgun_bfg, Settings.front_attack_power, Settings.front_armor)
 local MAIN_EXPLOSION = table.clone(ExplosionTemplates.tank_wall_explosion)
 MAIN_EXPLOSION.radius = Settings.main_explosion_radius
 MAIN_EXPLOSION.close_radius = Settings.main_explosion_close_radius
