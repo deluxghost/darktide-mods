@@ -10,6 +10,7 @@ local ExplosionTemplates = require("scripts/settings/damage/explosion_templates"
 local ProjectileLocomotionSettings = require("scripts/settings/projectile_locomotion/projectile_locomotion_settings")
 local MasterItems = require("scripts/backend/master_items")
 local Weapons = {}
+local AIM_LIMIT = math.rad(8)
 local LASER_DAMAGE = Laser.profile(Settings.laser_power, Settings.laser_armor, Settings.laser_splash_radius, Settings.laser_splash_fraction)
 local LASER_EFFECT = { muzzle_scale = 4, beam_width = 5, trail_scale = 2.5, impact_scale = 3 }
 local ROCKET_TEMPLATE = table.clone(ProjectileTemplates.attack_valkyrie_missile)
@@ -45,6 +46,21 @@ Weapons.muzzle = function (v, action, side)
 	return v.position:unbox() + Quaternion.rotate(Controller.rotation(v), offset), Controller.rotation(v)
 end
 
+Weapons.aim = function (v, action, yaw, pitch)
+	local position, body = Weapons.muzzle(v, action, v.rocket_side)
+	local desired, sight = View.direction(v, yaw, pitch, position, Settings.shot_range)
+	local inverse_body = Quaternion.inverse(body)
+	local local_aim = Quaternion.rotate(inverse_body, desired)
+	local local_sight = Quaternion.rotate(inverse_body, Quaternion.forward(sight))
+	local sight_yaw = math.atan2(-local_sight.x, local_sight.y)
+	local sight_pitch = math.asin(math.clamp(local_sight.z, -1, 1))
+	-- Limit mouse tracking separately from camera-to-muzzle parallax compensation.
+	local aim_yaw = math.atan2(-local_aim.x, local_aim.y) + math.clamp(sight_yaw, -AIM_LIMIT, AIM_LIMIT) - sight_yaw
+	local aim_pitch = math.asin(math.clamp(local_aim.z, -1, 1)) + math.clamp(sight_pitch, -AIM_LIMIT, AIM_LIMIT) - sight_pitch
+	local rotation = Quaternion.multiply(body, Quaternion.from_yaw_pitch_roll(aim_yaw, aim_pitch, 0))
+	return position, rotation
+end
+
 Weapons.effect = function (v, event)
 	local position = Vector3(unpack(event.origin))
 	local rotation = Quaternion.from_yaw_pitch_roll(event.yaw, event.pitch, event.roll)
@@ -67,13 +83,7 @@ Weapons.fire = function (v, action, control, time)
 		return
 	end
 	Controller.pose(v)
-	local position, body = Weapons.muzzle(v, action, v.rocket_side)
-	local desired = View.direction(v, control.yaw, control.pitch, position, Settings.shot_range)
-	local local_aim = Quaternion.rotate(Quaternion.inverse(body), desired)
-	-- Fixed aircraft weapons converge on the reticle within a small forward firing cone.
-	local yaw = math.clamp(math.atan2(-local_aim.x, local_aim.y), math.rad(-8), math.rad(8))
-	local pitch = math.clamp(math.asin(math.clamp(local_aim.z, -1, 1)), math.rad(-8), math.rad(8))
-	local rotation = Quaternion.multiply(body, Quaternion.from_yaw_pitch_roll(yaw, pitch, 0))
+	local position, rotation = Weapons.aim(v, action, control.yaw, control.pitch)
 	local event = { weapon = action, origin = { position.x, position.y, position.z } }
 	event.yaw, event.pitch, event.roll = Quaternion.to_yaw_pitch_roll(rotation)
 	if action == "laser" then

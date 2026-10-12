@@ -59,9 +59,9 @@ View.direction = function (v, yaw, pitch, pivot, range)
 	local direction = target - pivot
 	-- A camera obstruction behind the gun cannot represent a backward aiming intent.
 	if Vector3.dot(direction, forward) <= 0 then
-		return forward
+		return forward, rotation
 	end
-	return Vector3.normalize(direction)
+	return Vector3.normalize(direction), rotation
 end
 
 return View
