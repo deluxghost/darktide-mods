@@ -1,4 +1,5 @@
 local mod = get_mod("Mechanization")
+local RiderPose = mod.load_module("players/rider_pose")
 local IntroSettings = require("scripts/ui/views/mission_intro_view/mission_intro_view_settings")
 local WeaponTemplate = require("scripts/utilities/weapon/weapon_template")
 local PlayerUnitAnimationState = require("scripts/extension_systems/animation/utilities/player_unit_animation_state")
@@ -9,8 +10,12 @@ Seated.start = function (occupant)
 	local data = ScriptUnit.extension(unit, "unit_data_system")
 	local weapon = assert(WeaponTemplate.current_weapon_template(data:read_component("weapon_action")), "Missing occupant weapon template")
 	occupant.animation_machine = WeaponTemplate.state_machines(weapon, data:breed_name())
+	if occupant.seat.pose then
+		occupant.rider_pose = RiderPose.create(unit, occupant.seat.pose, data:breed().base_unit)
+		return
+	end
 	local archetype = occupant.player:profile().archetype
-	local animation = assert(IntroSettings.animations_per_archetype[archetype.name], "Missing seated animation")[1]
+	local animation = occupant.seat.animation or assert(IntroSettings.animations_per_archetype[archetype.name], "Missing seated animation")[1]
 	Unit.set_animation_state_machine(unit, archetype.mission_intro_state_machine)
 	Unit.animation_event(unit, animation)
 end
@@ -19,6 +24,10 @@ Seated.stop = function (occupant)
 	local unit = occupant.unit
 	if not ALIVE[unit] then
 		return
+	end
+	if occupant.rider_pose then
+		RiderPose.restore(unit, occupant.rider_pose)
+		occupant.rider_pose = nil
 	end
 	Unit.set_animation_state_machine(unit, occupant.animation_machine)
 	local animation = ScriptUnit.extension(unit, "animation_system")
@@ -99,6 +108,13 @@ Seated.install = function (session)
 			self._first_person_component.height_change_duration = 0
 		end
 		return func(self, unit, ...)
+	end)
+	mod:hook(CLASS.PlayerUnitFirstPersonExtension, "_update_first_person_mode", function (func, self, t)
+		local _, occupant = session.for_unit(self._unit)
+		if occupant and not session.personal_weapons(occupant) then
+			return false, false
+		end
+		return func(self, t)
 	end)
 end
 

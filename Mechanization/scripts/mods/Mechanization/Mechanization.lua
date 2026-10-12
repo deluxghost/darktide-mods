@@ -12,6 +12,7 @@ local Session = mod.load_module("session")
 local ScriptCamera = require("scripts/foundation/utilities/script_camera")
 local Crosshair = require("scripts/ui/utilities/crosshair")
 local View = mod.load_module("camera")
+local RiderPose = mod.load_module("players/rider_pose")
 local Collision = mod.load_module("physics/collision")
 mod.session = Session
 mod.load_module("physics/minions").install(Session)
@@ -163,6 +164,7 @@ mod:hook(Application, "render_world", function (func, world, ...)
 			v.type.controller.pose(v)
 			for _, occupant in pairs(v.occupants) do
 				if ALIVE[occupant.unit] then
+					RiderPose.apply(v, occupant)
 					local personal_weapons = Session.personal_weapons(occupant)
 					if not occupant.seat.visible or personal_weapons and occupant.peer == Session.network.local_peer() then
 						collect(occupant.unit, hidden)
