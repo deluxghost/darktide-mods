@@ -3,6 +3,7 @@ local mod = get_mod("Mechanization")
 local types = {
 	mod.load_module("vehicles/lionheart/definition"),
 	mod.load_module("vehicles/valkyrie/definition"),
+	mod.load_module("vehicles/wolfquad/definition"),
 }
 
 local by_id = {}

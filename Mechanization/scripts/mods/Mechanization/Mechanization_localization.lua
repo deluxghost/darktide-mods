@@ -47,6 +47,10 @@ return {
 		en = "Valkyrie · Airborne Assault Carrier",
 		["zh-cn"] = "女武神 · 空中突击运输机",
 	},
+	vehicle_wolfquad = {
+		en = "Atalan Wolfquad",
+		["zh-cn"] = "阿塔兰狼式四轮车",
+	},
 	hud_laser = {
 		en = "LASER",
 		["zh-cn"] = "激光炮",

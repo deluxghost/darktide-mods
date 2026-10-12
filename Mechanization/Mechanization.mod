@@ -9,6 +9,7 @@ return {
 		})
 	end,
 	packages = {
+		"content/levels/expeditions/opportunities/wastes/op_48m_power_station_002/world",
 		"content/characters/enemy/valkyrie/third_person/attack_valkyrie",
 		"content/levels/ui/mission_intro/mission_intro",
 		"content/levels/ui/barber_character_mindwipe/barber_character_mindwipe",
