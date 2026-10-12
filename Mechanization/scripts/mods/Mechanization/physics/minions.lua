@@ -1,8 +1,11 @@
 local mod = get_mod("Mechanization")
 local Collision = mod.load_module("physics/collision")
 local Blackboard = require("scripts/extension_systems/blackboard/utilities/blackboard")
+local NavQueries = require("scripts/utilities/nav_queries")
 local Minions = {}
 local APPROACH_MARGIN = 5
+local NAV_HEIGHT = 0.5
+local CONTACT_GAP = 0.03
 
 local function exposed_vehicle (session, target)
 	local vehicle, occupant = session.for_unit(target)
@@ -61,6 +64,47 @@ local function nearby (vehicles)
 	return positions
 end
 
+local function terrain_position (unit, from, destination, dt)
+	local mover = Unit.mover(unit)
+	if mover then
+		-- Resolve the complete correction, including the hull slide, through the mover.
+		Mover.set_position(mover, from)
+		Mover.move(mover, destination - from, dt)
+		return Mover.position(mover)
+	end
+	local locomotion = ScriptUnit.extension(unit, "locomotion_system")
+	if locomotion:get_movement_type() == "snap_to_navmesh" then
+		local navigation = ScriptUnit.extension(unit, "navigation_system")
+		local nav_world, traverse = navigation:nav_world(), navigation:traverse_logic()
+		local start = NavQueries.position_on_mesh(nav_world, from, NAV_HEIGHT, NAV_HEIGHT, traverse)
+		if not start then
+			-- A push cannot start a ground path from an off-mesh animation position.
+			return from
+		end
+		-- The ray stays on connected ground and stops at walls and ledges.
+		local _, position = GwNavQueries.raycast(nav_world, start, destination, traverse)
+		return position
+	end
+	-- Script-driven leaps and climbs must keep their altitude instead of snapping to ground.
+	local radius, height = Collision.character_size(unit)
+	radius = math.min(radius, height * 0.5)
+	local direction, distance = Vector3.direction_length(destination - from)
+	local travel = distance
+	local physics_world = Managers.state.extension:system("locomotion_system")._physics_world
+	local samples = math.max(1, math.ceil((height - radius * 2) / radius))
+	for index = 0, samples do
+		local offset = Vector3.up() * math.lerp(radius, height - radius, index / samples)
+		local hits = PhysicsWorld.linear_sphere_sweep(
+			physics_world, from + offset, destination + offset, radius - CONTACT_GAP, 1,
+			"types", "statics", "collision_filter", "filter_minion_mover"
+		)
+		if hits then
+			travel = math.min(travel, math.max(0, hits[1].distance - CONTACT_GAP))
+		end
+	end
+	return from + direction * travel
+end
+
 Minions.constrain = function (session, positions, dt)
 	for unit, origin in pairs(positions) do
 		if HEALTH_ALIVE[unit] then
@@ -69,8 +113,11 @@ Minions.constrain = function (session, positions, dt)
 			local destination = Collision.move(session.vehicles, unit, origin:unbox(), position, attack_vehicle)
 			destination = Collision.push(session.vehicles, unit, destination, dt, attack_vehicle)
 			if not Vector3.equal(destination, position) then
-				local locomotion = ScriptUnit.extension(unit, "locomotion_system")
-				locomotion:teleport_to(destination, Unit.world_rotation(unit, 1))
+				destination = terrain_position(unit, position, destination, dt)
+				if not Vector3.equal(destination, position) then
+					local locomotion = ScriptUnit.extension(unit, "locomotion_system")
+					locomotion:teleport_to(destination, Unit.world_rotation(unit, 1))
+				end
 			end
 		end
 	end
