@@ -1,6 +1,10 @@
 local Collision = {}
 local CONTACT_GAP = 0.03
 
+Collision.contains_unit = function (vehicle, unit)
+	return vehicle.parts[unit] == true
+end
+
 Collision.player_footprint = function (unit)
 	local mover = Unit.mover(unit)
 	if mover then

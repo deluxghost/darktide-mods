@@ -9,6 +9,7 @@ return {
 		})
 	end,
 	packages = {
+		"content/characters/enemy/valkyrie/third_person/attack_valkyrie",
 		"content/levels/ui/mission_intro/mission_intro",
 		"content/levels/ui/barber_character_mindwipe/barber_character_mindwipe",
 		"content/levels/cinematics/c_cams/c_cam_no_mans_land/world",

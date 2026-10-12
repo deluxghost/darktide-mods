@@ -183,7 +183,7 @@ HudElementVehicleStatus.update = function (self, dt, t, ui_renderer, render_sett
 	self._health_reference = nil
 	self._summary_reference = nil
 	if v then
-		content.exit = mod:localize(occupant.seat.movement and "hud_exit" or "hud_switch_exit", key)
+		content.exit = mod:localize(session.occupants.next_seat(v, occupant) and "hud_switch_exit" or "hud_exit", key)
 		local max_health = v.health:max_health()
 		content.health = mod:localize("hud_health", v.health:current_health(), max_health)
 		self._health_reference = mod:localize("hud_health", max_health, max_health)

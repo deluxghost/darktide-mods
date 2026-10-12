@@ -1,3 +1,5 @@
+local mod = get_mod("Mechanization")
+local Collision = mod.load_module("physics/collision")
 local View = {}
 
 View.pose = function (v, yaw, pitch)
@@ -5,6 +7,10 @@ View.pose = function (v, yaw, pitch)
 	local rotation = Quaternion.from_yaw_pitch_roll(yaw, math.clamp(pitch, settings.min_pitch, settings.max_pitch), 0)
 	local pivot = v.position:unbox() + Vector3(0, 0, settings.height)
 	local travel = -Quaternion.forward(rotation) * settings.distance + Quaternion.right(rotation) * settings.offset
+	if settings.vertical_offset then
+		-- Offset perpendicular to the sight line so pitching does not lift the hull over the reticle.
+		travel = travel + Quaternion.up(rotation) * settings.vertical_offset
+	end
 	local distance = Vector3.length(travel)
 	local hits = PhysicsWorld.raycast(
 		World.physics_world(v.world), pivot, Vector3.normalize(travel), distance,
@@ -12,7 +18,7 @@ View.pose = function (v, yaw, pitch)
 	)
 	local nearest = distance
 	for _, hit in ipairs(hits or {}) do
-		if Actor.unit(hit[4]) ~= v.unit and hit[2] < nearest then
+		if not Collision.contains_unit(v, Actor.unit(hit[4])) and hit[2] < nearest then
 			nearest = math.max(0, hit[2] - 0.4)
 		end
 	end
@@ -37,7 +43,7 @@ View.target = function (v, yaw, pitch, range)
 		for _, occupant in pairs(v.occupants) do
 			occupant_hit = occupant_hit or occupant.unit == unit
 		end
-		if unit ~= v.unit and not occupant_hit and hit[2] < nearest then
+		if not Collision.contains_unit(v, unit) and not occupant_hit and hit[2] < nearest then
 			nearest = hit[2]
 			target = hit[1]
 		end

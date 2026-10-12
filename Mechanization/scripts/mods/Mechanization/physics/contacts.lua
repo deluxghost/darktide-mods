@@ -7,11 +7,14 @@ local MIN_ADVANCE = 0.0001
 
 local function distance (vehicle, position, origin, rotation, radius, height)
 	local center, half = vehicle.type.controller.bounds(vehicle)
-	local local_position = Quaternion.rotate(Quaternion.inverse(rotation), position - origin) - center
-	if local_position.z >= half.z or local_position.z + height <= -half.z then
-		return
-	end
-	return math.max(math.abs(local_position.x) - half.x, math.abs(local_position.y) - half.y) - radius
+	local inverse = Quaternion.inverse(rotation)
+	local local_position = Quaternion.rotate(inverse, position + Vector3.up() * height * 0.5 - origin) - center
+	local upright = Quaternion.rotate(inverse, Vector3.up())
+	local extent = half + Vector3(math.abs(upright.x), math.abs(upright.y), math.abs(upright.z)) * height * 0.5
+	extent = extent + Vector3(radius, radius, 0)
+	local x, y, z = math.abs(local_position.x), math.abs(local_position.y), math.abs(local_position.z)
+	local gap = math.max(x - extent.x, y - extent.y, z - extent.z)
+	return gap, (x / extent.x)^2 + (y / extent.y)^2 + (z / extent.z)^2
 end
 
 local function candidates (vehicle, origin, rotation, destination, heading)
@@ -30,9 +33,11 @@ local function candidates (vehicle, origin, rotation, destination, heading)
 			local position = Unit.world_position(unit, 1)
 			local footprint = breed.broadphase_radius
 			local height = breed.base_height
-			local before = distance(vehicle, position, origin, rotation, footprint, height)
-			local after = distance(vehicle, position, destination, heading, footprint, height)
-			if after and after <= settings.contact_margin and (not before or after < before - MIN_ADVANCE) then
+			local before, previous_depth = distance(vehicle, position, origin, rotation, footprint, height)
+			local after, depth = distance(vehicle, position, destination, heading, footprint, height)
+			local advancing = after < before - MIN_ADVANCE
+				or math.abs(after - before) <= MIN_ADVANCE and depth < previous_depth - MIN_ADVANCE
+			if after <= settings.contact_margin and advancing then
 				contacts[#contacts + 1] = { unit = unit, breed = breed }
 			end
 		end
@@ -83,7 +88,9 @@ Contacts.update = function (vehicle, origin, rotation, time)
 		if not vehicle.contact_ticks[unit] then
 			vehicle.contact_ticks[unit] = time + settings.tick_interval
 			local position = Unit.world_position(unit, 1)
-			local direction = Vector3.normalize(Vector3.flat(position - origin))
+			local movement = vehicle.position:unbox() - origin
+			local direction = Vector3.length_squared(movement) > MIN_ADVANCE^2 and Vector3.normalize(movement)
+				or Vector3.normalize(position + Vector3.up() * contact.breed.base_height * 0.5 - origin)
 			local health = ScriptUnit.extension(unit, "health_system")
 			local result = health:current_health() <= settings.damage and "died" or "damaged"
 			-- Apply a fixed amount before armor scaling; all enemy classes use the same crushing damage.

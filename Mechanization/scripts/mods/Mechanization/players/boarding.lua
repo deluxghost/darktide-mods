@@ -1,3 +1,5 @@
+local mod = get_mod("Mechanization")
+local Collision = mod.load_module("physics/collision")
 local Boarding = {}
 local REACH = 4
 
@@ -30,7 +32,7 @@ Boarding.target = function (vehicles, player)
 		end
 	end
 	for _, vehicle in pairs(vehicles) do
-		if vehicle.unit == hit_unit then
+		if Collision.contains_unit(vehicle, hit_unit) then
 			return vehicle
 		end
 	end

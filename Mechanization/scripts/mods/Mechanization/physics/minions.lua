@@ -56,7 +56,7 @@ Minions.target = function (session, unit)
 		World.physics_world(vehicle.world), eye, direction, length,
 		"closest", "types", "both", "collision_filter", breed.line_of_sight_collision_filter
 	)
-	component.has_line_of_sight = not hit or Actor.unit(actor) == vehicle.unit
+	component.has_line_of_sight = not hit or Collision.contains_unit(vehicle, Actor.unit(actor))
 	local extension = ScriptUnit.extension(unit, "perception_system")
 	extension._line_of_sight_lookup[perception.target_unit] = component.has_line_of_sight
 end

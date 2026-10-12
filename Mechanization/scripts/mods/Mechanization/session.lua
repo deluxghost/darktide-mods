@@ -7,6 +7,7 @@ local Interaction = mod.load_module("players/interaction")
 local Health = mod.load_module("vehicles/health")
 local Dismount = mod.load_module("physics/dismount")
 local PlayerMovement = require("scripts/utilities/player_movement")
+local Airdrop = mod.load_module("players/airdrop")
 local Messages = mod.load_module("network/messages")
 local PlayerUnitStatus = require("scripts/utilities/attack/player_unit_status")
 local Session = {
@@ -75,12 +76,28 @@ Session.remove = function (peer, dismount)
 	if not v then
 		return
 	end
-	local positions = dismount and Dismount.removal(v)
+	local seated = {}
+	for _, occupant in pairs(v.occupants) do
+		if VehicleNetwork.is_host() or occupant.peer == VehicleNetwork.local_peer() then
+			seated[#seated + 1] = occupant
+		end
+	end
+	local positions, drops
+	if dismount then
+		positions, drops = Dismount.departure(v, seated, Session.vehicles, true)
+	end
 	Session.vehicles[peer] = nil
 	for index, occupant in pairs(v.occupants) do
 		local local_occupant = occupant.peer == VehicleNetwork.local_peer()
 		local position = positions and positions[occupant.peer]
-		Occupants.remove(v, index, (VehicleNetwork.is_host() or local_occupant) and position)
+		Occupants.remove(v, index)
+		if position and (VehicleNetwork.is_host() or local_occupant) then
+			if drops[occupant.peer] then
+				Airdrop.teleport(occupant.player, position, drops[occupant.peer])
+			else
+				PlayerMovement.teleport(occupant.player, Vector3(unpack(position)))
+			end
+		end
 	end
 	Health.detach(v)
 	v.type.controller.destroy(v)
@@ -94,8 +111,16 @@ Session.leave_peer = function (peer, dismount)
 	end
 	local removing = peer == v.peer
 	local positions = {}
+	local drops = {}
 	if dismount then
-		positions = removing and Dismount.removal(v) or Dismount.plan(v, { occupant }, Session.vehicles)
+		local departing = { occupant }
+		if removing then
+			departing = {}
+			for _, seated in pairs(v.occupants) do
+				departing[#departing + 1] = seated
+			end
+		end
+		positions, drops = Dismount.departure(v, departing, Session.vehicles, removing)
 		if not positions then
 			if peer == VehicleNetwork.local_peer() then
 				mod:echo(mod:localize("no_exit"))
@@ -113,16 +138,16 @@ Session.leave_peer = function (peer, dismount)
 		positions[peer] = positions[peer] or false
 	end
 	if VehicleNetwork.is_host() then
-		VehicleNetwork.send("departure", "others", v.peer, positions, removing)
+		VehicleNetwork.send("departure", "others", v.peer, positions, removing, drops)
 	end
-	Session.apply_departure(v.peer, positions, removing)
+	Session.apply_departure(v.peer, positions, removing, drops)
 	if VehicleNetwork.is_host() and not removing then
 		Session.publish(v)
 	end
 	return true
 end
 
-Session.apply_departure = function (owner, positions, removing)
+Session.apply_departure = function (owner, positions, removing, drops)
 	local v = Session.vehicles[owner]
 	if removing then
 		Session.remove(owner, false)
@@ -141,7 +166,11 @@ Session.apply_departure = function (owner, positions, removing)
 		if point and (VehicleNetwork.is_host() or peer == local_peer) then
 			local player = Occupants.find_player(peer)
 			if player and player.player_unit and ALIVE[player.player_unit] then
-				PlayerMovement.teleport(player, Vector3(unpack(point)))
+				if drops and drops[peer] then
+					Airdrop.teleport(player, point, drops[peer])
+				else
+					PlayerMovement.teleport(player, Vector3(unpack(point)))
+				end
 			end
 		end
 	end
@@ -216,6 +245,9 @@ Session.cleanup = function (dismount)
 	Session.exiting = nil
 	Interaction.reset()
 	Boarding.reset()
+	if not dismount then
+		table.clear(Airdrop.units)
+	end
 	for peer in pairs(Session.vehicles) do
 		Session.remove(peer, dismount)
 	end
@@ -337,6 +369,7 @@ Session.update = function (dt)
 		Session.network_elapsed = 0
 	end
 	update_local(dt, transmit)
+	Airdrop.update()
 	for peer, v in pairs(Session.vehicles) do
 		if VehicleNetwork.is_host() then
 			Health.update(v)
@@ -373,6 +406,7 @@ Session.update = function (dt)
 end
 
 Session.install = function ()
+	Airdrop.install()
 	Health.install(Session)
 	Messages.install(Session)
 	Occupants.install(Session)

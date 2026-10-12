@@ -96,15 +96,18 @@ mod:hook(CLASS.PlayerUnitLocomotionExtension, "_update_movement", function (func
 	end
 end)
 
-mod:hook(CLASS.DefaultPlayerOrientation, "pre_update", function (func, self, ...)
+mod:hook(CLASS.DefaultPlayerOrientation, "pre_update", function (func, self, main_t, main_dt, input, sensitivity, constraints)
 	local vehicle, occupant = Session.for_unit(self._player.player_unit)
 	if not vehicle or Session.personal_weapons(occupant) then
-		return func(self, ...)
+		return func(self, main_t, main_dt, input, sensitivity, constraints)
 	end
 	local min_pitch, max_pitch = self._min_pitch, self._max_pitch
 	local camera = vehicle.type.camera
 	self._min_pitch, self._max_pitch = camera.min_pitch, camera.max_pitch
-	func(self, ...)
+	if occupant.seat.movement and camera.look_sensitivity then
+		sensitivity = sensitivity * camera.look_sensitivity
+	end
+	func(self, main_t, main_dt, input, sensitivity, constraints)
 	self._min_pitch, self._max_pitch = min_pitch, max_pitch
 	local orientation = self._orientation
 	local pitch = (orientation.pitch + math.pi) % (math.pi * 2) - math.pi

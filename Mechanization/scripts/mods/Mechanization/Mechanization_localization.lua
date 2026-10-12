@@ -43,6 +43,18 @@ return {
 		en = "Lionheart · Leman Russ Demolisher",
 		["zh-cn"] = "狮心号 · 黎曼鲁斯破坏者",
 	},
+	vehicle_valkyrie = {
+		en = "Valkyrie · Airborne Assault Carrier",
+		["zh-cn"] = "女武神 · 空中突击运输机",
+	},
+	hud_laser = {
+		en = "LASER",
+		["zh-cn"] = "激光炮",
+	},
+	hud_rocket = {
+		en = "ROCKETS",
+		["zh-cn"] = "火箭巢",
+	},
 	invalid_vehicle = {
 		en = "Invalid vehicle number. Use /mech to list available vehicles.",
 		["zh-cn"] = "载具编号无效。使用 /mech 查看可用型号。",

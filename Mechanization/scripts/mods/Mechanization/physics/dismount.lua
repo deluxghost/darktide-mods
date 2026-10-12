@@ -1,6 +1,7 @@
 local mod = get_mod("Mechanization")
 local NavQueries = require("scripts/utilities/nav_queries")
 local Collision = mod.load_module("physics/collision")
+local AirborneDismount = mod.load_module("physics/airborne_dismount")
 local Dismount = {}
 local SEARCH_MARGIN = 24
 local SEARCH_SPACING = 0.75
@@ -142,14 +143,14 @@ local function find_position (context)
 	end
 end
 
-Dismount.plan = function (vehicle, occupants, vehicles)
+Dismount.plan = function (vehicle, occupants, vehicles, anchor_position)
 	local reserved, positions = {}, {}
 	local nav_world = Managers.state.nav_mesh:nav_world()
 	for _, occupant in ipairs(occupants) do
 		if ALIVE[occupant.unit] then
 			local navigation = ScriptUnit.extension(occupant.unit, "navigation_system")
 			local traverse = navigation:traverse_logic()
-			local anchor = NavQueries.position_on_mesh(nav_world, vehicle.position:unbox(), NAV_HEIGHT, NAV_HEIGHT, traverse)
+			local anchor = NavQueries.position_on_mesh(nav_world, anchor_position or vehicle.position:unbox(), NAV_HEIGHT, NAV_HEIGHT, traverse)
 			if not anchor then
 				return
 			end
@@ -187,6 +188,13 @@ Dismount.removal = function (vehicle)
 		end
 	end
 	return positions
+end
+
+Dismount.departure = function (vehicle, occupants, vehicles, removing)
+	if vehicle.type.dismount then
+		return AirborneDismount.plan(vehicle, occupants, vehicles, Dismount.plan, removing)
+	end
+	return removing and Dismount.removal(vehicle) or Dismount.plan(vehicle, occupants, vehicles), {}
 end
 
 return Dismount

@@ -5,14 +5,14 @@ local Explosion = require("scripts/utilities/attack/explosion")
 local ExplosionTemplates = require("scripts/settings/damage/explosion_templates")
 local DamageProfileTemplates = require("scripts/settings/damage/damage_profile_templates")
 local HitZone = require("scripts/utilities/attack/hit_zone")
-local HitScan = require("scripts/utilities/attack/hit_scan")
-local Health = require("scripts/utilities/health")
 local Weapons = {}
-local LASER_BEAM = "content/fx/particles/weapons/rifles/lasgun/lasgun_beam_krieg_charged"
-local LASER_TRAIL = "content/fx/particles/weapons/rifles/lasgun/lasgun_beam_krieg_linger_bfg"
-local TRAIL_SEGMENT_LENGTH = 5
-local LASER_MUZZLE = "content/fx/particles/weapons/rifles/lasgun/lasgun_bfg_muzzle"
-local LASER_IMPACT = "content/fx/particles/impacts/weapons/lasgun/lasgun_impact_surface_bfg_player"
+local Laser = mod.load_module("weapons/laser")
+local LASER_EFFECT = {
+	muzzle_scale = Settings.front_muzzle_scale,
+	beam_width = Settings.front_beam_width,
+	trail_scale = Settings.front_trail_width_scale,
+	impact_scale = Settings.front_impact_scale,
+}
 local SHELL_IMPACT = "content/fx/particles/explosions/tank_wall_explosion"
 local MAIN_DAMAGE = table.clone(DamageProfileTemplates.no_mans_land_tank_wall_explosion)
 MAIN_DAMAGE.power_distribution.attack = Settings.main_attack_power
@@ -38,38 +38,6 @@ Weapons.update = function (v, time)
 	end
 end
 
-local function trace (v, position, rotation, secondary)
-	local direction = Quaternion.forward(rotation)
-	local physics_world = World.physics_world(v.world)
-	local hits
-	if secondary then
-		hits = HitScan.sphere_sweep(physics_world, position, direction, Settings.shot_range, "both", nil, nil, Settings.front_beam_radius)
-		for index, hit in ipairs(hits or {}) do
-			hits[index] = { hit.position, hit.distance, hit.normal, hit.actor }
-		end
-	else
-		hits = HitScan.raycast(physics_world, position, direction, Settings.shot_range)
-	end
-	local nearest = Settings.shot_range
-	local selected
-
-	for _, hit in ipairs(hits or {}) do
-		local unit = Actor.unit(hit[4])
-		local occupant_hit = false
-		for _, occupant in pairs(v.occupants) do
-			occupant_hit = occupant_hit or occupant.unit == unit
-		end
-		local hit_zone = HitZone.get_name(unit, hit[4])
-		local damageable_actor = Health.can_actor_collide_with_attack_type(unit, hit[4], "ranged")
-		if unit ~= v.unit and not occupant_hit and hit_zone ~= "afro" and damageable_actor and hit[2] < nearest then
-			nearest = hit[2]
-			selected = hit
-		end
-	end
-
-	return selected and selected[1] or position + direction * Settings.shot_range, selected
-end
-
 Weapons.effect = function (vehicle, v, secondary, endpoint, hit)
 	vehicle.pose(v)
 	if not secondary then
@@ -81,23 +49,7 @@ Weapons.effect = function (vehicle, v, secondary, endpoint, hit)
 	end
 
 	local position, rotation = vehicle.front_muzzle(v)
-	-- A sweep contact can lie off the beam axis; keep the beam aligned with the barrel.
-	local distance = math.max(0, Vector3.dot(endpoint - position, Quaternion.forward(rotation)))
-	local muzzle_scale = Settings.front_muzzle_scale
-	World.create_particles(v.world, LASER_MUZZLE, position, rotation, Vector3(muzzle_scale, muzzle_scale, muzzle_scale))
-	local beam = World.create_particles(v.world, LASER_BEAM, position, rotation)
-	local variable = World.find_particles_variable(v.world, LASER_BEAM, "hit_distance")
-	World.set_particles_variable(v.world, beam, variable, Vector3(Settings.front_beam_width, distance, distance))
-	-- The stock BFG trail covers fixed five-metre segments rather than one full beam.
-	local direction = Quaternion.forward(rotation)
-	local trail_scale = Vector3(Settings.front_trail_width_scale, 1, Settings.front_trail_width_scale)
-	for offset = 1, distance - TRAIL_SEGMENT_LENGTH, TRAIL_SEGMENT_LENGTH do
-		World.create_particles(v.world, LASER_TRAIL, position + direction * offset, rotation, trail_scale)
-	end
-	if hit then
-		local scale = Settings.front_impact_scale
-		World.create_particles(v.world, LASER_IMPACT, endpoint, Quaternion.look(-direction), Vector3(scale, scale, scale))
-	end
+	Laser.effect(v.world, position, rotation, endpoint, hit, LASER_EFFECT)
 	WwiseWorld.trigger_resource_event(v.wwise, "wwise/events/world/play_valkyrie_lascannon_near", v.source)
 end
 
@@ -111,7 +63,7 @@ Weapons.fire = function (vehicle, v, secondary, time, attacker)
 	vehicle.pose(v)
 	local muzzle = secondary and vehicle.front_muzzle or vehicle.muzzle
 	local position, rotation = muzzle(v)
-	local endpoint, hit = trace(v, position, rotation, secondary)
+	local endpoint, hit = Laser.trace(v, position, rotation, Settings.shot_range, secondary and Settings.front_beam_radius)
 	if secondary then
 		v.front_rounds = v.front_rounds - 1
 		local delay = v.front_rounds == 0 and Settings.front_reload_time or Settings.front_shot_interval

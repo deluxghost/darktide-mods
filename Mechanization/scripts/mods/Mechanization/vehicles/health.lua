@@ -9,28 +9,38 @@ Health.attach = function (vehicle, network)
 	local maximum = vehicle.type.max_health
 	assert(type(maximum) == "number" and maximum > 0 and maximum < math.huge, "Invalid vehicle health")
 	vehicle.health = setmetatable({ vehicle = vehicle, network = network, maximum = maximum, remaining = maximum }, Health)
-	ScriptUnit.set_extension(vehicle.unit, "health_system", vehicle.health)
 	Managers.state.position_lookup:register(vehicle.unit, vehicle.position:unbox())
-	HEALTH_ALIVE[vehicle.unit] = true
-	for index = 1, Unit.num_actors(vehicle.unit) do
-		Actor.set_collision_filter(Unit.actor(vehicle.unit, index), "filter_destructible")
+	for part in pairs(vehicle.parts) do
+		ScriptUnit.set_extension(part, "health_system", vehicle.health)
+		if part ~= vehicle.unit then
+			Managers.state.position_lookup:register(part, Unit.world_position(part, 1))
+		end
+		HEALTH_ALIVE[part] = true
+		for index = 1, Unit.num_actors(part) do
+			Actor.set_collision_filter(Unit.actor(part, index), "filter_destructible")
+		end
 	end
 	local system = Managers.state.extension:system("broadphase_system")
 	local center, half_extents = vehicle.type.controller.bounds(vehicle)
 	local radius = Vector3.length(center) + Vector3.length(half_extents)
 	vehicle.health.broadphase = system.broadphase
-	vehicle.health.broadphase_id = Broadphase.add(system.broadphase, vehicle.unit, vehicle.position:unbox(), radius, { "destructibles" })
-	system._moving_units[vehicle.unit] = vehicle.health.broadphase_id
+	-- Explosion queries require an actor on the registered unit; a composite vehicle's root may have none.
+	vehicle.health.broadphase_unit = Actor.unit(vehicle.hit_actor)
+	local position = POSITION_LOOKUP[vehicle.health.broadphase_unit]
+	vehicle.health.broadphase_id = Broadphase.add(system.broadphase, vehicle.health.broadphase_unit, position, radius, { "destructibles" })
 end
 
 Health.detach = function (vehicle)
 	local health = vehicle.health
-	local system = Managers.state.extension:system("broadphase_system")
-	system._moving_units[vehicle.unit] = nil
 	Broadphase.remove(health.broadphase, health.broadphase_id)
-	ScriptUnit.remove_extension(vehicle.unit, "health_system")
+	for part in pairs(vehicle.parts) do
+		ScriptUnit.remove_extension(part, "health_system")
+		if part ~= vehicle.unit then
+			Managers.state.position_lookup:unregister(part)
+		end
+		HEALTH_ALIVE[part] = nil
+	end
 	Managers.state.position_lookup:unregister(vehicle.unit)
-	HEALTH_ALIVE[vehicle.unit] = nil
 end
 
 Health.is_alive = function (self)
@@ -39,6 +49,8 @@ end
 
 Health.update = function (vehicle)
 	local position = vehicle.position:unbox()
+	local health = vehicle.health
+	Broadphase.move(health.broadphase, health.broadphase_id, position)
 	local volumes = Managers.state.extension:system("volume_event_system")._level_volumes_by_name
 	for name, volume in pairs(volumes) do
 		if volume.type == "content/volume_types/player_instakill" then
@@ -87,7 +99,9 @@ Health.add_damage = function (self, damage)
 	assert(type(damage) == "number" and damage >= 0 and damage < math.huge, "Invalid vehicle damage")
 	local dealt = math.min(self.remaining, damage)
 	self.remaining = self.remaining - dealt
-	HEALTH_ALIVE[self.vehicle.unit] = self.remaining > 0
+	for part in pairs(self.vehicle.parts) do
+		HEALTH_ALIVE[part] = self.remaining > 0
+	end
 	return dealt
 end
 
@@ -103,7 +117,7 @@ local function melee_hit (vehicle, unit, action, profile, damage_type, event, or
 	if Vector3.length(offset) > reach then
 		return false
 	end
-	local direction = Vector3.normalize(Vector3.flat(offset))
+	local direction = Vector3.normalize(offset)
 	local forward = Vector3.normalize(Vector3.flat(Quaternion.forward(Unit.world_rotation(unit, 1))))
 	if action.attack_type ~= "broadphase" and Vector3.dot(direction, forward) < (action.weapon_reach_cone or 0.75) then
 		return false
@@ -112,7 +126,7 @@ local function melee_hit (vehicle, unit, action, profile, damage_type, event, or
 	Attack.execute(
 		vehicle.unit, profile or action.damage_profile,
 		"power_level", power, "attacking_unit", unit, "hit_world_position", target,
-		"hit_actor", Unit.actor(vehicle.unit, 1), "attack_direction", direction,
+		"hit_actor", vehicle.hit_actor, "attack_direction", direction,
 		"attack_type", "melee", "damage_type", damage_type or action.damage_type
 	)
 	return true
@@ -144,6 +158,15 @@ Health.install = function (session)
 				return health:add_damage(damage)
 			end
 			return func(unit, breed, attacker, owner, result, attack_type, profile, damage, ...)
+		end)
+	end)
+	hook_file("scripts/extension_systems/locomotion/utilities/projectile_locomotion", function (ProjectileLocomotion)
+		mod:hook(ProjectileLocomotion, "check_collision", function (func, unit, position, integration, bounce)
+			local vehicle = session.for_unit(integration.owner_unit)
+			if vehicle and Collision.contains_unit(vehicle, unit) then
+				return false
+			end
+			return func(unit, position, integration, bounce)
 		end)
 	end)
 	hook_file("scripts/utilities/minion_attack", function (MinionAttack)

@@ -48,7 +48,7 @@ Messages.install = function (session)
 				overlapping[#overlapping + 1] = bot
 			end
 		end
-		local positions = session.dismount.plan(v, overlapping, session.vehicles)
+		local positions = session.dismount.departure(v, overlapping, session.vehicles, false)
 		if not positions then
 			return false
 		end
@@ -58,7 +58,7 @@ Messages.install = function (session)
 		return true
 	end
 
-	session.receive_departure = function (sender, owner, positions, removing)
+	session.receive_departure = function (sender, owner, positions, removing, drops)
 		if not VehicleNetwork.from_host(sender) then
 			return
 		end
@@ -69,6 +69,10 @@ Messages.install = function (session)
 			return
 		end
 		assert(type(positions) == "table", "Invalid departure positions")
+		assert(type(drops) == "table", "Invalid departure descents")
+		for peer, speed in pairs(drops) do
+			assert(positions[peer] and finite(speed) and speed > 0 and speed <= 20, "Invalid departure descent")
+		end
 		for peer, point in pairs(positions) do
 			assert(type(peer) == "string", "Invalid departing peer")
 			if point ~= false then
@@ -78,7 +82,7 @@ Messages.install = function (session)
 				end
 			end
 		end
-		session.apply_departure(owner, positions, removing)
+		session.apply_departure(owner, positions, removing, drops)
 	end
 
 	session.receive_leave = function (peer, dismount)

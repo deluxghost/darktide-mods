@@ -3,7 +3,8 @@ local Settings = mod.load_module("vehicles/lionheart/settings")
 local View = mod.load_module("camera")
 local Collision = mod.load_module("physics/collision")
 local Terrain = mod.load_module("vehicles/lionheart/terrain")
-local Motion = mod.load_module("physics/ground_motion")
+local Motion = mod.load_module("physics/motion")
+local GroundMotion = mod.load_module("physics/ground_motion")
 local Contacts = mod.load_module("physics/contacts")
 local Vehicle = {}
 local TRACK_LINKS = 70
@@ -110,6 +111,8 @@ Vehicle.create = function (world, position, yaw)
 	lower.z = 0
 	return {
 		unit = unit,
+		parts = { [unit] = true },
+		hit_actor = Unit.actor(unit, 1),
 		exhausts = exhausts,
 		exhaust_group = exhaust_group,
 		world = world,
@@ -237,7 +240,7 @@ local function move (v, input, dt, vehicles)
 	else
 		normal = old_normal
 	end
-	yaw, normal = Motion.turn(v, yaw, normal, vehicles, Terrain.rotation)
+	yaw, normal = GroundMotion.turn(v, yaw, normal, vehicles, Terrain.rotation)
 	local rotation = Terrain.rotation(yaw, normal)
 	local height = Terrain.height(v.world, destination, rotation)
 	destination.z = support_height(v, origin, height, dt)
