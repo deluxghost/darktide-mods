@@ -32,12 +32,21 @@ Occupants.for_unit = function (vehicles, unit)
 	end
 end
 
-Occupants.free_seat = function (vehicle)
+Occupants.is_ogryn = function (player)
+	return ScriptUnit.extension(player.player_unit, "unit_data_system"):breed().name == "ogryn"
+end
+
+Occupants.can_use_seat = function (seat, player)
+	return not Occupants.is_ogryn(player) or seat.allow_ogryn == true
+end
+
+Occupants.free_seat = function (vehicle, player)
 	for index = 2, #vehicle.type.seats do
-		if not vehicle.occupants[index] then
+		if not vehicle.occupants[index] and Occupants.can_use_seat(vehicle.type.seats[index], player) then
 			return index
 		end
 	end
+	return nil, Occupants.is_ogryn(player) and "hud_no_ogryn_space" or "hud_full"
 end
 
 Occupants.next_seat = function (vehicle, occupant)
@@ -47,7 +56,7 @@ Occupants.next_seat = function (vehicle, occupant)
 	local count = #vehicle.type.seats
 	for offset = 1, count - 1 do
 		local index = (occupant.index - 1 + offset) % count + 1
-		if index ~= 1 and not vehicle.type.seats[index].movement and not vehicle.occupants[index] then
+		if index ~= 1 and not vehicle.type.seats[index].movement and not vehicle.occupants[index] and Occupants.can_use_seat(vehicle.type.seats[index], occupant.player) then
 			return index
 		end
 	end
@@ -55,6 +64,7 @@ end
 
 Occupants.switch = function (vehicle, occupant, index)
 	assert(not vehicle.occupants[index], "Vehicle seat is occupied")
+	assert(Occupants.can_use_seat(vehicle.type.seats[index], occupant.player), "Vehicle seat cannot accommodate this player")
 	vehicle.occupants[occupant.index] = nil
 	occupant.index = index
 	occupant.seat = assert(vehicle.type.seats[index], "Unknown vehicle seat")
@@ -81,6 +91,7 @@ Occupants.add = function (vehicle, index, peer, time)
 		return
 	end
 	assert(not vehicle.occupants[index], "Vehicle seat is occupied")
+	assert(Occupants.can_use_seat(vehicle.type.seats[index], player), "Vehicle seat cannot accommodate this player")
 	local axes = {}
 	for axis in pairs(vehicle.type.controls) do
 		axes[axis] = 0

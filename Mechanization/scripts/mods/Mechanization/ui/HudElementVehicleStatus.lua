@@ -191,8 +191,8 @@ HudElementVehicleStatus.update = function (self, dt, t, ui_renderer, render_sett
 			content.summary, self._summary_reference = v.type.summary(v)
 		end
 	else
-		local free = session.occupants.free_seat(boarding)
-		content.exit = free and mod:localize("hud_board", key) or mod:localize("hud_full")
+		local free, reason = session.occupants.free_seat(boarding, Managers.player:local_player(1))
+		content.exit = free and mod:localize("hud_board", key) or mod:localize(reason)
 		self._interaction_progress = free and self._interaction_progress or 0
 	end
 	for index, row in ipairs(rows) do

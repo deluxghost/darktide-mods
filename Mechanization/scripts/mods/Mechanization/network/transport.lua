@@ -79,7 +79,7 @@ VehicleNetwork.install = function (session)
 	end
 	assert(realms.network_register(mod, "notice", function (sender, key)
 		if VehicleNetwork.from_host(sender) then
-			assert(key == "no_space" or key == "no_ground" or key == "not_walking", "Invalid vehicle notice")
+			assert(key == "no_space" or key == "no_ground" or key == "not_walking" or key == "ogryn_cannot_drive", "Invalid vehicle notice")
 			mod:echo(mod:localize(key))
 		end
 	end))

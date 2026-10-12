@@ -33,7 +33,7 @@ local Valkyrie = {
 	},
 	seats = {
 		{ position = { 0, 6, 2.6 }, yaw = 0, visible = false, protected = true, movement = true, actions = { "laser", "rocket" } },
-		{ position = { 0, 4.3, 3.4 }, yaw = 0, visible = false, protected = true, movement = false, actions = {} },
+		{ position = { 0, 4.3, 3.4 }, yaw = 0, visible = false, protected = true, movement = false, allow_ogryn = true, actions = {} },
 	},
 	actions = { laser = "action_one_hold", rocket = "action_two_hold" },
 }

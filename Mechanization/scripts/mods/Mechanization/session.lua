@@ -225,6 +225,11 @@ Session.command = function (index, extra)
 		mod:echo(mod:localize("invalid_vehicle"))
 		return
 	end
+	local player = Managers.player:local_player(1)
+	if player and player.player_unit and not Occupants.can_use_seat(vehicle_type.seats[1], player) then
+		mod:echo(mod:localize("ogryn_cannot_drive"))
+		return
+	end
 	if VehicleNetwork.is_host() then
 		Session.receive_select(VehicleNetwork.local_peer(), vehicle_type.id)
 	elseif not VehicleNetwork.host_enabled then
@@ -313,8 +318,12 @@ local function update_local (dt, transmit)
 	local blocked = Managers.ui:using_input() or Session.exiting ~= nil
 	Boarding.vehicle = not mine and not blocked and VehicleNetwork.enabled() and Boarding.target(Session.vehicles, player) or nil
 	local input_service = Managers.input:get_input_service("Ingame")
+	local context = mine
+	if Boarding.vehicle and Occupants.free_seat(Boarding.vehicle, player) then
+		context = Boarding.vehicle
+	end
 	local gesture = Interaction.update(
-		player and player.player_unit, mine or Boarding.vehicle, input_service:get("interact_hold"), blocked, dt
+		player and player.player_unit, context, input_service:get("interact_hold"), blocked, dt
 	)
 	if mine then
 		if gesture == "hold" then

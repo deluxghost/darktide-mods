@@ -104,6 +104,10 @@ Messages.install = function (session)
 		if not player then
 			return
 		end
+		if not Occupants.can_use_seat(vehicle_type.seats[1], player) then
+			VehicleNetwork.notice(peer, "ogryn_cannot_drive")
+			return
+		end
 		local character = ScriptUnit.extension(player.player_unit, "unit_data_system"):read_component("character_state")
 		if character.state_name ~= "walking" then
 			VehicleNetwork.notice(peer, "not_walking")
@@ -141,7 +145,7 @@ Messages.install = function (session)
 		if Boarding.target(session.vehicles, player) ~= v then
 			return
 		end
-		local index = Occupants.free_seat(v)
+		local index = Occupants.free_seat(v, player)
 		if index then
 			Occupants.add(v, index, peer, session.clock)
 			session.publish(v)

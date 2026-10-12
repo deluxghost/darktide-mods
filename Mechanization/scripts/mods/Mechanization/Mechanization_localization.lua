@@ -63,6 +63,10 @@ return {
 		en = "No driveable ground at the player's position.",
 		["zh-cn"] = "当前位置没有可供载具行驶的地面。",
 	},
+	ogryn_cannot_drive = {
+		en = "Ogryns cannot drive vehicles.",
+		["zh-cn"] = "欧格林无法驾驶载具。",
+	},
 	not_walking = {
 		en = "You must be walking to create a vehicle.",
 		["zh-cn"] = "只有步行状态才能创建载具。",
@@ -78,6 +82,10 @@ return {
 	no_space = {
 		en = "Not enough space to create a vehicle.",
 		["zh-cn"] = "空间不足，无法创建载具。",
+	},
+	hud_no_ogryn_space = {
+		en = "No room for an Ogryn",
+		["zh-cn"] = "没有欧格林乘坐的空间",
 	},
 	hud_full = {
 		en = "Vehicle is full",
