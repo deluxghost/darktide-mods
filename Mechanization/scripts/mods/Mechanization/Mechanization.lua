@@ -168,7 +168,8 @@ mod:hook(Application, "render_world", function (func, world, ...)
 						end
 						if occupant.seat.visible then
 							local loadout = ScriptUnit.extension(occupant.unit, "visual_loadout_system")
-							local held = loadout:unit_3p_from_slot(loadout:currently_wielded_slot())
+							local inventory = ScriptUnit.extension(occupant.unit, "unit_data_system"):read_component("inventory")
+							local held = loadout:unit_3p_from_slot(inventory.wielded_slot)
 							if held then
 								collect(held, hidden)
 							end
