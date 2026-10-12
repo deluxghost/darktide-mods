@@ -9,6 +9,7 @@ return {
 		})
 	end,
 	packages = {
+		"wwise/events/weapon/play_2h_chainsword",
 		"content/levels/expeditions/opportunities/wastes/op_48m_power_station_002/world",
 		"content/characters/enemy/valkyrie/third_person/attack_valkyrie",
 		"content/levels/ui/mission_intro/mission_intro",
