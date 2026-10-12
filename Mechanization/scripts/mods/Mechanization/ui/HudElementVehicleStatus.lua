@@ -86,15 +86,48 @@ HudElementVehicleStatus._layout = function (self, ui_renderer, rows)
 	local widget = self._widgets_by_name.status
 	local content, style = widget.content, widget.style
 	local widths, heights = {}, {}
+	self._reference_sizes = self._reference_sizes or {}
 	local function measure (id, reference)
 		local measurement = style[id]
 		local scale = ui_renderer.scale
 		local font_size = measurement.font_size
+		local alignment = measurement.text_horizontal_alignment
 		measurement.font_size = math.max(font_size * scale, 1)
-		local width, height, _, caret = self:_text_size(ui_renderer, reference or content[id], measurement, { 1000000, LINE_HEIGHT * scale }, true)
+		-- Measure at the origin to avoid precision loss from a large alignment offset.
+		measurement.text_horizontal_alignment = "left"
+		local function text_size (text)
+			local width, height, _, caret = self:_text_size(ui_renderer, text, measurement, { 1000000, LINE_HEIGHT * scale }, true)
+			return math.max(width, caret.x), height
+		end
+		local width, height = text_size(content[id])
+		if reference then
+			local cached = self._reference_sizes[id]
+			if not cached or cached.text ~= reference or cached.font_size ~= measurement.font_size or cached.font_type ~= measurement.font_type or cached.scale ~= scale then
+				local reference_width, reference_height = text_size(reference)
+				-- A maximum numeric value does not necessarily use the widest digits.
+				for digit = 0, 9 do
+					local sample = reference:gsub("%d", tostring(digit))
+					local sample_width, sample_height = text_size(sample)
+					reference_width = math.max(reference_width, sample_width)
+					reference_height = math.max(reference_height, sample_height)
+				end
+				cached = {
+					text = reference,
+					font_size = measurement.font_size,
+					font_type = measurement.font_type,
+					scale = scale,
+					width = reference_width,
+					height = reference_height,
+				}
+				self._reference_sizes[id] = cached
+			end
+			width = math.max(width, cached.width)
+			height = math.max(height, cached.height)
+		end
 		measurement.font_size = font_size
-		-- Layout must include the final glyph advance, not only its visible outline.
-		widths[id] = math.ceil(math.max(width, caret.x) / scale)
+		measurement.text_horizontal_alignment = alignment
+		-- Round outward after converting pixels back to layout units.
+		widths[id] = math.ceil(width / scale)
 		heights[id] = math.max(LINE_HEIGHT, math.ceil(height / scale))
 	end
 	measure("title")
