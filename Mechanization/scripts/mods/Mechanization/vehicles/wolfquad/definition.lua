@@ -22,7 +22,7 @@ local Wolfquad = {
 		vertical_fov = math.rad(65),
 	},
 	contacts = {
-		damage = 100,
+		damage = 250,
 		tick_interval = 0.4,
 		contact_margin = 0.08,
 		push_speed = 3,
