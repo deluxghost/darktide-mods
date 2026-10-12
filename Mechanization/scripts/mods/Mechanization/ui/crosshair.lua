@@ -1,6 +1,8 @@
 local mod = get_mod("Mechanization")
 local Crosshair = require("scripts/ui/utilities/crosshair")
+local CrossTemplate = require("scripts/ui/hud/elements/crosshair/templates/crosshair_template_cross")
 local VehicleCrosshair = {}
+local SEGMENT_OFFSET = 16
 
 VehicleCrosshair.state = function (session, vehicle, occupant)
 	local states = vehicle.type.crosshairs
@@ -17,6 +19,16 @@ VehicleCrosshair.state = function (session, vehicle, occupant)
 end
 
 VehicleCrosshair.install = function (session)
+	mod:hook_safe(CrossTemplate, "update_function", function (parent, ui_renderer, widget)
+		if not session.local_vehicle() then
+			return
+		end
+		-- Keep vehicle spacing independent of weapon spread and crosshair remapping.
+		widget.style.top.offset[2] = -SEGMENT_OFFSET
+		widget.style.bottom.offset[2] = SEGMENT_OFFSET
+		widget.style.left.offset[1] = -SEGMENT_OFFSET
+		widget.style.right.offset[1] = SEGMENT_OFFSET
+	end)
 	mod:hook(CLASS.HudElementCrosshair, "_crosshair_settings", function (func, self)
 		local vehicle, occupant = session.local_vehicle()
 		if vehicle then
