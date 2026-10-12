@@ -97,13 +97,18 @@ Lionheart.interpolate = function (v, state)
 end
 
 Lionheart.update = function (v, time, emit)
-	Weapons.update(v, time)
+	local pending = Weapons.update(Controller, v, time)
+	if pending then
+		Weapons.effect(Controller, v, pending)
+		emit(v, pending)
+	end
 	for _, action in ipairs({ "main", "front" }) do
 		local control = v.input.actions[action]
 		if control and control.pressed then
-			local endpoint, hit = Weapons.fire(Controller, v, action == "front", time, control.unit)
-			if endpoint then
-				emit(v, { weapon = action, endpoint = { endpoint.x, endpoint.y, endpoint.z }, hit = hit })
+			local event = Weapons.fire(Controller, v, action == "front", time, control.unit)
+			if event then
+				Weapons.effect(Controller, v, event)
+				emit(v, event)
 			end
 		end
 	end
@@ -111,11 +116,17 @@ end
 
 Lionheart.receive_event = function (v, event, finite)
 	assert(type(event) == "table" and (event.weapon == "main" or event.weapon == "front"), "Invalid Lionheart weapon")
+	assert(event.phase == "fire" or (event.weapon == "main" and (event.phase == "prepare" or event.phase == "impact")), "Invalid Lionheart weapon phase")
+	if event.weapon == "main" and event.phase ~= "impact" then
+		Weapons.effect(Controller, v, event)
+		return
+	end
 	assert(type(event.hit) == "boolean" and type(event.endpoint) == "table" and #event.endpoint == 3, "Invalid Lionheart impact")
 	for index = 1, 3 do
 		assert(finite(event.endpoint[index]), "Invalid Lionheart impact coordinate")
 	end
-	Weapons.effect(Controller, v, event.weapon == "front", Vector3(unpack(event.endpoint)), event.hit)
+	assert(event.phase ~= "impact" or event.hit, "Invalid Lionheart shell impact")
+	Weapons.effect(Controller, v, event)
 end
 
 local function weapon_status (v, weapon, time)

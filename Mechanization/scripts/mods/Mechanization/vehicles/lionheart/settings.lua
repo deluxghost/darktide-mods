@@ -74,4 +74,5 @@ return {
 	reload_time = 5,
 	magazine_size = 1,
 	shot_range = 250,
+	main_shell_speed = 200,
 }

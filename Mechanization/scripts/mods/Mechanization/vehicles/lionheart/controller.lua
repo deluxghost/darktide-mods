@@ -377,7 +377,6 @@ Vehicle.fire_fx = function (v)
 	Vehicle.pose(v)
 	local position, rotation = Vehicle.muzzle(v)
 	World.create_particles(v.world, "content/fx/particles/environment/no_mans_land/tank_muzzle_flash", position, rotation)
-	WwiseWorld.trigger_resource_event(v.wwise, "wwise/events/world/play_tank_mission_turret_fire", v.source)
 end
 
 Vehicle.destroy = function (v)
