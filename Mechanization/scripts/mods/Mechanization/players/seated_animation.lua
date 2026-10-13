@@ -10,13 +10,14 @@ Seated.start = function (occupant)
 	local data = ScriptUnit.extension(unit, "unit_data_system")
 	local weapon = assert(WeaponTemplate.current_weapon_template(data:read_component("weapon_action")), "Missing occupant weapon template")
 	occupant.animation_machine = WeaponTemplate.state_machines(weapon, data:breed_name())
+	local archetype = occupant.player:profile().archetype
+	-- Keep native animation reads valid without retaining an unequipped weapon's resources.
+	Unit.set_animation_state_machine(unit, archetype.mission_intro_state_machine)
 	if occupant.seat.pose then
 		occupant.rider_pose = RiderPose.create(unit, occupant.seat.pose, data:breed().base_unit)
 		return
 	end
-	local archetype = occupant.player:profile().archetype
 	local animation = occupant.seat.animation or assert(IntroSettings.animations_per_archetype[archetype.name], "Missing seated animation")[1]
-	Unit.set_animation_state_machine(unit, archetype.mission_intro_state_machine)
 	Unit.animation_event(unit, animation)
 end
 
