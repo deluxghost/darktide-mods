@@ -2,8 +2,7 @@ local mod = get_mod("Mechanization")
 local Settings = mod.load_module("vehicles/wolfquad/settings")
 local Terrain = mod.load_module("physics/wheel_terrain")
 local WheelDrive = mod.load_module("physics/wheel_drive")
-local Motion = mod.load_module("physics/motion")
-local Collision = mod.load_module("physics/collision")
+local Chassis = mod.load_module("physics/wheel_chassis")
 local Vehicle = {}
 local ENGINE_IDLE_THROTTLE = 0.6
 local ENGINE_PITCH_MIN = 0.82506
@@ -11,27 +10,6 @@ local ENGINE_VOLUME = 0.21
 local ENGINE_RESPONSE_TIME = 0.1
 local ENGINE_NEAR_FIELD_RADIUS = 6
 local ENGINE_EVENT = "wwise/events/weapon/play_2h_chainsword"
-
-local function capture_actors (unit, origin, facing)
-	local actors = {}
-	for index = 1, Unit.num_actors(unit) do
-		local actor = Unit.actor(unit, index)
-		actors[index] = {
-			actor = actor,
-			position = Vector3Box(Quaternion.rotate(facing, Actor.position(actor) - origin)),
-			rotation = QuaternionBox(Quaternion.multiply(facing, Actor.rotation(actor))),
-		}
-	end
-	return actors
-end
-
-local function pose_actors (actors, position, rotation)
-	-- Static prop actors do not follow their scene graph after spawning.
-	for _, entry in ipairs(actors) do
-		Actor.teleport_position(entry.actor, position + Quaternion.rotate(rotation, entry.position:unbox()))
-		Actor.teleport_rotation(entry.actor, Quaternion.multiply(rotation, entry.rotation:unbox()))
-	end
-end
 
 local function create_engine_layer (wwise, position, throttle, volume)
 	-- Unit/node sources are shared; each layer needs independent RTPC values.
@@ -86,7 +64,7 @@ Vehicle.create = function (world, position, yaw)
 	-- Create movable wheels explicitly without the level-prop flow or chunk culling.
 	local unit = World.spawn_unit_ex(world, Settings.unit, nil, position, Quaternion.identity(), false)
 	local facing = Quaternion.from_yaw_pitch_roll(math.pi, 0, 0)
-	local actors = capture_actors(unit, position, facing)
+	local actors = Chassis.capture_actors(unit, position, facing)
 	for node = 2, Unit.num_scene_graph_items(unit) do
 		Unit.set_local_position(unit, node, Quaternion.rotate(facing, Unit.local_position(unit, node)))
 		Unit.set_local_rotation(unit, node, Quaternion.multiply(facing, Unit.local_rotation(unit, node)))
@@ -96,7 +74,7 @@ Vehicle.create = function (world, position, yaw)
 	for index, wheel in ipairs(Settings.wheels) do
 		local tyre = World.spawn_unit_ex(world, Settings.tyre, nil, position, Quaternion.identity(), false)
 		parts[tyre] = true
-		wheels[index] = { unit = tyre, actors = capture_actors(tyre, position, Quaternion.identity()), phase = 0, compression = 0 }
+		wheels[index] = { unit = tyre, actors = Chassis.capture_actors(tyre, position, Quaternion.identity()), phase = 0, compression = 0 }
 	end
 	for part in pairs(parts) do
 		Unit.set_unit_culling(part, false)
@@ -134,49 +112,13 @@ Vehicle.create = function (world, position, yaw)
 	}
 end
 
-Vehicle.can_spawn = function (v, vehicles, ignored_units)
-	local position = v.position:unbox()
-	local normal = Terrain.support(v, position, v.yaw)
-	if not normal then
-		return false
-	end
-	local rotation = Terrain.rotation(v.yaw, normal)
-	local height = Terrain.height(v, position, rotation)
-	if not height then
-		return false
-	end
-	position.z = height
-	v.position:store(position)
-	v.normal:store(normal)
-	Vehicle.pose(v)
-	if not Collision.clear_players(v, position, rotation, ignored_units) or not Collision.clear_vehicles(v, position, rotation, vehicles) then
-		return false
-	end
-	for _, filter in ipairs({ "filter_player_mover", "filter_player_character_shooting_raycast" }) do
-		for _, actor in ipairs(Motion.overlap(v, position, rotation, filter)) do
-			local unit = Actor.unit(actor)
-			local relevant = filter == "filter_player_mover" or ScriptUnit.has_extension(unit, "health_system")
-			if relevant and not Collision.contains_unit(v, unit) and not ignored_units[unit] then
-				return false
-			end
-		end
-	end
-	return true
-end
+Vehicle.can_spawn = Chassis.can_spawn
 
 Vehicle.step = WheelDrive.step
 
 Vehicle.animate = function (v, dt)
 	update_engine(v, dt)
-	local rotation = Terrain.rotation(v.yaw, v.normal:unbox())
-	local heights = Terrain.contacts(v, v.position:unbox(), rotation)
-	local response = 1 - math.exp(-Settings.suspension_response * dt)
-	for index, wheel in ipairs(v.wheels) do
-		wheel.phase = (wheel.phase - v.wheel_speed * dt / Settings.wheel_radius) % (math.pi * 2)
-		local height = heights[index]
-		local target = height and math.clamp(height - v.position:unbox().z, -Settings.suspension_travel, Settings.suspension_travel) or -Settings.suspension_travel
-		wheel.compression = math.lerp(wheel.compression, target, response)
-	end
+	Chassis.animate(v, dt)
 end
 
 Vehicle.pose = function (v)
@@ -196,10 +138,10 @@ Vehicle.pose = function (v)
 		Unit.set_local_position(wheel.unit, 1, wheel_position)
 		Unit.set_local_rotation(wheel.unit, 1, rotation)
 		World.update_unit_and_children(v.world, wheel.unit)
-		pose_actors(wheel.actors, wheel_position, rotation)
+		Chassis.pose_actors(wheel.actors, wheel_position, rotation)
 	end
 	World.update_unit_and_children(v.world, v.unit)
-	pose_actors(v.actors, position, body)
+	Chassis.pose_actors(v.actors, position, body)
 end
 
 Vehicle.destroy = function (v)

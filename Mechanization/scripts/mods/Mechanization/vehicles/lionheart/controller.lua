@@ -7,21 +7,17 @@ local Motion = mod.load_module("physics/motion")
 local GroundMotion = mod.load_module("physics/ground_motion")
 local GroundInertia = mod.load_module("physics/ground_inertia")
 local Contacts = mod.load_module("physics/contacts")
+local Exhaust = mod.load_module("vehicles/exhaust")
 local Vehicle = {}
 local TRACK_LINKS = 70
 local TAU = math.pi * 2
 local TURRET_SOUND_START_ANGLE = math.rad(1)
 local TURRET_SOUND_STOP_SPEED = math.rad(0.5)
 local TURRET_SOUND_STOP_DELAY = 0.2
-local EXHAUST_EFFECT = "content/fx/particles/environment/smoke_cooling_ground_directional_thin"
-local EXHAUST_SCALE = 0.7
-local EXHAUST_EMISSION = 2
 local MAX_MOVEMENT_STEP = 1 / 60
 local GROUND_EPSILON = 0.001
 local FRONT_PIVOT = { -0.456, 3.859, 2.809 }
 local FRONT_MUZZLE = { -0.456, 5.45, 2.9 }
--- The model's authored exhaust locators have no recovered string names.
-local EXHAUST_NODES = { 5, 6 }
 
 local function approach (value, target, amount)
 	return value + math.clamp(target - value, -amount, amount)
@@ -73,26 +69,11 @@ local function capture_tracks (unit, side)
 	}
 end
 
-local function create_exhausts (world, unit)
-	local exhausts = {}
-	local group = World.create_particle_group(world)
-	local scale = Vector3(EXHAUST_SCALE, EXHAUST_SCALE, EXHAUST_SCALE)
-	for _, node in ipairs(EXHAUST_NODES) do
-		local effect = World.create_particles(world, EXHAUST_EFFECT, Unit.world_position(unit, node), Quaternion.identity(), scale, group)
-		World.set_particles_emit_rate_multiplier(world, effect, EXHAUST_EMISSION)
-		local pose = Matrix4x4.from_quaternion_position(Quaternion.inverse(Unit.world_rotation(unit, node)), Vector3.zero())
-		Matrix4x4.set_scale(pose, scale)
-		World.link_particles(world, effect, unit, node, pose, "destroy")
-		exhausts[#exhausts + 1] = { id = effect, node = node }
-	end
-	return exhausts, group
-end
-
 Vehicle.create = function (world, position, yaw)
 	-- Measure the authored collision bounds before applying the requested heading.
 	-- Skip the authored spawn flow so it cannot create an uncontrolled exhaust plume.
 	local unit = World.spawn_unit_ex(world, Settings.unit, nil, position, Quaternion.identity(), false)
-	local exhausts, exhaust_group = create_exhausts(world, unit)
+	local exhausts = Exhaust.create(world, unit, Settings.exhausts)
 	-- Lower model detail levels omit the individual tread links.
 	Unit.set_unit_culling(unit, false)
 	LODObject.set_static_select(Unit.lod_object(unit, 1), 0)
@@ -119,7 +100,6 @@ Vehicle.create = function (world, position, yaw)
 		parts = { [unit] = true },
 		hit_actor = Unit.actor(unit, 1),
 		exhausts = exhausts,
-		exhaust_group = exhaust_group,
 		world = world,
 		position = Vector3Box(position),
 		normal = Vector3Box(Vector3.up()),
@@ -380,10 +360,7 @@ Vehicle.fire_fx = function (v)
 end
 
 Vehicle.destroy = function (v)
-	for _, exhaust in ipairs(v.exhausts) do
-		World.destroy_particles(v.world, exhaust.id)
-	end
-	World.destroy_particle_group(v.world, v.exhaust_group)
+	Exhaust.destroy(v.exhausts)
 	WwiseWorld.stop_event(v.wwise, v.engine)
 	if v.turret_moving then
 		WwiseWorld.stop_event(v.wwise, v.turret_event)

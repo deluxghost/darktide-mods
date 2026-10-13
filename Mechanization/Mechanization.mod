@@ -9,6 +9,7 @@ return {
 		})
 	end,
 	packages = {
+		"content/levels/expeditions/opportunities/wastes/op_32m_aa_turrent_001/world",
 		"wwise/events/weapon/play_explosion_grenade_frag_ogryn",
 		"wwise/events/weapon/play_2h_chainsword",
 		"content/levels/expeditions/opportunities/wastes/op_48m_power_station_002/world",

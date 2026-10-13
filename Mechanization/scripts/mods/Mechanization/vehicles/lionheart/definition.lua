@@ -1,4 +1,5 @@
 local mod = get_mod("Mechanization")
+local Interpolation = mod.load_module("network/interpolation")
 local Settings = mod.load_module("vehicles/lionheart/settings")
 local Controller = mod.load_module("vehicles/lionheart/controller")
 local Weapons = mod.load_module("vehicles/lionheart/weapons")
@@ -84,16 +85,12 @@ Lionheart.receive_state = function (v, state, time)
 	v.next_front_shot = time + state.front_wait
 end
 
-Lionheart.interpolate = function (v, state)
-	v.normal:store(Vector3(unpack(state.normal)))
-	v.turret_yaw = state.turret_yaw
-	v.pitch = state.pitch
-	v.front_yaw = state.front_yaw
-	v.front_pitch = state.front_pitch
-	v.speed = state.speed
-	v.turn = state.turn
-	v.left_speed = state.left_speed
-	v.right_speed = state.right_speed
+Lionheart.interpolate = function (v, from, to, fraction)
+	v.normal:store(Interpolation.normal(from.normal, to.normal, fraction))
+	v.turret_yaw = Interpolation.angle(from.turret_yaw, to.turret_yaw, fraction)
+	for _, field in ipairs({ "pitch", "front_yaw", "front_pitch", "speed", "turn", "left_speed", "right_speed" }) do
+		v[field] = math.lerp(from[field], to[field], fraction)
+	end
 end
 
 Lionheart.update = function (v, time, emit)

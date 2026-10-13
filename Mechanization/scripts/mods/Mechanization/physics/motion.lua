@@ -79,7 +79,8 @@ local function contact_depth (vehicle, position, rotation, actor)
 	for _ = 1, DEPTH_STEPS do
 		local middle = (low + high) * 0.5
 		local touching = false
-		for _, hit in ipairs(overlaps(vehicle, position, rotation, "filter_player_mover", vehicle.type.settings.suspension_travel, middle)) do
+		local clearance = vehicle.type.settings.hull_clearance or vehicle.type.settings.suspension_travel
+		for _, hit in ipairs(overlaps(vehicle, position, rotation, "filter_player_mover", clearance, middle)) do
 			if hit == actor then
 				touching = true
 				break
@@ -96,7 +97,7 @@ end
 
 local function escaping_contacts (vehicle, origin, rotation, destination, target_rotation)
 	local existing, before, after = {}, 0, 0
-	local step_height = vehicle.type.settings.suspension_travel
+	local step_height = vehicle.type.settings.hull_clearance or vehicle.type.settings.suspension_travel
 	for _, actor in ipairs(Motion.overlap(vehicle, origin, rotation, "filter_player_mover", step_height)) do
 		if obstacle(vehicle, actor) then
 			local depth = contact_depth(vehicle, origin, rotation, actor)
@@ -126,7 +127,7 @@ end
 local function sweep (vehicle, origin, destination, rotation)
 	local settings = vehicle.type.settings
 	local results = {}
-	local step_height = settings.suspension_travel
+	local step_height = settings.hull_clearance or settings.suspension_travel
 	for _, shape in ipairs(settings.collision_shapes) do
 		local center, half = shape_bounds(
 			shape, settings.terrain_contact_tolerance, settings.vertical_contact_tolerance, step_height, rotation
@@ -183,11 +184,13 @@ end
 
 local function slide (vehicle, position, destination, rotation, vehicles)
 	local remaining = destination - position
+	local contact_normal
 	for _ = 1, MAX_SLIDES do
 		if Vector3.length_squared(remaining) < MIN_MOVE_SQUARED then
 			break
 		end
 		local fraction, normal = blocker(vehicle, position, position + remaining, rotation)
+		contact_normal = normal or contact_normal
 		local candidate = position + remaining * fraction
 		if not Collision.clear_vehicles(vehicle, candidate, rotation, vehicles) then
 			local low, high = 0, fraction
@@ -199,7 +202,7 @@ local function slide (vehicle, position, destination, rotation, vehicles)
 					high = middle
 				end
 			end
-			return position + remaining * low
+			return position + remaining * low, contact_normal
 		end
 		position = candidate
 		if not normal then
@@ -208,7 +211,7 @@ local function slide (vehicle, position, destination, rotation, vehicles)
 		remaining = remaining * (1 - fraction)
 		remaining = remaining - normal * math.min(0, Vector3.dot(remaining, normal))
 	end
-	return position
+	return position, contact_normal
 end
 
 Motion.translate = function (vehicle, destination, rotation, vehicles)
@@ -230,7 +233,8 @@ Motion.rotation_clear = function (vehicle, previous, rotation, vehicles)
 	if not Collision.clear_vehicles(vehicle, origin, rotation, vehicles) then
 		return false
 	end
-	for _, actor in ipairs(Motion.overlap(vehicle, origin, rotation, "filter_player_mover", vehicle.type.settings.suspension_travel)) do
+	local clearance = vehicle.type.settings.hull_clearance or vehicle.type.settings.suspension_travel
+	for _, actor in ipairs(Motion.overlap(vehicle, origin, rotation, "filter_player_mover", clearance)) do
 		if obstacle(vehicle, actor) then
 			return escaping_contacts(vehicle, origin, previous, origin, rotation) ~= nil
 		end

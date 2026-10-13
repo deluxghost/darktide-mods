@@ -4,6 +4,7 @@ local types = {
 	mod.load_module("vehicles/lionheart/definition"),
 	mod.load_module("vehicles/valkyrie/definition"),
 	mod.load_module("vehicles/wolfquad/definition"),
+	mod.load_module("vehicles/goliath/definition"),
 }
 
 local by_id = {}

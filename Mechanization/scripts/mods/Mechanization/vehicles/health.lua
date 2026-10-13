@@ -162,8 +162,8 @@ Health.install = function (session)
 	end)
 	hook_file("scripts/extension_systems/locomotion/utilities/projectile_locomotion", function (ProjectileLocomotion)
 		mod:hook(ProjectileLocomotion, "check_collision", function (func, unit, position, integration, bounce)
-			local vehicle = session.for_unit(integration.owner_unit)
-			if vehicle and Collision.contains_unit(vehicle, unit) then
+			local vehicle, occupant = session.for_unit(integration.owner_unit)
+			if vehicle and not session.personal_weapons(occupant) and Collision.contains_unit(vehicle, unit) then
 				return false
 			end
 			return func(unit, position, integration, bounce)

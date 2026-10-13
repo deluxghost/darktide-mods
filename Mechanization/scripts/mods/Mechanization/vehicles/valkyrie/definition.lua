@@ -74,10 +74,10 @@ Valkyrie.receive_state = function (v, state, time)
 	v.next_laser, v.next_rocket = time + state.laser_wait, time + state.rocket_wait
 end
 
-Valkyrie.interpolate = function (v, state, dt)
-	local fraction = math.min(dt * 20, 1)
-	v.pitch, v.bank = math.lerp(v.pitch, state.pitch, fraction), math.lerp(v.bank, state.bank, fraction)
-	v.speed = state.speed
+Valkyrie.interpolate = function (v, from, to, fraction)
+	v.pitch = math.lerp(from.pitch, to.pitch, fraction)
+	v.bank = math.lerp(from.bank, to.bank, fraction)
+	v.speed = math.lerp(from.speed, to.speed, fraction)
 end
 
 Valkyrie.update = function (v, time, emit)

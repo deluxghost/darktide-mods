@@ -1,7 +1,9 @@
 local WheelTerrain = {}
 local MAX_HITS = 16
-local CONTACT_GAP = 0.02
-local PROBE_DEPTH = 3
+local TREAD_SEGMENTS = 8
+local CONTACT_GAP = 0.01
+local PROBE_DEPTH = 8
+local MIN_SUPPORTS = 2
 
 WheelTerrain.rotation = function (yaw, normal)
 	local forward = Quaternion.forward(Quaternion.from_yaw_pitch_roll(yaw, 0, 0))
@@ -11,58 +13,96 @@ end
 
 local function wheel_contact (vehicle, position, rotation, wheel)
 	local settings = vehicle.type.settings
-	local offset = Quaternion.rotate(rotation, Vector3(unpack(wheel.position)))
-	local center = position + offset
+	local turn = Quaternion.from_yaw_pitch_roll(wheel.front and vehicle.steering or 0, 0, 0)
+	local orientation = Quaternion.multiply(rotation, turn)
+	local center = position + Quaternion.rotate(rotation, Vector3(unpack(wheel.position)))
 	local lift = settings.max_step_height + settings.suspension_travel + settings.wheel_radius
-	local start = center + Vector3.up() * lift
-	local radius = settings.wheel_radius - CONTACT_GAP
-	local hits = PhysicsWorld.linear_sphere_sweep(
-		World.physics_world(vehicle.world), start, center - Vector3.up() * PROBE_DEPTH, radius, MAX_HITS,
-		"types", "statics", "collision_filter", "filter_player_mover"
-	)
-	local nearest
-	for _, hit in ipairs(hits or {}) do
-		if not vehicle.parts[Actor.unit(hit.actor)] and hit.normal.z >= math.cos(settings.max_slope)
-			and (not nearest or hit.distance < nearest.distance) then
-			nearest = hit
+	local max_ground = center.z - settings.wheel_radius + settings.max_step_height + settings.suspension_travel
+	local nearest, normal
+	-- Narrow strips follow the lower tyre arc without the oversized axle of a sphere.
+	for index = 1, TREAD_SEGMENTS do
+		local first_angle = (index - 1) * math.pi / TREAD_SEGMENTS - math.pi * 0.5
+		local last_angle = index * math.pi / TREAD_SEGMENTS - math.pi * 0.5
+		local first = Vector3(0, math.sin(first_angle), -math.cos(first_angle)) * settings.wheel_radius
+		local last = Vector3(0, math.sin(last_angle), -math.cos(last_angle)) * settings.wheel_radius
+		local tangent = Vector3.normalize(last - first)
+		local local_rotation = Quaternion.look(tangent, Vector3.cross(Vector3.right(), tangent))
+		local offset = Quaternion.rotate(orientation, (first + last) * 0.5)
+		local hits = PhysicsWorld.linear_obb_sweep(
+			World.physics_world(vehicle.world), center + offset + Vector3.up() * lift, center + offset - Vector3.up() * PROBE_DEPTH,
+			Vector3(settings.wheel_width * 0.45, Vector3.distance(first, last) * 0.5, CONTACT_GAP),
+			Quaternion.multiply(orientation, local_rotation), MAX_HITS, "collision_filter", "filter_player_mover"
+		)
+		for _, hit in ipairs(hits or {}) do
+			if Actor.is_static(hit.actor) and not vehicle.parts[Actor.unit(hit.actor)] and hit.normal.z >= math.cos(settings.max_slope) and hit.position.z <= max_ground
+				and (not nearest or hit.distance < nearest) then
+				nearest = hit.distance
+				normal = hit.normal
+			end
 		end
 	end
-	if nearest then
-		return start.z - nearest.distance + CONTACT_GAP - offset.z
-	end
+	return nearest and position.z + lift - nearest, normal
 end
 
 WheelTerrain.contacts = function (vehicle, position, rotation)
-	local heights = {}
+	local heights, normals, count = {}, Vector3.zero(), 0
 	for index, wheel in ipairs(vehicle.type.settings.wheels) do
-		heights[index] = wheel_contact(vehicle, position, rotation, wheel)
-	end
-	return heights
-end
-
-local function fitted_normal (heights, settings)
-	local count, x, y, z, xx, yy, xy, xz, yz = 0, 0, 0, 0, 0, 0, 0, 0, 0
-	for index, wheel in ipairs(settings.wheels) do
-		local height = heights[index]
+		local height, normal = wheel_contact(vehicle, position, rotation, wheel)
+		heights[index] = height
 		if height then
-			local sx, sy = wheel.position[1], wheel.position[2]
-			count = count + 1
-			x, y, z = x + sx, y + sy, z + height
-			xx, yy, xy = xx + sx * sx, yy + sy * sy, xy + sx * sy
-			xz, yz = xz + sx * height, yz + sy * height
+			normals, count = normals + normal, count + 1
 		end
 	end
-	if count < 3 then
+	return heights, count >= MIN_SUPPORTS and Vector3.normalize(normals)
+end
+
+local function support_plane (points, first, second, third, travel)
+	local a, b, c = points[first], points[second], points[third]
+	local dx, dy, dz = b.x - a.x, b.y - a.y, b.z - a.z
+	local ex, ey, ez = c.x - a.x, c.y - a.y, c.z - a.z
+	local determinant = dx * ey - dy * ex
+	if math.abs(determinant) < 0.000001 then
 		return
 	end
-	local a, b, c = xx - x * x / count, xy - x * y / count, yy - y * y / count
-	local d, e = xz - x * z / count, yz - y * z / count
-	local determinant = a * c - b * b
-	if determinant <= 0 then
+	local u = (-a.x * ey + a.y * ex) / determinant
+	local v = (-dx * a.y + dy * a.x) / determinant
+	if u < -0.000001 or v < -0.000001 or u + v > 1.000001 then
 		return
 	end
-	local right = (d * c - b * e) / determinant
-	local forward = (a * e - b * d) / determinant
+	local right = (dz * ey - dy * ez) / determinant
+	local forward = (dx * ez - dz * ex) / determinant
+	local height = a.z - right * a.x - forward * a.y
+	for _, point in ipairs(points) do
+		if point.z > height + right * point.x + forward * point.y + travel then
+			return
+		end
+	end
+	return right, forward, height
+end
+
+local function fitted_normal (heights, settings, rotation)
+	local points = {}
+	for index, wheel in ipairs(settings.wheels) do
+		if heights[index] then
+			local offset = Quaternion.rotate(rotation, Vector3(unpack(wheel.position)))
+			points[#points + 1] = { x = offset.x, y = offset.y, z = heights[index] + offset.z }
+		end
+	end
+	local right, forward, lowest
+	for first = 1, #points - 2 do
+		for second = first + 1, #points - 1 do
+			for third = second + 1, #points do
+				local x, y, height = support_plane(points, first, second, third, settings.suspension_travel)
+				if height and (not lowest or height < lowest) then
+					right, forward, lowest = x, y, height
+				end
+			end
+		end
+	end
+	if not lowest then
+		return
+	end
+	-- Gravity settles on a supporting triangle around the centre, rather than balancing on one high corner.
 	local slope = math.sqrt(right * right + forward * forward)
 	local limit = math.tan(settings.max_slope)
 	if slope > limit then
@@ -72,10 +112,9 @@ local function fitted_normal (heights, settings)
 end
 
 WheelTerrain.support = function (vehicle, position, yaw)
-	local rotation = Quaternion.from_yaw_pitch_roll(yaw, 0, 0)
-	local heights = WheelTerrain.contacts(vehicle, position, rotation)
-	local normal = fitted_normal(heights, vehicle.type.settings)
-	return normal and Quaternion.rotate(rotation, normal)
+	local rotation = WheelTerrain.rotation(yaw, vehicle.normal:unbox())
+	local heights, contact_normal = WheelTerrain.contacts(vehicle, position, rotation)
+	return fitted_normal(heights, vehicle.type.settings, rotation) or contact_normal
 end
 
 WheelTerrain.height = function (vehicle, position, rotation)
@@ -86,9 +125,8 @@ WheelTerrain.height = function (vehicle, position, rotation)
 		highest = math.max(highest, height)
 		count = count + 1
 	end
-	if count > 0 then
-		-- Suspension absorbs differences between individual wheels without letting
-		-- the highest contact pass through the tyre or underbody.
+	if count >= MIN_SUPPORTS then
+		-- Balance individual contacts within suspension travel; the chassis spring follows this target.
 		return math.max(total / count, highest - vehicle.type.settings.suspension_travel), heights
 	end
 end

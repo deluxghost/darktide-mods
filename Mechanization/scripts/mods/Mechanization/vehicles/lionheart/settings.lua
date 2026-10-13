@@ -1,5 +1,10 @@
 return {
 	unit = "content/environment/artsets/imperial/global/props/machinery/leman_russ_tank/leman_russ_tank_payload_operations",
+	-- The authored exhaust locators have no recovered string names.
+	exhausts = {
+		{ node = 5, offset = { 0, 0, 0 } },
+		{ node = 6, offset = { 0, 0, 0 } },
+	},
 	forward_speed = 5,
 	reverse_speed = 3,
 	acceleration = 2.5,

@@ -1,4 +1,5 @@
 local mod = get_mod("Mechanization")
+local Interpolation = mod.load_module("network/interpolation")
 local Settings = mod.load_module("vehicles/wolfquad/settings")
 local Wolfquad = {
 	id = "wolfquad",
@@ -74,14 +75,12 @@ Wolfquad.validate_state = function (state, finite)
 	assert(finite(state.speed) and finite(state.wheel_speed) and finite(state.steering), "Invalid Wolfquad motion")
 end
 
-Wolfquad.interpolate = function (v, state)
-	v.normal:store(Vector3(unpack(state.normal)))
-	v.speed = state.speed
-	v.wheel_speed = state.wheel_speed
-	v.steering = state.steering
+Wolfquad.interpolate = function (v, from, to, fraction)
+	v.normal:store(Interpolation.normal(from.normal, to.normal, fraction))
+	v.speed = math.lerp(from.speed, to.speed, fraction)
+	v.wheel_speed = math.lerp(from.wheel_speed, to.wheel_speed, fraction)
+	v.steering = math.lerp(from.steering, to.steering, fraction)
 end
-
-Wolfquad.receive_state = Wolfquad.interpolate
 
 Wolfquad.summary = function (v)
 	return string.format("%.1f km/h", math.abs(v.speed) * 3.6), string.format("%.1f km/h", Settings.forward_speed * 3.6)

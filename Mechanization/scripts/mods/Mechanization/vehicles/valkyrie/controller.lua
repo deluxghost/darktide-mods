@@ -48,7 +48,8 @@ Vehicle.spawn_position = function (world, position)
 end
 
 Vehicle.create = function (world, position, yaw)
-	local unit = World.spawn_unit_ex(world, Settings.unit, nil, position, Quaternion.identity())
+	-- Start the authored flow only after placement and bot relocation succeed.
+	local unit = World.spawn_unit_ex(world, Settings.unit, nil, position, Quaternion.identity(), false)
 	local config = ExtensionConfig:new()
 	config:add("ComponentExtension", {})
 	Managers.state.extension:add_unit_extensions(world, unit, config)
@@ -66,9 +67,6 @@ Vehicle.create = function (world, position, yaw)
 		end
 	end
 	local body = Unit.get_data(unit, "attached_items", 1)
-	Unit.flow_event(unit, "VFX_ignition_on")
-	Unit.flow_event(unit, "VFX_thrusters_on")
-	Unit.flow_event(unit, "VFX_vtol_thrusters_on")
 	local wwise = Managers.world:wwise_world(world)
 	local source = WwiseWorld.make_manual_source(wwise, unit, 1)
 	return {
@@ -86,13 +84,20 @@ Vehicle.create = function (world, position, yaw)
 		speed = 0,
 		wwise = wwise,
 		source = source,
-		ignition_elapsed = 0,
 		laser_rounds = Settings.laser_capacity,
 		rocket_rounds = Settings.rocket_capacity,
 		next_laser = 0,
 		next_rocket = 0,
 		rocket_side = 1,
 	}
+end
+
+Vehicle.activate = function (v)
+	Unit.trigger_flow_unit_spawned(v.unit)
+	Unit.flow_event(v.unit, "VFX_ignition_on")
+	Unit.flow_event(v.unit, "VFX_thrusters_on")
+	Unit.flow_event(v.unit, "VFX_vtol_thrusters_on")
+	v.ignition_elapsed = 0
 end
 
 Vehicle.can_spawn = function (v, vehicles, ignored_units)

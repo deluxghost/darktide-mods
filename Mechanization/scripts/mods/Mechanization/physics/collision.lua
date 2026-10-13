@@ -1,6 +1,14 @@
 local Collision = {}
 local CONTACT_GAP = 0.03
 
+local function character_shapes (vehicle)
+	if vehicle.type.settings.character_collision_shapes then
+		return vehicle.type.settings.character_collision_shapes
+	end
+	local center, half = vehicle.type.controller.bounds(vehicle)
+	return { { center = { center.x, center.y, center.z }, half = { half.x, half.y, half.z } } }
+end
+
 Collision.contains_unit = function (vehicle, unit)
 	return vehicle.parts[unit] == true
 end
@@ -23,15 +31,19 @@ Collision.character_size = function (unit)
 end
 
 Collision.closest_point = function (vehicle, position)
-	local center, half = vehicle.type.controller.bounds(vehicle)
 	local rotation = Unit.world_rotation(vehicle.unit, 1)
-	local local_position = Quaternion.rotate(Quaternion.inverse(rotation), position - vehicle.position:unbox()) - center
-	local point = Vector3(
-		math.clamp(local_position.x, -half.x, half.x),
-		math.clamp(local_position.y, -half.y, half.y),
-		math.clamp(local_position.z, -half.z, half.z)
-	)
-	return vehicle.position:unbox() + Quaternion.rotate(rotation, center + point)
+	local local_position = Quaternion.rotate(Quaternion.inverse(rotation), position - vehicle.position:unbox())
+	local nearest, distance
+	for _, shape in ipairs(character_shapes(vehicle)) do
+		local center, half = Vector3(unpack(shape.center)), Vector3(unpack(shape.half))
+		local offset = local_position - center
+		local point = center + Vector3(math.clamp(offset.x, -half.x, half.x), math.clamp(offset.y, -half.y, half.y), math.clamp(offset.z, -half.z, half.z))
+		local length = Vector3.length_squared(point - local_position)
+		if not distance or length < distance then
+			nearest, distance = point, length
+		end
+	end
+	return vehicle.position:unbox() + Quaternion.rotate(rotation, nearest)
 end
 
 Collision.local_position = function (vehicle, position)
@@ -40,10 +52,15 @@ Collision.local_position = function (vehicle, position)
 end
 
 Collision.outside = function (vehicle, position, radius, height)
-	local center, half = vehicle.type.controller.bounds(vehicle)
-	local point = Collision.local_position(vehicle, position) - center
-	return math.abs(point.x) > half.x + radius or math.abs(point.y) > half.y + radius
-		or point.z >= half.z or point.z + height <= -half.z
+	local local_position = Collision.local_position(vehicle, position)
+	for _, shape in ipairs(character_shapes(vehicle)) do
+		local center, half = Vector3(unpack(shape.center)), Vector3(unpack(shape.half))
+		local point = local_position - center
+		if math.abs(point.x) < half.x + radius and math.abs(point.y) < half.y + radius and point.z < half.z and point.z + height > -half.z then
+			return false
+		end
+	end
+	return true
 end
 
 Collision.contains_player = function (vehicle, unit)
@@ -125,20 +142,22 @@ Collision.push = function (vehicles, unit, position, dt, ignored_vehicle)
 	local radius, height = Collision.character_size(unit)
 	for _, vehicle in pairs(vehicles) do
 		if vehicle ~= ignored_vehicle and not Collision.contains_player(vehicle, unit) then
-			local center, half = vehicle.type.controller.bounds(vehicle)
-			local point = Collision.local_position(vehicle, position) - center
-			local overlap_x = half.x + radius - math.abs(point.x)
-			local overlap_y = half.y + radius - math.abs(point.y)
-			if overlap_x > 0 and overlap_y > 0 and point.z < half.z and point.z + height > -half.z then
-				local local_push = overlap_x < overlap_y and Vector3(point.x >= 0 and overlap_x or -overlap_x, 0, 0)
-					or Vector3(0, point.y >= 0 and overlap_y or -overlap_y, 0)
-				local displacement = Vector3.flat(Quaternion.rotate(Unit.world_rotation(vehicle.unit, 1), local_push))
-				local mover = Unit.mover(unit)
-				if mover then
-					Mover.move(mover, displacement, dt)
-					position = Mover.position(mover)
-				else
-					position = position + Vector3.flat(displacement)
+			for _, shape in ipairs(character_shapes(vehicle)) do
+				local center, half = Vector3(unpack(shape.center)), Vector3(unpack(shape.half))
+				local point = Collision.local_position(vehicle, position) - center
+				local overlap_x = half.x + radius - math.abs(point.x)
+				local overlap_y = half.y + radius - math.abs(point.y)
+				if overlap_x > 0 and overlap_y > 0 and point.z < half.z and point.z + height > -half.z then
+					local local_push = overlap_x < overlap_y and Vector3(point.x >= 0 and overlap_x or -overlap_x, 0, 0)
+						or Vector3(0, point.y >= 0 and overlap_y or -overlap_y, 0)
+					local displacement = Vector3.flat(Quaternion.rotate(Unit.world_rotation(vehicle.unit, 1), local_push))
+					local mover = Unit.mover(unit)
+					if mover then
+						Mover.move(mover, displacement, dt)
+						position = Mover.position(mover)
+					else
+						position = position + Vector3.flat(displacement)
+					end
 				end
 			end
 		end
@@ -189,18 +208,20 @@ Collision.move = function (vehicles, unit, from, destination, ignored_vehicle)
 	local result = destination
 	for _, vehicle in pairs(vehicles) do
 		if vehicle ~= ignored_vehicle then
-			local center, half = vehicle.type.controller.bounds(vehicle)
-			local start = Collision.local_position(vehicle, from)
-			local finish = Collision.local_position(vehicle, result)
-			local lower = center - half - Vector3(radius, radius, height)
-			local upper = center + half + Vector3(radius, radius, 0)
-			local fraction, normal = intersection(start, finish, lower, upper)
-			if fraction then
-				local contact = Vector3.lerp(start, finish, fraction)
-				local remaining = finish - contact
-				local slide = remaining - normal * Vector3.dot(remaining, normal)
-				local point = contact + normal * CONTACT_GAP + slide
-				result = vehicle.position:unbox() + Quaternion.rotate(Unit.world_rotation(vehicle.unit, 1), point)
+			for _, shape in ipairs(character_shapes(vehicle)) do
+				local center, half = Vector3(unpack(shape.center)), Vector3(unpack(shape.half))
+				local start = Collision.local_position(vehicle, from)
+				local finish = Collision.local_position(vehicle, result)
+				local lower = center - half - Vector3(radius, radius, height)
+				local upper = center + half + Vector3(radius, radius, 0)
+				local fraction, normal = intersection(start, finish, lower, upper)
+				if fraction then
+					local contact = Vector3.lerp(start, finish, fraction)
+					local remaining = finish - contact
+					local slide = remaining - normal * Vector3.dot(remaining, normal)
+					local point = contact + normal * CONTACT_GAP + slide
+					result = vehicle.position:unbox() + Quaternion.rotate(Unit.world_rotation(vehicle.unit, 1), point)
+				end
 			end
 		end
 	end

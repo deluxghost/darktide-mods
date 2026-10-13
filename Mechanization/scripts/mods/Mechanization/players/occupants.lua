@@ -1,6 +1,7 @@
 local PlayerMovement = require("scripts/utilities/player_movement")
 local mod = get_mod("Mechanization")
 local Seated = mod.load_module("players/seated_animation")
+local Platform = mod.load_module("players/platform")
 local Occupants = {}
 local INPUT_TIMEOUT = 0.5
 
@@ -56,7 +57,9 @@ Occupants.next_seat = function (vehicle, occupant)
 	local count = #vehicle.type.seats
 	for offset = 1, count - 1 do
 		local index = (occupant.index - 1 + offset) % count + 1
-		if index ~= 1 and not vehicle.type.seats[index].movement and not vehicle.occupants[index] and Occupants.can_use_seat(vehicle.type.seats[index], occupant.player) then
+		local seat = vehicle.type.seats[index]
+		local same_platform = seat.platform and seat.platform == occupant.seat.platform
+		if index ~= 1 and not seat.movement and not same_platform and not vehicle.occupants[index] and Occupants.can_use_seat(seat, occupant.player) then
 			return index
 		end
 	end
@@ -66,16 +69,27 @@ Occupants.switch = function (vehicle, occupant, index)
 	assert(not vehicle.occupants[index], "Vehicle seat is occupied")
 	assert(Occupants.can_use_seat(vehicle.type.seats[index], occupant.player), "Vehicle seat cannot accommodate this player")
 	vehicle.occupants[occupant.index] = nil
+	Seated.stop(occupant)
 	occupant.index = index
 	occupant.seat = assert(vehicle.type.seats[index], "Unknown vehicle seat")
 	occupant.input.actions = {}
+	occupant.platform = nil
+	if occupant.seat.platform then
+		Platform.start(vehicle, occupant)
+	end
+	Seated.start(occupant)
 	vehicle.occupants[index] = occupant
 end
 
 Occupants.pose = function (vehicle, occupant)
 	local body = Unit.world_rotation(vehicle.unit, 1)
 	local seat = occupant.seat
-	local position = vehicle.position:unbox() + Quaternion.rotate(body, Vector3(unpack(seat.position)))
+	local offset = occupant.platform and occupant.platform.render:unbox() or Vector3(unpack(seat.position))
+	local position = vehicle.position:unbox() + Quaternion.rotate(body, offset)
+	if occupant.platform then
+		local first_person = ScriptUnit.extension(occupant.unit, "unit_data_system"):read_component("first_person")
+		return position, Quaternion.from_yaw_pitch_roll(Quaternion.yaw(first_person.rotation), 0, 0)
+	end
 	local rotation = Quaternion.multiply(body, Quaternion.from_yaw_pitch_roll(seat.yaw, 0, 0))
 	return position, rotation
 end
@@ -105,6 +119,9 @@ Occupants.add = function (vehicle, index, peer, time)
 		input = { axes = axes, yaw = vehicle.yaw, pitch = 0, actions = {} },
 		input_time = time,
 	}
+	if occupant.seat.platform then
+		Platform.start(vehicle, occupant)
+	end
 	Seated.start(occupant)
 	vehicle.occupants[index] = occupant
 	return occupant

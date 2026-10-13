@@ -2,6 +2,8 @@ local mod = get_mod("Mechanization")
 local PlayerUnitStatus = require("scripts/utilities/attack/player_unit_status")
 local PlayerMovement = require("scripts/utilities/player_movement")
 local Collision = mod.load_module("physics/collision")
+local Platform = mod.load_module("players/platform")
+local Interpolation = mod.load_module("network/interpolation")
 local Messages = {}
 
 Messages.install = function (session)
@@ -127,6 +129,7 @@ Messages.install = function (session)
 				VehicleNetwork.notice(peer, "no_space")
 				return
 			end
+			session.activate(v)
 			Occupants.add(v, 1, peer, session.clock)
 			session.publish(v)
 		end
@@ -176,6 +179,10 @@ Messages.install = function (session)
 		assert(type(input.actions) == "table", "Invalid vehicle actions")
 		local v, occupant = Occupants.find_peer(session.vehicles, peer)
 		if occupant then
+			assert(type(input.seat) == "number" and input.seat % 1 == 0, "Invalid input seat")
+			if input.seat ~= occupant.index then
+				return
+			end
 			for axis in pairs(input.axes) do
 				assert(v.type.controls[axis], "Unknown vehicle control axis")
 			end
@@ -187,6 +194,9 @@ Messages.install = function (session)
 			end
 			occupant.input = input
 			occupant.input_time = session.clock
+			if occupant.platform then
+				Platform.receive_input(v, occupant, input.platform, finite)
+			end
 		end
 	end
 
@@ -196,6 +206,7 @@ Messages.install = function (session)
 		end
 		assert(type(owner) == "string", "Invalid vehicle owner")
 		assert(type(data) == "table" and type(data.p) == "table" and #data.p == 3 and finite(data.yaw), "Invalid vehicle state")
+		assert(finite(data.time), "Invalid vehicle snapshot time")
 		local vehicle_type = assert(Registry.by_id[data.type], "Unknown vehicle type")
 		assert(finite(data.health) and data.health >= 0 and data.health <= vehicle_type.max_health, "Invalid vehicle health")
 		for index = 1, 3 do
@@ -204,6 +215,16 @@ Messages.install = function (session)
 		vehicle_type.validate_state(data.state, finite)
 		local peers = data.seats
 		assert(type(peers) == "table" and peers[1] == owner, "Missing vehicle owner seat")
+		assert(type(data.platforms) == "table" and #data.platforms == #vehicle_type.seats, "Invalid platform snapshot")
+		for index, state in ipairs(data.platforms) do
+			if state then
+				assert(vehicle_type.seats[index].platform and state.peer == peers[index], "Invalid platform occupant")
+				assert(type(state.p) == "table" and #state.p == 3 and type(state.v) == "table" and #state.v == 3, "Invalid platform state")
+				for axis = 1, 3 do
+					assert(finite(state.p[axis]) and finite(state.v[axis]), "Invalid platform vector")
+				end
+			end
+		end
 		local departure = session.exiting
 		local released = departure and departure.owner == owner and departure.released
 		if released and owner == VehicleNetwork.local_peer() then
@@ -211,11 +232,18 @@ Messages.install = function (session)
 		end
 		local v = session.vehicles[owner]
 		assert(not v or v.type == vehicle_type, "Vehicle type changed without departure")
-		v = v or session.spawn(owner, vehicle_type, Vector3(unpack(data.p)), data.yaw)
+		if not v then
+			v = session.spawn(owner, vehicle_type, Vector3(unpack(data.p)), data.yaw)
+			if v then
+				session.activate(v)
+			end
+		end
 		if v then
-			v.target = data
+			Interpolation.receive(v, data, session.clock)
 			v.health.remaining = data.health
-			v.type.receive_state(v, data.state, session.clock)
+			if v.type.receive_state then
+				v.type.receive_state(v, data.state, session.clock)
+			end
 			Occupants.receive(v, peers, session.clock, released and VehicleNetwork.local_peer())
 		end
 	end

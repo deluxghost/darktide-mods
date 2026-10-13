@@ -24,7 +24,6 @@ local settings = {
 	suspension_travel = 0.12,
 	suspension_response = 9,
 	suspension_speed = math.rad(65),
-	suspension_lift_speed = 2.5,
 	terrain_contact_tolerance = 0.08,
 	vertical_contact_tolerance = 0.04,
 	collision_shapes = {

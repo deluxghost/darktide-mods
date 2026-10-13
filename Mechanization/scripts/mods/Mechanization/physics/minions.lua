@@ -10,14 +10,14 @@ local CONTACT_GAP = 0.03
 local function exposed_vehicle (session, target)
 	local vehicle, occupant = session.for_unit(target)
 	if occupant and not occupant.seat.protected then
-		return vehicle
+		return vehicle, occupant
 	end
 end
 
 local function exposed_attack_vehicle (session, unit)
 	local blackboard = BLACKBOARDS[unit]
-	local vehicle = exposed_vehicle(session, blackboard.perception.target_unit)
-	if not vehicle then
+	local vehicle, occupant = exposed_vehicle(session, blackboard.perception.target_unit)
+	if not vehicle or occupant.seat.platform then
 		return
 	end
 	local behavior = ScriptUnit.extension(unit, "behavior_system")
@@ -30,6 +30,26 @@ local function exposed_attack_vehicle (session, unit)
 	if node.__class_name == "BtChaosHoundLeapAction" or node.__class_name == "BtMutantChargerChargeAction" then
 		return vehicle
 	end
+end
+
+local function unobstructed_attack (session, attacker, target)
+	local vehicle, occupant = exposed_vehicle(session, target)
+	if not vehicle or not occupant.seat.platform then
+		return true
+	end
+	local origin = Unit.world_position(attacker, Unit.node(attacker, "j_head"))
+	local point = Unit.world_position(target, Unit.node(target, "j_spine"))
+	local direction, distance = Vector3.direction_length(point - origin)
+	local hits = PhysicsWorld.raycast(
+		World.physics_world(vehicle.world), origin, direction, distance,
+		"all", "collision_filter", "filter_player_character_shooting_raycast"
+	)
+	for _, hit in ipairs(hits or {}) do
+		if Collision.contains_unit(vehicle, Actor.unit(hit[4])) then
+			return false
+		end
+	end
+	return true
 end
 
 local function disable_hull_queries (vehicle)
@@ -151,8 +171,8 @@ end
 Minions.install = function (session)
 	for _, class_name in ipairs({ "BtChaosHoundApproachAction", "BtChaosHoundLeapAction", "BtMutantChargerChargeAction" }) do
 		mod:hook(class_name, "run", function (func, self, unit, breed, blackboard, ...)
-			local vehicle = exposed_vehicle(session, blackboard.perception.target_unit)
-			if not vehicle then
+			local vehicle, occupant = exposed_vehicle(session, blackboard.perception.target_unit)
+			if not vehicle or occupant.seat.platform then
 				return func(self, unit, breed, blackboard, ...)
 			end
 			-- Native disabler sweeps must reach the rider instead of hitting the seat's prop actor.
@@ -166,6 +186,19 @@ Minions.install = function (session)
 			return result, evaluate, rate
 		end)
 	end
+	for _, class_name in ipairs({ "BtChaosHoundLeapAction", "BtMutantChargerChargeAction" }) do
+		mod:hook(class_name, "_check_colliding_players", function (func, self, unit, ...)
+			local target = func(self, unit, ...)
+			if target and unobstructed_attack(session, unit, target) then
+				return target
+			end
+		end)
+	end
+	mod:hook(CLASS.BtMutantChargerChargeAction, "_hit_target", function (func, self, unit, target, ...)
+		if unobstructed_attack(session, unit, target) then
+			return func(self, unit, target, ...)
+		end
+	end)
 	mod:hook(CLASS.LocomotionSystem, "update", function (func, self, context, dt, ...)
 		if not self._is_server or not next(session.vehicles) then
 			return func(self, context, dt, ...)

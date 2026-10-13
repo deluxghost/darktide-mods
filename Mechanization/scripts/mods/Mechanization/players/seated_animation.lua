@@ -6,6 +6,9 @@ local PlayerUnitAnimationState = require("scripts/extension_systems/animation/ut
 local Seated = {}
 
 Seated.start = function (occupant)
+	if occupant.seat.platform then
+		return
+	end
 	local unit = occupant.unit
 	local data = ScriptUnit.extension(unit, "unit_data_system")
 	local weapon = assert(WeaponTemplate.current_weapon_template(data:read_component("weapon_action")), "Missing occupant weapon template")
@@ -23,7 +26,7 @@ end
 
 Seated.stop = function (occupant)
 	local unit = occupant.unit
-	if not ALIVE[unit] then
+	if not ALIVE[unit] or occupant.seat.platform then
 		return
 	end
 	if occupant.rider_pose then
@@ -48,6 +51,10 @@ Seated.stop = function (occupant)
 end
 
 Seated.install = function (session)
+	local function seated (unit)
+		local _, occupant = session.for_unit(unit)
+		return occupant and not occupant.seat.platform
+	end
 	-- Gameplay keeps driving the first-person weapon. Only its third-person
 	-- animation writes are suppressed while the actual player skeleton is seated.
 	for _, class_name in ipairs({ "PlayerUnitAnimationExtension", "AuthoritativePlayerUnitAnimationExtension" }) do
@@ -58,7 +65,7 @@ Seated.install = function (session)
 			"anim_event_with_variable_int",
 		}) do
 			mod:hook(class_name, method, function (func, self, ...)
-				if not session.for_unit(self._unit) then
+				if not seated(self._unit) then
 					return func(self, ...)
 				end
 			end)
@@ -73,14 +80,14 @@ Seated.install = function (session)
 		"animation_set_animation",
 	}) do
 		mod:hook(Unit, method, function (func, unit, ...)
-			if not session.for_unit(unit) then
+			if not seated(unit) then
 				return func(unit, ...)
 			end
 		end)
 	end
 	mod:hook(Unit, "set_animation_state_machine_blend_base_layer", function (func, unit, machine, ...)
 		local _, occupant = session.for_unit(unit)
-		if occupant then
+		if occupant and not occupant.seat.platform then
 			occupant.animation_machine = machine
 			return
 		end
@@ -89,20 +96,20 @@ Seated.install = function (session)
 	for _, class_name in ipairs({ "PlayerUnitAimExtension", "PlayerHuskAimExtension" }) do
 		mod:hook(class_name, "state_machine_changed", function (func, self, unit, ...)
 			-- The intro skeleton has no gameplay aim constraints. Restore them on exit.
-			if not session.for_unit(unit) then
+			if not seated(unit) then
 				return func(self, unit, ...)
 			end
 		end)
 	end
 	mod:hook(CLASS.PlayerUnitLocomotionExtension, "update", function (func, self, unit, ...)
 		-- Vehicle posing replaces locomotion interpolation and its gameplay animation reads.
-		if not session.for_unit(unit) then
+		if not seated(unit) then
 			return func(self, unit, ...)
 		end
 	end)
 	mod:hook(CLASS.PlayerUnitFirstPersonExtension, "fixed_update", function (func, self, unit, ...)
 		local _, occupant = session.for_unit(unit)
-		if occupant then
+		if occupant and not occupant.seat.platform then
 			local head = Unit.world_position(unit, Unit.node(unit, "j_head"))
 			local height = head.z - Unit.world_position(unit, 1).z
 			self._first_person_component.wanted_height = height

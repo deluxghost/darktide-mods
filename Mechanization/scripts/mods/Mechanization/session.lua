@@ -10,6 +10,8 @@ local PlayerMovement = require("scripts/utilities/player_movement")
 local Airdrop = mod.load_module("players/airdrop")
 local Messages = mod.load_module("network/messages")
 local PlayerUnitStatus = require("scripts/utilities/attack/player_unit_status")
+local Platform = mod.load_module("players/platform")
+local Interpolation = mod.load_module("network/interpolation")
 local Session = {
 	vehicles = {},
 	clock = 0,
@@ -27,11 +29,17 @@ local NETWORK_INTERVAL = 0.05
 
 local function snapshot (v)
 	local position = v.position:unbox()
+	local platforms = {}
+	for index = 1, #v.type.seats do
+		platforms[index] = v.occupants[index] and Platform.snapshot(v.occupants[index]) or false
+	end
 	return {
+		time = Session.clock,
 		type = v.type.id,
 		p = { position.x, position.y, position.z },
 		yaw = v.yaw,
 		seats = Occupants.snapshot(v),
+		platforms = platforms,
 		health = v.health:current_health(),
 		state = v.type.snapshot(v, Session.clock),
 	}
@@ -54,6 +62,12 @@ Session.spawn = function (peer, vehicle_type, position, yaw)
 	Session.vehicles[peer] = v
 	vehicle_type.controller.pose(v)
 	return v
+end
+
+Session.activate = function (v)
+	if v.type.controller.activate then
+		v.type.controller.activate(v)
+	end
 end
 
 Session.local_vehicle = function ()
@@ -301,6 +315,8 @@ local function read_local_input (v, occupant)
 		actions[action] = not blocked and not not input:get(binding)
 	end
 	return {
+		seat = occupant.index,
+		platform = Platform.snapshot(occupant),
 		axes = axes,
 		yaw = orientation.yaw,
 		pitch = (orientation.pitch + math.pi) % (math.pi * 2) - math.pi,
@@ -402,12 +418,10 @@ Session.update = function (dt)
 				if transmit then
 					Session.publish(v)
 				end
-			elseif v.target then
-				local data = v.target
-				v.position:store(Vector3.lerp(v.position:unbox(), Vector3(unpack(data.p)), math.min(dt * 20, 1)))
-				v.yaw = data.yaw
-				v.type.interpolate(v, data.state, dt)
+			elseif v.stream then
+				Interpolation.update(v, Session.clock)
 			end
+			Platform.update(v, dt)
 			v.type.controller.animate(v, dt)
 			v.type.controller.pose(v)
 		end

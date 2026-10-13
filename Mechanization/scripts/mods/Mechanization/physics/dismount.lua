@@ -150,7 +150,13 @@ Dismount.plan = function (vehicle, occupants, vehicles, anchor_position)
 		if ALIVE[occupant.unit] then
 			local navigation = ScriptUnit.extension(occupant.unit, "navigation_system")
 			local traverse = navigation:traverse_logic()
-			local anchor = NavQueries.position_on_mesh(nav_world, anchor_position or vehicle.position:unbox(), NAV_HEIGHT, NAV_HEIGHT, traverse)
+			local origin = anchor_position or vehicle.position:unbox()
+			if occupant.platform and not anchor_position then
+				local offset = occupant.platform.position:unbox()
+				offset.z = 0
+				origin = origin + Quaternion.rotate(Unit.world_rotation(vehicle.unit, 1), offset)
+			end
+			local anchor = NavQueries.position_on_mesh(nav_world, origin, NAV_HEIGHT, NAV_HEIGHT, traverse)
 			if not anchor then
 				return
 			end

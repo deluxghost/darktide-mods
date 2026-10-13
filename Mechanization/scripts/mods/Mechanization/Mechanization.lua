@@ -12,11 +12,11 @@ local Session = mod.load_module("session")
 local ScriptCamera = require("scripts/foundation/utilities/script_camera")
 local View = mod.load_module("camera")
 local RiderPose = mod.load_module("players/rider_pose")
-local Collision = mod.load_module("physics/collision")
 mod.session = Session
 mod.load_module("ui/crosshair").install(Session)
 mod.load_module("physics/minions").install(Session)
 mod.load_module("players/protection").install(Session)
+mod.load_module("players/movement").install(Session)
 
 mod:command("mech", mod:localize("command_description"), Session.command)
 mod:register_hud_element({
@@ -61,40 +61,18 @@ mod:hook(CLASS.PlayerUnitInputExtension, "get", function (func, self, action)
 		return func(self, action)
 	end
 	if action == "move" then
-		return Vector3.zero()
+		return occupant.platform and func(self, action) or Vector3.zero()
 	end
 	if action == "look" or action == "look_raw" then
 		return func(self, action)
 	end
 	if Session.personal_weapons(occupant) and not interaction_input then
 		local movement = action == "jump" or action == "dodge" or action == "crouch" or action == "sprint"
-		if not movement then
+		if occupant.platform or not movement then
 			return func(self, action)
 		end
 	end
 	return false
-end)
-
-mod:hook(CLASS.PlayerUnitLocomotionExtension, "_update_movement", function (func, self, unit, dt, t, locomotion, steering, inair)
-	local from = self._locomotion_component.position
-	func(self, unit, dt, t, locomotion, steering, inair)
-	local v, occupant = Session.for_unit(unit)
-	local component = self._locomotion_component
-	local destination = v and component.position or Collision.push(Session.vehicles, unit, component.position, dt)
-	local position = v and Session.occupants.pose(v, occupant) or Collision.move(Session.vehicles, unit, from, destination)
-	if not v and Vector3.equal(position, component.position) then
-		return
-	end
-	Mover.set_position(Unit.mover(unit), position)
-	component.position = position
-	if v then
-		component.velocity_current = Vector3.zero()
-	end
-	self._old_position:store(position)
-	self._latest_simulated_position:store(position)
-	if v then
-		self._inair_state_component.fell_from_height = position.z
-	end
 end)
 
 mod:hook(CLASS.DefaultPlayerOrientation, "pre_update", function (func, self, main_t, main_dt, input, sensitivity, constraints)
@@ -188,23 +166,4 @@ mod:hook(Application, "render_world", function (func, world, ...)
 	end
 	func(world, ...)
 	Unit.restore_visibility_snapshot(hidden)
-end)
-
-local function pose_occupant (self, unit)
-	local vehicle, occupant = Session.for_unit(unit)
-	if vehicle then
-		local position, rotation = Session.occupants.pose(vehicle, occupant)
-		Unit.set_local_position(unit, 1, position)
-		Unit.set_local_rotation(unit, 1, rotation)
-		World.update_unit_and_children(vehicle.world, unit)
-	end
-end
-
-mod:hook_safe(CLASS.PlayerUnitLocomotionExtension, "post_update", pose_occupant)
-mod:hook(CLASS.PlayerHuskLocomotionExtension, "post_update", function (func, self, unit, dt, t)
-	if not Session.for_unit(unit) then
-		return func(self, unit, dt, t)
-	end
-	self._visual_loadout_extension:update_unit_position(unit, dt, t)
-	pose_occupant(self, unit)
 end)

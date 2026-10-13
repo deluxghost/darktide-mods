@@ -51,6 +51,10 @@ return {
 		en = "Atalan Wolfquad",
 		["zh-cn"] = "阿塔兰狼式四轮车",
 	},
+	vehicle_goliath = {
+		en = "Goliath Truck",
+		["zh-cn"] = "歌利亚卡车",
+	},
 	hud_laser = {
 		en = "LASER",
 		["zh-cn"] = "激光炮",
