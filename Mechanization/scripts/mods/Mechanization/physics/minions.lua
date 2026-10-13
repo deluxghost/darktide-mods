@@ -98,7 +98,7 @@ local function terrain_position (unit, from, destination, dt)
 			physics_world, from + offset, destination + offset, radius - CONTACT_GAP, 1,
 			"types", "statics", "collision_filter", "filter_minion_mover"
 		)
-		if hits then
+		if hits and hits[1] then
 			travel = math.min(travel, math.max(0, hits[1].distance - CONTACT_GAP))
 		end
 	end
