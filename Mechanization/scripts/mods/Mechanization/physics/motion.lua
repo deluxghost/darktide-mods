@@ -71,6 +71,10 @@ Motion.overlap = function (vehicle, position, rotation, filter, step_height)
 	return overlaps(vehicle, position, rotation, filter, step_height, 0)
 end
 
+Motion.nearby = function (vehicle, margin)
+	return overlaps(vehicle, vehicle.position:unbox(), Unit.world_rotation(vehicle.unit, 1), "filter_player_mover", nil, -margin)
+end
+
 local function contact_depth (vehicle, position, rotation, actor)
 	local low, high = 0, 0
 	for _, shape in ipairs(vehicle.type.settings.collision_shapes) do
@@ -292,6 +296,31 @@ Motion.rotation_position = function (vehicle, previous, rotation, vehicles)
 			break
 		end
 		distance = math.min(distance * 2, limit)
+	end
+end
+
+Motion.push_from_actor = function (vehicle, actor, previous, current, vehicles)
+	local rotation = Unit.world_rotation(vehicle.unit, 1)
+	local clearance = vehicle.type.settings.hull_clearance or vehicle.type.settings.suspension_travel
+	for _, contact in ipairs(Motion.overlap(vehicle, vehicle.position:unbox(), rotation, "filter_player_mover", clearance)) do
+		if contact == actor then
+			local center = Actor.world_bounds(actor)
+			local point = Collision.closest_point(vehicle, center)
+			local relative = Matrix4x4.transform(Matrix4x4.inverse(previous), point)
+			local movement = Matrix4x4.transform(current, relative) - point
+			local origin = vehicle.position:unbox()
+			local destination = origin + movement
+			local support_height = vehicle.type.controller.support_height
+			if movement.z < 0 and support_height and not vehicle.airborne then
+				local floor = support_height(vehicle, Vector3(destination.x, destination.y, origin.z), rotation)
+				if floor then
+					destination.z = math.max(destination.z, math.min(floor, origin.z))
+				end
+			end
+			local position = Motion.translate(vehicle, destination, rotation, vehicles)
+			vehicle.position:store(position)
+			return
+		end
 	end
 end
 

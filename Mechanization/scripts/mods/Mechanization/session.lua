@@ -14,6 +14,7 @@ local PlayerUnitStatus = require("scripts/utilities/attack/player_unit_status")
 local Platform = mod.load_module("players/platform")
 local Interpolation = mod.load_module("network/interpolation")
 local MovingGround = mod.load_module("physics/moving_ground")
+local MovingObstacles = mod.load_module("physics/moving_obstacles")
 local Session = {
 	vehicles = {},
 	last_departures = {},
@@ -425,6 +426,7 @@ Session.update = function (dt)
 				v.input = Occupants.controls(v, Session.clock)
 				MovingGround.carry(v, Session.vehicles)
 				v.type.controller.pose(v)
+				MovingObstacles.update(v, Session.vehicles)
 				local origin = v.position:unbox()
 				local rotation = Unit.world_rotation(v.unit, 1)
 				v.type.controller.step(v, v.input, math.min(dt, 0.1), Session.vehicles)
