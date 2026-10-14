@@ -1,0 +1,12 @@
+{
+  "name": "Good Old Outlines",
+  "description": "Brings back the classic tagging outline style from Vermintide 2.",
+  "version": "1.0.0",
+  "author": "deluxghost",
+  "localization": {
+    "zh-cn": {
+      "name": "经典版轮廓",
+      "description": "带回类似《鼠疫 2》中经典的标记轮廓样式。"
+    }
+  }
+}
