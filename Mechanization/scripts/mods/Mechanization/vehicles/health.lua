@@ -155,6 +155,9 @@ Health.install = function (session)
 		mod:hook(Damage, "deal_damage", function (func, unit, breed, attacker, owner, result, attack_type, profile, damage, ...)
 			local health = ScriptUnit.has_extension(unit, "health_system")
 			if getmetatable(health) == Health then
+				if owner and Managers.player:player_by_unit(owner) or attacker and Managers.player:player_by_unit(attacker) then
+					return 0
+				end
 				return health:add_damage(damage)
 			end
 			return func(unit, breed, attacker, owner, result, attack_type, profile, damage, ...)
