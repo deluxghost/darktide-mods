@@ -3,6 +3,7 @@ local Settings = mod.load_module("vehicles/valkyrie/settings")
 local Collision = mod.load_module("physics/collision")
 local Motion = mod.load_module("physics/motion")
 local Contacts = mod.load_module("physics/contacts")
+local Surfaces = mod.load_module("physics/surfaces")
 local ExtensionConfig = require("scripts/foundation/managers/extension/extension_config")
 local Vehicle = {}
 local MAX_MOVEMENT_STEP = 1 / 60
@@ -40,11 +41,8 @@ Vehicle.bounds = function (v)
 end
 
 Vehicle.spawn_position = function (world, position)
-	local hit, ground = PhysicsWorld.raycast(
-		World.physics_world(world), position + Vector3.up() * 2, Vector3.down(), 8,
-		"closest", "types", "statics", "collision_filter", "filter_player_mover"
-	)
-	return hit and ground + Vector3.up() * SPAWN_CLEARANCE
+	local ground = Surfaces.ground(world, position, 2, 6, 0.55)
+	return ground and ground + Vector3.up() * SPAWN_CLEARANCE
 end
 
 Vehicle.create = function (world, position, yaw)

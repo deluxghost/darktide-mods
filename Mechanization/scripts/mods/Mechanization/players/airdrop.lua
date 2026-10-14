@@ -1,16 +1,17 @@
 local mod = get_mod("Mechanization")
 local PlayerMovement = require("scripts/utilities/player_movement")
+local Surfaces = mod.load_module("physics/surfaces")
 local Fall = require("scripts/extension_systems/character_state_machine/character_states/utilities/fall")
 local Airdrop = { units = {} }
 
-Airdrop.teleport = function (player, point, descent_speed)
+Airdrop.teleport = function (player, point, descent_speed, frame)
 	local position = Vector3Box(Vector3(unpack(point)))
 	Managers.state.game_mode:register_physics_safe_callback(function ()
 		local unit = player.player_unit
 		if not ALIVE[unit] then
 			return
 		end
-		PlayerMovement.teleport_fixed_update(unit, position:unbox())
+		PlayerMovement.teleport_fixed_update(unit, frame and Surfaces.position(frame) or position:unbox())
 		local data = ScriptUnit.extension(unit, "unit_data_system")
 		local inair = data:write_component("inair_state")
 		inair.on_ground, inair.standing_frames = false, 0

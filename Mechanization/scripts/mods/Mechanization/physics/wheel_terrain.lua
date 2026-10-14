@@ -1,3 +1,5 @@
+local mod = get_mod("Mechanization")
+local Surfaces = mod.load_module("physics/surfaces")
 local WheelTerrain = {}
 local MAX_HITS = 16
 local TREAD_SEGMENTS = 8
@@ -18,7 +20,7 @@ local function wheel_contact (vehicle, position, rotation, wheel)
 	local center = position + Quaternion.rotate(rotation, Vector3(unpack(wheel.position)))
 	local lift = settings.max_step_height + settings.suspension_travel + settings.wheel_radius
 	local max_ground = center.z - settings.wheel_radius + settings.max_step_height + settings.suspension_travel
-	local nearest, normal
+	local nearest, normal, actor
 	-- Narrow strips follow the lower tyre arc without the oversized axle of a sphere.
 	for index = 1, TREAD_SEGMENTS do
 		local first_angle = (index - 1) * math.pi / TREAD_SEGMENTS - math.pi * 0.5
@@ -34,26 +36,31 @@ local function wheel_contact (vehicle, position, rotation, wheel)
 			Quaternion.multiply(orientation, local_rotation), MAX_HITS, "collision_filter", "filter_player_mover"
 		)
 		for _, hit in ipairs(hits or {}) do
-			if Actor.is_static(hit.actor) and not vehicle.parts[Actor.unit(hit.actor)] and hit.normal.z >= math.cos(settings.max_slope) and hit.position.z <= max_ground
+			if Surfaces.is_ground(hit.actor) and not vehicle.parts[Actor.unit(hit.actor)] and hit.normal.z >= math.cos(settings.max_slope) and hit.position.z <= max_ground
 				and (not nearest or hit.distance < nearest) then
 				nearest = hit.distance
 				normal = hit.normal
+				actor = hit.actor
 			end
 		end
 	end
-	return nearest and position.z + lift - nearest, normal
+	return nearest and position.z + lift - nearest, normal, actor
 end
 
 WheelTerrain.contacts = function (vehicle, position, rotation)
 	local heights, normals, count = {}, Vector3.zero(), 0
+	local highest, actor = -math.huge, nil
 	for index, wheel in ipairs(vehicle.type.settings.wheels) do
-		local height, normal = wheel_contact(vehicle, position, rotation, wheel)
+		local height, normal, contact = wheel_contact(vehicle, position, rotation, wheel)
 		heights[index] = height
 		if height then
 			normals, count = normals + normal, count + 1
+			if height > highest then
+				highest, actor = height, contact
+			end
 		end
 	end
-	return heights, count >= MIN_SUPPORTS and Vector3.normalize(normals)
+	return heights, count >= MIN_SUPPORTS and Vector3.normalize(normals), actor
 end
 
 local function support_plane (points, first, second, third, travel)
@@ -118,7 +125,7 @@ WheelTerrain.support = function (vehicle, position, yaw)
 end
 
 WheelTerrain.height = function (vehicle, position, rotation)
-	local heights = WheelTerrain.contacts(vehicle, position, rotation)
+	local heights, _, actor = WheelTerrain.contacts(vehicle, position, rotation)
 	local total, highest, count = 0, -math.huge, 0
 	for _, height in pairs(heights) do
 		total = total + height
@@ -127,22 +134,12 @@ WheelTerrain.height = function (vehicle, position, rotation)
 	end
 	if count >= MIN_SUPPORTS then
 		-- Balance individual contacts within suspension travel; the chassis spring follows this target.
-		return math.max(total / count, highest - vehicle.type.settings.suspension_travel), heights
+		return math.max(total / count, highest - vehicle.type.settings.suspension_travel), actor
 	end
 end
 
 WheelTerrain.ground = function (world, position, settings)
-	local hits = PhysicsWorld.raycast(
-		World.physics_world(world), position + Vector3.up() * settings.max_step_height, Vector3.down(), PROBE_DEPTH,
-		"all", "types", "statics", "collision_filter", "filter_player_mover"
-	)
-	local point
-	for _, hit in ipairs(hits or {}) do
-		if hit[3].z >= math.cos(settings.max_slope) and (not point or hit[1].z > point.z) then
-			point = hit[1]
-		end
-	end
-	return point
+	return Surfaces.ground(world, position, settings.max_step_height, PROBE_DEPTH - settings.max_step_height, math.cos(settings.max_slope))
 end
 
 return WheelTerrain

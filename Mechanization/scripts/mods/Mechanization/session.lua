@@ -7,12 +7,13 @@ local Boarding = mod.load_module("players/boarding")
 local Interaction = mod.load_module("players/interaction")
 local Health = mod.load_module("vehicles/health")
 local Dismount = mod.load_module("physics/dismount")
-local PlayerMovement = require("scripts/utilities/player_movement")
+local Teleport = mod.load_module("players/teleport")
 local Airdrop = mod.load_module("players/airdrop")
 local Messages = mod.load_module("network/messages")
 local PlayerUnitStatus = require("scripts/utilities/attack/player_unit_status")
 local Platform = mod.load_module("players/platform")
 local Interpolation = mod.load_module("network/interpolation")
+local MovingGround = mod.load_module("physics/moving_ground")
 local Session = {
 	vehicles = {},
 	last_departures = {},
@@ -40,6 +41,7 @@ local function snapshot (v)
 		type = v.type.id,
 		p = { position.x, position.y, position.z },
 		yaw = v.yaw,
+		ground = MovingGround.snapshot(v),
 		seats = Occupants.snapshot(v),
 		platforms = platforms,
 		health = v.health:current_health(),
@@ -108,9 +110,9 @@ Session.remove = function (peer, dismount)
 			seated[#seated + 1] = occupant
 		end
 	end
-	local positions, drops
+	local positions, drops, frames
 	if dismount then
-		positions, drops = Dismount.departure(v, seated, Session.vehicles, true)
+		positions, drops, frames = Dismount.departure(v, seated, Session.vehicles, true)
 	end
 	Session.vehicles[peer] = nil
 	for index, occupant in pairs(v.occupants) do
@@ -119,9 +121,9 @@ Session.remove = function (peer, dismount)
 		Occupants.remove(v, index)
 		if position and (VehicleNetwork.is_host() or local_occupant) then
 			if drops[occupant.peer] then
-				Airdrop.teleport(occupant.player, position, drops[occupant.peer])
+				Airdrop.teleport(occupant.player, position, drops[occupant.peer], frames[occupant.peer])
 			else
-				PlayerMovement.teleport(occupant.player, Vector3(unpack(position)))
+				Teleport.player(occupant.player, position, frames[occupant.peer])
 			end
 		end
 	end
@@ -138,6 +140,7 @@ Session.leave_peer = function (peer, dismount)
 	local removing = peer == v.peer
 	local positions = {}
 	local drops = {}
+	local frames = {}
 	if dismount then
 		local departing = { occupant }
 		if removing then
@@ -146,7 +149,7 @@ Session.leave_peer = function (peer, dismount)
 				departing[#departing + 1] = seated
 			end
 		end
-		positions, drops = Dismount.departure(v, departing, Session.vehicles, removing)
+		positions, drops, frames = Dismount.departure(v, departing, Session.vehicles, removing)
 		if not positions then
 			if peer == VehicleNetwork.local_peer() then
 				mod:echo(mod:localize("no_exit"))
@@ -164,16 +167,16 @@ Session.leave_peer = function (peer, dismount)
 		positions[peer] = positions[peer] or false
 	end
 	if VehicleNetwork.is_host() then
-		VehicleNetwork.send("departure", "others", v.peer, positions, removing, drops)
+		VehicleNetwork.send("departure", "others", v.peer, positions, removing, drops, frames)
 	end
-	Session.apply_departure(v.peer, positions, removing, drops)
+	Session.apply_departure(v.peer, positions, removing, drops, frames)
 	if VehicleNetwork.is_host() and not removing then
 		Session.publish(v)
 	end
 	return true
 end
 
-Session.apply_departure = function (owner, positions, removing, drops)
+Session.apply_departure = function (owner, positions, removing, drops, frames)
 	local v = Session.vehicles[owner]
 	if removing then
 		Session.remove(owner, false)
@@ -193,9 +196,9 @@ Session.apply_departure = function (owner, positions, removing, drops)
 			local player = Occupants.find_player(peer)
 			if player and player.player_unit and ALIVE[player.player_unit] then
 				if drops and drops[peer] then
-					Airdrop.teleport(player, point, drops[peer])
+					Airdrop.teleport(player, point, drops[peer], frames and frames[peer])
 				else
-					PlayerMovement.teleport(player, Vector3(unpack(point)))
+					Teleport.player(player, point, frames and frames[peer])
 				end
 			end
 		end
@@ -420,10 +423,13 @@ Session.update = function (dt)
 		if Session.vehicles[peer] then
 			if VehicleNetwork.is_host() then
 				v.input = Occupants.controls(v, Session.clock)
+				MovingGround.carry(v, Session.vehicles)
+				v.type.controller.pose(v)
 				local origin = v.position:unbox()
 				local rotation = Unit.world_rotation(v.unit, 1)
 				v.type.controller.step(v, v.input, math.min(dt, 0.1), Session.vehicles)
 				v.type.controller.pose(v)
+				MovingGround.capture(v)
 				Contacts.update(v, origin, rotation, Session.clock)
 				if v.type.update then
 					v.type.update(v, Session.clock, emit_event)

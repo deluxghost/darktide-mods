@@ -26,6 +26,14 @@ local function update_husk (self, occupant, dt)
 end
 
 Movement.install = function (session)
+	local posing_occupant
+	mod:hook(CLASS.MoveablePlatformExtension, "movement_since_last_fixed_update", function (func, self)
+		-- The rendered vehicle transform already includes its supporting platform's movement.
+		if posing_occupant then
+			return Vector3.zero()
+		end
+		return func(self)
+	end)
 	mod:hook(CLASS.PlayerUnitLocomotionExtension, "_update_movement", function (func, self, unit, dt, t, locomotion, steering, inair)
 		local vehicle, occupant = session.for_unit(unit)
 		if occupant and occupant.platform then
@@ -61,7 +69,9 @@ Movement.install = function (session)
 		self._latest_simulated_position:store(position)
 		local first = ScriptUnit.extension(unit, "unit_data_system"):write_component("first_person")
 		first.position = position + Vector3.up() * first.height
+		posing_occupant = occupant
 		func(self, unit, dt, t)
+		posing_occupant = nil
 	end)
 	mod:hook(CLASS.PlayerHuskLocomotionExtension, "post_update", function (func, self, unit, dt, t)
 		local vehicle, occupant = session.for_unit(unit)

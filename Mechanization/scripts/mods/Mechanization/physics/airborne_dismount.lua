@@ -1,5 +1,6 @@
 local mod = get_mod("Mechanization")
 local Collision = mod.load_module("physics/collision")
+local Surfaces = mod.load_module("physics/surfaces")
 local AirborneDismount = {}
 local EXIT_MARGIN = 0.3
 
@@ -10,11 +11,8 @@ AirborneDismount.plan = function (vehicle, occupants, vehicles, ground_plan, rem
 	local world_center = origin + Quaternion.rotate(rotation, center)
 	local right, forward, up = Quaternion.right(rotation), Quaternion.forward(rotation), Quaternion.up(rotation)
 	local bottom = world_center.z - math.abs(right.z) * half.x - math.abs(forward.z) * half.y - math.abs(up.z) * half.z
-	local hit, ground = PhysicsWorld.raycast(
-		World.physics_world(vehicle.world), Vector3(world_center.x, world_center.y, bottom + EXIT_MARGIN), Vector3.down(),
-		vehicle.type.dismount.near_ground + EXIT_MARGIN, "closest", "types", "statics", "collision_filter", "filter_player_mover"
-	)
-	if hit and not removing then
+	local ground = Surfaces.ground(vehicle.world, Vector3(world_center.x, world_center.y, bottom), EXIT_MARGIN, vehicle.type.dismount.near_ground, 0.55)
+	if ground and not removing then
 		local positions = ground_plan(vehicle, occupants, vehicles, ground)
 		if positions then
 			return positions, {}
@@ -27,7 +25,7 @@ AirborneDismount.plan = function (vehicle, occupants, vehicles, ground_plan, rem
 			local radius, height = Collision.character_size(occupant.unit)
 			local point = Vector3(world_center.x, world_center.y, bottom - height - EXIT_MARGIN)
 			point = point + Vector3.flat(right) * ((index - (#occupants + 1) * 0.5) * (radius * 2 + EXIT_MARGIN))
-			if hit then
+			if ground then
 				point.z = math.max(point.z, ground.z)
 			end
 			if not Unit.mover_fits_at(occupant.unit, "default", point) then

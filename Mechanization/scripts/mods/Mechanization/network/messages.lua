@@ -1,10 +1,11 @@
 local mod = get_mod("Mechanization")
 local PlayerUnitStatus = require("scripts/utilities/attack/player_unit_status")
-local PlayerMovement = require("scripts/utilities/player_movement")
+local Teleport = mod.load_module("players/teleport")
 local Collision = mod.load_module("physics/collision")
 local Platform = mod.load_module("players/platform")
 local Interpolation = mod.load_module("network/interpolation")
 local Configuration = mod.load_module("configuration")
+local Surfaces = mod.load_module("physics/surfaces")
 local Messages = {}
 
 Messages.install = function (session)
@@ -51,17 +52,17 @@ Messages.install = function (session)
 				overlapping[#overlapping + 1] = bot
 			end
 		end
-		local positions = session.dismount.departure(v, overlapping, session.vehicles, false)
+		local positions, _, frames = session.dismount.departure(v, overlapping, session.vehicles, false)
 		if not positions then
 			return false
 		end
 		for _, bot in ipairs(overlapping) do
-			PlayerMovement.teleport(bot.player, Vector3(unpack(positions[bot.unit])))
+			Teleport.player(bot.player, positions[bot.unit], frames[bot.unit])
 		end
 		return true
 	end
 
-	session.receive_departure = function (sender, owner, positions, removing, drops)
+	session.receive_departure = function (sender, owner, positions, removing, drops, frames)
 		if not VehicleNetwork.from_host(sender) then
 			return
 		end
@@ -73,6 +74,11 @@ Messages.install = function (session)
 		end
 		assert(type(positions) == "table", "Invalid departure positions")
 		assert(type(drops) == "table", "Invalid departure descents")
+		assert(type(frames) == "table", "Invalid departure platforms")
+		for peer, frame in pairs(frames) do
+			assert(positions[peer], "Missing departure platform position")
+			Surfaces.validate(frame, finite)
+		end
 		for peer, speed in pairs(drops) do
 			assert(positions[peer] and finite(speed) and speed > 0 and speed <= 20, "Invalid departure descent")
 		end
@@ -85,7 +91,7 @@ Messages.install = function (session)
 				end
 			end
 		end
-		session.apply_departure(owner, positions, removing, drops)
+		session.apply_departure(owner, positions, removing, drops, frames)
 	end
 
 	session.receive_leave = function (peer, dismount)
@@ -232,6 +238,15 @@ Messages.install = function (session)
 		assert(type(data) == "table" and type(data.p) == "table" and #data.p == 3 and finite(data.yaw), "Invalid vehicle state")
 		assert(finite(data.time), "Invalid vehicle snapshot time")
 		local vehicle_type = assert(Registry.by_id[data.type], "Unknown vehicle type")
+		assert(data.ground == false or type(data.ground) == "table", "Invalid vehicle ground frame")
+		if data.ground then
+			Surfaces.validate(data.ground, finite)
+			assert(vehicle_type.controller.support_height and finite(data.ground.yaw), "Invalid grounded vehicle")
+			assert(type(data.ground.normal) == "table" and #data.ground.normal == 3, "Invalid platform normal")
+			for index = 1, 3 do
+				assert(finite(data.ground.normal[index]), "Invalid platform normal coordinate")
+			end
+		end
 		Configuration.validate(data.type, data.config)
 		assert(finite(data.health) and data.health >= 0 and data.health <= data.config.health, "Invalid vehicle health")
 		for index = 1, 3 do

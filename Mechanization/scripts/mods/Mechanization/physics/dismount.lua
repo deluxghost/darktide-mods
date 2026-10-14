@@ -2,6 +2,7 @@ local mod = get_mod("Mechanization")
 local NavQueries = require("scripts/utilities/nav_queries")
 local Collision = mod.load_module("physics/collision")
 local AirborneDismount = mod.load_module("physics/airborne_dismount")
+local Surfaces = mod.load_module("physics/surfaces")
 local Dismount = {}
 local SEARCH_MARGIN = 24
 local SEARCH_SPACING = 0.75
@@ -11,6 +12,7 @@ local GROUND_TOLERANCE = 0.25
 local BORDER_MARGIN = 0.25
 local PLAYER_MARGIN = 0.25
 local EDGE_SAMPLES = 8
+local MAX_SURFACE_HITS = 32
 local NEIGHBORS = { { -1, 0 }, { 1, 0 }, { 0, -1 }, { 0, 1 }, { -1, -1 }, { -1, 1 }, { 1, -1 }, { 1, 1 } }
 
 local function dangerous (position, height)
@@ -56,16 +58,62 @@ local function separated (position, radius, reserved, unit)
 	return true
 end
 
+local function project (context, candidate)
+	if not context.platform then
+		return NavQueries.position_on_mesh(context.nav_world, candidate, NAV_HEIGHT, NAV_HEIGHT, context.traverse)
+	end
+	local point, _, actor = Surfaces.ground(context.vehicle.world, candidate, GROUND_TOLERANCE, GROUND_TOLERANCE, 0.55)
+	if actor and Actor.unit(actor) == context.platform then
+		return point
+	end
+end
+
+local function connected (context, from, destination, edge_check)
+	if not context.platform then
+		return GwNavQueries.raycango(context.nav_world, from, destination, context.traverse)
+	end
+	local distance = Vector3.distance(from, destination)
+	local count = math.max(1, math.ceil(distance / GROUND_TOLERANCE))
+	for index = 1, count do
+		if not project(context, Vector3.lerp(from, destination, index / count)) then
+			return false
+		end
+	end
+	local travel = destination - from
+	if distance == 0 then
+		return true
+	end
+	for _, height in ipairs({ context.radius + BORDER_MARGIN, context.height * 0.5, context.height - context.radius }) do
+		local hits
+		if edge_check then
+			hits = PhysicsWorld.raycast(
+				World.physics_world(context.vehicle.world), from + Vector3.up() * height, travel / distance, distance,
+				"all", "types", "both", "collision_filter", "filter_player_mover"
+			)
+		else
+			hits = PhysicsWorld.linear_sphere_sweep(
+				World.physics_world(context.vehicle.world), from + Vector3.up() * height, destination + Vector3.up() * height,
+				context.radius, MAX_SURFACE_HITS, "types", "both", "collision_filter", "filter_player_mover"
+			)
+		end
+		for _, hit in ipairs(hits or {}) do
+			local actor = edge_check and hit[4] or hit.actor
+			local normal = edge_check and hit[3] or hit.normal
+			if not Collision.contains_unit(context.vehicle, Actor.unit(actor)) and Vector3.dot(travel, normal) < -0.00001 then
+				return false
+			end
+		end
+	end
+	return true
+end
+
 local function validate (context, candidate)
-	local position = NavQueries.position_on_mesh(context.nav_world, candidate, NAV_HEIGHT, NAV_HEIGHT, context.traverse)
+	local position = project(context, candidate)
 	if not position or not outside_vehicles(context.vehicles, position, context.radius, context.height) then
 		return
 	end
-	local hit, ground = PhysicsWorld.raycast(
-		World.physics_world(context.vehicle.world), position + Vector3.up() * GROUND_TOLERANCE, Vector3.down(),
-		GROUND_TOLERANCE * 2, "closest", "types", "statics", "collision_filter", "filter_player_mover"
-	)
-	if not hit or Vector3.distance(ground, position) > GROUND_TOLERANCE then
+	local ground = Surfaces.ground(context.vehicle.world, position, GROUND_TOLERANCE, GROUND_TOLERANCE, 0.55)
+	if not ground or Vector3.distance(ground, position) > GROUND_TOLERANCE then
 		return
 	end
 	if not Unit.mover_fits_at(context.occupant.unit, "default", ground) or dangerous(ground, context.height) then
@@ -77,9 +125,9 @@ local function validate (context, candidate)
 	for index = 1, EDGE_SAMPLES do
 		local angle = index * math.pi * 2 / EDGE_SAMPLES
 		local edge = position + Vector3(math.cos(angle), math.sin(angle), 0) * (context.radius + BORDER_MARGIN)
-		edge = NavQueries.position_on_mesh(context.nav_world, edge, NAV_HEIGHT, NAV_HEIGHT, context.traverse)
+		edge = project(context, edge)
 		if not edge
-			or not GwNavQueries.raycango(context.nav_world, position, edge, context.traverse)
+			or not connected(context, position, edge, true)
 			or dangerous(edge, context.height)
 		then
 			return
@@ -96,12 +144,12 @@ local function expand (context, node, offset, search)
 	if Vector3.distance(candidate, context.anchor) > search.limit then
 		return
 	end
-	local point = NavQueries.position_on_mesh(context.nav_world, candidate, NAV_HEIGHT, NAV_HEIGHT, context.traverse)
+	local point = project(context, candidate)
 	if not point then
 		return
 	end
 	local key = string.format("%d:%d:%d", x, y, math.floor(point.z / NAV_HEIGHT))
-	if search.visited[key] or not GwNavQueries.raycango(context.nav_world, from, point, context.traverse) then
+	if search.visited[key] or not connected(context, from, point) then
 		return
 	end
 	if dangerous(point, context.height) then
@@ -129,7 +177,7 @@ local function find_position (context)
 		visited = {},
 	}
 	local index = 1
-	-- Connected navmesh edges can lead around corners but never jump into a disconnected nearby room.
+	-- Search connected floors, using physical platform surfaces while their navmesh is unavailable.
 	while index <= #search.queue and index <= MAX_SEARCH_NODES do
 		local node = search.queue[index]
 		local point = validate(context, node.position:unbox())
@@ -156,10 +204,6 @@ Dismount.plan = function (vehicle, occupants, vehicles, anchor_position)
 				offset.z = 0
 				origin = origin + Quaternion.rotate(Unit.world_rotation(vehicle.unit, 1), offset)
 			end
-			local anchor = NavQueries.position_on_mesh(nav_world, origin, NAV_HEIGHT, NAV_HEIGHT, traverse)
-			if not anchor then
-				return
-			end
 			local radius = Collision.player_footprint(occupant.unit)
 			local first = ScriptUnit.extension(occupant.unit, "first_person_system")
 			local context = {
@@ -168,11 +212,21 @@ Dismount.plan = function (vehicle, occupants, vehicles, anchor_position)
 				vehicles = vehicles,
 				nav_world = nav_world,
 				traverse = traverse,
-				anchor = anchor,
 				radius = radius,
 				height = first:default_height("default") + radius,
 				reserved = reserved,
 			}
+			local ground, _, actor = Surfaces.ground(vehicle.world, origin, NAV_HEIGHT, NAV_HEIGHT, 0.55)
+			local platform = actor and Actor.unit(actor)
+			if platform and ScriptUnit.has_extension(platform, "moveable_platform_system") then
+				context.platform = platform
+				context.anchor = ground
+			else
+				context.anchor = project(context, origin)
+			end
+			if not context.anchor then
+				return
+			end
 			local point = find_position(context)
 			if not point then
 				return
@@ -187,6 +241,10 @@ end
 Dismount.removal = function (vehicle)
 	-- Removing the hull makes its current position available to all occupants.
 	local point = vehicle.position:unbox()
+	local ground = Surfaces.ground(vehicle.world, point, GROUND_TOLERANCE, GROUND_TOLERANCE, 0.55)
+	if ground then
+		point.z = math.max(point.z, ground.z)
+	end
 	local positions = {}
 	for _, occupant in pairs(vehicle.occupants) do
 		if ALIVE[occupant.unit] then
@@ -197,10 +255,17 @@ Dismount.removal = function (vehicle)
 end
 
 Dismount.departure = function (vehicle, occupants, vehicles, removing)
+	local positions, drops
 	if vehicle.type.dismount then
-		return AirborneDismount.plan(vehicle, occupants, vehicles, Dismount.plan, removing)
+		positions, drops = AirborneDismount.plan(vehicle, occupants, vehicles, Dismount.plan, removing)
+	else
+		positions, drops = removing and Dismount.removal(vehicle) or Dismount.plan(vehicle, occupants, vehicles), {}
 	end
-	return removing and Dismount.removal(vehicle) or Dismount.plan(vehicle, occupants, vehicles), {}
+	local frames = {}
+	for peer, point in pairs(positions or {}) do
+		frames[peer] = Surfaces.frame(vehicle.world, Vector3(unpack(point)))
+	end
+	return positions, drops, frames
 end
 
 return Dismount

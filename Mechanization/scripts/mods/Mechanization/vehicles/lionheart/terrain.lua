@@ -1,5 +1,6 @@
 local mod = get_mod("Mechanization")
 local Settings = mod.load_module("vehicles/lionheart/settings")
+local Surfaces = mod.load_module("physics/surfaces")
 local Terrain = {}
 local MIN_GROUND_NORMAL = 0.55
 local MIN_SUPPORTS = 3
@@ -13,11 +14,11 @@ local PROBE_START = 8
 Terrain.ground = function (world, position)
 	local hits = PhysicsWorld.raycast(
 		World.physics_world(world), position + Vector3(0, 0, PROBE_START), Vector3.down(), PROBE_START + 4,
-		"all", "types", "statics", "collision_filter", "filter_player_mover"
+		"all", "types", "both", "collision_filter", "filter_player_mover"
 	)
 	local point, normal
 	for _, hit in ipairs(hits or {}) do
-		if hit[3].z > MIN_GROUND_NORMAL and hit[1].z <= position.z + GROUND_PROBE_HEIGHT and (not point or hit[1].z > point.z) then
+		if Surfaces.is_ground(hit[4]) and hit[3].z > MIN_GROUND_NORMAL and hit[1].z <= position.z + GROUND_PROBE_HEIGHT and (not point or hit[1].z > point.z) then
 			point, normal = hit[1], hit[3]
 		end
 	end
@@ -84,7 +85,7 @@ Terrain.sweep = function (world, origin, destination, rotation, compression)
 				MAX_CONTACTS, "collision_filter", "filter_player_mover"
 			)
 			for _, hit in ipairs(hits or {}) do
-				if Actor.is_static(hit.actor) then
+				if Surfaces.is_ground(hit.actor) then
 					hit.support = true
 					hit.track = side * index
 					results[#results + 1] = hit
@@ -97,6 +98,7 @@ end
 
 local function track_contacts (world, position, rotation)
 	local height, points, normals = -math.huge, {}, Vector3.zero()
+	local actor
 	local inverse = Quaternion.inverse(rotation)
 	local start = GROUND_PROBE_HEIGHT
 	local contacts = {}
@@ -115,17 +117,20 @@ local function track_contacts (world, position, rotation)
 			end
 		end
 		points[#points + 1] = { x = sample.x, y = sample.y, z = sample.z - clearance }
-		height = math.max(height, position.z + start - hit.distance)
+		local contact_height = position.z + start - hit.distance
+		if contact_height > height then
+			height, actor = contact_height, hit.actor
+		end
 		normals = normals + hit.normal
 	end
 	if #points > 0 then
-		return height, points, Vector3.normalize(normals)
+		return height, points, Vector3.normalize(normals), actor
 	end
 end
 
 Terrain.height = function (world, position, rotation)
-	local height = track_contacts(world, position, rotation)
-	return height and height + CONTACT_CLEARANCE
+	local height, _, _, actor = track_contacts(world, position, rotation)
+	return height and height + CONTACT_CLEARANCE, actor
 end
 
 Terrain.support = function (world, position, yaw)
