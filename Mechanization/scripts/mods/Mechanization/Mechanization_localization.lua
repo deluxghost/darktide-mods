@@ -4,8 +4,8 @@ return {
 		["zh-cn"] = "机械化",
 	},
 	mod_description = {
-		en = "Drive vehicles in local missions.",
-		["zh-cn"] = "在本地任务中驾驶载具。",
+		en = "Drive vehicles in local missions with the /mech command.",
+		["zh-cn"] = "在本地任务中用 /mech 命令驾驶载具。",
 	},
 	mission_required = {
 		en = "Vehicles can only be used in local missions.",
@@ -32,8 +32,56 @@ return {
 		["zh-cn"] = "启用",
 	},
 	enabled_description = {
-		en = "Enable vehicle functionality. Only the host setting takes effect.",
-		["zh-cn"] = "是否启用载具功能，仅主机设置生效。",
+		en = "Enable vehicle functionality.\n\nOnly the host setting takes effect.",
+		["zh-cn"] = "是否启用载具功能。\n\n仅主机设置生效。",
+	},
+	spawn_cooldown = {
+		en = "Vehicle spawn cooldown (seconds)",
+		["zh-cn"] = "召唤冷却秒数",
+	},
+	spawn_cooldown_description = {
+		en = "Cooldown before spawning another vehicle after leaving your own.\n\nOnly the host setting takes effect.",
+		["zh-cn"] = "离开自己召唤的载具后再次召唤的冷却时间。\n\n仅主机设置生效。",
+	},
+	spawn_wait = {
+		en = "You can spawn another vehicle in %d seconds.",
+		["zh-cn"] = "还需等待 %d 秒才能再次召唤载具。",
+	},
+	custom_vehicle_properties = {
+		en = "Custom vehicle properties",
+		["zh-cn"] = "自定义载具属性",
+	},
+	custom_vehicle_properties_description = {
+		en = "Customize vehicle health and weapon base damage.\n\nOnly the host settings take effect.\n\nOnly applies to newly spawned vehicles.",
+		["zh-cn"] = "自定义载具血量和武器基础伤害。\n\n仅主机设置生效。\n\n仅对新生成的载具生效。",
+	},
+	vehicle_health = {
+		en = "Health",
+		["zh-cn"] = "血量",
+	},
+	vehicle_health_description = {
+		en = "Maximum vehicle health.",
+		["zh-cn"] = "载具最大血量。",
+	},
+	weapon_damage_description = {
+		en = "Base damage before armor modifiers.",
+		["zh-cn"] = "应用护甲倍率前的基础伤害。",
+	},
+	main_damage = {
+		en = "Main cannon base damage",
+		["zh-cn"] = "主炮基础伤害",
+	},
+	front_damage = {
+		en = "Hull cannon base damage",
+		["zh-cn"] = "前炮基础伤害",
+	},
+	laser_damage = {
+		en = "Lascannon base damage",
+		["zh-cn"] = "激光炮基础伤害",
+	},
+	rocket_damage = {
+		en = "Rocket base damage",
+		["zh-cn"] = "火箭弹基础伤害",
 	},
 	creation_disabled = {
 		en = "Vehicles are not enabled on this server.",

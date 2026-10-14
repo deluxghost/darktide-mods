@@ -25,7 +25,6 @@ return {
 	laser_capacity = 240,
 	laser_interval = 0.25,
 	laser_reload = 10,
-	laser_power = 800,
 	laser_radius = 0.2,
 	laser_splash_radius = 1.5,
 	laser_splash_fraction = 0.4,
@@ -44,8 +43,6 @@ return {
 	rocket_reload = 12,
 	rocket_speed = 76,
 	rocket_radius = 8,
-	-- Normalize against unarmored targets while preserving the previous 3600 base blast damage.
-	rocket_power = 3600,
 	rocket_armor = {
 		unarmored = 1,
 		armored = 0.75,

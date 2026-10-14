@@ -4,6 +4,7 @@ local PlayerMovement = require("scripts/utilities/player_movement")
 local Collision = mod.load_module("physics/collision")
 local Platform = mod.load_module("players/platform")
 local Interpolation = mod.load_module("network/interpolation")
+local Configuration = mod.load_module("configuration")
 local Messages = {}
 
 Messages.install = function (session)
@@ -132,7 +133,30 @@ Messages.install = function (session)
 			session.activate(v)
 			Occupants.add(v, 1, peer, session.clock)
 			session.publish(v)
+			return v
 		end
+	end
+
+	session.receive_command = function (peer, type_id)
+		if not VehicleNetwork.is_host() then
+			return
+		end
+		local player = available_player(peer)
+		if not player then
+			return
+		end
+		local account = player:account_id()
+		local departed = session.last_departures[account]
+		local remaining = departed and departed + Configuration.cooldown() - session.clock or 0
+		if remaining > 0 then
+			VehicleNetwork.notice(peer, "spawn_wait", math.ceil(remaining))
+			return
+		end
+		local v = session.receive_select(peer, type_id)
+		if v then
+			v.command_account = account
+		end
+		return v
 	end
 
 	session.receive_board = function (peer, owner)
@@ -208,7 +232,8 @@ Messages.install = function (session)
 		assert(type(data) == "table" and type(data.p) == "table" and #data.p == 3 and finite(data.yaw), "Invalid vehicle state")
 		assert(finite(data.time), "Invalid vehicle snapshot time")
 		local vehicle_type = assert(Registry.by_id[data.type], "Unknown vehicle type")
-		assert(finite(data.health) and data.health >= 0 and data.health <= vehicle_type.max_health, "Invalid vehicle health")
+		Configuration.validate(data.type, data.config)
+		assert(finite(data.health) and data.health >= 0 and data.health <= data.config.health, "Invalid vehicle health")
 		for index = 1, 3 do
 			assert(finite(data.p[index]), "Invalid vehicle vector")
 		end
@@ -232,8 +257,13 @@ Messages.install = function (session)
 		end
 		local v = session.vehicles[owner]
 		assert(not v or v.type == vehicle_type, "Vehicle type changed without departure")
+		if v then
+			for key, value in pairs(v.config) do
+				assert(data.config[key] == value, "Vehicle configuration changed without departure")
+			end
+		end
 		if not v then
-			v = session.spawn(owner, vehicle_type, Vector3(unpack(data.p)), data.yaw)
+			v = session.spawn(owner, vehicle_type, Vector3(unpack(data.p)), data.yaw, data.config)
 			if v then
 				session.activate(v)
 			end

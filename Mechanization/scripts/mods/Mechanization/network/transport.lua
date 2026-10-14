@@ -51,11 +51,11 @@ VehicleNetwork.publish = function (recipient, enabled)
 	VehicleNetwork.send("config", recipient, enabled)
 end
 
-VehicleNetwork.notice = function (peer, key)
+VehicleNetwork.notice = function (peer, key, value)
 	if peer == VehicleNetwork.local_peer() then
-		mod:echo(mod:localize(key))
+		mod:echo(mod:localize(key, value))
 	else
-		VehicleNetwork.send("notice", peer, key)
+		VehicleNetwork.send("notice", peer, key, value)
 	end
 end
 
@@ -77,10 +77,13 @@ VehicleNetwork.install = function (session)
 	if not realms then
 		return
 	end
-	assert(realms.network_register(mod, "notice", function (sender, key)
+	assert(realms.network_register(mod, "notice", function (sender, key, value)
 		if VehicleNetwork.from_host(sender) then
-			assert(key == "no_space" or key == "no_ground" or key == "not_walking" or key == "ogryn_cannot_drive", "Invalid vehicle notice")
-			mod:echo(mod:localize(key))
+			assert(key == "no_space" or key == "no_ground" or key == "not_walking" or key == "ogryn_cannot_drive" or key == "spawn_wait", "Invalid vehicle notice")
+			if key == "spawn_wait" then
+				assert(type(value) == "number" and value > 0 and value < math.huge, "Invalid spawn cooldown notice")
+			end
+			mod:echo(mod:localize(key, value))
 		end
 	end))
 	assert(realms.network_register(mod, "request", function (sender)
@@ -100,7 +103,8 @@ VehicleNetwork.install = function (session)
 		end
 	end))
 	for name, callback in pairs({
-		select = session.receive_select,
+		select = session.receive_command,
+		create = session.receive_select,
 		board = session.receive_board,
 		switch = session.receive_switch,
 		leave = session.receive_leave,

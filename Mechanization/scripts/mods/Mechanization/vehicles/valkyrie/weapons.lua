@@ -11,22 +11,29 @@ local ProjectileLocomotionSettings = require("scripts/settings/projectile_locomo
 local MasterItems = require("scripts/backend/master_items")
 local Weapons = {}
 local AIM_LIMIT = math.rad(8)
-local LASER_DAMAGE = Laser.profile(Settings.laser_power, Settings.laser_armor, Settings.laser_splash_radius, Settings.laser_splash_fraction)
 local LASER_EFFECT = { muzzle_scale = 4, beam_width = 5, trail_scale = 2.5, impact_scale = 3 }
-local ROCKET_TEMPLATE = table.clone(ProjectileTemplates.attack_valkyrie_missile)
 local ROCKET_EXPLOSION = table.clone(ExplosionTemplates.attack_valkyrie_missile)
-local ROCKET_DAMAGE = Damage.profile(DamageProfileTemplates.no_mans_land_tank_wall_explosion, Settings.rocket_power, Settings.rocket_armor)
 ROCKET_EXPLOSION.radius = Settings.rocket_radius
 ROCKET_EXPLOSION.min_radius = Settings.rocket_radius
 ROCKET_EXPLOSION.close_radius = Settings.rocket_radius * 0.5
 ROCKET_EXPLOSION.min_close_radius = Settings.rocket_radius * 0.5
-ROCKET_EXPLOSION.damage_profile, ROCKET_EXPLOSION.close_damage_profile = ROCKET_DAMAGE, ROCKET_DAMAGE
-ROCKET_TEMPLATE.damage.fuse.explosion_template = ROCKET_EXPLOSION
-ROCKET_TEMPLATE.damage.impact.explosion_template = ROCKET_EXPLOSION
 local WEAPONS = {
 	laser = { capacity = Settings.laser_capacity, interval = Settings.laser_interval, reload = Settings.laser_reload },
 	rocket = { capacity = Settings.rocket_capacity, interval = Settings.rocket_interval, reload = Settings.rocket_reload },
 }
+
+Weapons.configure = function (v)
+	local template = table.clone(ProjectileTemplates.attack_valkyrie_missile)
+	local explosion = table.clone(ROCKET_EXPLOSION)
+	local damage = Damage.profile(DamageProfileTemplates.no_mans_land_tank_wall_explosion, v.config.rocket_damage, Settings.rocket_armor)
+	explosion.damage_profile, explosion.close_damage_profile = damage, damage
+	template.damage.fuse.explosion_template = explosion
+	template.damage.impact.explosion_template = explosion
+	v.weapon_profiles = {
+		laser = Laser.profile(v.config.laser_damage, Settings.laser_armor, Settings.laser_splash_radius, Settings.laser_splash_fraction),
+		rocket = template,
+	}
+end
 
 Weapons.update = function (v, time)
 	for action, weapon in pairs(WEAPONS) do
@@ -90,10 +97,10 @@ Weapons.fire = function (v, action, control, time)
 		local endpoint, hit = Laser.trace(v, position, rotation, Settings.shot_range, Settings.laser_radius)
 		event.endpoint, event.hit = { endpoint.x, endpoint.y, endpoint.z }, hit ~= nil
 		if hit then
-			Laser.damage(v, LASER_DAMAGE, hit, rotation, control.unit)
+			Laser.damage(v, v.weapon_profiles.laser, hit, rotation, control.unit)
 		end
 	else
-		local template = ROCKET_TEMPLATE
+		local template = v.weapon_profiles.rocket
 		local item = MasterItems.get_cached()[template.item_name]
 		local side_name = Managers.state.extension:system("side_system").side_by_unit[control.unit]:name()
 		Managers.state.unit_spawner:spawn_network_unit(

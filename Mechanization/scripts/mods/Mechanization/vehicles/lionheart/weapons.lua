@@ -16,13 +16,19 @@ local SHELL_IMPACT = "content/fx/particles/explosions/tank_wall_explosion"
 local SHELL_EXPLOSION_SOUND = "wwise/events/weapon/play_explosion_grenade_frag_ogryn"
 -- The original event delays its main cannon report by 400 ms.
 local FIRE_SOUND_DELAY = 0.4
-local MAIN_DAMAGE = Damage.profile(DamageProfileTemplates.no_mans_land_tank_wall_explosion, Settings.main_attack_power, Settings.main_armor)
-local FRONT_DAMAGE = Laser.profile(Settings.front_attack_power, Settings.front_armor, Settings.front_splash_radius, Settings.front_splash_fraction)
 local MAIN_EXPLOSION = table.clone(ExplosionTemplates.tank_wall_explosion)
 MAIN_EXPLOSION.radius = Settings.main_explosion_radius
 MAIN_EXPLOSION.close_radius = Settings.main_explosion_close_radius
-MAIN_EXPLOSION.damage_profile = MAIN_DAMAGE
-MAIN_EXPLOSION.close_damage_profile = MAIN_DAMAGE
+
+Weapons.configure = function (v)
+	local main = table.clone(MAIN_EXPLOSION)
+	local damage = Damage.profile(DamageProfileTemplates.no_mans_land_tank_wall_explosion, v.config.main_damage, Settings.main_armor)
+	main.damage_profile, main.close_damage_profile = damage, damage
+	v.weapon_profiles = {
+		main = main,
+		front = Laser.profile(v.config.front_damage, Settings.front_armor, Settings.front_splash_radius, Settings.front_splash_fraction),
+	}
+end
 
 Weapons.update = function (vehicle, v, time)
 	if v.rounds == 0 and time >= v.next_shot then
@@ -60,7 +66,7 @@ Weapons.update = function (vehicle, v, time)
 	local endpoint = shell.position:unbox()
 	Explosion.create_explosion(
 		v.world, World.physics_world(v.world), endpoint, shell.rotation:unbox(), shell.attacker,
-		MAIN_EXPLOSION, 500, 1, "ranged", false, false
+		v.weapon_profiles.main, 500, 1, "ranged", false, false
 	)
 	return { weapon = "main", phase = "impact", endpoint = { endpoint.x, endpoint.y, endpoint.z }, hit = true }
 end
@@ -106,7 +112,7 @@ Weapons.fire = function (vehicle, v, secondary, time, attacker)
 	local delay = v.front_rounds == 0 and Settings.front_reload_time or Settings.front_shot_interval
 	v.next_front_shot = time + delay
 	if hit then
-		Laser.damage(v, FRONT_DAMAGE, hit, rotation, attacker)
+		Laser.damage(v, v.weapon_profiles.front, hit, rotation, attacker)
 	end
 	return { weapon = "front", phase = "fire", endpoint = { endpoint.x, endpoint.y, endpoint.z }, hit = hit ~= nil }
 end

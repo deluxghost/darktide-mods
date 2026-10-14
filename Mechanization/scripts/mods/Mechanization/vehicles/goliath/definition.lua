@@ -4,7 +4,6 @@ local Interpolation = mod.load_module("network/interpolation")
 local Goliath = {
 	id = "goliath",
 	name = "vehicle_goliath",
-	max_health = 15000,
 	settings = Settings,
 	controller = mod.load_module("vehicles/goliath/controller"),
 	crosshairs = {

@@ -6,7 +6,7 @@ local Health = {}
 Health.__index = Health
 
 Health.attach = function (vehicle, network)
-	local maximum = vehicle.type.max_health
+	local maximum = vehicle.config.health
 	assert(type(maximum) == "number" and maximum > 0 and maximum < math.huge, "Invalid vehicle health")
 	vehicle.health = setmetatable({ vehicle = vehicle, network = network, maximum = maximum, remaining = maximum }, Health)
 	Managers.state.position_lookup:register(vehicle.unit, vehicle.position:unbox())

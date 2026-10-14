@@ -18,7 +18,9 @@ mod.load_module("physics/minions").install(Session)
 mod.load_module("players/protection").install(Session)
 mod.load_module("players/movement").install(Session)
 
-mod:command("mech", mod:localize("command_description"), Session.command)
+mod:command("mech", mod:localize("command_description"), function (index, extra)
+	Session.command(index, extra, true)
+end)
 mod:register_hud_element({
 	class_name = "HudElementVehicleStatus",
 	filename = "Mechanization/scripts/mods/Mechanization/ui/HudElementVehicleStatus",
@@ -42,6 +44,7 @@ mod.on_settings_reset = Session.settings_changed
 mod.on_game_state_changed = function (status, state)
 	if state == "StateGameplay" and status == "exit" then
 		Session.cleanup()
+		table.clear(Session.last_departures)
 		Session.running = false
 		Session.network.host_enabled = false
 	end

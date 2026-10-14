@@ -27,7 +27,6 @@ return {
 	front_reload_time = 10,
 	front_shot_interval = 1,
 	front_magazine_size = 30,
-	front_attack_power = 1200,
 	front_splash_radius = 2,
 	front_splash_fraction = 0.4,
 	front_armor = {
@@ -40,8 +39,6 @@ return {
 		void_shield = 0.75,
 		player = 1,
 	},
-	-- Normalize against unarmored targets while preserving the previous 4000 base blast damage.
-	main_attack_power = 4000,
 	main_armor = {
 		unarmored = 1,
 		armored = 0.85,

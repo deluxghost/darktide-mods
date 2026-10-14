@@ -1,5 +1,6 @@
 local mod = get_mod("Mechanization")
 local Registry = mod.load_module("vehicles/registry")
+local Configuration = mod.load_module("configuration")
 local VehicleNetwork = mod.load_module("network/transport")
 local Occupants = mod.load_module("players/occupants")
 local Boarding = mod.load_module("players/boarding")
@@ -14,6 +15,7 @@ local Platform = mod.load_module("players/platform")
 local Interpolation = mod.load_module("network/interpolation")
 local Session = {
 	vehicles = {},
+	last_departures = {},
 	clock = 0,
 	network_elapsed = 0,
 	registry = Registry,
@@ -41,6 +43,7 @@ local function snapshot (v)
 		seats = Occupants.snapshot(v),
 		platforms = platforms,
 		health = v.health:current_health(),
+		config = v.config,
 		state = v.type.snapshot(v, Session.clock),
 	}
 end
@@ -49,13 +52,19 @@ Session.publish = function (v)
 	VehicleNetwork.send("state", "others", v.peer, snapshot(v))
 end
 
-Session.spawn = function (peer, vehicle_type, position, yaw)
+Session.spawn = function (peer, vehicle_type, position, yaw, config)
 	local player = Occupants.find_player(peer)
 	if not player or not player.player_unit or not ALIVE[player.player_unit] then
 		return
 	end
+	config = config or Configuration.read(vehicle_type.id)
+	Configuration.validate(vehicle_type.id, config)
 	local v = vehicle_type.controller.create(Managers.world:world("level_world"), position, yaw)
 	v.type = vehicle_type
+	v.config = table.clone(config)
+	if vehicle_type.configure then
+		vehicle_type.configure(v)
+	end
 	v.peer = peer
 	v.occupants = {}
 	Health.attach(v, VehicleNetwork)
@@ -89,6 +98,9 @@ Session.remove = function (peer, dismount)
 	local v = Session.vehicles[peer]
 	if not v then
 		return
+	end
+	if VehicleNetwork.is_host() and v.command_account then
+		Session.last_departures[v.command_account] = Session.clock
 	end
 	local seated = {}
 	for _, occupant in pairs(v.occupants) do
@@ -211,7 +223,7 @@ Session.eject = function (peer, dismount)
 	end
 end
 
-Session.command = function (index, extra)
+Session.command = function (index, extra, from_command)
 	if not index then
 		local lines = { mod:localize("vehicle_list") }
 		for number, vehicle_type in ipairs(Registry.list) do
@@ -245,12 +257,13 @@ Session.command = function (index, extra)
 		return
 	end
 	if VehicleNetwork.is_host() then
-		Session.receive_select(VehicleNetwork.local_peer(), vehicle_type.id)
+		local create = from_command and Session.receive_command or Session.receive_select
+		create(VehicleNetwork.local_peer(), vehicle_type.id)
 	elseif not VehicleNetwork.host_enabled then
 		mod:echo(mod:localize("creation_disabled"))
 		VehicleNetwork.refresh()
 	else
-		VehicleNetwork.send("select", "host", vehicle_type.id)
+		VehicleNetwork.send(from_command and "select" or "create", "host", vehicle_type.id)
 	end
 end
 

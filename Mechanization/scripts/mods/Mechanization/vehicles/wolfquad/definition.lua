@@ -4,7 +4,6 @@ local Settings = mod.load_module("vehicles/wolfquad/settings")
 local Wolfquad = {
 	id = "wolfquad",
 	name = "vehicle_wolfquad",
-	max_health = 2000,
 	settings = Settings,
 	controller = mod.load_module("vehicles/wolfquad/controller"),
 	crosshairs = {
