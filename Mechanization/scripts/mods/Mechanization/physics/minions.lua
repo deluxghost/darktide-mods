@@ -166,6 +166,12 @@ Minions.target = function (session, unit)
 	component.has_line_of_sight = not hit or Collision.contains_unit(vehicle, Actor.unit(actor))
 	local extension = ScriptUnit.extension(unit, "perception_system")
 	extension._line_of_sight_lookup[perception.target_unit] = component.has_line_of_sight
+	if component.has_line_of_sight then
+		extension:set_last_los_position(perception.target_unit, target)
+		component.last_los_position:store(target)
+		component.has_last_los_position = true
+		component.has_good_last_los_position = true
+	end
 end
 
 Minions.install = function (session)
