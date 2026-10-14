@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Release|x64">
+      <Configuration>Release</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <WindowsTargetPlatformVersion>10.0.26100.0</WindowsTargetPlatformVersion>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Label="Configuration">
+    <ConfigurationType>DynamicLibrary</ConfigurationType>
+    <PlatformToolset>v143</PlatformToolset>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <PropertyGroup>
+    <LinkIncremental>false</LinkIncremental>
+    <OutDir>$(ProjectDir)bin\$(Platform)\$(Configuration)\</OutDir>
+    <IntDir>$(ProjectDir)obj\$(Platform)\$(Configuration)\</IntDir>
+    <TargetName>GoodOldOutlines</TargetName>
+  </PropertyGroup>
+  <ItemDefinitionGroup>
+    <ClCompile>
+      <LanguageStandard>stdcpp20</LanguageStandard>
+      <Optimization>MaxSpeed</Optimization>
+      <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
+      <WarningLevel>Level4</WarningLevel>
+      <TreatWarningAsError>true</TreatWarningAsError>
+      <ExceptionHandling>Sync</ExceptionHandling>
+      <PreprocessorDefinitions>WIN32_LEAN_AND_MEAN;NOMINMAX;_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>$(ProjectDir)include;$(ProjectDir)obj;$(ProjectDir)..\darktide-internal-utils\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+    </ClCompile>
+    <Link>
+      <GenerateDebugInformation>false</GenerateDebugInformation>
+      <AdditionalDependencies>$(ProjectDir)..\darktide-internal-utils\bin\x64\Release\dtintutils-core.lib;Synchronization.lib;dxguid.lib;%(AdditionalDependencies)</AdditionalDependencies>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <ClCompile Include="src\engine.cpp" />
+    <ClCompile Include="src\render_config.cpp" />
+    <ClCompile Include="src\render_graph.cpp" />
+    <ClCompile Include="src\render_graph_locator.cpp" />
+    <ClCompile Include="src\pipeline.cpp" />
+    <ClCompile Include="src\draw_hook.cpp" />
+    <ClCompile Include="src\runtime.cpp" />
+    <ClCompile Include="src\dxil_reader.cpp" />
+    <ClCompile Include="src\shader_contract.cpp" />
+    <ClCompile Include="src\shader_matcher.cpp" />
+    <ClCompile Include="src\shader_resources.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="include\good_old_outlines.h" />
+    <ClInclude Include="src\engine.h" />
+    <ClInclude Include="src\render_config.h" />
+    <ClInclude Include="src\render_graph.h" />
+    <ClInclude Include="src\runtime.h" />
+    <ClInclude Include="src\dxil_reader.h" />
+    <ClInclude Include="src\shader_contract.h" />
+    <ClInclude Include="src\shader_matcher.h" />
+    <ClInclude Include="src\shader_resources.h" />
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+</Project>
