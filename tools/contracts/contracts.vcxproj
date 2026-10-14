@@ -40,6 +40,7 @@
     <ClCompile Include="main.cpp" />
     <ClCompile Include="..\..\src\dxil_reader.cpp" />
     <ClCompile Include="..\..\src\shader_contract.cpp" />
+    <ClCompile Include="..\..\src\shader_ir.cpp" />
     <ClCompile Include="..\..\src\shader_resources.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

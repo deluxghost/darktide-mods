@@ -66,7 +66,7 @@ void generate(goo::DxilReader &reader, const std::filesystem::path &directory,
         if (static_cast<size_t>(result.program) != index)
             throw std::runtime_error("Reference shader family differs");
         output << "{\n";
-        write_literal(output, result.bindings);
+        write_literal(output, result.properties);
         output << ",\n";
         write_literal(output, result.instructions);
         output << "},\n";

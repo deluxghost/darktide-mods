@@ -11,17 +11,18 @@ inline constexpr std::array<const char *, ProgramCount> ProgramNames = {"outline
                                                                         "composite"};
 
 struct ShaderContract {
-    std::string_view bindings;
+    // Resource/layout/signature data, shader model and execution flags.
+    std::string_view properties;
     std::string_view instructions;
 };
 
 struct ShaderAnalysis {
     Program program = Program::Count;
-    std::string bindings;
+    std::string properties;
     std::string instructions;
 };
 
-// Canonicalizes decoded DXIL, including resource/signature metadata. It never compiles a shader.
+// Compares executable structure and DXIL interface properties, excluding reflection/debug data.
 bool analyze_shader(std::string_view disassembly, ShaderAnalysis &result, std::string &error);
 bool validate_shader(const ShaderAnalysis &analysis, const ShaderContract &contract,
                      std::string &error);
