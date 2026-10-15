@@ -17,7 +17,6 @@ GOOD_OLD_OUTLINES_API int GoodOldOutlines_ApplyConfig(const void *data, uint32_t
                                                       int capacity);
 GOOD_OLD_OUTLINES_API int GoodOldOutlines_RestoreConfig(char *error, int capacity);
 
-// Start reads three replacement shaders and initializes the bundled DXIL reader.
 // The caller must synchronize the renderer before changing config or removing hooks.
 // ApplyConfig/RestoreConfig rebuild only render graph layers, generators and viewport templates.
 GOOD_OLD_OUTLINES_API int GoodOldOutlines_Start(const char *shader_directory, char *error,

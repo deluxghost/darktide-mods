@@ -6,7 +6,6 @@
 #include <cstring>
 
 namespace goo::engine {
-// Field locations verified against the current engine; no fixed function addresses.
 inline constexpr size_t VertexBytes = 0x188;
 inline constexpr size_t VertexCompressedSize = 0x190;
 inline constexpr size_t PixelBytes = 0x198;

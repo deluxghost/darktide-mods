@@ -565,10 +565,59 @@ define void @ps_main() {
   call void @dx.op.storeOutput.f32(i32 5, i32 0, i32 0, i8 1, float %349)  ; StoreOutput(outputSigId,rowIndex,colIndex,value)
   call void @dx.op.storeOutput.f32(i32 5, i32 0, i32 0, i8 2, float %350)  ; StoreOutput(outputSigId,rowIndex,colIndex,value)
   call void @dx.op.storeOutput.f32(i32 5, i32 0, i32 0, i8 3, float 0.000000e+00)  ; StoreOutput(outputSigId,rowIndex,colIndex,value)
-  call void @dx.op.storeOutput.f32(i32 5, i32 1, i32 0, i8 0, float %223)
-  call void @dx.op.storeOutput.f32(i32 5, i32 1, i32 0, i8 1, float %224)
-  call void @dx.op.storeOutput.f32(i32 5, i32 1, i32 0, i8 2, float %225)
-  call void @dx.op.storeOutput.f32(i32 5, i32 1, i32 0, i8 3, float %217)
+  ; Upper 20 bits order positive depths; low bits carry RGB, target identity and occlusion.
+  ; MIN blending selects the nearest fragment without relying on transparent draw order.
+  %goo_identity_cb = call %dx.types.CBufRet.f32 @dx.op.cbufferLoadLegacy.f32(i32 59, %dx.types.Handle %6, i32 19)
+  %goo_identity_value = extractvalue %dx.types.CBufRet.f32 %goo_identity_cb, 3
+  %goo_identity = fptoui float %goo_identity_value to i32
+  %goo_depth_bits = bitcast float %36 to i32
+  %goo_depth_prefix = and i32 %goo_depth_bits, -4096
+  %goo_in_range = fcmp fast ogt float %170, 0.000000e+00
+  %goo_r_sat = call float @dx.op.unary.f32(i32 7, float %223)
+  %goo_r_scaled = fmul fast float %goo_r_sat, 2.550000e+02
+  %goo_r_round = fadd fast float %goo_r_scaled, 5.000000e-01
+  %goo_r_byte = fptoui float %goo_r_round to i32
+  %goo_r_id_shifted = lshr i32 %goo_identity, 0
+  %goo_r_id_nibble = and i32 %goo_r_id_shifted, 15
+  %goo_r_id_bits = shl i32 %goo_r_id_nibble, 8
+  %goo_r_payload = or i32 %goo_r_id_bits, %goo_r_byte
+  %goo_r_bits = or i32 %goo_depth_prefix, %goo_r_payload
+  %goo_r_packed = bitcast i32 %goo_r_bits to float
+  %goo_r_encoded = select i1 %goo_in_range, float %goo_r_packed, float 4.096000e+03
+  %goo_g_sat = call float @dx.op.unary.f32(i32 7, float %224)
+  %goo_g_scaled = fmul fast float %goo_g_sat, 2.550000e+02
+  %goo_g_round = fadd fast float %goo_g_scaled, 5.000000e-01
+  %goo_g_byte = fptoui float %goo_g_round to i32
+  %goo_g_id_shifted = lshr i32 %goo_identity, 4
+  %goo_g_id_nibble = and i32 %goo_g_id_shifted, 15
+  %goo_g_id_bits = shl i32 %goo_g_id_nibble, 8
+  %goo_g_payload = or i32 %goo_g_id_bits, %goo_g_byte
+  %goo_g_bits = or i32 %goo_depth_prefix, %goo_g_payload
+  %goo_g_packed = bitcast i32 %goo_g_bits to float
+  %goo_g_encoded = select i1 %goo_in_range, float %goo_g_packed, float 4.096000e+03
+  %goo_b_sat = call float @dx.op.unary.f32(i32 7, float %225)
+  %goo_b_scaled = fmul fast float %goo_b_sat, 2.550000e+02
+  %goo_b_round = fadd fast float %goo_b_scaled, 5.000000e-01
+  %goo_b_byte = fptoui float %goo_b_round to i32
+  %goo_b_id_shifted = lshr i32 %goo_identity, 8
+  %goo_b_id_nibble = and i32 %goo_b_id_shifted, 15
+  %goo_b_id_bits = shl i32 %goo_b_id_nibble, 8
+  %goo_b_payload = or i32 %goo_b_id_bits, %goo_b_byte
+  %goo_b_bits = or i32 %goo_depth_prefix, %goo_b_payload
+  %goo_b_packed = bitcast i32 %goo_b_bits to float
+  %goo_b_encoded = select i1 %goo_in_range, float %goo_b_packed, float 4.096000e+03
+  %goo_occluded = fcmp olt float %166, 1.000000e+00
+  %goo_occlusion_bit = zext i1 %goo_occluded to i32
+  %goo_a_id_shifted = lshr i32 %goo_identity, 12
+  %goo_a_id_bits = shl i32 %goo_a_id_shifted, 1
+  %goo_a_payload = or i32 %goo_a_id_bits, %goo_occlusion_bit
+  %goo_a_bits = or i32 %goo_depth_prefix, %goo_a_payload
+  %goo_a_packed = bitcast i32 %goo_a_bits to float
+  %goo_a_encoded = select i1 %goo_in_range, float %goo_a_packed, float 4.096000e+03
+  call void @dx.op.storeOutput.f32(i32 5, i32 1, i32 0, i8 0, float %goo_r_encoded)
+  call void @dx.op.storeOutput.f32(i32 5, i32 1, i32 0, i8 1, float %goo_g_encoded)
+  call void @dx.op.storeOutput.f32(i32 5, i32 1, i32 0, i8 2, float %goo_b_encoded)
+  call void @dx.op.storeOutput.f32(i32 5, i32 1, i32 0, i8 3, float %goo_a_encoded)
   ret void
 }
 

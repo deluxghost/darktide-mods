@@ -96,7 +96,7 @@ bool RenderGraph::rebuild(char *error, int capacity) const {
     auto *context = create_context(error, capacity);
     if (!context)
         return false;
-    // Match the graph-building order in RenderInterface::setup, without applying user settings.
+    // Match the graph-building order in RenderInterface::setup.
     build_layers_(renderer_ + engine::RendererLayers, &layers, &blocks);
     add_debug_layer_(renderer_);
     build_generators_(renderer_ + engine::RendererGenerators, &generators, context, renderer_);

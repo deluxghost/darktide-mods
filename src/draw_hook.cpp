@@ -38,7 +38,7 @@ ID3D12PipelineState *resolve_pipeline(ID3D12PipelineState *original,
         const auto entry = shared_pipelines.try_emplace(original, original).first;
         pipeline = &entry->second;
     }
-    // Keep initialization outside the map lock; call_once serializes the same PSO.
+    // Shader compilation must not hold the shared cache lock.
     std::call_once(pipeline->initialized,
                    [&] { pipeline->replacement = identify_pipeline(original, arguments, root); });
     return pipeline->replacement ? pipeline->replacement.Get() : original;
@@ -71,7 +71,6 @@ void *pipeline_hook(void *context, uint64_t hash, void *cache, void *pass, void 
                 arguments.elements = engine::read<const void *>(layout, engine::LayoutElements);
                 arguments.element_count = engine::read<uint32_t>(layout, engine::LayoutCount);
             }
-            // Validate the live array before copying into the engine ABI structure.
             if (target_count > arguments.target_formats.size() ||
                 (target_count && !target_formats)) {
                 std::lock_guard<std::mutex> lock(state.pipeline_mutex);

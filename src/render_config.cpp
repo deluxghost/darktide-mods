@@ -67,7 +67,6 @@ class ConfigExtent {
                                               region_end - address)) {
                 return false;
             }
-            // VirtualQuery describes one region with uniform state and page protection.
             const auto end_page = std::min((region_end - base) / PageSize, readable_.size());
             std::fill(readable_.begin() + page, readable_.begin() + end_page, true);
         }

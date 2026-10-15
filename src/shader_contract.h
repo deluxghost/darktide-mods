@@ -22,7 +22,7 @@ struct ShaderAnalysis {
     std::string instructions;
 };
 
-// Compares executable structure and DXIL interface properties, excluding reflection/debug data.
+// Extracts execution structure and interface properties, excluding reflection/debug data.
 bool analyze_shader(std::string_view disassembly, ShaderAnalysis &result, std::string &error);
 bool validate_shader(const ShaderAnalysis &analysis, const ShaderContract &contract,
                      std::string &error);

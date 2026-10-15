@@ -63,5 +63,8 @@
     <ClInclude Include="src\shader_matcher.h" />
     <ClInclude Include="src\shader_resources.h" />
   </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="src\versioninfo.rc" />
+  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
 </Project>

@@ -43,13 +43,20 @@ bool build_descriptor(engine::PipelineArguments &arguments, void *root,
 
 bool configure_mask(D3D12_GRAPHICS_PIPELINE_STATE_DESC &descriptor) {
     if (descriptor.NumRenderTargets != 2 ||
-        descriptor.RTVFormats[1] != DXGI_FORMAT_R8G8B8A8_UNORM) {
+        descriptor.RTVFormats[1] != DXGI_FORMAT_R32G32B32A32_FLOAT) {
         return runtime().fail("Outline mask target is not bound");
     }
     descriptor.BlendState.IndependentBlendEnable = TRUE;
     auto &mask = descriptor.BlendState.RenderTarget[1];
     mask = descriptor.BlendState.RenderTarget[0];
-    mask.BlendEnable = FALSE;
+    // Encode depth in the high bits of every channel, so MIN retains the nearest fragment.
+    mask.BlendEnable = TRUE;
+    mask.SrcBlend = D3D12_BLEND_ONE;
+    mask.DestBlend = D3D12_BLEND_ONE;
+    mask.BlendOp = D3D12_BLEND_OP_MIN;
+    mask.SrcBlendAlpha = D3D12_BLEND_ONE;
+    mask.DestBlendAlpha = D3D12_BLEND_ONE;
+    mask.BlendOpAlpha = D3D12_BLEND_OP_MIN;
     mask.LogicOpEnable = FALSE;
     mask.RenderTargetWriteMask = D3D12_COLOR_WRITE_ENABLE_ALL;
     return true;
