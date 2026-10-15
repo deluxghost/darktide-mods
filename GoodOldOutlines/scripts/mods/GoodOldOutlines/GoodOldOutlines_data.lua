@@ -26,6 +26,21 @@ return {
 					},
 				},
 			},
+			{
+				setting_id = "opaque_outlines",
+				type = "checkbox",
+				default_value = true,
+				tooltip = "opaque_outlines_description",
+			},
+			{
+				setting_id = "occluded_outline_visibility",
+				type = "numeric",
+				unit_text = "percent",
+				default_value = 50,
+				range = { 0, 100 },
+				decimals_number = 0,
+				tooltip = "occluded_outline_visibility_description",
+			},
 		},
 	},
 }

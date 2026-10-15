@@ -76,10 +76,10 @@ local function prepare(snapshot)
 	assert(not settings.resource_generators.value[COMPOSITE_NAME], "Global outline pass already exists")
 	local mask = make_node({
 		depends_on = "output_rt",
-		format = "R8G8B8A8",
+		format = "R32G32B32A32F",
 		name = MASK_NAME,
 		type = "render_target",
-		clear_color = { 0, 0, 0, 0 },
+		clear_color = { 4096, 4096, 4096, 4096 },
 	})
 	for _, branch_name in ipairs({ "pass", "fail" }) do
 		patch_transparent_branch(branch_name, transparent[branch_name].value, mask)

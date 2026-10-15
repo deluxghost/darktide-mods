@@ -22,6 +22,10 @@ end
 local function hide_outline(unit)
 	if Unit.alive(unit) then
 		Unit.set_material_layer(unit, LAYER, false)
+		local outline = ScriptUnit.has_extension(unit, "outline_system")
+		if not outline or not outline.visible_material_layers then
+			Unit.set_unit_culling(unit, true, true)
+		end
 	end
 	records[unit] = nil
 end
@@ -43,6 +47,8 @@ local function add_tag(tag)
 			Unit.set_data(unit, LAYER, true)
 		end
 		Unit.set_material_layer(unit, LAYER, true)
+		-- Keep tagged models in the render list when geometry hides them.
+		Unit.set_unit_culling(unit, false, true)
 		tags = {}
 		records[unit] = tags
 		set_color(unit, outline_color())
