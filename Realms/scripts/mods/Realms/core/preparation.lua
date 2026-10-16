@@ -482,8 +482,8 @@ function Preparation.is_started()
 	return state.phase == "started"
 end
 
-function Preparation.is_finalizing()
-	return state.finalizing
+function Preparation.can_perform_action()
+	return Preparation.is_waiting() and not state.finalizing and SessionControl.is_available()
 end
 
 function Preparation.allows_profile_changes()
@@ -495,7 +495,7 @@ function Preparation.action_label()
 end
 
 function Preparation.perform_action()
-	if not Preparation.is_waiting() or state.finalizing then
+	if not Preparation.can_perform_action() then
 		return false
 	end
 
@@ -503,18 +503,19 @@ function Preparation.perform_action()
 
 	if state.role == "host" then
 		set_host_ready(local_peer_id(), not ready)
-	else
-		local connection = active_client_connection()
-		local channel_id = connection and connection:host_channel()
 
-		if channel_id then
-			send_message(channel_id, "ready", {
-				ready = not ready,
-			})
-		end
+		return true
 	end
 
-	return true
+	local sent, send_error = Preparation.send_to_host("ready", {
+		ready = not ready,
+	})
+
+	if not sent then
+		mod:error("Failed sending preparation readiness: %s", tostring(send_error))
+	end
+
+	return sent
 end
 
 function Preparation.open_inventory(view)

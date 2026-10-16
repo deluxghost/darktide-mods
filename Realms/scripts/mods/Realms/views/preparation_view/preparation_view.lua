@@ -528,7 +528,7 @@ RealmsPreparationView._refresh = function (self, force)
 
 	button_content.original_text = button_text
 	button_content.text = button_text
-	button_content.hotspot.disabled = Preparation.is_finalizing()
+	button_content.hotspot.disabled = not Preparation.can_perform_action()
 
 	self:_present_player_rows(force)
 	self:_present_mission_rows(force)
