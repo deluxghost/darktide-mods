@@ -78,6 +78,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\realms_api.cpp" />
+    <ClCompile Include="src\realms_binary.cpp" />
     <ClCompile Include="src\realms_datagram.cpp" />
     <ClCompile Include="src\realms_engine.cpp" />
     <ClCompile Include="src\realms_events.cpp" />

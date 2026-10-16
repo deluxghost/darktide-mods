@@ -104,6 +104,22 @@ using AcceptChannelFunction = uint32_t *(__fastcall *)(void *, uint32_t *, uint3
                                                        const void *, uint32_t);
 using SendChannelFunction = uint64_t(__fastcall *)(void *, uint32_t, uint32_t, uint8_t, const void *, uint32_t,
                                                    uint32_t *);
+using PeerEndpointFunction = void *(__fastcall *)(void *, uint64_t);
+using EndpointMessageSizeFunction = uint32_t(__fastcall *)(void *);
+using ReliableBufferLeftFunction = uint32_t(__fastcall *)(void *, uint64_t);
+
+struct BinaryConnectionMethods {
+    void *connection = nullptr;
+    void *vtable = nullptr;
+    RegisterChannelSystemListenerFunction register_listener = nullptr;
+    RemoveListenerFunction remove_listener = nullptr;
+    SendChannelFunction send = nullptr;
+    ReadBitsFunction read_bits = nullptr;
+    IsPeerConnectedFunction is_connected = nullptr;
+    PeerEndpointFunction peer_endpoint = nullptr;
+    EndpointMessageSizeFunction message_size = nullptr;
+    ReliableBufferLeftFunction buffer_left = nullptr;
+};
 using AddLobbyMemberFunction = uint64_t(__fastcall *)(void *, void *, uint16_t);
 using DestroyLobbyMemberFunction = void(__fastcall *)(void *);
 
@@ -162,6 +178,8 @@ bool validate_send_address_method(const void *target, char *error, int error_cap
 bool locate_lobby_member_helpers(AddLobbyMemberFunction *add_member, DestroyLobbyMemberFunction *destroy_member,
                                  char *error, int error_capacity);
 bool locate_read_bits(ReadBitsFunction *read_bits, char *error, int error_capacity);
+bool resolve_binary_connection(BinaryConnectionMethods *methods, char *error, int error_capacity);
+bool reader_succeeded(void *reader);
 bool set_client_ipv6_member_address_support(bool enabled, char *error, int error_capacity);
 bool start_udp_relay(uint16_t listen_port, const sockaddr *game_address, int game_address_size,
                      RealmsRuntimeStartError *start_error, char *error, int error_capacity);

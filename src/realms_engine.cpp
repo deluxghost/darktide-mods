@@ -865,4 +865,90 @@ bool parse_hex_id(const char *text, uint64_t *value, const char *description, ch
     return true;
 }
 
+bool resolve_binary_connection(BinaryConnectionMethods *methods, char *error, int error_capacity) {
+    if (!current_connection(&methods->connection, &methods->is_connected, nullptr, &methods->remove_listener,
+                            error, error_capacity) ||
+        !read_pointer(static_cast<const uint8_t *>(methods->connection), &methods->vtable,
+                      "Binary Connection vtable", error, error_capacity)) {
+        return false;
+    }
+
+    const auto *vtable = static_cast<const uint8_t *>(methods->vtable);
+    void *register_channel = nullptr;
+    void *register_peer = nullptr;
+    void *send = nullptr;
+    void *buffer_left = nullptr;
+    constexpr size_t kReliableBufferLeftSlot = 0x198;
+    if (!read_pointer(vtable + kRegisterChannelSystemListenerSlot, &register_channel, "Binary channel listener",
+                      error, error_capacity) ||
+        !read_pointer(vtable + kRegisterPeerSystemListenerSlot, &register_peer, "Binary peer listener", error,
+                      error_capacity) ||
+        !read_pointer(vtable + kSendChannelSlot, &send, "Binary channel send", error, error_capacity) ||
+        !read_pointer(vtable + kReliableBufferLeftSlot, &buffer_left, "Reliable buffer query", error,
+                      error_capacity) ||
+        !validate_routed_listener_methods(register_channel, register_peer, error, error_capacity) ||
+        !validate_engine_function(send, EngineFunctionRole::SendChannel, "Binary channel send", error,
+                                  error_capacity) ||
+        !locate_read_bits(&methods->read_bits, error, error_capacity)) {
+        return false;
+    }
+
+    auto direct_target = [&](const void *caller, std::initializer_list<int64_t> values,
+                             DtIntUtilsFunction *result) {
+        DtIntUtilsFunction function{};
+        if (!resolve_function_entry(caller, kMaximumSemanticFunctionSize, &function)) {
+            return false;
+        }
+        std::array<const uint8_t *, 32> targets{};
+        const size_t count = dtintutils_collect_direct_call_targets(&g_module, &function, targets.data(),
+                                                                   targets.size());
+        size_t matches = 0;
+        for (size_t index = 0; index < count && index < targets.size(); ++index) {
+            DtIntUtilsFunction candidate{};
+            if (!resolve_function_entry(targets[index], kMaximumSemanticFunctionSize, &candidate)) {
+                continue;
+            }
+            bool matched = true;
+            for (int64_t value : values) {
+                matched = matched && function_has_numeric_value(candidate, value);
+            }
+            if (matched) {
+                *result = candidate;
+                ++matches;
+            }
+        }
+        return count < targets.size() && matches == 1;
+    };
+
+    DtIntUtilsFunction buffer_function{};
+    DtIntUtilsFunction endpoint_function{};
+    DtIntUtilsFunction endpoint_send{};
+    DtIntUtilsFunction endpoint_flush{};
+    DtIntUtilsFunction maximum_message{};
+    if (!resolve_function_entry(buffer_left, 0x400, &buffer_function) ||
+        count_field_offsets(buffer_function, {0x20a8, 0x20e0, 0x20d8, 0x20f8}) != 4) {
+        return semantic_error("Darktide binary reliable-buffer query", error, error_capacity);
+    }
+    if (!direct_target(buffer_left, {0x78, 0x80, 0xa8, 0xb0}, &endpoint_function)) {
+        return semantic_error("Darktide binary peer Endpoint lookup", error, error_capacity);
+    }
+    if (!direct_target(send, {0x2630, 0x2b10}, &endpoint_send)) {
+        return semantic_error("Darktide binary Endpoint send", error, error_capacity);
+    }
+    if (!direct_target(endpoint_send.start, {0x20b0, 0x20d0, 0x2088, 0x20a0, 0x20a4, 0x20a8}, &endpoint_flush)) {
+        return semantic_error("Darktide binary Endpoint queue flush", error, error_capacity);
+    }
+    if (!direct_target(endpoint_send.start, {0x206c}, &maximum_message) ||
+        !function_has_numeric_value(maximum_message, 0x4b0)) {
+        return semantic_error("Darktide binary Endpoint message limit", error, error_capacity);
+    }
+
+    methods->register_listener = reinterpret_cast<RegisterChannelSystemListenerFunction>(register_channel);
+    methods->send = reinterpret_cast<SendChannelFunction>(send);
+    methods->buffer_left = reinterpret_cast<ReliableBufferLeftFunction>(buffer_left);
+    methods->peer_endpoint = reinterpret_cast<PeerEndpointFunction>(endpoint_function.start);
+    methods->message_size = reinterpret_cast<EndpointMessageSizeFunction>(maximum_message.start);
+    return true;
+}
+
 } // namespace realms

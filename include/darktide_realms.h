@@ -61,6 +61,26 @@ typedef struct RealmsResolvedAddresses {
     char addresses[REALMS_RUNTIME_MAX_RESOLVED_ADDRESSES][REALMS_RUNTIME_ADDRESS_CAPACITY];
 } RealmsResolvedAddresses;
 
+typedef struct RealmsBinaryMessage {
+    uint32_t struct_size;
+    uint32_t channel_id;
+    uint32_t message_type;
+    uint32_t message_id;
+    uint32_t reliable;
+    uint32_t payload_size;
+    char sender_peer_id[REALMS_RUNTIME_PEER_ID_CAPACITY];
+    char recipient_peer_id[REALMS_RUNTIME_PEER_ID_CAPACITY];
+} RealmsBinaryMessage;
+
+typedef struct RealmsBinaryStats {
+    uint32_t struct_size;
+    uint32_t queued_messages;
+    uint64_t queued_bytes;
+    uint64_t sent_messages;
+    uint64_t received_messages;
+    uint64_t expired_messages;
+} RealmsBinaryStats;
+
 // All functions except native callbacks must be called from the game thread.
 // Command functions return 1 on success and 0 on failure.
 REALMS_RUNTIME_API int RealmsRuntime_Initialize(char *error, int error_capacity);
@@ -103,6 +123,31 @@ REALMS_RUNTIME_API int RealmsRuntime_ReapAbandonedPeerTransportState(uint32_t id
 // The caller must initialize event->struct_size to sizeof(RealmsRuntimeEvent).
 // Non-null output buffers are inspected only when an event is available; API failure does not consume the event.
 REALMS_RUNTIME_API int RealmsRuntime_PollEvent(RealmsRuntimeEvent *event, char *error, int error_capacity);
+
+// Private Realms transport. Attach only channels admitted by the Realms session handshake.
+REALMS_RUNTIME_API int RealmsRuntime_AttachBinaryChannel(uint32_t channel_id, const char *peer_id, int is_host,
+                                                        char *error, int error_capacity);
+REALMS_RUNTIME_API int RealmsRuntime_DetachBinaryChannel(uint32_t channel_id, char *error, int error_capacity);
+
+// Copies payload before returning. Success means accepted locally, not acknowledged by the recipient.
+// Type 0 is reserved for reliable JSON control. Recipient 0 means host; UINT64_MAX means others.
+// Control enters the engine reliable queue synchronously; other types use the rate-limited local queue.
+// lifetime_ms applies only to the local unreliable send queue; reliable messages use 0.
+REALMS_RUNTIME_API int RealmsRuntime_SendBinary(uint32_t channel_id, const char *sender_peer_id,
+                                               const char *recipient_peer_id, uint32_t message_type, int reliable,
+                                               const void *payload, uint32_t payload_size, uint32_t lifetime_ms,
+                                               uint32_t *message_id, char *error, int error_capacity);
+
+// Advances all attached channels. On failure, identifies the channel that must be closed.
+REALMS_RUNTIME_API int RealmsRuntime_UpdateBinary(uint32_t *failed_channel, char *error, int error_capacity);
+
+// Returns 1 for a message, 0 when empty, -1 on failure, -2 for an undersized buffer, without consuming it;
+// message->payload_size reports the required size. The caller owns the output buffer.
+// Pass 0/0 for ordinary data; control requires the channel and ID from its ordered Lua RPC wakeup.
+REALMS_RUNTIME_API int RealmsRuntime_PollBinary(uint32_t control_channel, uint32_t message_id, RealmsBinaryMessage *message, void *payload, uint32_t capacity,
+                                               char *error, int error_capacity);
+REALMS_RUNTIME_API int RealmsRuntime_BinaryStats(uint32_t channel_id, RealmsBinaryStats *stats,
+                                                char *error, int error_capacity);
 
 // Must run before Darktide destroys the Connection and local-session lobby objects.
 REALMS_RUNTIME_API int RealmsRuntime_CloseLocalSession(char *error, int error_capacity);
