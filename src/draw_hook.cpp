@@ -15,19 +15,34 @@ thread_local std::unordered_map<ID3D12PipelineState *, ID3D12PipelineState *> th
 std::unordered_map<ID3D12PipelineState *, CachedPipeline> shared_pipelines;
 std::mutex shared_pipeline_mutex;
 
+void report_failure(Program program, const std::string &error) {
+    if (error.empty())
+        return;
+    auto &state = runtime();
+    // A missing shared composite would hide every successfully replaced outline.
+    if (program == Program::Composite) {
+        std::lock_guard<std::mutex> lock(state.pipeline_mutex);
+        state.fail(error.c_str());
+        return;
+    }
+    state.warn((error + "; original rendering retained for this program").c_str());
+}
+
 ComPtr<ID3D12PipelineState> identify_pipeline(ID3D12PipelineState *original,
                                               engine::PipelineArguments &arguments, void *root) {
     auto &state = runtime();
     Program program;
     std::string error;
     if (!state.matcher.identify(arguments.pass, state.engine, program, error)) {
-        std::lock_guard<std::mutex> lock(state.pipeline_mutex);
-        state.fail(error.c_str());
+        report_failure(program, error);
         return {};
     }
     if (program == Program::Count)
         return {};
-    return create_pipeline(original, arguments, root, program);
+    auto replacement = create_pipeline(original, arguments, root, program, error);
+    if (!replacement && !error.empty())
+        report_failure(program, std::string(ProgramNames[static_cast<size_t>(program)]) + ": " + error);
+    return replacement;
 }
 
 ID3D12PipelineState *resolve_pipeline(ID3D12PipelineState *original,

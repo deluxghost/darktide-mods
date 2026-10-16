@@ -25,6 +25,9 @@ GOOD_OLD_OUTLINES_API int GoodOldOutlines_SetEnabled(int enabled);
 // GetError returns null until a render-thread failure occurs. The first error is retained;
 // its native-owned text is immutable and valid until process exit. Reading it never blocks.
 GOOD_OLD_OUTLINES_API const char *GoodOldOutlines_GetError(void);
+// PollWarning copies and removes one nonfatal program failure: 1 message, 0 empty,
+// -1 insufficient capacity (message retained). No render-thread callback enters Lua.
+GOOD_OLD_OUTLINES_API int GoodOldOutlines_PollWarning(char *message, int capacity);
 GOOD_OLD_OUTLINES_API int GoodOldOutlines_Remove(char *error, int capacity);
 
 #ifdef __cplusplus

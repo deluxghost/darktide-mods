@@ -5,10 +5,10 @@
 #include <span>
 
 namespace goo {
-enum class Program : size_t { Outline, Combat, Composite, Count };
+enum class Program : size_t { Outline, Combat, PropOutline, Composite, Count };
 inline constexpr size_t ProgramCount = static_cast<size_t>(Program::Count);
-inline constexpr std::array<const char *, ProgramCount> ProgramNames = {"outline", "combat",
-                                                                        "composite"};
+inline constexpr std::array<const char *, ProgramCount> ProgramNames = {
+    "outline", "combat", "prop_outline", "composite"};
 
 struct ShaderContract {
     // Resource/layout/signature data, shader model and execution flags.

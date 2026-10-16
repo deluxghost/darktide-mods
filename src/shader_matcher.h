@@ -3,6 +3,7 @@
 #include "engine.h"
 #include "shader_contract.h"
 #include <mutex>
+#include <atomic>
 #include <unordered_map>
 
 namespace goo {
@@ -17,6 +18,7 @@ class ShaderMatcher {
         std::once_flag initialized;
         Program program = Program::Count;
         bool valid = false;
+        std::atomic<bool> reported{false};
         std::string error;
     };
     std::mutex programs_mutex_;

@@ -3,28 +3,32 @@
 
 namespace goo {
 namespace {
-bool load_vertex(engine::PipelineArguments &arguments, std::vector<uint8_t> &vertex) {
+bool load_vertex(engine::PipelineArguments &arguments, std::vector<uint8_t> &vertex,
+                 std::string &error) {
     auto &state = runtime();
     const auto *source = engine::read<const uint8_t *>(arguments.pass, engine::VertexBytes);
     const auto compressed = engine::read<uint64_t>(arguments.pass, engine::VertexCompressedSize);
     const auto expanded = engine::read<uint32_t>(arguments.pass, engine::VertexExpandedSize);
     if (!expanded || !dtintutils_is_readable_range(source, compressed)) {
-        return state.fail("Invalid live vertex shader storage");
+        error = "Invalid live vertex shader storage";
+        return false;
     }
     vertex.resize(expanded);
     if (state.engine.decompress(source, intptr_t(compressed), vertex.data(), expanded, 1, 0, 0,
                                 nullptr, 0, nullptr, nullptr, nullptr, 0, 3) != expanded) {
-        return state.fail("Vertex shader decompression failed");
+        error = "Vertex shader decompression failed";
+        return false;
     }
     return true;
 }
 
 bool build_descriptor(engine::PipelineArguments &arguments, void *root,
-                      D3D12_GRAPHICS_PIPELINE_STATE_DESC &descriptor) {
+                      D3D12_GRAPHICS_PIPELINE_STATE_DESC &descriptor, std::string &error) {
     auto &state = runtime();
     const auto count = arguments.target_count;
     if (!root || count > arguments.target_formats.size()) {
-        return state.fail("Live target contract changed");
+        error = "Live target contract changed";
+        return false;
     }
     if (state.engine.build_descriptor(&descriptor, root, &arguments) != &descriptor ||
         descriptor.pRootSignature != root || descriptor.NumRenderTargets != count ||
@@ -32,19 +36,22 @@ bool build_descriptor(engine::PipelineArguments &arguments, void *root,
         uint32_t(descriptor.PrimitiveTopologyType) != arguments.topology ||
         (count && std::memcmp(descriptor.RTVFormats, arguments.target_formats.data(),
                               size_t(count) * sizeof(uint32_t)))) {
-        return state.fail("Native descriptor differs from live arguments");
+        error = "Native descriptor differs from live arguments";
+        return false;
     }
     if (descriptor.GS.BytecodeLength || descriptor.HS.BytecodeLength ||
         descriptor.DS.BytecodeLength) {
-        return state.fail("Unexpected additional graphics shader stage");
+        error = "Unexpected additional graphics shader stage";
+        return false;
     }
     return true;
 }
 
-bool configure_mask(D3D12_GRAPHICS_PIPELINE_STATE_DESC &descriptor) {
+bool configure_mask(D3D12_GRAPHICS_PIPELINE_STATE_DESC &descriptor, std::string &error) {
     if (descriptor.NumRenderTargets != 2 ||
         descriptor.RTVFormats[1] != DXGI_FORMAT_R32G32B32A32_FLOAT) {
-        return runtime().fail("Outline mask target is not bound");
+        error = "Outline mask target is not bound";
+        return false;
     }
     descriptor.BlendState.IndependentBlendEnable = TRUE;
     auto &mask = descriptor.BlendState.RenderTarget[1];
@@ -62,9 +69,10 @@ bool configure_mask(D3D12_GRAPHICS_PIPELINE_STATE_DESC &descriptor) {
     return true;
 }
 
-bool configure_composite(D3D12_GRAPHICS_PIPELINE_STATE_DESC &descriptor) {
+bool configure_composite(D3D12_GRAPHICS_PIPELINE_STATE_DESC &descriptor, std::string &error) {
     if (descriptor.NumRenderTargets != 1) {
-        return runtime().fail("Composite target contract changed");
+        error = "Composite target contract changed";
+        return false;
     }
     auto &blend = descriptor.BlendState.RenderTarget[0];
     blend.BlendEnable = TRUE;
@@ -84,7 +92,7 @@ bool configure_composite(D3D12_GRAPHICS_PIPELINE_STATE_DESC &descriptor) {
 
 ComPtr<ID3D12PipelineState> create_pipeline(ID3D12PipelineState *original,
                                             engine::PipelineArguments &arguments, void *root,
-                                            Program program) {
+                                            Program program, std::string &error) {
     auto &state = runtime();
     std::lock_guard<std::mutex> lock(state.pipeline_mutex);
     if (state.failure.load(std::memory_order_acquire)) {
@@ -92,16 +100,21 @@ ComPtr<ID3D12PipelineState> create_pipeline(ID3D12PipelineState *original,
     }
     D3D12_GRAPHICS_PIPELINE_STATE_DESC descriptor{};
     std::vector<uint8_t> vertex;
-    if (!build_descriptor(arguments, root, descriptor) || !load_vertex(arguments, vertex)) {
+    if (!build_descriptor(arguments, root, descriptor, error) ||
+        !load_vertex(arguments, vertex, error)) {
         return {};
     }
     const auto &replacement = state.shaders[static_cast<size_t>(program)];
     descriptor.VS = {vertex.data(), vertex.size()};
     descriptor.PS = {replacement.data(), replacement.size()};
-    const bool configured = program == Program::Composite ? configure_composite(descriptor)
-                                                          : configure_mask(descriptor);
+    const bool configured = program == Program::Composite ? configure_composite(descriptor, error)
+                                                          : configure_mask(descriptor, error);
     if (!configured) {
         return {};
+    }
+    if (program == Program::PropOutline) {
+        // Scene depth would cut holes in this mask; MIN and the composite handle occlusion.
+        descriptor.DepthStencilState.DepthEnable = FALSE;
     }
     descriptor.CachedPSO = {};
     ComPtr<ID3D12Device> device;
@@ -115,7 +128,7 @@ ComPtr<ID3D12PipelineState> create_pipeline(ID3D12PipelineState *original,
         char message[128];
         std::snprintf(message, sizeof(message), "Pipeline creation failed: 0x%08lx",
                       static_cast<unsigned long>(result));
-        state.fail(message);
+        error = message;
         return {};
     }
     return replacement_pipeline;

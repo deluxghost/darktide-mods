@@ -5,11 +5,13 @@ namespace goo {
 namespace {
 bool classify(std::string_view header, Program &program, std::string &error) {
     const bool thickness = header.find("outline_thickness;") != header.npos;
-    const bool outline =
-        thickness && header.find("__BINDLESS_TEX2D_scanline_vertical;") != header.npos;
+    const bool scanline = header.find("__BINDLESS_TEX2D_scanline_vertical;") != header.npos;
+    const bool outline = thickness && scanline && header.find("outline_color;") != header.npos;
+    const bool prop_outline = thickness && scanline && header.find("float3 color;") != header.npos;
     const bool combat = thickness && header.find("__BINDLESS_TEX2D_warp_breakup;") != header.npos;
     const bool composite = header.find("outline_inner_params;") != header.npos;
-    const unsigned candidates = unsigned(outline) + unsigned(combat) + unsigned(composite);
+    const unsigned candidates = unsigned(outline) + unsigned(combat) + unsigned(prop_outline) +
+                                unsigned(composite);
     if (candidates > 1 || (thickness && !candidates)) {
         error = "Ambiguous or unknown outline resource structure";
         return false;
@@ -18,6 +20,8 @@ bool classify(std::string_view header, Program &program, std::string &error) {
         program = Program::Outline;
     if (combat)
         program = Program::Combat;
+    if (prop_outline)
+        program = Program::PropOutline;
     if (composite)
         program = Program::Composite;
     return true;

@@ -55,6 +55,11 @@ bool Runtime::fail(const char *message) {
     enabled.store(false, std::memory_order_release);
     return false;
 }
+
+void Runtime::warn(const char *message) {
+    std::lock_guard<std::mutex> lock(warnings_mutex);
+    warnings.emplace_back(message);
+}
 } // namespace goo
 
 const void *GoodOldOutlines_GetConfig(uint32_t *size, char *error, int capacity) {
@@ -112,6 +117,19 @@ int GoodOldOutlines_SetEnabled(int enabled) {
 
 const char *GoodOldOutlines_GetError(void) {
     return goo::runtime().failure.load(std::memory_order_acquire);
+}
+
+int GoodOldOutlines_PollWarning(char *message, int capacity) {
+    auto &state = goo::runtime();
+    std::lock_guard<std::mutex> lock(state.warnings_mutex);
+    if (state.warnings.empty())
+        return 0;
+    const auto &warning = state.warnings.front();
+    if (!message || capacity <= 0 || warning.size() >= size_t(capacity))
+        return -1;
+    std::memcpy(message, warning.c_str(), warning.size() + 1);
+    state.warnings.pop_front();
+    return 1;
 }
 
 int GoodOldOutlines_Remove(char *error, int capacity) {

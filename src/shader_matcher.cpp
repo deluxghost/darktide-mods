@@ -35,7 +35,7 @@ bool ShaderMatcher::identify(void *pass, const engine::Functions &engine, Progra
             inspect(source, compressed, expanded, engine, cached->program, cached->error);
     });
     program = cached->program;
-    error = cached->error;
+    error = !cached->valid && !cached->reported.exchange(true) ? cached->error : std::string{};
     return cached->valid;
 }
 
@@ -59,8 +59,10 @@ bool ShaderMatcher::inspect(const uint8_t *source, uint64_t compressed, uint32_t
                 return false;
         }
         if (!analyze_shader(text, analysis, error) ||
-            !identify_shader(analysis, ShaderContracts, program, error))
+            !identify_shader(analysis, ShaderContracts, program, error)) {
+            program = analysis.program;
             return false;
+        }
     }
     return true;
 }

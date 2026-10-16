@@ -65,7 +65,7 @@ foreach ($library in 'dxcompiler.dll', 'dxil.dll') {
     Copy-Item -LiteralPath (Join-Path $sdkDirectory $library) -Destination $toolDirectory
 }
 $assembler = Join-Path $toolDirectory 'assemble.exe'
-foreach ($program in 'outline', 'combat') {
+foreach ($program in 'outline', 'combat', 'prop_outline') {
     Invoke-BuildTool $assembler @(
         (Join-Path $PSScriptRoot "shaders/$program.ll"),
         (Join-Path $outputDirectory "$program.dxil")
@@ -82,7 +82,7 @@ Invoke-BuildTool (Join-Path $toolDirectory 'contracts.exe') @(
 )
 Copy-Item -LiteralPath (Join-Path $sdkDirectory 'dxcompiler.dll') -Destination $outputDirectory
 Build-Project 'GoodOldOutlines.vcxproj'
-foreach ($name in 'GoodOldOutlines.dll', 'outline.dxil', 'combat.dxil', 'composite.dxil', 'dxcompiler.dll') {
+foreach ($name in 'GoodOldOutlines.dll', 'outline.dxil', 'combat.dxil', 'prop_outline.dxil', 'composite.dxil', 'dxcompiler.dll') {
     $file = Join-Path $outputDirectory $name
     if (-not (Test-Path -LiteralPath $file -PathType Leaf)) {
         throw "Build output was not found: $file"
