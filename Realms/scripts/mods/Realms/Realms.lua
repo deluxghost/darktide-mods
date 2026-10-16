@@ -16,6 +16,8 @@ local GameplayControl = mod:io_dofile("Realms/scripts/mods/Realms/core/gameplay_
 mod._gameplay_control = GameplayControl
 local SessionControl = mod:io_dofile("Realms/scripts/mods/Realms/core/session_control")
 mod._session_control = SessionControl
+local BinaryNetwork = mod:io_dofile("Realms/scripts/mods/Realms/core/binary_network")
+mod._binary_network = BinaryNetwork
 local Latency = mod:io_dofile("Realms/scripts/mods/Realms/core/latency")
 local ModNetwork = mod:io_dofile("Realms/scripts/mods/Realms/core/mod_network")
 local Chat = mod:io_dofile("Realms/scripts/mods/Realms/core/chat")
@@ -64,7 +66,8 @@ mod:io_dofile("Realms/scripts/mods/Realms/views/preparation_view/register")
 
 LoadingClients.install(Session, Preparation)
 MissionSeed.install(Session)
-SessionControl.install(Session)
+BinaryNetwork.install(Session, SessionControl)
+SessionControl.install(Session, BinaryNetwork)
 Latency.install(Session, SessionControl)
 Preparation.install(Session, ProfileUpdates, SessionControl, Latency)
 BotBackfill.install(Session)
@@ -271,6 +274,7 @@ end)
 
 mod.update = function ()
 	SessionControl.update()
+	BinaryNetwork.update()
 	Session.update()
 	Latency.update()
 	GameplayControl.update()
@@ -278,6 +282,10 @@ mod.update = function ()
 	ProfileUpdates.update()
 	LoadoutChanges.update()
 	Workarounds.update()
+end
+
+mod.on_unload = function ()
+	SessionControl.shutdown()
 end
 
 mod:command("realms_status", mod:localize("command_status_description"), function ()

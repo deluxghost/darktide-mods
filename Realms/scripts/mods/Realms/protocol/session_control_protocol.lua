@@ -6,12 +6,12 @@ local SessionControlProtocol = {}
 
 SessionControlProtocol.NAME = "realms-session-control"
 SessionControlProtocol.VERSION = SessionTicket.PROTOCOL_VERSION
-SessionControlProtocol.MAX_FRAME_SIZE = 500
 SessionControlProtocol.MAX_MESSAGE_SIZE = 96 * 1024
 
 local MESSAGE_TYPES = table.set({
 	"hello",
 	"ready",
+	"binary_error",
 })
 
 local function validate_message(message)
@@ -20,9 +20,22 @@ local function validate_message(message)
 		or message.version ~= SessionControlProtocol.VERSION
 		or not MESSAGE_TYPES[message.type]
 		or type(message.data) ~= "table"
-		or table.size(message.data) ~= 0
 	then
 		return false, "Invalid session-control protocol message"
+	end
+	local data = message.data
+
+	if message.type == "binary_error" then
+		if table.size(data) ~= 4
+			or type(data.message_type) ~= "number" or data.message_type % 1 ~= 0 or data.message_type < 1 or data.message_type > 65535
+			or type(data.message_id) ~= "number" or data.message_id % 1 ~= 0 or data.message_id < 1 or data.message_id > 4294967295
+			or type(data.reason) ~= "string" or #data.reason == 0 or #data.reason > 64
+			or type(data.details) ~= "string" or #data.details > 256
+		then
+			return false, "Invalid binary routing error"
+		end
+	elseif table.size(data) ~= 0 then
+		return false, "Session-control handshake data must be empty"
 	end
 
 	return true

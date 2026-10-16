@@ -15,11 +15,11 @@ local disconnect_handlers = {}
 local registered_channels = {}
 local member_peers = {}
 local Session
+local BinaryNetwork
 
 local CLIENT_TO_HOST_RPC = "rpc_check_mechanism"
 local HOST_TO_CLIENT_RPC = "rpc_check_mechanism_reply"
 local HELLO_RETRY_INTERVAL = 1
-local REASSEMBLY_TIMEOUT = 10
 local RECONCILE_INTERVAL = 1
 local next_reconcile_at = 0
 
@@ -85,8 +85,14 @@ local function unregister_channel(channel_id, notify_handlers)
 		return
 	end
 
+	local detached, detach_error = BinaryNetwork.detach(channel_id)
+
+	if not detached then
+		error("Failed detaching session-control transport: " .. detach_error)
+	end
+
 	local delegate = registration.delegate
-	local objects = delegate and delegate._registered_channel_objects[registration.rpc_name]
+	local objects = delegate._registered_channel_objects[registration.rpc_name]
 
 	if objects and objects[channel_id] == SessionControl then
 		delegate:unregister_channel_events(channel_id, registration.rpc_name)
@@ -150,12 +156,14 @@ local function register_channel(channel_id, peer_id, role)
 	local objects = delegate._registered_channel_objects[rpc_name]
 	local existing = objects and objects[channel_id]
 
-	if existing and existing ~= SessionControl then
-		if existing.__class_name ~= SessionControl.__class_name then
-			return nil, string.format("RPC %s is still owned by %s", rpc_name, tostring(existing.__class_name))
-		end
+	if existing then
+		return nil, string.format("RPC %s is still owned by %s", rpc_name, tostring(existing.__class_name))
+	end
 
-		delegate:unregister_channel_events(channel_id, rpc_name)
+	local attached, attach_error = BinaryNetwork.attach(channel_id, peer_id, role)
+
+	if not attached then
+		return nil, attach_error
 	end
 
 	delegate:register_connection_channel_events(SessionControl, channel_id, rpc_name)
@@ -165,9 +173,6 @@ local function register_channel(channel_id, peer_id, role)
 		hello_sent_at = nil,
 		peer_id = peer_id,
 		ready = false,
-		receive_chunks = nil,
-		receive_size = 0,
-		receive_started_at = nil,
 		role = role,
 		rpc_name = rpc_name,
 	}
@@ -182,21 +187,6 @@ local function register_channel(channel_id, peer_id, role)
 	end
 
 	return registration
-end
-
-local function send_frames(channel_id, role, payload)
-	for offset = 1, #payload, SessionControlProtocol.MAX_FRAME_SIZE do
-		local chunk = string.sub(payload, offset, offset + SessionControlProtocol.MAX_FRAME_SIZE - 1)
-		local is_last = offset + SessionControlProtocol.MAX_FRAME_SIZE > #payload
-
-		if role == "host" then
-			RPC.rpc_check_mechanism_reply(channel_id, is_last, chunk)
-		else
-			RPC.rpc_check_mechanism(channel_id, chunk, is_last)
-		end
-	end
-
-	return true
 end
 
 local function encode_message(protocol_name, message_type, data)
@@ -222,7 +212,7 @@ local function send_message(channel_id, role, protocol_name, message_type, data,
 		return false, encode_error
 	end
 
-	return send_frames(channel_id, role, payload)
+	return BinaryNetwork.send_control(channel_id, registration.peer_id, payload, role)
 end
 
 local function mark_ready(channel_id, registration)
@@ -247,6 +237,11 @@ local function receive_builtin(channel_id, registration, message)
 	end
 	if registration.role == "client" and message.type == "ready" then
 		return mark_ready(channel_id, registration)
+	end
+	if registration.role == "client" and registration.ready and message.type == "binary_error" then
+		BinaryNetwork.receive_error(message.data)
+
+		return true
 	end
 
 	return false, "Session-control handshake message is invalid for this endpoint"
@@ -301,48 +296,6 @@ local function receive_message(channel_id, payload)
 	end
 end
 
-local function receive_frame(channel_id, expected_role, is_last, chunk)
-	local registration = registered_channels[channel_id]
-
-	if not registration
-		or registration.role ~= expected_role
-		or type(is_last) ~= "boolean"
-		or type(chunk) ~= "string"
-		or #chunk == 0
-		or #chunk > SessionControlProtocol.MAX_FRAME_SIZE
-	then
-		fail_channel(channel_id, "Session-control frame is invalid")
-
-		return
-	end
-
-	if not registration.receive_chunks then
-		registration.receive_chunks = {}
-		registration.receive_size = 0
-		registration.receive_started_at = Managers.time:time("main")
-	end
-
-	registration.receive_chunks[#registration.receive_chunks + 1] = chunk
-	registration.receive_size = registration.receive_size + #chunk
-
-	if registration.receive_size > SessionControlProtocol.MAX_MESSAGE_SIZE then
-		fail_channel(channel_id, "Session-control message exceeds the size limit")
-
-		return
-	end
-	if not is_last then
-		return
-	end
-
-	local payload = table.concat(registration.receive_chunks)
-
-	registration.receive_chunks = nil
-	registration.receive_size = 0
-	registration.receive_started_at = nil
-
-	receive_message(channel_id, payload)
-end
-
 local function client_connected_to_host(connection)
 	local connection_manager = Managers.connection
 
@@ -377,19 +330,9 @@ local function reconcile_host(connection)
 	end
 end
 
-local function expire_partial_messages(t)
-	for channel_id, registration in pairs(registered_channels) do
-		if registration.receive_started_at and t - registration.receive_started_at > REASSEMBLY_TIMEOUT then
-			registration.receive_chunks = nil
-			registration.receive_size = 0
-			registration.receive_started_at = nil
-			fail_channel(channel_id, "Session-control message reassembly timed out")
-		end
-	end
-end
-
-function SessionControl.install(session)
+function SessionControl.install(session, binary_network)
 	Session = session
+	BinaryNetwork = binary_network
 	SessionControl.register_protocol(SessionControlProtocol)
 
 	mod:hook(NetworkEventDelegate, "destroy", function (func, self, ...)
@@ -578,18 +521,81 @@ function SessionControl.is_available()
 	return registration and registration.role == "client" and registration.ready or false
 end
 
-function SessionControl.rpc_check_mechanism(self, channel_id, payload, is_last)
-	receive_frame(channel_id, "host", is_last, payload)
+function SessionControl.receive_control(message)
+	local registration = registered_channels[message.channel_id]
+
+	if not registration or message.sender ~= registration.peer_id
+		or message.recipient ~= normalize_peer_id(Network.peer_id())
+		or not message.reliable or #message.payload > SessionControlProtocol.MAX_MESSAGE_SIZE
+	then
+		fail_channel(message.channel_id, "Session-control message identity or size is invalid")
+
+		return
+	end
+
+	receive_message(message.channel_id, message.payload)
 end
 
-function SessionControl.rpc_check_mechanism_reply(self, channel_id, is_last, payload)
-	receive_frame(channel_id, "client", is_last, payload)
+local function receive_control_wakeup(channel_id, role, token, complete)
+	local registration = registered_channels[channel_id]
+	local message_id = tonumber(token)
+
+	if not registration or registration.role ~= role or complete ~= true
+		or not message_id or message_id % 1 ~= 0 or message_id < 1 or message_id > 4294967295
+	then
+		fail_channel(channel_id, "Binary control wakeup is invalid")
+
+		return
+	end
+
+	BinaryNetwork.receive_control(channel_id, message_id)
+end
+
+function SessionControl.rpc_check_mechanism(self, channel_id, token, complete)
+	receive_control_wakeup(channel_id, "host", token, complete)
+end
+
+function SessionControl.rpc_check_mechanism_reply(self, channel_id, complete, token)
+	receive_control_wakeup(channel_id, "client", token, complete)
+end
+
+function SessionControl.send_binary_error(channel_id, message_type, message_id, reason, details)
+	return send_message(channel_id, "host", SessionControlProtocol.NAME, "binary_error", {
+		message_type = message_type,
+		message_id = message_id,
+		reason = reason,
+		details = details,
+	}, true)
+end
+
+function SessionControl.channel_for_peer(peer_id)
+	for channel_id, registration in pairs(registered_channels) do
+		if registration.ready and registration.peer_id == peer_id then
+			return channel_id
+		end
+	end
+end
+
+function SessionControl.peer_for_channel(channel_id)
+	local registration = registered_channels[channel_id]
+
+	return registration and registration.ready and registration.peer_id or nil
+end
+
+function SessionControl.has_channels()
+	return next(registered_channels) ~= nil
+end
+
+function SessionControl.reject_channel(channel_id, reason)
+	fail_channel(channel_id, reason)
+end
+
+function SessionControl.shutdown()
+	unregister_all_channels()
 end
 
 function SessionControl.update()
 	local t = Managers.time:time("main")
-
-	expire_partial_messages(t)
 
 	local host_connection = active_host_connection()
 

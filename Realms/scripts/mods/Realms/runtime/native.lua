@@ -289,5 +289,6 @@ end
 Native.EVENT_TYPES = EVENT_TYPES
 Native.ERROR_CODES = ERROR_CODES
 Native.START_ERROR_CODES = START_ERROR_CODES
+Native.initialized_runtime = initialized_runtime
 
 return Native
