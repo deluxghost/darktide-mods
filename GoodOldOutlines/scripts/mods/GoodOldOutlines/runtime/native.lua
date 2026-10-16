@@ -11,6 +11,7 @@ if not declared then
 		int GoodOldOutlines_Start(const char* shader_directory, char* error, int capacity);
 		int GoodOldOutlines_SetEnabled(int enabled);
 		const char* GoodOldOutlines_GetError(void);
+		int GoodOldOutlines_PollWarning(char* message, int capacity);
 		int GoodOldOutlines_Remove(char* error, int capacity);
 		typedef int GoodOldOutlines_RuntimeAbiDeclared;
 	]])
@@ -69,6 +70,14 @@ local function new(state)
 		local message = library().GoodOldOutlines_GetError()
 		if message ~= nil then
 			return ffi.string(message)
+		end
+	end
+
+	function api.warning_message()
+		local code = library().GoodOldOutlines_PollWarning(error_buffer, ERROR_CAPACITY)
+		assert(code >= 0, "Outline warning buffer is too small")
+		if code == 1 then
+			return ffi.string(error_buffer)
 		end
 	end
 

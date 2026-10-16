@@ -5,6 +5,10 @@ local function new(mod)
 	local Native = mod:io_dofile("GoodOldOutlines/scripts/mods/GoodOldOutlines/runtime/native").new(state)
 	local api = {}
 
+	function api.is_enabled()
+		return mod:is_enabled() and not state.failed
+	end
+
 	local function synchronize_renderer()
 		-- This getter waits for the previous renderer job before its config changes.
 		Application.render_config("settings", "outline_enabled")
@@ -48,21 +52,26 @@ local function new(mod)
 	end
 
 	function api.request_enable()
-		state.pending = not state.active
+		state.pending = api.is_enabled() and not state.active
 	end
 
 	function api.update()
-		if state.pending and mod:is_enabled() then
+		if state.pending and api.is_enabled() then
 			state.pending = false
 			enable()
 		end
-		if not state.active then
+		if not state.active or state.failed then
 			return
 		end
 		local message = Native.error_message()
 		if message then
-			mod:error("%s", message)
-			get_mod("DMF").mod_state_changed(mod:get_name(), false)
+			state.failed = true
+			return message
+		end
+		local warning = Native.warning_message()
+		while warning do
+			mod:warning("%s", warning)
+			warning = Native.warning_message()
 		end
 	end
 

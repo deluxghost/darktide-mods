@@ -1,6 +1,6 @@
 local mod = get_mod("GoodOldOutlines")
 local OutlineSettings = require("scripts/settings/outline/outline_settings")
-local MAX_ID = 8388607
+local MAX_ID = 4194303
 local layers = { goo_tagged_item_outline = true }
 local records, owners = {}, {}
 local next_id = 0
@@ -20,7 +20,7 @@ end
 
 local function write_tree(unit, owner, layer, id)
 	owners[unit] = owner
-	-- This existing parameter is unused by both original outline pixel shaders.
+	-- This existing parameter is unused by the original outline pixel shaders.
 	Unit.set_vector4_for_material(unit, layer, "dev_wireframe_color", Color(0, 0, 0, id))
 	for _, child in ipairs(Unit.get_child_units(unit)) do
 		write_tree(child, owner, layer, id)

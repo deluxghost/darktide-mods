@@ -6,12 +6,13 @@ local render_options = mod:io_dofile("GoodOldOutlines/scripts/mods/GoodOldOutlin
 local outline_identity = mod:io_dofile("GoodOldOutlines/scripts/mods/GoodOldOutlines/outline_identity")
 
 local function update_enemy_highlight()
-	enemy_highlight.set_hidden(mod:is_enabled() and mod:get("hide_mesh"))
+	enemy_highlight.set_hidden(runtime.is_enabled() and mod:get("hide_mesh"))
 end
 
-mod.update = runtime.update
-
 mod.on_enabled = function()
+	if not runtime.is_enabled() then
+		return
+	end
 	outline_identity.set_enabled(true)
 	render_options.update()
 	runtime.request_enable()
@@ -26,6 +27,14 @@ local function disable()
 	outline_identity.set_enabled(false)
 end
 
+mod.update = function()
+	local message = runtime.update()
+	if message then
+		mod:error("%s", message)
+		disable()
+	end
+end
+
 mod.on_disabled = disable
 mod.on_unload = disable
 
@@ -33,7 +42,7 @@ mod.on_setting_changed = function(setting_id)
 	if setting_id == "hide_mesh" then
 		update_enemy_highlight()
 	elseif setting_id == "highlight_tagged_items" then
-		item_highlight.set_enabled(mod:is_enabled() and mod:get("highlight_tagged_items"))
+		item_highlight.set_enabled(runtime.is_enabled() and mod:get("highlight_tagged_items"))
 	elseif setting_id == "item_outline_color" then
 		item_highlight.update_color()
 	elseif setting_id == "opaque_outlines" or setting_id == "occluded_outline_visibility" then
