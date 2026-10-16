@@ -8,12 +8,12 @@ return {
 		["zh-cn"] = "带回类似《鼠疫 2》中经典的标记轮廓样式。",
 	},
 	hide_mesh = {
-		en = "Hide Highlighted Mesh",
-		["zh-cn"] = "隐藏高亮模型",
+		en = "Hide Highlighted Enemy Mesh",
+		["zh-cn"] = "隐藏敌人高亮模型",
 	},
 	hide_mesh_description = {
-		en = "Hides the highlighted mesh of tagged enemies through obstacles.",
-		["zh-cn"] = "隐藏被标记敌人隔着障碍时的高亮模型。",
+		en = "Hides enemy mesh highlights behind obstacles.",
+		["zh-cn"] = "隐藏敌人在障碍物后的高亮模型。",
 	},
 	highlight_tagged_items = {
 		en = "Highlight Tagged Items",
