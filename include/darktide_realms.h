@@ -81,6 +81,57 @@ typedef struct RealmsBinaryStats {
     uint64_t expired_messages;
 } RealmsBinaryStats;
 
+#define REALMS_VOICE_MAX_PACKET_SIZE 960
+
+typedef struct RealmsVoiceConfig {
+    uint32_t struct_size;
+    uint32_t frame_ms;
+    uint32_t bitrate;
+    uint32_t device_period_ms;
+    uint32_t playback_device_id;
+    uint32_t echo_cancellation;
+    uint32_t noise_suppression;
+} RealmsVoiceConfig;
+
+typedef struct RealmsVoicePacket {
+    uint32_t struct_size;
+    uint32_t sequence;
+    uint32_t payload_size;
+    uint32_t age_ms;
+    uint32_t speaking;
+    uint32_t stream;
+} RealmsVoicePacket;
+
+typedef struct RealmsVoiceStats {
+    uint32_t struct_size;
+    uint32_t capture_enabled;
+    uint32_t maximum_packet_bytes;
+    uint32_t codec_lookahead_frames;
+    uint32_t capture_pending_frames;
+    uint32_t playback_pending_frames;
+    uint32_t capture_device_buffer_us;
+    uint32_t playback_device_buffer_us;
+    uint64_t encoded_frames;
+    uint64_t encoded_bytes;
+    uint64_t decoded_frames;
+    uint64_t expired_packets;
+    uint64_t dropped_packets;
+    uint64_t dropped_capture_frames;
+    uint64_t dropped_playback_frames;
+    uint64_t playback_underrun_frames;
+    uint64_t encode_time_us;
+    uint64_t maximum_encode_time_us;
+    uint64_t decode_time_us;
+    uint64_t maximum_decode_time_us;
+    uint32_t echo_cancellation;
+    uint32_t noise_suppression;
+    uint32_t reference_enabled;
+    uint64_t processed_frames;
+    uint64_t processing_time_us;
+    uint64_t maximum_processing_time_us;
+    uint64_t dropped_reference_frames;
+} RealmsVoiceStats;
+
 // All functions except native callbacks must be called from the game thread.
 // Command functions return 1 on success and 0 on failure.
 REALMS_RUNTIME_API int RealmsRuntime_Initialize(char *error, int error_capacity);
@@ -148,6 +199,35 @@ REALMS_RUNTIME_API int RealmsRuntime_PollBinary(uint32_t control_channel, uint32
                                                char *error, int error_capacity);
 REALMS_RUNTIME_API int RealmsRuntime_BinaryStats(uint32_t channel_id, RealmsBinaryStats *stats,
                                                 char *error, int error_capacity);
+
+// Private audio module, independent of engine initialization and networking.
+// 48 kHz mono float PCM internally; frame_ms is 10 or 20, device_period_ms is 5..20.
+// Start opens playback only. Capture must be explicitly enabled and disabling it closes the microphone.
+// Playback uses the game's Wwise device ID (0 = system default).
+// Capture uses a UTF-8 Windows endpoint ID borrowed during the call (null = system default).
+REALMS_RUNTIME_API int RealmsRuntime_StartVoice(const RealmsVoiceConfig *config, char *error, int error_capacity);
+REALMS_RUNTIME_API int RealmsRuntime_StopVoice(char *error, int error_capacity);
+// Polls default-device changes and rebuilds affected devices on the game thread; failure stops voice.
+REALMS_RUNTIME_API int RealmsRuntime_UpdateVoice(char *error, int error_capacity);
+// Linear playback gain: 0 = muted, 1 = normal, 2 = 200%. Preserved across device changes.
+REALMS_RUNTIME_API int RealmsRuntime_SetVoiceVolume(float volume, char *error, int error_capacity);
+REALMS_RUNTIME_API int RealmsRuntime_SetVoiceCapture(int enabled, const char *device_id, char *error, int error_capacity);
+// Gates capture-to-packet transmission without reopening the microphone; disabling clears pending speech.
+REALMS_RUNTIME_API int RealmsRuntime_SetVoiceTransmission(int enabled, char *error, int error_capacity);
+REALMS_RUNTIME_API int RealmsRuntime_SetVoiceProcessing(int echo_cancellation, int noise_suppression, char *error, int error_capacity);
+// Reopens playback without resetting codec streams. A failed switch stops voice and closes capture.
+REALMS_RUNTIME_API int RealmsRuntime_SetVoicePlaybackDevice(uint32_t device_id, char *error, int error_capacity);
+
+// Same poll return convention as PollBinary. Frames older than 100 ms are discarded and counted.
+REALMS_RUNTIME_API int RealmsRuntime_PollVoicePacket(RealmsVoicePacket *packet, void *payload, uint32_t capacity,
+                                                    char *error, int error_capacity);
+// Copies an ordered Opus packet for a nonzero local speaker ID. Zero bytes requests loss concealment.
+// Congestion drops audio and increments dropped_packets; speaker removals remain ordered.
+// Does not create connections, write recordings, or call Lua.
+REALMS_RUNTIME_API int RealmsRuntime_SubmitVoicePacket(uint32_t speaker_id, const void *payload, uint32_t size,
+                                                      char *error, int error_capacity);
+REALMS_RUNTIME_API int RealmsRuntime_RemoveVoiceSpeaker(uint32_t speaker_id, char *error, int error_capacity);
+REALMS_RUNTIME_API int RealmsRuntime_VoiceStats(RealmsVoiceStats *stats, char *error, int error_capacity);
 
 // Must run before Darktide destroys the Connection and local-session lobby objects.
 REALMS_RUNTIME_API int RealmsRuntime_CloseLocalSession(char *error, int error_capacity);
