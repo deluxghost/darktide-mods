@@ -1,7 +1,9 @@
 local mod = get_mod("Realms")
+local MissionTemplates = require("scripts/settings/mission/mission_templates")
 
 local SocialMenu = {}
 local Session
+local Preparation
 
 local DEFINITIONS_PATH = "scripts/ui/views/social_menu_roster_view/social_menu_roster_view_definitions"
 local PLAYER_POPUP_CONTENT_PATH = "scripts/ui/view_elements/view_element_player_social_popup/view_element_player_social_popup_content_list"
@@ -582,8 +584,51 @@ local function install_view_hooks(SocialMenuRosterView, Definitions, RosterViewS
 	installed_roster_views[SocialMenuRosterView] = true
 end
 
-function SocialMenu.install(session)
+function SocialMenu.install(session, preparation)
 	Session = session
+	Preparation = preparation
+
+	mod:hook(CLASS.SocialService, "fetch_party_members", function (func, self)
+		local promise = func(self)
+		local mission_name = Preparation.mission_name()
+		local mission = MissionTemplates[mission_name]
+
+		if not Session.is_active() or not mission or mission.is_hub
+			or mission.game_mode_name == "hub" or mission.game_mode_name == "hub_singleplay"
+		then
+			return promise
+		end
+
+		return promise:next(function (members)
+			if not Session.is_active() or Preparation.mission_name() ~= mission_name then
+				return members
+			end
+
+			local member_ids = {}
+
+			for unique_id, info in pairs(members) do
+				member_ids[info:account_id()] = unique_id
+			end
+
+			for unique_id, player in pairs(Managers.player:human_players()) do
+				local account_id = player:account_id()
+				local previous_id = member_ids[account_id]
+				local info = self:get_player_info_by_account_id(account_id)
+
+				if previous_id and previous_id ~= unique_id then
+					members[previous_id] = nil
+				end
+
+				info:set_is_party_member(true)
+				members[unique_id] = info
+				member_ids[account_id] = unique_id
+			end
+
+			self._num_party_members = table.size(members)
+
+			return members
+		end)
+	end)
 
 	mod:hook_require(PLAYER_POPUP_CONTENT_PATH, install_player_popup_hook)
 

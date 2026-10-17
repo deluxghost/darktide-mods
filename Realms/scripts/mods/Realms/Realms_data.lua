@@ -113,6 +113,22 @@ return {
 					},
 				},
 			},
+			{
+				setting_id = "voice_chat_settings",
+				type = "group",
+				sub_widgets = {
+					{
+						setting_id = "voice_echo_cancellation",
+						type = "checkbox",
+						default_value = true,
+					},
+					{
+						setting_id = "voice_noise_suppression",
+						type = "checkbox",
+						default_value = true,
+					},
+				},
+			},
 		},
 	},
 }

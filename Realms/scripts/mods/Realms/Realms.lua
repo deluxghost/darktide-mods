@@ -18,6 +18,8 @@ local SessionControl = mod:io_dofile("Realms/scripts/mods/Realms/core/session_co
 mod._session_control = SessionControl
 local BinaryNetwork = mod:io_dofile("Realms/scripts/mods/Realms/core/binary_network")
 mod._binary_network = BinaryNetwork
+local Voice = mod:io_dofile("Realms/scripts/mods/Realms/core/voice")
+mod._voice = Voice
 local Latency = mod:io_dofile("Realms/scripts/mods/Realms/core/latency")
 local ModNetwork = mod:io_dofile("Realms/scripts/mods/Realms/core/mod_network")
 local Chat = mod:io_dofile("Realms/scripts/mods/Realms/core/chat")
@@ -77,6 +79,7 @@ ProfileUpdates.install(Session, Preparation, GameplayControl)
 Presence.install(Session)
 ModNetwork.install(SessionControl)
 Chat.install(Session, SessionControl)
+Voice.install(Session, SessionControl, BinaryNetwork)
 UnitRpcLifetime.install(Session)
 Workarounds.install(Session, GameplayControl)
 SystemMenu.install(Preparation, Session)
@@ -84,7 +87,7 @@ Loading.install(Session)
 EndViewPatch.install(Session)
 ChatView.install(Chat)
 PreparationChat.install()
-SocialMenu.install(Session)
+SocialMenu.install(Session, Preparation)
 
 mod.load_package = function (package_name)
 	if not Managers.package:is_loading(package_name) and not Managers.package:has_loaded(package_name) then
@@ -282,9 +285,16 @@ mod.update = function ()
 	ProfileUpdates.update()
 	LoadoutChanges.update()
 	Workarounds.update()
+	Voice.update()
 end
 
 mod.on_unload = function ()
+	local stopped, stop_error = Voice.stop()
+
+	if not stopped then
+		mod:error("Failed stopping voice: %s", stop_error)
+	end
+
 	SessionControl.shutdown()
 end
 
@@ -293,6 +303,11 @@ mod:command("realms_status", mod:localize("command_status_description"), functio
 end)
 
 mod.on_setting_changed = function (setting_id)
+	if setting_id == "voice_echo_cancellation" or setting_id == "voice_noise_suppression" then
+		Voice.processing_settings_changed()
+
+		return
+	end
 	if setting_id == "bot_fill_target" then
 		BotBackfill.apply_settings(Session)
 

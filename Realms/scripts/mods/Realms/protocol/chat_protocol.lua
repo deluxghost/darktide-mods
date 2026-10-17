@@ -10,6 +10,7 @@ ChatProtocol.MAX_MESSAGE_SIZE = 96 * 1024
 ChatProtocol.MAX_TEXT_CHARACTERS = 200
 
 local MAX_NAME_BYTES = 256
+local MAX_ACCOUNT_ID_BYTES = 128
 local REJECTION_REASONS = table.set({
 	"sender_unavailable",
 })
@@ -34,10 +35,13 @@ local MESSAGE_VALIDATORS = {
 			and valid_text(data.text)
 	end,
 	chat_deliver = function (data)
-		return table.size(data) == 2
+		return table.size(data) == 3
 			and type(data.sender_name) == "string"
 			and #data.sender_name > 0
 			and #data.sender_name <= MAX_NAME_BYTES
+			and type(data.sender_account_id) == "string"
+			and #data.sender_account_id > 0
+			and #data.sender_account_id <= MAX_ACCOUNT_ID_BYTES
 			and valid_text(data.text)
 	end,
 	chat_rejected = function (data)

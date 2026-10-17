@@ -73,34 +73,6 @@ local localization = {
 		en = "Allow every player to change their loadout while a Realms mission is in progress.",
 		["zh-cn"] = "允许所有玩家在领域任务进行期间切换战斗配备。",
 	},
-	join_server_address = {
-		en = "Server address",
-		["zh-cn"] = "服务器地址",
-	},
-	join_server_address_placeholder = {
-		en = "address:port or [IPv6]:port",
-		["zh-cn"] = "地址:端口 或 [IPv6]:端口",
-	},
-	join_server_password = {
-		en = "Password",
-		["zh-cn"] = "密码",
-	},
-	join_server_connect = {
-		en = "Connect",
-		["zh-cn"] = "连接",
-	},
-	social_kick_confirmation_title = {
-		en = "Kick {#color(239,193,82)}%s{#reset()} from Realm",
-		["zh-cn"] = "将{#color(239,193,82)}%s{#reset()}踢出领域",
-	},
-	social_kick_confirmation_description = {
-		en = "Do you want to kick %s from the Realm?",
-		["zh-cn"] = "确定要将%s从领域中踢出吗？",
-	},
-	error_join_target_format = {
-		en = "Enter the server as address:port or [IPv6]:port.",
-		["zh-cn"] = "服务器地址格式应为 地址:端口 或 [IPv6]:端口。",
-	},
 	private_mode = {
 		en = "Private mode",
 		["zh-cn"] = "私人模式",
@@ -169,13 +141,73 @@ local localization = {
 		en = "Make clients follow the host's sound-muffling state in the Psykhanium.",
 		["zh-cn"] = "使客机跟随主机在灵能室中的消音状态。",
 	},
+	voice_chat_settings = {
+		en = "Voice chat",
+		["zh-cn"] = "语音聊天",
+	},
+	voice_echo_cancellation = {
+		en = "Echo cancellation",
+		["zh-cn"] = "回声消除",
+	},
+	voice_echo_cancellation_description = {
+		en = "Remove speaker audio picked up by your microphone in Realms voice chat. This only affects your microphone.",
+		["zh-cn"] = "消除领域语音中麦克风拾取的扬声器回声。只影响自己的麦克风。",
+	},
+	voice_noise_suppression = {
+		en = "Noise suppression",
+		["zh-cn"] = "降噪",
+	},
+	voice_noise_suppression_description = {
+		en = "Reduce background noise from your microphone in Realms voice chat. This only affects your microphone.",
+		["zh-cn"] = "减少领域语音中麦克风的背景噪声。只影响自己的麦克风。",
+	},
+	join_server_address = {
+		en = "Server address",
+		["zh-cn"] = "服务器地址",
+	},
+	join_server_address_placeholder = {
+		en = "address:port or [IPv6]:port",
+		["zh-cn"] = "地址:端口 或 [IPv6]:端口",
+	},
+	join_server_password = {
+		en = "Password",
+		["zh-cn"] = "密码",
+	},
+	join_server_connect = {
+		en = "Connect",
+		["zh-cn"] = "连接",
+	},
+	preparation_skills_header = {
+		en = "Skills",
+		["zh-cn"] = "技能",
+	},
+	preparation_weapons_header = {
+		en = "Weapon",
+		["zh-cn"] = "武器",
+	},
+	preparation_status_header = {
+		en = "Status",
+		["zh-cn"] = "状态",
+	},
+	preparation_ready = {
+		en = "Ready",
+		["zh-cn"] = "准备",
+	},
+	preparation_cancel_ready = {
+		en = "Cancel Ready",
+		["zh-cn"] = "取消准备",
+	},
+	social_kick_confirmation_title = {
+		en = "Kick {#color(239,193,82)}%s{#reset()} from Realm",
+		["zh-cn"] = "将{#color(239,193,82)}%s{#reset()}踢出领域",
+	},
+	social_kick_confirmation_description = {
+		en = "Do you want to kick %s from the Realm?",
+		["zh-cn"] = "确定要将%s从领域中踢出吗？",
+	},
 	command_status_description = {
 		en = "Show the current Realms session status.",
 		["zh-cn"] = "显示当前领域会话状态。",
-	},
-	settings_apply_failed = {
-		en = "Failed to apply server settings.",
-		["zh-cn"] = "应用服务器设置失败。",
 	},
 	host_listening = {
 		en = "Realms server is listening on UDP port %d.",
@@ -185,13 +217,25 @@ local localization = {
 		en = "The Realms server is not enabled. Other players cannot join.",
 		["zh-cn"] = "当前未启用领域服务器，其他玩家无法加入。",
 	},
+	settings_apply_failed = {
+		en = "Failed to apply server settings.",
+		["zh-cn"] = "应用服务器设置失败。",
+	},
 	client_boot_failed = {
 		en = "Failed to join the server.",
 		["zh-cn"] = "加入服务器失败。",
 	},
+	official_session_transition_failed = {
+		en = "Failed to join the official game session. The current Realms session is still active.",
+		["zh-cn"] = "加入官方游戏会话失败，当前领域会话仍然有效。",
+	},
 	error_server_address_required = {
 		en = "Enter a server address.",
 		["zh-cn"] = "请输入服务器地址。",
+	},
+	error_join_target_format = {
+		en = "Enter the server as address:port or [IPv6]:port.",
+		["zh-cn"] = "服务器地址格式应为 地址:端口 或 [IPv6]:端口。",
 	},
 	error_server_address_unresolved = {
 		en = "The server address could not be resolved.",
@@ -225,30 +269,6 @@ local localization = {
 		en = "The network client is unavailable.",
 		["zh-cn"] = "网络客户端不可用。",
 	},
-	official_session_transition_failed = {
-		en = "Failed to join the official game session. The current Realms session is still active.",
-		["zh-cn"] = "加入官方游戏会话失败，当前领域会话仍然有效。",
-	},
-	preparation_skills_header = {
-		en = "Skills",
-		["zh-cn"] = "技能",
-	},
-	preparation_weapons_header = {
-		en = "Weapon",
-		["zh-cn"] = "武器",
-	},
-	preparation_status_header = {
-		en = "Status",
-		["zh-cn"] = "状态",
-	},
-	preparation_ready = {
-		en = "Ready",
-		["zh-cn"] = "准备",
-	},
-	preparation_cancel_ready = {
-		en = "Cancel Ready",
-		["zh-cn"] = "取消准备",
-	},
 	preparation_control_failed = {
 		en = "The preparation session received invalid network data.",
 		["zh-cn"] = "准备会话收到了无效的网络数据。",
@@ -272,6 +292,22 @@ local native_localization = {
 		en = "Realm",
 		["zh-cn"] = "领域",
 	},
+	loc_realms_social_kick_player = {
+		en = "Kick from Realm",
+		["zh-cn"] = "从领域中踢出",
+	},
+	loc_realms_host_boot_failed = {
+		en = "Failed to start the Realms listen server.",
+		["zh-cn"] = "无法启动领域监听服务器。",
+	},
+	loc_realms_listen_port_unavailable = {
+		en = "The configured UDP listening port is unavailable.",
+		["zh-cn"] = "配置的 UDP 监听端口不可用。",
+	},
+	loc_realms_listen_endpoint_failed = {
+		en = "The Realms UDP listening endpoint stopped working. Connected players will be disconnected.",
+		["zh-cn"] = "领域 UDP 监听端点已停止工作，已连接的玩家将断开连接。",
+	},
 	loc_realms_connection_error_title = {
 		en = "Realms connection error",
 		["zh-cn"] = "领域连接错误",
@@ -279,14 +315,6 @@ local native_localization = {
 	loc_realms_connection_failed = {
 		en = "Failed to connect to the Realms server. Check that the server address is correct.",
 		["zh-cn"] = "无法连接到领域服务器。请检查服务器地址是否正确。",
-	},
-	loc_realms_connection_lost = {
-		en = "The connection to the Realms server was lost.",
-		["zh-cn"] = "与领域服务器的连接已中断。",
-	},
-	loc_realms_server_closed = {
-		en = "The Realms server was closed by the host.",
-		["zh-cn"] = "主机已关闭领域服务器。",
 	},
 	loc_realms_server_private = {
 		en = "The Realms server is private and is not accepting new connections.",
@@ -320,25 +348,17 @@ local native_localization = {
 		en = "The Realms server could not complete the connection.",
 		["zh-cn"] = "领域服务器无法完成本次连接。",
 	},
-	loc_realms_host_boot_failed = {
-		en = "Failed to start the Realms listen server.",
-		["zh-cn"] = "无法启动领域监听服务器。",
+	loc_realms_connection_lost = {
+		en = "The connection to the Realms server was lost.",
+		["zh-cn"] = "与领域服务器的连接已中断。",
 	},
-	loc_realms_listen_port_unavailable = {
-		en = "The configured UDP listening port is unavailable.",
-		["zh-cn"] = "配置的 UDP 监听端口不可用。",
-	},
-	loc_realms_listen_endpoint_failed = {
-		en = "The Realms UDP listening endpoint stopped working. Connected players will be disconnected.",
-		["zh-cn"] = "领域 UDP 监听端点已停止工作，已连接的玩家将断开连接。",
+	loc_realms_server_closed = {
+		en = "The Realms server was closed by the host.",
+		["zh-cn"] = "主机已关闭领域服务器。",
 	},
 	loc_realms_kicked_by_host = {
 		en = "You were removed from the Realm by the host.",
 		["zh-cn"] = "你已被主机移出领域。",
-	},
-	loc_realms_social_kick_player = {
-		en = "Kick from Realm",
-		["zh-cn"] = "从领域中踢出",
 	},
 }
 

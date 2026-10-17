@@ -290,5 +290,10 @@ Native.EVENT_TYPES = EVENT_TYPES
 Native.ERROR_CODES = ERROR_CODES
 Native.START_ERROR_CODES = START_ERROR_CODES
 Native.initialized_runtime = initialized_runtime
+Native.load_runtime = load_runtime
+
+function Native.loaded_runtime()
+	return state.runtime
+end
 
 return Native

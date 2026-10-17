@@ -21,12 +21,19 @@ local function local_player()
 end
 
 local function show_message(data)
+	local info = Managers.data_service.social:get_player_info_by_account_id(data.sender_account_id)
+
+	if info:is_text_muted() or info:is_blocked() then
+		return
+	end
+
 	Managers.event:trigger("realms_chat_message", data.text, data.sender_name)
 end
 
-local function delivery(player_name, text)
+local function delivery(player, text)
 	return {
-		sender_name = player_name,
+		sender_name = player:name(),
+		sender_account_id = player:account_id(),
 		text = text,
 	}
 end
@@ -67,7 +74,7 @@ local function receive_submission(channel_id, peer_id, data)
 		return reject(channel_id, "sender_unavailable")
 	end
 
-	return broadcast(delivery(player:name(), data.text))
+	return broadcast(delivery(player, data.text))
 end
 
 local function receive_delivery(channel_id, peer_id, data)
@@ -136,7 +143,7 @@ function Chat.submit(text)
 	end
 
 	if Session.is_active_host() then
-		return broadcast(delivery(player:name(), text))
+		return broadcast(delivery(player, text))
 	end
 
 	local message = {
