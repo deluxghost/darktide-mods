@@ -360,8 +360,16 @@ mod:hook_require("scripts/settings/options/sound_settings", function (settings)
 	if device_state.playback_device_id == nil then
 		-- Audio settings are applied during boot, before mods load. Reuse that original snapshot.
 		local entry = settings.settings_by_id.sound_device
-		local option = entry.options[entry.get_function() + 1]
-		device_state.playback_device_id = option and option.device_id or 0
+		local value = entry.get_function()
+		device_state.playback_device_id = 0
+
+		for _, option in ipairs(entry.options) do
+			if option.id == value then
+				device_state.playback_device_id = option.device_id or 0
+
+				break
+			end
+		end
 	end
 end)
 
