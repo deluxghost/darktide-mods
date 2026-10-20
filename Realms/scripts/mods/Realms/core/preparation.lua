@@ -482,6 +482,10 @@ function Preparation.is_started()
 	return state.phase == "started"
 end
 
+function Preparation.is_finalizing()
+	return state.finalizing
+end
+
 function Preparation.can_perform_action()
 	return Preparation.is_waiting() and not state.finalizing and SessionControl.is_available()
 end
