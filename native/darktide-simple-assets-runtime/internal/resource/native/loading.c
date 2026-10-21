@@ -1,0 +1,7 @@
+#include "loading/resource.c"
+#include "loading/path.c"
+#include "loading/finalization.c"
+#include "loading/validation.c"
+#include "loading/texture.c"
+#include "loading/video.c"
+#include "loading/mouse_cursor.c"
