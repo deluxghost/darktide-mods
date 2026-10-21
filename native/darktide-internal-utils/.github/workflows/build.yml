@@ -1,0 +1,119 @@
+name: Build and release
+
+on:
+  push:
+    branches:
+      - main
+    tags:
+      - "v*"
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: windows-latest
+
+    steps:
+      - name: Configure Git line endings
+        run: git config --global core.autocrlf input
+
+      - name: Check out repository
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+          submodules: recursive
+          persist-credentials: false
+
+      - name: Validate release tag
+        if: github.event_name == 'push' && github.ref_type == 'tag'
+        shell: pwsh
+        env:
+          RELEASE_TAG: ${{ github.ref_name }}
+          RELEASE_COMMIT: ${{ github.sha }}
+        run: |
+          $ErrorActionPreference = "Stop"
+          $PSNativeCommandUseErrorActionPreference = $false
+
+          if ($env:RELEASE_TAG -notmatch '^v\d+\.\d+\.\d+$') {
+              throw "Release tag must match vX.Y.Z: $env:RELEASE_TAG"
+          }
+
+          & git rev-parse --verify "refs/remotes/origin/main^{commit}" | Out-Null
+          $ResolveMainExitCode = $LASTEXITCODE
+          if ($ResolveMainExitCode -ne 0) {
+              throw "Could not resolve origin/main with exit code $ResolveMainExitCode"
+          }
+
+          & git merge-base --is-ancestor $env:RELEASE_COMMIT origin/main
+          $AncestryExitCode = $LASTEXITCODE
+          if ($AncestryExitCode -eq 1) {
+              throw "Release tag commit is not reachable from origin/main: $env:RELEASE_COMMIT"
+          }
+          if ($AncestryExitCode -ne 0) {
+              throw "git merge-base failed with exit code $AncestryExitCode"
+          }
+
+      - name: Set up MSYS2 UCRT64
+        id: msys2
+        uses: msys2/setup-msys2@v2
+        with:
+          msystem: UCRT64
+          update: true
+          install: mingw-w64-ucrt-x86_64-gcc
+
+      - name: Build libraries
+        shell: pwsh
+        env:
+          MSYS2_LOCATION: ${{ steps.msys2.outputs.msys2-location }}
+        run: |
+          $ErrorActionPreference = "Stop"
+          .\build.ps1 -Configuration Release -Platform x64
+          $Ucrt64Bin = Join-Path -Path $env:MSYS2_LOCATION -ChildPath "ucrt64\bin"
+          .\build-ucrt64.ps1 -Configuration Release -Ucrt64Bin $Ucrt64Bin
+
+      - name: Package SDK
+        shell: pwsh
+        env:
+          PACKAGE_VERSION: ${{ github.event_name == 'push' && github.ref_type == 'tag' && github.ref_name || github.sha }}
+        run: .\package.ps1 -Version $env:PACKAGE_VERSION
+
+      - name: Upload workflow artifact
+        uses: actions/upload-artifact@v7
+        with:
+          name: darktide-internal-utils
+          path: |
+            release/darktide-internal-utils.zip
+            release/SHA256SUMS.txt
+          if-no-files-found: error
+          retention-days: 7
+
+  release:
+    if: github.event_name == 'push' && github.ref_type == 'tag'
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Download verified SDK
+        uses: actions/download-artifact@v8
+        with:
+          name: darktide-internal-utils
+          path: release
+
+      - name: Create GitHub Release
+        env:
+          GH_REPO: ${{ github.repository }}
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_TAG: ${{ github.ref_name }}
+        run: >-
+          gh release create "$RELEASE_TAG"
+          release/darktide-internal-utils.zip
+          release/SHA256SUMS.txt
+          --verify-tag
+          --generate-notes
+          --latest
+          --title "$RELEASE_TAG"
