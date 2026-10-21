@@ -1,0 +1,114 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|x64">
+      <Configuration>Debug</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|x64">
+      <Configuration>Release</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <VCProjectVersion>17.0</VCProjectVersion>
+    <Keyword>Win32Proj</Keyword>
+    <ProjectGuid>{B0FB3D64-E67A-4C2C-9E52-3A74C3D5B421}</ProjectGuid>
+    <RootNamespace>DarktideRealms</RootNamespace>
+    <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Label="Configuration">
+    <ConfigurationType>DynamicLibrary</ConfigurationType>
+    <UseDebugLibraries Condition="'$(Configuration)'=='Debug'">true</UseDebugLibraries>
+    <UseDebugLibraries Condition="'$(Configuration)'=='Release'">false</UseDebugLibraries>
+    <PlatformToolset>v143</PlatformToolset>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings" />
+  <ImportGroup Label="Shared" />
+  <ImportGroup Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup>
+    <TargetName>darktide-realms</TargetName>
+    <OutDir>$(ProjectDir)bin\$(Platform)\$(Configuration)\</OutDir>
+    <IntDir>$(ProjectDir)obj\$(Platform)\$(Configuration)\</IntDir>
+  </PropertyGroup>
+  <ItemDefinitionGroup>
+    <ClCompile>
+      <WarningLevel>Level4</WarningLevel>
+      <TreatWarningAsError>true</TreatWarningAsError>
+      <SDLCheck>true</SDLCheck>
+      <ConformanceMode>true</ConformanceMode>
+      <LanguageStandard>stdcpp17</LanguageStandard>
+      <ExceptionHandling>Sync</ExceptionHandling>
+      <PreprocessorDefinitions>WIN32_LEAN_AND_MEAN;NOMINMAX;UNICODE;_UNICODE;_CRT_SECURE_NO_WARNINGS;DARKTIDE_REALMS_BUILD;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>$(ProjectDir)include;$(ProjectDir)..\darktide-internal-utils\include;$(ProjectDir)obj\audio\_deps\opus-src\include;$(ProjectDir)obj\audio\include;$(ProjectDir)obj\audio\_deps\webrtc-src\webrtc;$(ProjectDir)obj\audio\_deps\webrtc-src\subprojects\abseil-cpp-20240722.0;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+    </ClCompile>
+    <Link>
+      <SubSystem>Windows</SubSystem>
+      <AdditionalDependencies>ws2_32.lib;rpcrt4.lib;ole32.lib;winmm.lib;dbghelp.lib;opus.lib;webrtc.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>$(ProjectDir)obj\audio\_deps\opus-build\$(Configuration);$(ProjectDir)obj\webrtc\$(Configuration);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)'=='Debug'">
+    <ClCompile>
+      <Optimization>Disabled</Optimization>
+      <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
+    </ClCompile>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)'=='Release'">
+    <ClCompile>
+      <Optimization>MaxSpeed</Optimization>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
+    </ClCompile>
+    <Link>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <ClInclude Include="include\darktide_realms.h" />
+    <ClInclude Include="src\realms_internal.h" />
+    <ClInclude Include="src\realms_datagram.h" />
+    <ClInclude Include="src\realms_audio.h" />
+    <ClInclude Include="src\realms_audio_devices.h" />
+    <ClInclude Include="src\realms_audio_processing.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="src\realms_api.cpp" />
+    <ClCompile Include="src\realms_audio.cpp">
+      <WarningLevel>TurnOffAllWarnings</WarningLevel>
+    </ClCompile>
+    <ClCompile Include="src\realms_audio_devices.cpp" />
+    <ClCompile Include="src\realms_audio_processing.cpp">
+      <PreprocessorDefinitions>WEBRTC_WIN;WEBRTC_LIBRARY_IMPL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <LanguageStandard>stdcpp20</LanguageStandard>
+    </ClCompile>
+    <ClCompile Include="src\realms_binary.cpp" />
+    <ClCompile Include="src\realms_datagram.cpp" />
+    <ClCompile Include="src\realms_engine.cpp" />
+    <ClCompile Include="src\realms_events.cpp" />
+    <ClCompile Include="src\realms_ipv6.cpp" />
+    <ClCompile Include="src\realms_protocol.cpp" />
+    <ClCompile Include="src\realms_relay.cpp" />
+    <ClCompile Include="src\realms_state.cpp" />
+    <ClCompile Include="src\realms_voice.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="src\versioninfo.rc" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\darktide-internal-utils\dtintutils-core.vcxproj">
+      <Project>{A2A708A8-2106-443F-9293-FBF44E582D2E}</Project>
+      <LinkLibraryDependencies>true</LinkLibraryDependencies>
+    </ProjectReference>
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets" />
+</Project>

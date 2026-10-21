@@ -1,0 +1,12 @@
+# Build outputs
+bin/
+obj/
+
+# Visual Studio local files
+.vs/
+*.user
+*.rsuser
+*.suo
+*.sln.docstates
+*.VC.db
+*.VC.VC.opendb

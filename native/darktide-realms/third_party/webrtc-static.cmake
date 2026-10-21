@@ -1,0 +1,8 @@
+file(READ "${WEBRTC_SOURCE_DIR}/meson.build" meson_source)
+set(export_flag "  '-DWEBRTC_ENABLE_SYMBOL_EXPORT',\n")
+string(REPLACE "${export_flag}" "" static_source "${meson_source}")
+if(static_source STREQUAL meson_source)
+    message(FATAL_ERROR "WebRTC static symbol visibility patch did not match")
+endif()
+string(REPLACE "'cpp_std=c++17'" "'cpp_std=c++20'" static_source "${static_source}")
+file(WRITE "${WEBRTC_SOURCE_DIR}/meson.build" "${static_source}")
