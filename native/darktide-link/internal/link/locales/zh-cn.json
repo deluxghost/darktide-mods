@@ -1,0 +1,12 @@
+{
+  "app.title": "Darktide Link",
+  "error.invalid_url": "Darktide 链接无效。",
+  "error.game_not_ready": "Darktide 或 URL Protocol 模组未运行。",
+  "error.request_privileges": "请求管理员权限失败。",
+  "registration.confirm": "URL Protocol 模组请求安装 %s，需要管理员权限。",
+  "registration.failed": "安装失败：%s",
+  "registration.success": "Darktide Link 已安装。",
+  "unregistration.confirm": "URL Protocol 模组请求卸载 %s，需要管理员权限。",
+  "unregistration.failed": "卸载失败：%s",
+  "unregistration.success": "Darktide Link 已卸载。"
+}

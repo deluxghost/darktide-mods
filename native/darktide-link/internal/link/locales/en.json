@@ -1,0 +1,12 @@
+{
+  "app.title": "Darktide Link",
+  "error.invalid_url": "Invalid Darktide link.",
+  "error.game_not_ready": "Darktide or the URL Protocol mod is not running.",
+  "error.request_privileges": "Failed to request administrator privileges.",
+  "registration.confirm": "The URL Protocol mod is requesting to install %s. Administrator privileges are required.",
+  "registration.failed": "Installation failed: %s",
+  "registration.success": "Darktide Link is installed.",
+  "unregistration.confirm": "The URL Protocol mod is requesting to uninstall %s. Administrator privileges are required.",
+  "unregistration.failed": "Uninstallation failed: %s",
+  "unregistration.success": "Darktide Link is uninstalled."
+}
