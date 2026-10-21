@@ -1,6 +1,12 @@
 {
   "name": "Good Old Outlines",
   "description": "Brings back the classic tagging outline style from Vermintide 2.",
+  "homepage": "https://www.nexusmods.com/warhammer40kdarktide/mods/1455",
+  "source": "https://github.com/deluxghost/darktide-mods/tree/main/GoodOldOutlines",
+  "funding": {
+    "kofi": "https://ko-fi.com/deluxghost",
+    "bilibili": "https://space.bilibili.com/4712698"
+  },
   "version": "1.2.1",
   "author": "deluxghost",
   "localization": {
