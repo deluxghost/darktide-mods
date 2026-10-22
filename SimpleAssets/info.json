@@ -7,6 +7,11 @@
     "kofi": "https://ko-fi.com/deluxghost",
     "bilibili": "https://space.bilibili.com/4712698"
   },
+  "_build": {
+    "native": [
+      "darktide-simple-assets-runtime"
+    ]
+  },
   "version": "2.0.0",
   "author": "deluxghost",
   "localization": {

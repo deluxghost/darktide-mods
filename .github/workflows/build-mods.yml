@@ -1,0 +1,181 @@
+name: Build
+run-name: Build ${{ inputs.mods || 'mods' }}
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      mods:
+        description: Comma-separated mod directory names
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+defaults:
+  run:
+    shell: pwsh
+
+jobs:
+  select:
+    name: Select mods
+    if: github.ref == 'refs/heads/main'
+    runs-on: windows-2025
+    outputs:
+      matrix: ${{ steps.mods.outputs.matrix }}
+      count: ${{ steps.mods.outputs.count }}
+    steps:
+      - name: Configure line endings
+        run: git config --global core.autocrlf input
+
+      - name: Check out repository
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+          persist-credentials: true
+
+      - name: Resolve build targets
+        id: mods
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          BEFORE_REF: ${{ github.event.before }}
+          MANUAL_MODS: ${{ inputs.mods }}
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $PSNativeCommandUseErrorActionPreference = $true
+          $arguments = @{}
+          switch ($env:EVENT_NAME) {
+              'push' {
+                  if ($env:BEFORE_REF -notmatch '^0{40}$') {
+                      git fetch --no-tags origin $env:BEFORE_REF
+                  }
+                  $arguments.BaseRef = $env:BEFORE_REF
+              }
+              'workflow_dispatch' {
+                  $arguments.Mod = @($env:MANUAL_MODS -split ',' | ForEach-Object { $_.Trim() } | Where-Object { $_ })
+                  if ($arguments.Mod.Count -eq 0) {
+                      throw 'Specify at least one mod directory.'
+                  }
+              }
+          }
+          $matrix = & ./scripts/select-mods.ps1 @arguments
+          $selected = $matrix | ConvertFrom-Json
+          "matrix=$matrix" | Add-Content -LiteralPath $env:GITHUB_OUTPUT -Encoding utf8
+          "count=$($selected.include.Count)" | Add-Content -LiteralPath $env:GITHUB_OUTPUT -Encoding utf8
+
+  build:
+    needs: select
+    if: github.ref == 'refs/heads/main' && needs.select.outputs.count != '0'
+    permissions:
+      contents: read
+      id-token: write
+    runs-on: windows-2025
+    strategy:
+      fail-fast: false
+      matrix: ${{ fromJSON(needs.select.outputs.matrix) }}
+    name: ${{ matrix.mod }} ${{ matrix.version }}
+    steps:
+      - name: Configure line endings
+        run: git config --global core.autocrlf input
+
+      - name: Check out repository
+        uses: actions/checkout@v7
+        with:
+          submodules: recursive
+          lfs: true
+          persist-credentials: false
+
+      - name: Set up Go
+        uses: actions/setup-go@v7
+        if: matrix.go_mod != ''
+        with:
+          go-version-file: ${{ matrix.go_mod }}
+          cache-dependency-path: |
+            native/**/go.mod
+            native/**/go.sum
+
+      - name: Set up UCRT64
+        if: matrix.needs_msys2
+        id: msys2
+        uses: msys2/setup-msys2@v2
+        with:
+          msystem: UCRT64
+          update: true
+          install: >-
+            mingw-w64-ucrt-x86_64-gcc
+            mingw-w64-ucrt-x86_64-clang
+
+      - name: Set up Python
+        uses: actions/setup-python@v7
+        if: matrix.needs_meson
+        with:
+          python-version: '3.13'
+
+      - name: Set up Meson
+        if: matrix.needs_meson
+        run: python -m pip install --disable-pip-version-check meson==1.9.1
+
+      - name: Set up code signing
+        if: join(matrix.native, '') != ''
+        env:
+          ARTIFACT_SIGNING_ENDPOINT: ${{ secrets.ARTIFACT_SIGNING_ENDPOINT }}
+          ARTIFACT_SIGNING_ACCOUNT_NAME: ${{ secrets.ARTIFACT_SIGNING_ACCOUNT_NAME }}
+          ARTIFACT_SIGNING_CERTIFICATE_PROFILE: ${{ secrets.ARTIFACT_SIGNING_CERTIFICATE_PROFILE }}
+        run: |
+          Install-Module ArtifactSigning -RequiredVersion 0.1.20 -Repository PSGallery -Scope CurrentUser -Force
+          $metadata = @{
+              Endpoint = $env:ARTIFACT_SIGNING_ENDPOINT
+              CodeSigningAccountName = $env:ARTIFACT_SIGNING_ACCOUNT_NAME
+              CertificateProfileName = $env:ARTIFACT_SIGNING_CERTIFICATE_PROFILE
+          }
+          foreach ($name in $metadata.Keys) {
+              if ([string]::IsNullOrWhiteSpace($metadata[$name])) {
+                  throw "Required signing configuration is missing: $name"
+              }
+          }
+          $metadata | ConvertTo-Json | Set-Content -LiteralPath (Join-Path $env:RUNNER_TEMP 'artifact-signing.json') -Encoding utf8
+
+      - name: Authenticate to Azure
+        if: join(matrix.native, '') != ''
+        uses: azure/login@935127ca5bb3c4b02c9c2c10060028383878f33f # v3
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          allow-no-subscriptions: true
+
+      - name: Build and package
+        env:
+          MOD_NAME: ${{ matrix.mod }}
+          MSYS2_LOCATION: ${{ steps.msys2.outputs.msys2-location }}
+          NEEDS_CMAKE: ${{ matrix.needs_cmake }}
+        run: |
+          $arguments = @{
+              Mod = @($env:MOD_NAME)
+              SigningConfig = Join-Path $env:RUNNER_TEMP 'artifact-signing.json'
+              SigningAuthentication = 'AzureCli'
+          }
+          if ($env:MSYS2_LOCATION) {
+              $arguments.Ucrt64Bin = Join-Path $env:MSYS2_LOCATION 'ucrt64/bin'
+          }
+          if ($env:NEEDS_CMAKE -eq 'true') {
+              $arguments.CMakePath = (Get-Command cmake -CommandType Application -TotalCount 1 -ErrorAction Stop).Source
+          }
+          ./build.ps1 @arguments
+
+      - name: Clean up signing configuration
+        if: always() && join(matrix.native, '') != ''
+        run: |
+          $path = Join-Path $env:RUNNER_TEMP 'artifact-signing.json'
+          if (Test-Path -LiteralPath $path) {
+              Remove-Item -LiteralPath $path
+          }
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v7
+        with:
+          path: output/${{ matrix.mod }}.zip
+          archive: false
+          if-no-files-found: error
+          retention-days: 7

@@ -1,0 +1,905 @@
+{
+  "schema": 1,
+  "requested_output": "all",
+  "selected_scene": 0,
+  "requested_clip": null,
+  "emitted_clips": [],
+  "applied_approximations": [],
+  "texture_dimension_normalizations": [],
+  "compiler": {
+    "name": "DarktideGLBCompiler",
+    "version": "0.3.0-beta"
+  },
+  "target": {
+    "id": "darktide",
+    "name": "Warhammer 40,000: Darktide",
+    "unit_version": 115,
+    "material_version": 61
+  },
+  "roots": [
+    {
+      "type": "unit",
+      "name": "content/mods/creeper/parent"
+    }
+  ],
+  "artifacts": [
+    {
+      "resource": {
+        "type": "particles",
+        "name": "content/mods/creeper/particles/removed_poxwalker_bomber_prime_bomb"
+      },
+      "role": "primary",
+      "path": "removed_poxwalker_bomber_prime_bomb.particles",
+      "size": 82
+    },
+    {
+      "resource": {
+        "type": "unit",
+        "name": "content/mods/creeper/parent"
+      },
+      "path": "parent.unit",
+      "role": "primary",
+      "size": 127464
+    }
+  ],
+  "resources": [
+    {
+      "key": {
+        "type": "particles",
+        "name": "content/mods/creeper/particles/removed_poxwalker_bomber_prime_bomb"
+      },
+      "name_hash": "c8c22e85350b3c6c",
+      "file": {
+        "path": "removed_poxwalker_bomber_prime_bomb.particles",
+        "size": 82,
+        "crc32": "33721c69"
+      },
+      "stream": null,
+      "dependencies": []
+    },
+    {
+      "key": {
+        "type": "unit",
+        "name": "content/mods/creeper/parent"
+      },
+      "file": {
+        "path": "parent.unit",
+        "size": 127464,
+        "crc32": "3cee335b"
+      },
+      "dependencies": [
+        {
+          "type": "particles",
+          "name": "content/mods/creeper/particles/removed_poxwalker_bomber_prime_bomb"
+        },
+        {
+          "type": "bones",
+          "name": "#ID[eb772a352917743a]"
+        },
+        {
+          "type": "flow",
+          "name": "#ID[26b1220f1955ca06]"
+        },
+        {
+          "type": "animation",
+          "name": "#ID[000cb16d5a2aa027]"
+        },
+        {
+          "type": "animation",
+          "name": "#ID[00f8209f7704850b]"
+        },
+        {
+          "type": "animation",
+          "name": "#ID[045cd842efc92dde]"
+        },
+        {
+          "type": "animation",
+          "name": "#ID[148c74f27852da29]"
+        },
+        {
+          "type": "animation",
+          "name": "#ID[1b47fb0b2a6ac9af]"
+        },
+        {
+          "type": "animation",
+          "name": "#ID[245ee8d6e631e565]"
+        },
+        {
+          "type": "animation",
+          "name": "#ID[33cfb671399f710b]"
+        },
+        {
+          "type": "animation",
+          "name": "#ID[3cd0e920ad7d4045]"
+        },
+        {
+          "type": "animation",
+          "name": "#ID[3d24a2d1e2d6e9d9]"
+        },
+        {
+          "type": "animation",
+          "name": "#ID[415dce874024e7f0]"
+        },
+        {
+          "type": "animation",
+          "name": "#ID[52390bb6280e3686]"
+        },
+        {
+          "type": "animation",
+          "name": "#ID[5adbf18f02d3f83a]"
+        },
+        {
+          "type": "animation",
+          "name": "#ID[665f60e72baf4e2a]"
+        },
+        {
+          "type": "animation",
+          "name": "#ID[6a7419e83401928e]"
+        },
+        {
+          "type": "animation",
+          "name": "#ID[87ce6867bdb2623b]"
+        },
+        {
+          "type": "animation",
+          "name": "#ID[883570f80dd3c0a8]"
+        },
+        {
+          "type": "animation",
+          "name": "#ID[943ea9c2aaf56bea]"
+        },
+        {
+          "type": "animation",
+          "name": "#ID[97a9cdfe70f66e76]"
+        },
+        {
+          "type": "animation",
+          "name": "#ID[a8ce5c0a7eaed3e9]"
+        },
+        {
+          "type": "animation",
+          "name": "#ID[a95dcf3f06467353]"
+        },
+        {
+          "type": "animation",
+          "name": "#ID[ad353c4f50702469]"
+        },
+        {
+          "type": "animation",
+          "name": "#ID[af701b97fc4443fd]"
+        },
+        {
+          "type": "animation",
+          "name": "#ID[b80001867dcafea4]"
+        },
+        {
+          "type": "animation",
+          "name": "#ID[be11e11530d99db0]"
+        },
+        {
+          "type": "animation",
+          "name": "#ID[c69a19822c46a13d]"
+        },
+        {
+          "type": "animation",
+          "name": "#ID[ca6504fecf49f637]"
+        },
+        {
+          "type": "animation",
+          "name": "#ID[d931fe994cd90e19]"
+        },
+        {
+          "type": "animation",
+          "name": "#ID[e31acee3884fb9ad]"
+        },
+        {
+          "type": "animation",
+          "name": "#ID[e755ec5257c282da]"
+        },
+        {
+          "type": "animation",
+          "name": "#ID[f0eb7f4d12fd7e29]"
+        },
+        {
+          "type": "state_machine",
+          "name": "#ID[e32b417bc1b62eb9]"
+        },
+        {
+          "type": "particles",
+          "name": "#ID[18b4ac401f6c38a2]"
+        },
+        {
+          "type": "particles",
+          "name": "#ID[4428eecc9b465984]"
+        },
+        {
+          "type": "wwise_event",
+          "name": "#ID[a56233307e1abc29]"
+        },
+        {
+          "type": "wwise_event",
+          "name": "#ID[d54da5c22c5b4711]"
+        },
+        {
+          "type": "wwise_event",
+          "name": "#ID[e066f2a1055c6c3d]"
+        },
+        {
+          "type": "wwise_event",
+          "name": "#ID[ec11d4d86c8f988a]"
+        },
+        {
+          "type": "texture",
+          "name": "#ID[0e2ed1747e68a632]"
+        },
+        {
+          "type": "texture",
+          "name": "#ID[11ffb39ada0c3dc9]"
+        },
+        {
+          "type": "texture",
+          "name": "#ID[23d3373664c5b0e1]"
+        },
+        {
+          "type": "texture",
+          "name": "#ID[27574758732c0ad5]"
+        },
+        {
+          "type": "texture",
+          "name": "#ID[3a65ba77859e28f6]"
+        },
+        {
+          "type": "texture",
+          "name": "#ID[42237235e6fa1966]"
+        },
+        {
+          "type": "texture",
+          "name": "#ID[45a7c6d858a65270]"
+        },
+        {
+          "type": "texture",
+          "name": "#ID[4b77d0f6c4964988]"
+        },
+        {
+          "type": "texture",
+          "name": "#ID[5219727e4ae1b387]"
+        },
+        {
+          "type": "texture",
+          "name": "#ID[5ab644abab762979]"
+        },
+        {
+          "type": "texture",
+          "name": "#ID[6b0872521ede0e30]"
+        },
+        {
+          "type": "texture",
+          "name": "#ID[87cdd2a2d21a0906]"
+        },
+        {
+          "type": "texture",
+          "name": "#ID[909f0d3e2db365e2]"
+        },
+        {
+          "type": "texture",
+          "name": "#ID[94bfb1d2dba31185]"
+        },
+        {
+          "type": "texture",
+          "name": "#ID[968a414a4b33bb16]"
+        },
+        {
+          "type": "texture",
+          "name": "#ID[a6ad8a1995ba1c75]"
+        },
+        {
+          "type": "texture",
+          "name": "#ID[c63b8ad7d7723361]"
+        },
+        {
+          "type": "texture",
+          "name": "#ID[c8d02e3292ca3b08]"
+        },
+        {
+          "type": "texture",
+          "name": "#ID[da57a067199b9d38]"
+        },
+        {
+          "type": "material",
+          "name": "#ID[166bf66a333846c3]"
+        },
+        {
+          "type": "material",
+          "name": "#ID[31d4c427ee4fbd63]"
+        },
+        {
+          "type": "material",
+          "name": "#ID[32384441bfe07b96]"
+        },
+        {
+          "type": "material",
+          "name": "#ID[439430b945c50a99]"
+        },
+        {
+          "type": "material",
+          "name": "#ID[568ca4dfece781c5]"
+        },
+        {
+          "type": "material",
+          "name": "#ID[59eda8bf845fab9f]"
+        },
+        {
+          "type": "material",
+          "name": "#ID[66990638f3a3d118]"
+        },
+        {
+          "type": "material",
+          "name": "#ID[69eeb7e1c5363ec1]"
+        },
+        {
+          "type": "material",
+          "name": "#ID[76417c9efd8c575f]"
+        },
+        {
+          "type": "material",
+          "name": "#ID[78be56ac70caa5b6]"
+        },
+        {
+          "type": "material",
+          "name": "#ID[7a878519994efa78]"
+        },
+        {
+          "type": "material",
+          "name": "#ID[84820be5be4a7292]"
+        },
+        {
+          "type": "material",
+          "name": "#ID[a570734470cac8a6]"
+        },
+        {
+          "type": "material",
+          "name": "#ID[c06d7a5d7ea1d64d]"
+        },
+        {
+          "type": "material",
+          "name": "#ID[daad642880b93568]"
+        },
+        {
+          "type": "material",
+          "name": "#ID[e14900c258cc9b8e]"
+        },
+        {
+          "type": "material",
+          "name": "#ID[fd498d637f9b10ff]"
+        }
+      ]
+    }
+  ],
+  "external_resources": [
+    {
+      "key": {
+        "type": "bones",
+        "name": "#ID[eb772a352917743a]"
+      },
+      "package_member": true
+    },
+    {
+      "key": {
+        "type": "flow",
+        "name": "#ID[26b1220f1955ca06]"
+      },
+      "package_member": true
+    },
+    {
+      "key": {
+        "type": "animation",
+        "name": "#ID[000cb16d5a2aa027]"
+      },
+      "package_member": true
+    },
+    {
+      "key": {
+        "type": "animation",
+        "name": "#ID[00f8209f7704850b]"
+      },
+      "package_member": true
+    },
+    {
+      "key": {
+        "type": "animation",
+        "name": "#ID[045cd842efc92dde]"
+      },
+      "package_member": true
+    },
+    {
+      "key": {
+        "type": "animation",
+        "name": "#ID[148c74f27852da29]"
+      },
+      "package_member": true
+    },
+    {
+      "key": {
+        "type": "animation",
+        "name": "#ID[1b47fb0b2a6ac9af]"
+      },
+      "package_member": true
+    },
+    {
+      "key": {
+        "type": "animation",
+        "name": "#ID[245ee8d6e631e565]"
+      },
+      "package_member": true
+    },
+    {
+      "key": {
+        "type": "animation",
+        "name": "#ID[33cfb671399f710b]"
+      },
+      "package_member": true
+    },
+    {
+      "key": {
+        "type": "animation",
+        "name": "#ID[3cd0e920ad7d4045]"
+      },
+      "package_member": true
+    },
+    {
+      "key": {
+        "type": "animation",
+        "name": "#ID[3d24a2d1e2d6e9d9]"
+      },
+      "package_member": true
+    },
+    {
+      "key": {
+        "type": "animation",
+        "name": "#ID[415dce874024e7f0]"
+      },
+      "package_member": true
+    },
+    {
+      "key": {
+        "type": "animation",
+        "name": "#ID[52390bb6280e3686]"
+      },
+      "package_member": true
+    },
+    {
+      "key": {
+        "type": "animation",
+        "name": "#ID[5adbf18f02d3f83a]"
+      },
+      "package_member": true
+    },
+    {
+      "key": {
+        "type": "animation",
+        "name": "#ID[665f60e72baf4e2a]"
+      },
+      "package_member": true
+    },
+    {
+      "key": {
+        "type": "animation",
+        "name": "#ID[6a7419e83401928e]"
+      },
+      "package_member": true
+    },
+    {
+      "key": {
+        "type": "animation",
+        "name": "#ID[87ce6867bdb2623b]"
+      },
+      "package_member": true
+    },
+    {
+      "key": {
+        "type": "animation",
+        "name": "#ID[883570f80dd3c0a8]"
+      },
+      "package_member": true
+    },
+    {
+      "key": {
+        "type": "animation",
+        "name": "#ID[943ea9c2aaf56bea]"
+      },
+      "package_member": true
+    },
+    {
+      "key": {
+        "type": "animation",
+        "name": "#ID[97a9cdfe70f66e76]"
+      },
+      "package_member": true
+    },
+    {
+      "key": {
+        "type": "animation",
+        "name": "#ID[a8ce5c0a7eaed3e9]"
+      },
+      "package_member": true
+    },
+    {
+      "key": {
+        "type": "animation",
+        "name": "#ID[a95dcf3f06467353]"
+      },
+      "package_member": true
+    },
+    {
+      "key": {
+        "type": "animation",
+        "name": "#ID[ad353c4f50702469]"
+      },
+      "package_member": true
+    },
+    {
+      "key": {
+        "type": "animation",
+        "name": "#ID[af701b97fc4443fd]"
+      },
+      "package_member": true
+    },
+    {
+      "key": {
+        "type": "animation",
+        "name": "#ID[b80001867dcafea4]"
+      },
+      "package_member": true
+    },
+    {
+      "key": {
+        "type": "animation",
+        "name": "#ID[be11e11530d99db0]"
+      },
+      "package_member": true
+    },
+    {
+      "key": {
+        "type": "animation",
+        "name": "#ID[c69a19822c46a13d]"
+      },
+      "package_member": true
+    },
+    {
+      "key": {
+        "type": "animation",
+        "name": "#ID[ca6504fecf49f637]"
+      },
+      "package_member": true
+    },
+    {
+      "key": {
+        "type": "animation",
+        "name": "#ID[d931fe994cd90e19]"
+      },
+      "package_member": true
+    },
+    {
+      "key": {
+        "type": "animation",
+        "name": "#ID[e31acee3884fb9ad]"
+      },
+      "package_member": true
+    },
+    {
+      "key": {
+        "type": "animation",
+        "name": "#ID[e755ec5257c282da]"
+      },
+      "package_member": true
+    },
+    {
+      "key": {
+        "type": "animation",
+        "name": "#ID[f0eb7f4d12fd7e29]"
+      },
+      "package_member": true
+    },
+    {
+      "key": {
+        "type": "state_machine",
+        "name": "#ID[e32b417bc1b62eb9]"
+      },
+      "package_member": true
+    },
+    {
+      "key": {
+        "type": "particles",
+        "name": "#ID[18b4ac401f6c38a2]"
+      },
+      "package_member": true
+    },
+    {
+      "key": {
+        "type": "particles",
+        "name": "#ID[4428eecc9b465984]"
+      },
+      "package_member": true
+    },
+    {
+      "key": {
+        "type": "wwise_event",
+        "name": "#ID[a56233307e1abc29]"
+      },
+      "package_member": true
+    },
+    {
+      "key": {
+        "type": "wwise_event",
+        "name": "#ID[d54da5c22c5b4711]"
+      },
+      "package_member": true
+    },
+    {
+      "key": {
+        "type": "wwise_event",
+        "name": "#ID[e066f2a1055c6c3d]"
+      },
+      "package_member": true
+    },
+    {
+      "key": {
+        "type": "wwise_event",
+        "name": "#ID[ec11d4d86c8f988a]"
+      },
+      "package_member": true
+    },
+    {
+      "key": {
+        "type": "texture",
+        "name": "#ID[0e2ed1747e68a632]"
+      },
+      "package_member": true
+    },
+    {
+      "key": {
+        "type": "texture",
+        "name": "#ID[11ffb39ada0c3dc9]"
+      },
+      "package_member": true
+    },
+    {
+      "key": {
+        "type": "texture",
+        "name": "#ID[23d3373664c5b0e1]"
+      },
+      "package_member": true
+    },
+    {
+      "key": {
+        "type": "texture",
+        "name": "#ID[27574758732c0ad5]"
+      },
+      "package_member": true
+    },
+    {
+      "key": {
+        "type": "texture",
+        "name": "#ID[3a65ba77859e28f6]"
+      },
+      "package_member": true
+    },
+    {
+      "key": {
+        "type": "texture",
+        "name": "#ID[42237235e6fa1966]"
+      },
+      "package_member": true
+    },
+    {
+      "key": {
+        "type": "texture",
+        "name": "#ID[45a7c6d858a65270]"
+      },
+      "package_member": true
+    },
+    {
+      "key": {
+        "type": "texture",
+        "name": "#ID[4b77d0f6c4964988]"
+      },
+      "package_member": true
+    },
+    {
+      "key": {
+        "type": "texture",
+        "name": "#ID[5219727e4ae1b387]"
+      },
+      "package_member": true
+    },
+    {
+      "key": {
+        "type": "texture",
+        "name": "#ID[5ab644abab762979]"
+      },
+      "package_member": true
+    },
+    {
+      "key": {
+        "type": "texture",
+        "name": "#ID[6b0872521ede0e30]"
+      },
+      "package_member": true
+    },
+    {
+      "key": {
+        "type": "texture",
+        "name": "#ID[87cdd2a2d21a0906]"
+      },
+      "package_member": true
+    },
+    {
+      "key": {
+        "type": "texture",
+        "name": "#ID[909f0d3e2db365e2]"
+      },
+      "package_member": true
+    },
+    {
+      "key": {
+        "type": "texture",
+        "name": "#ID[94bfb1d2dba31185]"
+      },
+      "package_member": true
+    },
+    {
+      "key": {
+        "type": "texture",
+        "name": "#ID[968a414a4b33bb16]"
+      },
+      "package_member": true
+    },
+    {
+      "key": {
+        "type": "texture",
+        "name": "#ID[a6ad8a1995ba1c75]"
+      },
+      "package_member": true
+    },
+    {
+      "key": {
+        "type": "texture",
+        "name": "#ID[c63b8ad7d7723361]"
+      },
+      "package_member": true
+    },
+    {
+      "key": {
+        "type": "texture",
+        "name": "#ID[c8d02e3292ca3b08]"
+      },
+      "package_member": true
+    },
+    {
+      "key": {
+        "type": "texture",
+        "name": "#ID[da57a067199b9d38]"
+      },
+      "package_member": true
+    },
+    {
+      "key": {
+        "type": "material",
+        "name": "#ID[166bf66a333846c3]"
+      },
+      "package_member": true
+    },
+    {
+      "key": {
+        "type": "material",
+        "name": "#ID[31d4c427ee4fbd63]"
+      },
+      "package_member": true
+    },
+    {
+      "key": {
+        "type": "material",
+        "name": "#ID[32384441bfe07b96]"
+      },
+      "package_member": true
+    },
+    {
+      "key": {
+        "type": "material",
+        "name": "#ID[439430b945c50a99]"
+      },
+      "package_member": true
+    },
+    {
+      "key": {
+        "type": "material",
+        "name": "#ID[568ca4dfece781c5]"
+      },
+      "package_member": true
+    },
+    {
+      "key": {
+        "type": "material",
+        "name": "#ID[59eda8bf845fab9f]"
+      },
+      "package_member": true
+    },
+    {
+      "key": {
+        "type": "material",
+        "name": "#ID[66990638f3a3d118]"
+      },
+      "package_member": true
+    },
+    {
+      "key": {
+        "type": "material",
+        "name": "#ID[69eeb7e1c5363ec1]"
+      },
+      "package_member": true
+    },
+    {
+      "key": {
+        "type": "material",
+        "name": "#ID[76417c9efd8c575f]"
+      },
+      "package_member": true
+    },
+    {
+      "key": {
+        "type": "material",
+        "name": "#ID[78be56ac70caa5b6]"
+      },
+      "package_member": true
+    },
+    {
+      "key": {
+        "type": "material",
+        "name": "#ID[7a878519994efa78]"
+      },
+      "package_member": true
+    },
+    {
+      "key": {
+        "type": "material",
+        "name": "#ID[84820be5be4a7292]"
+      },
+      "package_member": true
+    },
+    {
+      "key": {
+        "type": "material",
+        "name": "#ID[a570734470cac8a6]"
+      },
+      "package_member": true
+    },
+    {
+      "key": {
+        "type": "material",
+        "name": "#ID[c06d7a5d7ea1d64d]"
+      },
+      "package_member": true
+    },
+    {
+      "key": {
+        "type": "material",
+        "name": "#ID[daad642880b93568]"
+      },
+      "package_member": true
+    },
+    {
+      "key": {
+        "type": "material",
+        "name": "#ID[e14900c258cc9b8e]"
+      },
+      "package_member": true
+    },
+    {
+      "key": {
+        "type": "material",
+        "name": "#ID[fd498d637f9b10ff]"
+      },
+      "package_member": true
+    }
+  ]
+}

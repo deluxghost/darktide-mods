@@ -1,8 +1,6 @@
 package native
 
 /*
-#cgo windows CFLAGS: -I${SRCDIR}/../../../../darktide-internal-utils/include
-#cgo windows LDFLAGS: -L${SRCDIR}/../../../../darktide-internal-utils/bin/ucrt64/Release -ldtintutils-core
 #include <stdlib.h>
 #include "runtime_windows.h"
 */
