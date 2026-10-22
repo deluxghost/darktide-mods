@@ -1,0 +1,23 @@
+{
+  "name": "URL Protocol",
+  "description": "Accepts and dispatches darktide:// links to registered mods.",
+  "homepage": "https://www.nexusmods.com/warhammer40kdarktide/mods/880",
+  "source": "https://github.com/deluxghost/darktide-mods/tree/main/UrlProtocol",
+  "funding": {
+    "kofi": "https://ko-fi.com/deluxghost",
+    "bilibili": "https://space.bilibili.com/4712698"
+  },
+  "_build": {
+    "native": [
+      "darktide-link"
+    ]
+  },
+  "version": "1.0.0",
+  "author": "deluxghost",
+  "localization": {
+    "zh-cn": {
+      "name": "URL Protocol",
+      "description": "接受 darktide:// 链接，分发给已注册的模组。"
+    }
+  }
+}

@@ -1,1 +1,8 @@
-/bin/
+/bin/*
+!/bin/avcodec-62.dll
+!/bin/avfilter-11.dll
+!/bin/avformat-62.dll
+!/bin/avutil-60.dll
+!/bin/swresample-6.dll
+!/bin/swscale-9.dll
+!/bin/FFmpeg-LICENSE.txt

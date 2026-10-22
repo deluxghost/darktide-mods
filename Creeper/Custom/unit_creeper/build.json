@@ -1,0 +1,502 @@
+{
+  "schema": 1,
+  "requested_output": "all",
+  "selected_scene": 0,
+  "requested_clip": null,
+  "emitted_clips": [],
+  "applied_approximations": [],
+  "texture_dimension_normalizations": [],
+  "compiler": {
+    "name": "DarktideGLBCompiler",
+    "version": "0.3.0-beta"
+  },
+  "target": {
+    "id": "darktide",
+    "name": "Warhammer 40,000: Darktide",
+    "unit_version": 115,
+    "material_version": 61
+  },
+  "roots": [
+    {
+      "type": "unit",
+      "name": "content/mods/creeper/creeper"
+    }
+  ],
+  "artifacts": [
+    {
+      "resource": {
+        "type": "bones",
+        "name": "content/mods/creeper/creeper_bones"
+      },
+      "role": "primary",
+      "path": "creeper_bones.bones",
+      "size": 104
+    },
+    {
+      "resource": {
+        "type": "texture",
+        "name": "content/mods/creeper/creeper_material_0_bc"
+      },
+      "role": "primary",
+      "path": "creeper_material_0_bc.texture",
+      "size": 5000
+    },
+    {
+      "resource": {
+        "type": "texture",
+        "name": "content/mods/creeper/creeper_material_0_bc"
+      },
+      "role": "stream",
+      "path": "data/am/a9d35b809d556d23.stream",
+      "size": 6679
+    },
+    {
+      "resource": {
+        "type": "texture",
+        "name": "content/mods/creeper/creeper_material_0_nm"
+      },
+      "role": "primary",
+      "path": "creeper_material_0_nm.texture",
+      "size": 357
+    },
+    {
+      "resource": {
+        "type": "texture",
+        "name": "content/mods/creeper/creeper_material_0_nm"
+      },
+      "role": "stream",
+      "path": "data/am/090a48a507751d19.stream",
+      "size": 215
+    },
+    {
+      "resource": {
+        "type": "texture",
+        "name": "content/mods/creeper/creeper_material_0_orm"
+      },
+      "role": "primary",
+      "path": "creeper_material_0_orm.texture",
+      "size": 349
+    },
+    {
+      "resource": {
+        "type": "texture",
+        "name": "content/mods/creeper/creeper_material_0_orm"
+      },
+      "role": "stream",
+      "path": "data/am/e2f5aa7c67b37bae.stream",
+      "size": 86
+    },
+    {
+      "resource": {
+        "type": "material",
+        "name": "content/mods/creeper/creeper_material_0"
+      },
+      "role": "primary",
+      "path": "creeper_material_0.material",
+      "size": 68
+    },
+    {
+      "resource": {
+        "type": "material",
+        "name": "content/mods/creeper/creeper_material_0"
+      },
+      "role": "stream",
+      "path": "data/am/43244b90ca446b82",
+      "size": 120
+    },
+    {
+      "resource": {
+        "type": "texture",
+        "name": "content/mods/creeper/creeper_material_1_bc"
+      },
+      "role": "primary",
+      "path": "creeper_material_1_bc.texture",
+      "size": 4032
+    },
+    {
+      "resource": {
+        "type": "texture",
+        "name": "content/mods/creeper/creeper_material_1_bc"
+      },
+      "role": "stream",
+      "path": "data/am/5d7be47bee2e1406.stream",
+      "size": 5243
+    },
+    {
+      "resource": {
+        "type": "texture",
+        "name": "content/mods/creeper/creeper_material_1_nm"
+      },
+      "role": "primary",
+      "path": "creeper_material_1_nm.texture",
+      "size": 357
+    },
+    {
+      "resource": {
+        "type": "texture",
+        "name": "content/mods/creeper/creeper_material_1_nm"
+      },
+      "role": "stream",
+      "path": "data/am/5bf23051c8a9beee.stream",
+      "size": 215
+    },
+    {
+      "resource": {
+        "type": "texture",
+        "name": "content/mods/creeper/creeper_material_1_orm"
+      },
+      "role": "primary",
+      "path": "creeper_material_1_orm.texture",
+      "size": 349
+    },
+    {
+      "resource": {
+        "type": "texture",
+        "name": "content/mods/creeper/creeper_material_1_orm"
+      },
+      "role": "stream",
+      "path": "data/am/b2ed72c283ea9411.stream",
+      "size": 86
+    },
+    {
+      "resource": {
+        "type": "material",
+        "name": "content/mods/creeper/creeper_material_1"
+      },
+      "role": "primary",
+      "path": "creeper_material_1.material",
+      "size": 68
+    },
+    {
+      "resource": {
+        "type": "material",
+        "name": "content/mods/creeper/creeper_material_1"
+      },
+      "role": "stream",
+      "path": "data/am/48894aebc1138971",
+      "size": 120
+    },
+    {
+      "resource": {
+        "type": "unit",
+        "name": "content/mods/creeper/creeper"
+      },
+      "role": "primary",
+      "path": "creeper.unit",
+      "size": 21295
+    }
+  ],
+  "resources": [
+    {
+      "key": {
+        "type": "bones",
+        "name": "content/mods/creeper/creeper_bones"
+      },
+      "name_hash": "fcb597056ef5495f",
+      "file": {
+        "path": "creeper_bones.bones",
+        "size": 104,
+        "crc32": "2402baab"
+      },
+      "stream": null,
+      "dependencies": []
+    },
+    {
+      "key": {
+        "type": "texture",
+        "name": "content/mods/creeper/creeper_material_0_bc"
+      },
+      "name_hash": "7f5204a55cfd14ab",
+      "file": {
+        "path": "creeper_material_0_bc.texture",
+        "size": 5000,
+        "crc32": "d2ca19f8"
+      },
+      "stream": {
+        "name": "data/am/a9d35b809d556d23.stream",
+        "file": {
+          "path": "data/am/a9d35b809d556d23.stream",
+          "size": 6679,
+          "crc32": "141dfa99"
+        }
+      },
+      "dependencies": []
+    },
+    {
+      "key": {
+        "type": "texture",
+        "name": "content/mods/creeper/creeper_material_0_nm"
+      },
+      "name_hash": "0fdec361693554f7",
+      "file": {
+        "path": "creeper_material_0_nm.texture",
+        "size": 357,
+        "crc32": "0ad5e611"
+      },
+      "stream": {
+        "name": "data/am/090a48a507751d19.stream",
+        "file": {
+          "path": "data/am/090a48a507751d19.stream",
+          "size": 215,
+          "crc32": "765b2340"
+        }
+      },
+      "dependencies": []
+    },
+    {
+      "key": {
+        "type": "texture",
+        "name": "content/mods/creeper/creeper_material_0_orm"
+      },
+      "name_hash": "12a89a87862d3bfe",
+      "file": {
+        "path": "creeper_material_0_orm.texture",
+        "size": 349,
+        "crc32": "43ad0ed2"
+      },
+      "stream": {
+        "name": "data/am/e2f5aa7c67b37bae.stream",
+        "file": {
+          "path": "data/am/e2f5aa7c67b37bae.stream",
+          "size": 86,
+          "crc32": "e73ad97f"
+        }
+      },
+      "dependencies": []
+    },
+    {
+      "key": {
+        "type": "material",
+        "name": "content/mods/creeper/creeper_material_0"
+      },
+      "name_hash": "ad457fbeb7695d63",
+      "file": {
+        "path": "creeper_material_0.material",
+        "size": 68,
+        "crc32": "8dfab960"
+      },
+      "stream": {
+        "name": "data/am/43244b90ca446b82",
+        "file": {
+          "path": "data/am/43244b90ca446b82",
+          "size": 120,
+          "crc32": "7f736e5d"
+        }
+      },
+      "dependencies": [
+        {
+          "type": "material",
+          "name": "content/parent_materials/substance_basic"
+        },
+        {
+          "type": "material",
+          "name": "#ID[cfe7f61e8e475a1a]"
+        },
+        {
+          "type": "texture",
+          "name": "content/mods/creeper/creeper_material_0_bc"
+        },
+        {
+          "type": "texture",
+          "name": "content/mods/creeper/creeper_material_0_nm"
+        },
+        {
+          "type": "texture",
+          "name": "content/mods/creeper/creeper_material_0_orm"
+        }
+      ]
+    },
+    {
+      "key": {
+        "type": "texture",
+        "name": "content/mods/creeper/creeper_material_1_bc"
+      },
+      "name_hash": "0755c16dd7ce5377",
+      "file": {
+        "path": "creeper_material_1_bc.texture",
+        "size": 4032,
+        "crc32": "c5a9a2ae"
+      },
+      "stream": {
+        "name": "data/am/5d7be47bee2e1406.stream",
+        "file": {
+          "path": "data/am/5d7be47bee2e1406.stream",
+          "size": 5243,
+          "crc32": "a8bcbd4b"
+        }
+      },
+      "dependencies": []
+    },
+    {
+      "key": {
+        "type": "texture",
+        "name": "content/mods/creeper/creeper_material_1_nm"
+      },
+      "name_hash": "32c46e9b9f28b70c",
+      "file": {
+        "path": "creeper_material_1_nm.texture",
+        "size": 357,
+        "crc32": "8c055320"
+      },
+      "stream": {
+        "name": "data/am/5bf23051c8a9beee.stream",
+        "file": {
+          "path": "data/am/5bf23051c8a9beee.stream",
+          "size": 215,
+          "crc32": "765b2340"
+        }
+      },
+      "dependencies": []
+    },
+    {
+      "key": {
+        "type": "texture",
+        "name": "content/mods/creeper/creeper_material_1_orm"
+      },
+      "name_hash": "6235ae19726ad70d",
+      "file": {
+        "path": "creeper_material_1_orm.texture",
+        "size": 349,
+        "crc32": "18471733"
+      },
+      "stream": {
+        "name": "data/am/b2ed72c283ea9411.stream",
+        "file": {
+          "path": "data/am/b2ed72c283ea9411.stream",
+          "size": 86,
+          "crc32": "e73ad97f"
+        }
+      },
+      "dependencies": []
+    },
+    {
+      "key": {
+        "type": "material",
+        "name": "content/mods/creeper/creeper_material_1"
+      },
+      "name_hash": "d65290249911423e",
+      "file": {
+        "path": "creeper_material_1.material",
+        "size": 68,
+        "crc32": "20c5030f"
+      },
+      "stream": {
+        "name": "data/am/48894aebc1138971",
+        "file": {
+          "path": "data/am/48894aebc1138971",
+          "size": 120,
+          "crc32": "00ca3723"
+        }
+      },
+      "dependencies": [
+        {
+          "type": "material",
+          "name": "content/parent_materials/substance_basic"
+        },
+        {
+          "type": "material",
+          "name": "#ID[cfe7f61e8e475a1a]"
+        },
+        {
+          "type": "texture",
+          "name": "content/mods/creeper/creeper_material_1_bc"
+        },
+        {
+          "type": "texture",
+          "name": "content/mods/creeper/creeper_material_1_nm"
+        },
+        {
+          "type": "texture",
+          "name": "content/mods/creeper/creeper_material_1_orm"
+        }
+      ]
+    },
+    {
+      "key": {
+        "type": "unit",
+        "name": "content/mods/creeper/creeper"
+      },
+      "name_hash": "e49c18b6b073114a",
+      "file": {
+        "path": "creeper.unit",
+        "size": 21295,
+        "crc32": "6d5ab9f3"
+      },
+      "stream": null,
+      "dependencies": [
+        {
+          "type": "bones",
+          "name": "content/mods/creeper/creeper_bones"
+        },
+        {
+          "type": "material",
+          "name": "content/mods/creeper/creeper_material_0"
+        },
+        {
+          "type": "material",
+          "name": "content/mods/creeper/creeper_material_1"
+        },
+        {
+          "type": "material",
+          "name": "#ID[365ea051cdf53ac8]"
+        },
+        {
+          "type": "material",
+          "name": "#ID[e6481945702287a1]"
+        },
+        {
+          "type": "material",
+          "name": "#ID[4ddb0491c07af985]"
+        },
+        {
+          "type": "material",
+          "name": "#ID[213bf6c76d71db74]"
+        }
+      ]
+    }
+  ],
+  "external_resources": [
+    {
+      "key": {
+        "type": "material",
+        "name": "#ID[cfe7f61e8e475a1a]"
+      },
+      "package_member": false
+    },
+    {
+      "key": {
+        "type": "material",
+        "name": "content/parent_materials/substance_basic"
+      },
+      "package_member": false
+    },
+    {
+      "key": {
+        "type": "material",
+        "name": "#ID[365ea051cdf53ac8]"
+      },
+      "package_member": true
+    },
+    {
+      "key": {
+        "type": "material",
+        "name": "#ID[e6481945702287a1]"
+      },
+      "package_member": true
+    },
+    {
+      "key": {
+        "type": "material",
+        "name": "#ID[4ddb0491c07af985]"
+      },
+      "package_member": true
+    },
+    {
+      "key": {
+        "type": "material",
+        "name": "#ID[213bf6c76d71db74]"
+      },
+      "package_member": true
+    }
+  ]
+}

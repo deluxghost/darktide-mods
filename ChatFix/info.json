@@ -1,0 +1,26 @@
+{
+  "name": "Chat Fix",
+  "description": "Some additional chat options.",
+  "homepage": "https://www.nexusmods.com/warhammer40kdarktide/mods/43",
+  "source": "https://github.com/deluxghost/darktide-mods/tree/main/ChatFix",
+  "funding": {
+    "kofi": "https://ko-fi.com/deluxghost",
+    "bilibili": "https://space.bilibili.com/4712698"
+  },
+  "version": "1.1.2",
+  "author": "deluxghost",
+  "_build": {
+    "enabled": false,
+    "native": []
+  },
+  "localization": {
+    "zh-cn": {
+      "name": "聊天修复",
+      "description": "添加额外的聊天选项。"
+    },
+    "ru": {
+      "name": "Исправление чата",
+      "description": "Chat Fix - Добавляет дополнительные параметры для чата."
+    }
+  }
+}

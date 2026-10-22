@@ -1,0 +1,23 @@
+{
+  "name": "ImGui Font Patch",
+  "description": "Patches Darktide's native ImGui font and clipboard handling so original ImGui windows can display and paste non-ASCII text.",
+  "homepage": "https://www.nexusmods.com/warhammer40kdarktide/mods/1027",
+  "source": "https://github.com/deluxghost/darktide-mods/tree/main/ImguiPatch",
+  "funding": {
+    "kofi": "https://ko-fi.com/deluxghost",
+    "bilibili": "https://space.bilibili.com/4712698"
+  },
+  "_build": {
+    "native": [
+      "darktide-imgui-patch"
+    ]
+  },
+  "version": "1.0.1",
+  "author": "deluxghost",
+  "localization": {
+    "zh-cn": {
+      "name": "ImGui 字体补丁",
+      "description": "修补暗潮原生 ImGui 的字体和剪贴板处理，让原版 ImGui 窗口可以显示并粘贴非 ASCII 文本。"
+    }
+  }
+}

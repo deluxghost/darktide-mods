@@ -1,2 +1,5 @@
 /assets/*/source/**/*.png filter=lfs diff=lfs merge=lfs -text
 /assets/*/source/**/*.ogg filter=lfs diff=lfs merge=lfs -text
+/SimpleAudio/bin/*.dll filter=lfs diff=lfs merge=lfs -text
+/Creeper/Custom/** filter=lfs diff=lfs merge=lfs -text
+/Creeper/Custom/**/*.json !filter !diff !merge text

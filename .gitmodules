@@ -1,0 +1,6 @@
+[submodule "native/darktide-internal-utils/third_party/minhook"]
+	path = native/darktide-internal-utils/third_party/minhook
+	url = https://github.com/TsudaKageyu/minhook.git
+[submodule "native/darktide-internal-utils/third_party/zydis"]
+	path = native/darktide-internal-utils/third_party/zydis
+	url = https://github.com/zyantific/zydis.git

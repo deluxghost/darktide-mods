@@ -22,7 +22,7 @@
     <ConfigurationType>DynamicLibrary</ConfigurationType>
     <UseDebugLibraries Condition="'$(Configuration)'=='Debug'">true</UseDebugLibraries>
     <UseDebugLibraries Condition="'$(Configuration)'=='Release'">false</UseDebugLibraries>
-    <PlatformToolset>v143</PlatformToolset>
+    <PlatformToolset>$(DefaultPlatformToolset)</PlatformToolset>
     <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
@@ -33,6 +33,7 @@
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup>
+    <DtIntUtilsRoot Condition="'$(DtIntUtilsRoot)'==''">$(ProjectDir)..\darktide-internal-utils</DtIntUtilsRoot>
     <TargetName>darktide-realms</TargetName>
     <OutDir>$(ProjectDir)bin\$(Platform)\$(Configuration)\</OutDir>
     <IntDir>$(ProjectDir)obj\$(Platform)\$(Configuration)\</IntDir>
@@ -46,7 +47,7 @@
       <LanguageStandard>stdcpp17</LanguageStandard>
       <ExceptionHandling>Sync</ExceptionHandling>
       <PreprocessorDefinitions>WIN32_LEAN_AND_MEAN;NOMINMAX;UNICODE;_UNICODE;_CRT_SECURE_NO_WARNINGS;DARKTIDE_REALMS_BUILD;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>$(ProjectDir)include;$(ProjectDir)..\darktide-internal-utils\include;$(ProjectDir)obj\audio\_deps\opus-src\include;$(ProjectDir)obj\audio\include;$(ProjectDir)obj\audio\_deps\webrtc-src\webrtc;$(ProjectDir)obj\audio\_deps\webrtc-src\subprojects\abseil-cpp-20240722.0;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)include;$(DtIntUtilsRoot)\include;$(ProjectDir)obj\audio\_deps\opus-src\include;$(ProjectDir)obj\audio\include;$(ProjectDir)obj\audio\_deps\webrtc-src\webrtc;$(ProjectDir)obj\audio\_deps\webrtc-src\subprojects\abseil-cpp-20240722.0;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -104,7 +105,7 @@
     <ResourceCompile Include="src\versioninfo.rc" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\darktide-internal-utils\dtintutils-core.vcxproj">
+    <ProjectReference Include="$(DtIntUtilsRoot)\dtintutils-core.vcxproj">
       <Project>{A2A708A8-2106-443F-9293-FBF44E582D2E}</Project>
       <LinkLibraryDependencies>true</LinkLibraryDependencies>
     </ProjectReference>
