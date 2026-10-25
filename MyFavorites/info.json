@@ -1,0 +1,22 @@
+{
+  "name": "My Favorites",
+  "description": "Make favorite icons colorful.",
+  "homepage": "https://www.nexusmods.com/warhammer40kdarktide/mods/125",
+  "source": "https://github.com/deluxghost/darktide-mods/tree/main/MyFavorites",
+  "funding": {
+    "kofi": "https://ko-fi.com/deluxghost",
+    "bilibili": "https://space.bilibili.com/4712698"
+  },
+  "version": "2.1.2",
+  "author": "deluxghost",
+  "localization": {
+    "zh-cn": {
+      "name": "我的收藏",
+      "description": "为收藏图标添加颜色。"
+    },
+    "ru": {
+      "name": "Моё избранное",
+      "description": "My Favorites - делает значок избранного цветным."
+    }
+  }
+}

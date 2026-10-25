@@ -7,6 +7,19 @@ local UISoundEvents = require("scripts/settings/ui/ui_sound_events")
 local star_icon = "content/ui/materials/icons/presets/preset_15"
 local item_cache = mod:persistent_table("item_cache")
 
+local function migrate_colors()
+	for index = 1, 5 do
+		local old_setting_id = "color_definition_" .. tostring(index)
+		local color_name = mod:get(old_setting_id)
+
+		if type(color_name) == "string" then
+			local new_setting_id = "favorite_color_" .. tostring(index)
+			mod:set(new_setting_id, Color[color_name](255, true))
+			mod:set(old_setting_id, nil)
+		end
+	end
+end
+
 local function get_item_cache()
 	if item_cache.favorites == nil then
 		item_cache.favorites = mod:get("favorite_item_list") or {}
@@ -39,6 +52,7 @@ mod.load_package = function (package_name)
 end
 
 mod.on_all_mods_loaded = function ()
+	migrate_colors()
 	mod.load_package("packages/ui/views/inventory_background_view/inventory_background_view")
 end
 
@@ -226,10 +240,10 @@ local item_definitions = {
 			end
 
 			local current = get_item_group(item.gear_id)
-			local color_name = mod:get("color_definition_" .. tostring(current))
+			local color = mod:get("favorite_color_" .. tostring(current))
 			if current > 0 then
-				style.color = Color[color_name](255, true)
-				style.default_color = Color[color_name](255, true)
+				style.color = color
+				style.default_color = color
 				return true
 			end
 			return false
@@ -284,8 +298,8 @@ mod:hook_require("scripts/ui/pass_templates/item_pass_templates", function (inst
 				local hotspot = content.myfav_hotspot
 				local hotspot_extra = content.myfav_extra_icon_hotspot
 				local current = get_item_group(item.gear_id)
-				local color_name = mod:get("color_definition_" .. tostring(current))
-				style.text_color = Color[color_name](255, true)
+				local color = mod:get("favorite_color_" .. tostring(current))
+				style.text_color = color
 				local is_hover = hotspot.is_hover or (show_extra_icon and hotspot_extra.is_hover)
 				if is_hover then
 					content.favorite_icon = string.format("%s %s", "", mod:localize("color_definition") .. " " .. tostring(current))

@@ -1,73 +1,34 @@
 local mod = get_mod("MyFavorites")
 
-local color_list = {
-	"ui_hud_red_light",
-	"orange_red",
-	"orange",
-	"gold",
-	"ui_difficulty_3",
-	"green_yellow",
-	"lawn_green",
-	"ui_green_light",
-	"spring_green",
-	"ui_difficulty_1",
-	"turquoise",
-	"deep_sky_blue",
-	"dodger_blue",
-	"royal_blue",
-	"blue_violet",
-	"hot_pink",
-	"deep_pink",
-	"crimson",
+local default_colors = {
+	{ 255, 255, 165, 0 },
+	{ 255, 124, 252, 0 },
+	{ 255, 0, 191, 255 },
+	{ 255, 138, 43, 226 },
+	{ 255, 255, 20, 147 },
 }
 
-local color_widget = {
-	setting_id = "color_definition",
-	type = "group",
-	sub_widgets = {
-		{
-			setting_id = "color_definition_1",
-			type = "dropdown",
-			default_value = "orange",
-			options = {},
-		},
-		{
-			setting_id = "color_definition_2",
-			type = "dropdown",
-			default_value = "lawn_green",
-			options = {},
-		},
-		{
-			setting_id = "color_definition_3",
-			type = "dropdown",
-			default_value = "deep_sky_blue",
-			options = {},
-		},
-		{
-			setting_id = "color_definition_4",
-			type = "dropdown",
-			default_value = "blue_violet",
-			options = {},
-		},
-		{
-			setting_id = "color_definition_5",
-			type = "dropdown",
-			default_value = "deep_pink",
-			options = {},
-		},
-	},
-}
-
-local color_options = {}
-for _, color_name in ipairs(color_list) do
-	table.insert(color_options, {
-		text = "color_def_" .. color_name,
-		value = color_name,
-	})
+local color_widgets = {}
+for index, color in ipairs(default_colors) do
+	color_widgets[#color_widgets + 1] = {
+		setting_id = "favorite_color_" .. tostring(index),
+		type = "color",
+		title = "color_definition_" .. tostring(index),
+		default_value = color,
+	}
 end
 
-for _, sub_widget in ipairs(color_widget.sub_widgets) do
-	sub_widget.options = table.clone(color_options)
+local count_options = { localize = false }
+for count = 1, #color_widgets do
+	local show_widgets = {}
+	for index = 1, count do
+		show_widgets[#show_widgets + 1] = index
+	end
+	count_options[#count_options + 1] = {
+		text = tostring(count),
+		value = count,
+		show_widgets = show_widgets,
+	}
 end
 
 return {
@@ -83,11 +44,11 @@ return {
 			},
 			{
 				setting_id = "favorite_preset_count",
-				type = "numeric",
+				type = "dropdown",
 				default_value = 5,
-				range = { 1, 5 },
+				options = count_options,
+				sub_widgets = color_widgets,
 			},
-			color_widget,
 		}
 	}
 }
