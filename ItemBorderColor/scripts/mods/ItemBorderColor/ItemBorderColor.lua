@@ -4,14 +4,35 @@ local DEFAULT_SELECTED_COLOR = { 255, 250, 189, 73 }
 
 local cache = mod:persistent_table("cache")
 
+local function migrate_color()
+	local r_id = "opt_selected_r"
+	local g_id = "opt_selected_g"
+	local b_id = "opt_selected_b"
+	local r = mod:get(r_id)
+	local g = mod:get(g_id)
+	local b = mod:get(b_id)
+
+	if r ~= nil and g ~= nil and b ~= nil then
+		mod:set("opt_selected_color", { 255, r, g, b })
+		mod:set(r_id, nil)
+		mod:set(g_id, nil)
+		mod:set(b_id, nil)
+	end
+end
+
+function mod.on_all_mods_loaded()
+	migrate_color()
+	cache.opt_selected_color = mod:get("opt_selected_color")
+end
+
 function mod.on_enabled()
-	cache.opt_selected_r = mod:get("opt_selected_r")
-	cache.opt_selected_g = mod:get("opt_selected_g")
-	cache.opt_selected_b = mod:get("opt_selected_b")
+	cache.opt_selected_color = mod:get("opt_selected_color")
 end
 
 mod.on_setting_changed = function (setting_id)
-	cache[setting_id] = mod:get(setting_id)
+	if setting_id == "opt_selected_color" then
+		cache.opt_selected_color = mod:get(setting_id)
+	end
 end
 
 local function darken_color(color, percentage)
@@ -23,10 +44,7 @@ local function darken_color(color, percentage)
 end
 
 local function get_selected_color()
-	if cache.opt_selected_r == nil or cache.opt_selected_g == nil or cache.opt_selected_b == nil then
-		return DEFAULT_SELECTED_COLOR
-	end
-	return { 255, cache.opt_selected_r, cache.opt_selected_g, cache.opt_selected_b }
+	return cache.opt_selected_color or DEFAULT_SELECTED_COLOR
 end
 
 local function hook_pass(pass, key, darken)

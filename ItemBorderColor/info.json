@@ -1,0 +1,22 @@
+{
+  "name": "Item Border Color",
+  "description": "Change selected item border color.",
+  "homepage": "https://www.nexusmods.com/warhammer40kdarktide/mods/231",
+  "source": "https://github.com/deluxghost/darktide-mods/tree/main/ItemBorderColor",
+  "funding": {
+    "kofi": "https://ko-fi.com/deluxghost",
+    "bilibili": "https://space.bilibili.com/4712698"
+  },
+  "version": "1.0.2",
+  "author": "deluxghost",
+  "localization": {
+    "zh-cn": {
+      "name": "物品边框颜色",
+      "description": "修改已选物品边框颜色。"
+    },
+    "ru": {
+      "name": "Цвет границы предмета",
+      "description": "Item Border Color - Вы можете изменить цвет границы выбранного предмета."
+    }
+  }
+}

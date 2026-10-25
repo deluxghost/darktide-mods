@@ -8,27 +8,8 @@ return {
 		widgets = {
 			{
 				setting_id = "opt_selected_color",
-				type = "group",
-				sub_widgets = {
-					{
-						setting_id = "opt_selected_r",
-						type = "numeric",
-						default_value = 250,
-						range = {0, 255},
-					},
-					{
-						setting_id = "opt_selected_g",
-						type = "numeric",
-						default_value = 189,
-						range = {0, 255},
-					},
-					{
-						setting_id = "opt_selected_b",
-						type = "numeric",
-						default_value = 73,
-						range = {0, 255},
-					},
-				},
+				type = "color",
+				default_value = { 255, 250, 189, 73 },
 			},
 		}
 	}
