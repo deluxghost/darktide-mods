@@ -455,7 +455,7 @@ local function install_view_hooks(SocialMenuRosterView, Definitions, RosterViewS
 	local function add_party_member(self, unique_id, player_info)
 		local party_widgets = self._party_widgets
 		local num_party_members = #party_widgets
-		local party_member_widget = self:_get_roster_widget(player_info, "player_plaque", PARTY_GRID_ID)
+		local party_member_widget = self:_get_roster_widget(player_info, "player_plaque", PARTY_GRID_INDEX)
 		local widget_content = party_member_widget.content
 
 		widget_content.party_panel = true

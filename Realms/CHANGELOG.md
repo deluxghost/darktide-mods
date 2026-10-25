@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.1.3
+
+- Fixed a Social menu crash with more than four players
+
 ## 1.1.2
 
 - Restored preparation is_finalizing function for other mods
