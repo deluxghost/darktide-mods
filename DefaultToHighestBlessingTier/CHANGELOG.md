@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.0.3
+
+- Updated mod metadata for new DMF
+
 ## 1.0.2
 
 - Fixed wrong tier of weapons that has not fully mastered (Thanks to WaiMonkey)

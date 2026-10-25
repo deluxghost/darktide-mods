@@ -1,0 +1,22 @@
+{
+  "name": "Default To Highest Blessing Tier",
+  "description": "Automatically switch to the highest unlocked blessing tier in Re-Bless page.",
+  "homepage": "https://www.nexusmods.com/warhammer40kdarktide/mods/364",
+  "source": "https://github.com/deluxghost/darktide-mods/tree/main/DefaultToHighestBlessingTier",
+  "funding": {
+    "kofi": "https://ko-fi.com/deluxghost",
+    "bilibili": "https://space.bilibili.com/4712698"
+  },
+  "version": "1.0.3",
+  "author": "deluxghost",
+  "localization": {
+    "zh-cn": {
+      "name": "默认最高祝福等级",
+      "description": "在重新祝福页面，自动切换到已解锁的最高祝福等级。"
+    },
+    "ru": {
+      "name": "Благословения высшего уровня по умолчанию",
+      "description": "Default To Highest Blessing Tier - Автоматически переключает на наивысший разблокированный уровень благословения на странице смены благословений."
+    }
+  }
+}
