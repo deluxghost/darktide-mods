@@ -1,0 +1,23 @@
+{
+  "name": "Simple Audio",
+  "description": "Provides simple local audio playback for other mods.",
+  "homepage": "https://www.nexusmods.com/warhammer40kdarktide/mods/929",
+  "source": "https://github.com/deluxghost/darktide-mods/tree/main/SimpleAudio",
+  "funding": {
+    "kofi": "https://ko-fi.com/deluxghost",
+    "bilibili": "https://space.bilibili.com/4712698"
+  },
+  "_build": {
+    "native": [
+      "darktide-simple-audio-runtime"
+    ]
+  },
+  "version": "1.4.1",
+  "author": "deluxghost",
+  "localization": {
+    "zh-cn": {
+      "name": "简易音频",
+      "description": "为其他模组提供简单的本地音频播放功能。"
+    }
+  }
+}

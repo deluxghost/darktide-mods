@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.4.1
+
+- Updated mod metadata and options for new DMF
+
 ## 1.4.0
 
 - Optimized performance (experimental)
