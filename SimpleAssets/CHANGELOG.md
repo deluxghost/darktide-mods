@@ -1,5 +1,9 @@
 # Changelog
 
+## 2.0.1
+
+- Fixed resource loading initialization failures when no nearby address space is available for hook trampolines
+
 ## 2.0.0
 
 - [For Modders] Custom compiled textures, materials, particles, units and animations (very unstable)

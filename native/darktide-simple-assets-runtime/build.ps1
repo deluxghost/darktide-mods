@@ -37,8 +37,11 @@ $DtIntUtilsRoot = if ([System.IO.Path]::IsPathRooted($DtIntUtilsRoot)) {
 }
 $DtIntUtilsBuild = Join-Path $DtIntUtilsRoot "build-ucrt64.ps1"
 $DtIntUtilsInclude = Join-Path $DtIntUtilsRoot "include"
+$MinHookInclude = Join-Path $DtIntUtilsRoot "third_party\minhook\include"
+$MinHookSource = Join-Path $DtIntUtilsRoot "third_party\minhook\src"
+$MinHookPatch = Join-Path $ProjectRoot "minhook-absolute.patch"
 $DtIntUtilsLibraryDirectory = Join-Path $DtIntUtilsRoot "bin\ucrt64\Release"
-$DtIntUtilsLibrary = Join-Path $DtIntUtilsRoot "bin\ucrt64\Release\libdtintutils-core.a"
+$DtIntUtilsLibrary = Join-Path $DtIntUtilsLibraryDirectory "libdtintutils-core.a"
 $NativeSourceRoot = Join-Path $ProjectRoot "internal\resource\native"
 $Windres = Join-Path $Ucrt64Bin "windres.exe"
 $Clang = Join-Path $Ucrt64Bin "clang.exe"
@@ -64,6 +67,13 @@ if (-not (Test-Path -LiteralPath $DtIntUtilsLibrary -PathType Leaf)) {
     throw "Darktide Internal Utils UCRT64 library was not found at: $DtIntUtilsLibrary"
 }
 
+# Apply only the SA backend changes to a build-local copy of the existing dependency.
+$MinHookBuild = Join-Path $BuildDir "minhook"
+New-Item -ItemType Directory -Force -Path $MinHookBuild | Out-Null
+foreach ($Name in @("buffer.c", "buffer.h", "hook.c", "trampoline.c", "trampoline.h")) {
+    Copy-Item -LiteralPath (Join-Path $MinHookSource $Name) -Destination $MinHookBuild -Force
+}
+& git -C $ProjectRoot apply --directory build/minhook $MinHookPatch
 $DtIntUtilsHash = (Get-FileHash -LiteralPath $DtIntUtilsLibrary -Algorithm SHA256).Hash
 $NativeSourceFiles = @(
     Get-ChildItem -LiteralPath $NativeSourceRoot -Recurse -File |
@@ -78,6 +88,7 @@ $NativeSourceManifest = $NativeSourceFiles | ForEach-Object {
     $Hash = (Get-FileHash -LiteralPath $_.FullName -Algorithm SHA256).Hash
     "$RelativePath=$Hash"
 }
+$NativeSourceManifest += "minhook-absolute.patch=$((Get-FileHash -LiteralPath $MinHookPatch -Algorithm SHA256).Hash)"
 $NativeSourceBytes = [System.Text.Encoding]::UTF8.GetBytes($NativeSourceManifest -join "`n")
 $NativeSourceHash = [Convert]::ToHexString(
     [System.Security.Cryptography.SHA256]::HashData($NativeSourceBytes)
@@ -86,7 +97,7 @@ $NativeSourceHash = [Convert]::ToHexString(
 $env:PATH = "$Ucrt64Bin;$env:PATH"
 $env:CC = $Clang
 $env:CGO_ENABLED = "1"
-$env:CGO_CPPFLAGS = "`"-I$DtIntUtilsInclude`" -DDTINTUTILS_BUILD_ID_$DtIntUtilsHash=1 -DSIMPLE_ASSETS_NATIVE_BUILD_ID_$NativeSourceHash=1"
+$env:CGO_CPPFLAGS = "`"-I$DtIntUtilsInclude`" `"-I$BuildDir`" `"-I$MinHookInclude`" `"-I$MinHookSource`" -DDTINTUTILS_BUILD_ID_$DtIntUtilsHash=1 -DSIMPLE_ASSETS_NATIVE_BUILD_ID_$NativeSourceHash=1"
 $env:CGO_LDFLAGS = "`"-L$DtIntUtilsLibraryDirectory`" -ldtintutils-core"
 
 $RuntimePath = Join-Path $BuildDir "simple-assets-runtime.dll"

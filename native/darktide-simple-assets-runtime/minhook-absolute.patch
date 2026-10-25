@@ -1,0 +1,408 @@
+--- a/buffer.c
++++ b/buffer.c
+@@ -31,9 +31,6 @@
+ 
+ // Size of each memory block. (= page size of VirtualAlloc)
+ #define MEMORY_BLOCK_SIZE 0x1000
+-
+-// Max range for seeking a memory block. (= 1024MB)
+-#define MAX_MEMORY_RANGE 0x40000000
+ 
+ // Memory protection flags to check the executable address.
+ #define PAGE_EXECUTE_FLAGS \
+@@ -85,144 +82,17 @@
+ }
+ 
+ //-------------------------------------------------------------------------
+-#if defined(_M_X64) || defined(__x86_64__)
+-static LPVOID FindPrevFreeRegion(LPVOID pAddress, LPVOID pMinAddr, DWORD dwAllocationGranularity)
+-{
+-    ULONG_PTR tryAddr = (ULONG_PTR)pAddress;
+-
+-    // Round down to the allocation granularity.
+-    tryAddr -= tryAddr % dwAllocationGranularity;
+-
+-    // Start from the previous allocation granularity multiply.
+-    tryAddr -= dwAllocationGranularity;
+-
+-    while (tryAddr >= (ULONG_PTR)pMinAddr)
+-    {
+-        MEMORY_BASIC_INFORMATION mbi;
+-        if (VirtualQuery((LPVOID)tryAddr, &mbi, sizeof(mbi)) == 0)
+-            break;
+-
+-        if (mbi.State == MEM_FREE)
+-            return (LPVOID)tryAddr;
+-
+-        if ((ULONG_PTR)mbi.AllocationBase < dwAllocationGranularity)
+-            break;
+-
+-        tryAddr = (ULONG_PTR)mbi.AllocationBase - dwAllocationGranularity;
+-    }
+-
+-    return NULL;
+-}
+-#endif
+-
+-//-------------------------------------------------------------------------
+-#if defined(_M_X64) || defined(__x86_64__)
+-static LPVOID FindNextFreeRegion(LPVOID pAddress, LPVOID pMaxAddr, DWORD dwAllocationGranularity)
+-{
+-    ULONG_PTR tryAddr = (ULONG_PTR)pAddress;
+-
+-    // Round down to the allocation granularity.
+-    tryAddr -= tryAddr % dwAllocationGranularity;
+-
+-    // Start from the next allocation granularity multiply.
+-    tryAddr += dwAllocationGranularity;
+-
+-    while (tryAddr <= (ULONG_PTR)pMaxAddr)
+-    {
+-        MEMORY_BASIC_INFORMATION mbi;
+-        if (VirtualQuery((LPVOID)tryAddr, &mbi, sizeof(mbi)) == 0)
+-            break;
+-
+-        if (mbi.State == MEM_FREE)
+-            return (LPVOID)tryAddr;
+-
+-        tryAddr = (ULONG_PTR)mbi.BaseAddress + mbi.RegionSize;
+-
+-        // Round up to the next allocation granularity.
+-        tryAddr += dwAllocationGranularity - 1;
+-        tryAddr -= tryAddr % dwAllocationGranularity;
+-    }
+-
+-    return NULL;
+-}
+-#endif
+-
+-//-------------------------------------------------------------------------
+-static PMEMORY_BLOCK GetMemoryBlock(LPVOID pOrigin)
++static PMEMORY_BLOCK GetMemoryBlock(VOID)
+ {
+     PMEMORY_BLOCK pBlock;
+-#if defined(_M_X64) || defined(__x86_64__)
+-    ULONG_PTR minAddr;
+-    ULONG_PTR maxAddr;
+-
+-    SYSTEM_INFO si;
+-    GetSystemInfo(&si);
+-    minAddr = (ULONG_PTR)si.lpMinimumApplicationAddress;
+-    maxAddr = (ULONG_PTR)si.lpMaximumApplicationAddress;
+-
+-    // pOrigin ± 512MB
+-    if ((ULONG_PTR)pOrigin > MAX_MEMORY_RANGE && minAddr < (ULONG_PTR)pOrigin - MAX_MEMORY_RANGE)
+-        minAddr = (ULONG_PTR)pOrigin - MAX_MEMORY_RANGE;
+-
+-    if (maxAddr > (ULONG_PTR)pOrigin + MAX_MEMORY_RANGE)
+-        maxAddr = (ULONG_PTR)pOrigin + MAX_MEMORY_RANGE;
+-
+-    // Make room for MEMORY_BLOCK_SIZE bytes.
+-    maxAddr -= MEMORY_BLOCK_SIZE - 1;
+-#endif
+-
+-    // Look the registered blocks for a reachable one.
++    // Absolute entry jumps do not require a trampoline near the target.
+     for (pBlock = g_pMemoryBlocks; pBlock != NULL; pBlock = pBlock->pNext)
+     {
+-#if defined(_M_X64) || defined(__x86_64__)
+-        // Ignore the blocks too far.
+-        if ((ULONG_PTR)pBlock < minAddr || (ULONG_PTR)pBlock >= maxAddr)
+-            continue;
+-#endif
+-        // The block has at least one unused slot.
+         if (pBlock->pFree != NULL)
+             return pBlock;
+     }
+-
+-#if defined(_M_X64) || defined(__x86_64__)
+-    // Alloc a new block above if not found.
+-    {
+-        LPVOID pAlloc = pOrigin;
+-        while ((ULONG_PTR)pAlloc >= minAddr)
+-        {
+-            pAlloc = FindPrevFreeRegion(pAlloc, (LPVOID)minAddr, si.dwAllocationGranularity);
+-            if (pAlloc == NULL)
+-                break;
+-
+-            pBlock = (PMEMORY_BLOCK)VirtualAlloc(
+-                pAlloc, MEMORY_BLOCK_SIZE, MEM_COMMIT | MEM_RESERVE, PAGE_EXECUTE_READWRITE);
+-            if (pBlock != NULL)
+-                break;
+-        }
+-    }
+-
+-    // Alloc a new block below if not found.
+-    if (pBlock == NULL)
+-    {
+-        LPVOID pAlloc = pOrigin;
+-        while ((ULONG_PTR)pAlloc <= maxAddr)
+-        {
+-            pAlloc = FindNextFreeRegion(pAlloc, (LPVOID)maxAddr, si.dwAllocationGranularity);
+-            if (pAlloc == NULL)
+-                break;
+-
+-            pBlock = (PMEMORY_BLOCK)VirtualAlloc(
+-                pAlloc, MEMORY_BLOCK_SIZE, MEM_COMMIT | MEM_RESERVE, PAGE_EXECUTE_READWRITE);
+-            if (pBlock != NULL)
+-                break;
+-        }
+-    }
+-#else
+-    // In x86 mode, a memory block can be placed anywhere.
+     pBlock = (PMEMORY_BLOCK)VirtualAlloc(
+         NULL, MEMORY_BLOCK_SIZE, MEM_COMMIT | MEM_RESERVE, PAGE_EXECUTE_READWRITE);
+-#endif
+-
+     if (pBlock != NULL)
+     {
+         // Build a linked list of all the slots.
+@@ -244,10 +114,10 @@
+ }
+ 
+ //-------------------------------------------------------------------------
+-LPVOID AllocateBuffer(LPVOID pOrigin)
++LPVOID AllocateBuffer(VOID)
+ {
+     PMEMORY_SLOT  pSlot;
+-    PMEMORY_BLOCK pBlock = GetMemoryBlock(pOrigin);
++    PMEMORY_BLOCK pBlock = GetMemoryBlock();
+     if (pBlock == NULL)
+         return NULL;
+ 
+--- a/buffer.h
++++ b/buffer.h
+@@ -28,15 +28,19 @@
+ 
+ #pragma once
+ 
++#if !defined(_M_X64) && !defined(__x86_64__)
++    #error This absolute-jump backend requires x64.
++#endif
++
+ // Size of each memory slot.
+ #if defined(_M_X64) || defined(__x86_64__)
+-    #define MEMORY_SLOT_SIZE 64
++    #define MEMORY_SLOT_SIZE 256
+ #else
+     #define MEMORY_SLOT_SIZE 32
+ #endif
+ 
+ VOID   InitializeBuffer(VOID);
+ VOID   UninitializeBuffer(VOID);
+-LPVOID AllocateBuffer(LPVOID pOrigin);
++LPVOID AllocateBuffer(VOID);
+ VOID   FreeBuffer(LPVOID pBuffer);
+ BOOL   IsExecutableAddress(LPVOID pAddress);
+--- a/hook.c
++++ b/hook.c
+@@ -30,7 +30,7 @@
+ #include <tlhelp32.h>
+ #include <limits.h>
+ 
+-#include "../include/MinHook.h"
++#include <MinHook.h>
+ #include "buffer.h"
+ #include "trampoline.h"
+ 
+@@ -63,15 +63,15 @@
+     LPVOID pTarget;             // Address of the target function.
+     LPVOID pDetour;             // Address of the detour or relay function.
+     LPVOID pTrampoline;         // Address of the trampoline function.
+-    UINT8  backup[8];           // Original prologue of the target function.
++    UINT8  backup[16];          // Original prologue of the target function.
+ 
+     UINT8  patchAbove  : 1;     // Uses the hot patch area.
+     UINT8  isEnabled   : 1;     // Enabled.
+     UINT8  queueEnable : 1;     // Queued for enabling/disabling when != isEnabled.
+ 
+-    UINT   nIP : 4;             // Count of the instruction boundaries.
+-    UINT8  oldIPs[8];           // Instruction boundaries of the target function.
+-    UINT8  newIPs[8];           // Instruction boundaries of the trampoline function.
++    UINT   nIP : 5;             // Count of the instruction boundaries.
++    UINT8  oldIPs[16];          // Instruction boundaries of the target function.
++    UINT8  newIPs[16];          // Instruction boundaries of the trampoline function.
+ } HOOK_ENTRY, *PHOOK_ENTRY;
+ 
+ // Suspended threads for Freeze()/Unfreeze().
+@@ -164,7 +164,7 @@
+ {
+     UINT i;
+ 
+-    if (pHook->patchAbove && ip == ((DWORD_PTR)pHook->pTarget - sizeof(JMP_REL)))
++    if (pHook->patchAbove && ip == ((DWORD_PTR)pHook->pTarget - sizeof(JMP_ABS)))
+         return (DWORD_PTR)pHook->pTarget;
+ 
+     for (i = 0; i < pHook->nIP; ++i)
+@@ -394,12 +394,12 @@
+ {
+     PHOOK_ENTRY pHook = &g_hooks.pItems[pos];
+     DWORD  oldProtect;
+-    SIZE_T patchSize    = sizeof(JMP_REL);
++    SIZE_T patchSize    = sizeof(JMP_ABS);
+     LPBYTE pPatchTarget = (LPBYTE)pHook->pTarget;
+ 
+     if (pHook->patchAbove)
+     {
+-        pPatchTarget -= sizeof(JMP_REL);
++        pPatchTarget -= sizeof(JMP_ABS);
+         patchSize    += sizeof(JMP_REL_SHORT);
+     }
+ 
+@@ -408,23 +408,25 @@
+ 
+     if (enable)
+     {
+-        PJMP_REL pJmp = (PJMP_REL)pPatchTarget;
+-        pJmp->opcode = 0xE9;
+-        pJmp->operand = (UINT32)((LPBYTE)pHook->pDetour - (pPatchTarget + sizeof(JMP_REL)));
++        PJMP_ABS pJmp = (PJMP_ABS)pPatchTarget;
++        pJmp->opcode0 = 0xFF;
++        pJmp->opcode1 = 0x25;
++        pJmp->dummy = 0;
++        pJmp->address = (UINT64)(ULONG_PTR)pHook->pDetour;
+ 
+         if (pHook->patchAbove)
+         {
+             PJMP_REL_SHORT pShortJmp = (PJMP_REL_SHORT)pHook->pTarget;
+             pShortJmp->opcode = 0xEB;
+-            pShortJmp->operand = (UINT8)(0 - (sizeof(JMP_REL_SHORT) + sizeof(JMP_REL)));
++            pShortJmp->operand = (UINT8)(0 - (sizeof(JMP_REL_SHORT) + sizeof(JMP_ABS)));
+         }
+     }
+     else
+     {
+         if (pHook->patchAbove)
+-            memcpy(pPatchTarget, pHook->backup, sizeof(JMP_REL) + sizeof(JMP_REL_SHORT));
++            memcpy(pPatchTarget, pHook->backup, sizeof(JMP_ABS) + sizeof(JMP_REL_SHORT));
+         else
+-            memcpy(pPatchTarget, pHook->backup, sizeof(JMP_REL));
++            memcpy(pPatchTarget, pHook->backup, sizeof(JMP_ABS));
+     }
+ 
+     VirtualProtect(pPatchTarget, patchSize, oldProtect, &oldProtect);
+@@ -589,7 +591,7 @@
+             UINT pos = FindHookEntry(pTarget);
+             if (pos == INVALID_HOOK_POS)
+             {
+-                LPVOID pBuffer = AllocateBuffer(pTarget);
++                LPVOID pBuffer = AllocateBuffer();
+                 if (pBuffer != NULL)
+                 {
+                     TRAMPOLINE ct;
+@@ -622,12 +624,12 @@
+                             {
+                                 memcpy(
+                                     pHook->backup,
+-                                    (LPBYTE)pTarget - sizeof(JMP_REL),
+-                                    sizeof(JMP_REL) + sizeof(JMP_REL_SHORT));
++                                    (LPBYTE)pTarget - sizeof(JMP_ABS),
++                                    sizeof(JMP_ABS) + sizeof(JMP_REL_SHORT));
+                             }
+                             else
+                             {
+-                                memcpy(pHook->backup, pTarget, sizeof(JMP_REL));
++                                memcpy(pHook->backup, pTarget, sizeof(JMP_ABS));
+                             }
+ 
+                             if (ppOriginal != NULL)
+--- a/trampoline.c
++++ b/trampoline.c
+@@ -27,6 +27,7 @@
+  */
+ 
+ #include <windows.h>
++#include <stdint.h>
+ 
+ #if defined(_MSC_VER) && !defined(MINHOOK_DISABLE_INTRINSICS)
+     #define ALLOW_INTRINSICS
+@@ -38,7 +39,7 @@
+ #endif
+ 
+ #if defined(_M_X64) || defined(__x86_64__)
+-    #include "./hde/hde64.h"
++    #include <hde/hde64.h>
+     typedef hde64s HDE;
+     #define HDE_DISASM(code, hs) hde64_disasm(code, hs)
+ #else
+@@ -130,7 +131,7 @@
+             return FALSE;
+ 
+         pCopySrc = (LPVOID)pOldInst;
+-        if (oldPos >= sizeof(JMP_REL))
++        if (oldPos >= sizeof(JMP_ABS))
+         {
+             // The trampoline function is long enough.
+             // Complete the function with the jump to the target function.
+@@ -162,8 +163,12 @@
+ 
+             // Relative address is stored at (instruction length - immediate value length - 4).
+             pRelAddr = (PUINT32)(instBuf + hs.len - ((hs.flags & 0x3C) >> 2) - 4);
+-            *pRelAddr
+-                = (UINT32)((pOldInst + hs.len + (INT32)hs.disp.disp32) - (pNewInst + hs.len));
++            // A distant trampoline must not truncate a RIP-relative displacement.
++            int64_t displacement = (int64_t)pOldInst + hs.len + (INT32)hs.disp.disp32
++                - ((int64_t)pNewInst + hs.len);
++            if (displacement < INT32_MIN || displacement > INT32_MAX)
++                return FALSE;
++            *pRelAddr = (UINT32)(INT32)displacement;
+ 
+             // Complete the function if JMP (FF /4).
+             if (hs.opcode == 0xFF && hs.modrm_reg == 4)
+@@ -194,7 +199,7 @@
+ 
+             // Simply copy an internal jump.
+             if ((ULONG_PTR)ct->pTarget <= dest
+-                && dest < ((ULONG_PTR)ct->pTarget + sizeof(JMP_REL)))
++                && dest < ((ULONG_PTR)ct->pTarget + sizeof(JMP_ABS)))
+             {
+                 if (jmpDest < dest)
+                     jmpDest = dest;
+@@ -228,7 +233,7 @@
+ 
+             // Simply copy an internal jump.
+             if ((ULONG_PTR)ct->pTarget <= dest
+-                && dest < ((ULONG_PTR)ct->pTarget + sizeof(JMP_REL)))
++                && dest < ((ULONG_PTR)ct->pTarget + sizeof(JMP_ABS)))
+             {
+                 if (jmpDest < dest)
+                     jmpDest = dest;
+@@ -288,8 +293,8 @@
+     } while (!finished);
+ 
+     // Is there enough place for a long jump?
+-    if (oldPos < sizeof(JMP_REL)
+-        && !IsCodePadding((LPBYTE)ct->pTarget + oldPos, sizeof(JMP_REL) - oldPos))
++    if (oldPos < sizeof(JMP_ABS)
++        && !IsCodePadding((LPBYTE)ct->pTarget + oldPos, sizeof(JMP_ABS) - oldPos))
+     {
+         // Is there enough place for a short jump?
+         if (oldPos < sizeof(JMP_REL_SHORT)
+@@ -299,10 +304,10 @@
+         }
+ 
+         // Can we place the long jump above the function?
+-        if (!IsExecutableAddress((LPBYTE)ct->pTarget - sizeof(JMP_REL)))
+-            return FALSE;
+-
+-        if (!IsCodePadding((LPBYTE)ct->pTarget - sizeof(JMP_REL), sizeof(JMP_REL)))
++        if (!IsExecutableAddress((LPBYTE)ct->pTarget - sizeof(JMP_ABS)))
++            return FALSE;
++
++        if (!IsCodePadding((LPBYTE)ct->pTarget - sizeof(JMP_ABS), sizeof(JMP_ABS)))
+             return FALSE;
+ 
+         ct->patchAbove = TRUE;
+--- a/trampoline.h
++++ b/trampoline.h
+@@ -98,8 +98,8 @@
+ #endif
+     BOOL   patchAbove;      // [Out] Should use the hot patch area?
+     UINT   nIP;             // [Out] Number of the instruction boundaries.
+-    UINT8  oldIPs[8];       // [Out] Instruction boundaries of the target function.
+-    UINT8  newIPs[8];       // [Out] Instruction boundaries of the trampoline function.
++    UINT8  oldIPs[16];      // [Out] Instruction boundaries of the target function.
++    UINT8  newIPs[16];      // [Out] Instruction boundaries of the trampoline function.
+ } TRAMPOLINE, *PTRAMPOLINE;
+ 
+ BOOL CreateTrampolineFunction(PTRAMPOLINE ct);
