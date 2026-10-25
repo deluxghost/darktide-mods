@@ -7,6 +7,14 @@ return {
 		en = "Execute the /colorview command to view the builtin colors in Darktide.",
 		["zh-cn"] = "执行 /colorview 命令以在暗潮中查看内置颜色。",
 	},
+	open_color_viewer = {
+		en = "Color Viewer Interface",
+		["zh-cn"] = "颜色查看器界面",
+	},
+	open = {
+		en = "Open",
+		["zh-cn"] = "打开",
+	},
 	color_viewer_title = {
 		en = "Color Viewer",
 		["zh-cn"] = "颜色查看器",

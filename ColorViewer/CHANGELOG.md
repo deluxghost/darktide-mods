@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.1.2
+
+- Updated mod metadata and options for new DMF
+
 ## 1.1.1
 
 - Slightly changed the layout

@@ -1,0 +1,18 @@
+{
+  "name": "Color Viewer",
+  "description": "Execute the /colorview command to view the builtin colors in Darktide.",
+  "homepage": "https://www.nexusmods.com/warhammer40kdarktide/mods/401",
+  "source": "https://github.com/deluxghost/darktide-mods/tree/main/ColorViewer",
+  "funding": {
+    "kofi": "https://ko-fi.com/deluxghost",
+    "bilibili": "https://space.bilibili.com/4712698"
+  },
+  "version": "1.1.2",
+  "author": "deluxghost",
+  "localization": {
+    "zh-cn": {
+      "name": "颜色查看器",
+      "description": "执行 /colorview 命令以在暗潮中查看内置颜色。"
+    }
+  }
+}

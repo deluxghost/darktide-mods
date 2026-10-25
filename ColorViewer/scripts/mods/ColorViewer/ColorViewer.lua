@@ -178,8 +178,10 @@ mod:register_view({
 	},
 })
 
-mod:command("colorview", mod:localize("cmd_open_color_viewer"), function ()
+mod.open_color_viewer = function ()
 	if not Managers.ui:view_instance("color_viewer_view") then
 		Managers.ui:open_view("color_viewer_view", nil, nil, nil, nil, {})
 	end
-end)
+end
+
+mod:command("colorview", mod:localize("cmd_open_color_viewer"), mod.open_color_viewer)
