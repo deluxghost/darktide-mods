@@ -58,7 +58,8 @@ $RuntimeHeaderPath = Join-Path $BuildDir "simple-audio-runtime.h"
 Push-Location -LiteralPath $ProjectRoot
 try {
     & $Windres "$ProjectRoot\runtime\versioninfo.rc" -O coff -o "$ProjectRoot\runtime\versioninfo.syso"
-    & $Go build -buildvcs=false -trimpath -buildmode=c-shared -ldflags '-s -w -extldflags "-static"' -o $RuntimePath "$ProjectRoot\runtime"
+    # Resolve the default floating-point environment before static pthread libraries pull in fesetenv.
+    & $Go build -buildvcs=false -trimpath -buildmode=c-shared -ldflags '-s -w -extldflags "-static -l:CRT_fp10.o"' -o $RuntimePath "$ProjectRoot\runtime"
     & $SignArtifact -Path $RuntimePath -SigningConfig $SigningConfig -SigningAuthentication $SigningAuthentication
 }
 finally {
