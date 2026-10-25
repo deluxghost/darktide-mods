@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.1.4
+
+- Fixed multiplayer stuttering caused by frequent network activity
+
 ## 1.1.3
 
 - Fixed a Social menu crash with more than four players

@@ -100,13 +100,18 @@ bool validate_connection(char *error, int capacity) {
     void *manager = nullptr;
     void *current = nullptr;
     void *vtable = nullptr;
-    if (!current_network_manager(&manager, error, capacity) ||
-        !read_pointer(static_cast<const uint8_t *>(manager) + kConnectionOffset, &current,
-                      "Binary Connection", error, capacity) ||
-        !read_pointer(static_cast<const uint8_t *>(current), &vtable, "Binary Connection", error, capacity)) {
-        return false;
+
+    // Channel operations run on the game thread; attachment validates this engine-owned pointer chain.
+    std::memcpy(&manager, g_network_manager_slot, sizeof(manager));
+    if (manager == nullptr) {
+        return write_error(error, capacity, "Darktide network manager is not initialized");
     }
-    return (current == methods.connection && vtable == methods.vtable) ||
+    std::memcpy(&current, static_cast<const uint8_t *>(manager) + kConnectionOffset, sizeof(current));
+    if (current != methods.connection) {
+        return write_error(error, capacity, "Binary transport Connection changed before channel cleanup");
+    }
+    std::memcpy(&vtable, current, sizeof(vtable));
+    return vtable == methods.vtable ||
            write_error(error, capacity, "Binary transport Connection changed before channel cleanup");
 }
 
@@ -300,9 +305,8 @@ bool send_control(uint32_t id, Channel &channel, Message &message, char *error, 
     // Control must enter the engine queue before the following Lua RPC, never behind bulk throttling.
     const size_t required = message.payload.size() + frames * (kHeaderSize + kEngineFrameOverhead) + kReliableReserve;
     const auto *endpoint = static_cast<const uint8_t *>(methods.peer_endpoint(methods.connection, channel.peer));
-    if (endpoint == nullptr || !dtintutils_is_readable_range(endpoint + kReliableCapacityOffset,
-                                                          kReliableUsedOffset - kReliableCapacityOffset + sizeof(uint32_t))) {
-        return write_error(error, error_capacity, "Engine reliable queue is unreadable");
+    if (endpoint == nullptr) {
+        return write_error(error, error_capacity, "Engine reliable queue is unavailable");
     }
     uint32_t queue_capacity = 0;
     uint32_t read = 0;
@@ -381,8 +385,8 @@ bool flush_channel(uint32_t id, Channel &channel, uint64_t now) {
         }
         if (!message.reliable) {
             const auto *endpoint = static_cast<const uint8_t *>(methods.peer_endpoint(methods.connection, channel.peer));
-            if (endpoint == nullptr || !dtintutils_is_readable_range(endpoint + kUnreliableUsedOffset, sizeof(uint32_t))) {
-                return fail(channel, "Binary unreliable Endpoint queue is unreadable");
+            if (endpoint == nullptr) {
+                return fail(channel, "Binary unreliable Endpoint is unavailable");
             }
             uint32_t queue_capacity = 0;
             uint32_t used = 0;
