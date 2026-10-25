@@ -10,6 +10,11 @@ on:
         description: Comma-separated mod directory names
         required: true
         type: string
+      publish:
+        description: Publish the selected mods to Nexus Mods
+        required: true
+        default: false
+        type: boolean
 
 permissions:
   contents: read
@@ -26,6 +31,8 @@ jobs:
     outputs:
       matrix: ${{ steps.mods.outputs.matrix }}
       count: ${{ steps.mods.outputs.count }}
+      publish_mods: ${{ steps.mods.outputs.publish_mods }}
+      publish_count: ${{ steps.mods.outputs.publish_count }}
     steps:
       - name: Configure line endings
         run: git config --global core.autocrlf input
@@ -42,6 +49,7 @@ jobs:
           EVENT_NAME: ${{ github.event_name }}
           BEFORE_REF: ${{ github.event.before }}
           MANUAL_MODS: ${{ inputs.mods }}
+          MANUAL_PUBLISH: ${{ inputs.publish }}
         run: |
           $ErrorActionPreference = 'Stop'
           $PSNativeCommandUseErrorActionPreference = $true
@@ -64,6 +72,19 @@ jobs:
           $selected = $matrix | ConvertFrom-Json
           "matrix=$matrix" | Add-Content -LiteralPath $env:GITHUB_OUTPUT -Encoding utf8
           "count=$($selected.include.Count)" | Add-Content -LiteralPath $env:GITHUB_OUTPUT -Encoding utf8
+          $publish = @()
+          if ($env:EVENT_NAME -eq 'push' -or $env:MANUAL_PUBLISH -eq 'true') {
+              Import-Module ./scripts/ModRelease.psm1 -Force
+              foreach ($item in $selected.include) {
+                  $information = Get-Content -LiteralPath "$($item.mod)/info.json" -Raw | ConvertFrom-Json -AsHashtable
+                  if (Test-ModNexusHomepage $information) {
+                      $publish += $item.mod
+                  }
+              }
+          }
+          $publishJson = ConvertTo-Json -InputObject @($publish) -Compress
+          "publish_mods=$publishJson" | Add-Content -LiteralPath $env:GITHUB_OUTPUT -Encoding utf8
+          "publish_count=$($publish.Count)" | Add-Content -LiteralPath $env:GITHUB_OUTPUT -Encoding utf8
 
   build:
     needs: select
@@ -179,3 +200,51 @@ jobs:
           archive: false
           if-no-files-found: error
           retention-days: 7
+
+  publish:
+    name: Publish to Nexus Mods
+    needs: [select, build]
+    if: >-
+      !cancelled() &&
+      github.ref == 'refs/heads/main' &&
+      needs.select.result == 'success' &&
+      needs.build.result != 'cancelled' &&
+      needs.select.outputs.publish_count != '0'
+    runs-on: windows-2025
+    timeout-minutes: 60
+    concurrency:
+      group: nexus-publish
+      queue: max
+      cancel-in-progress: false
+    steps:
+      - name: Configure line endings
+        run: git config --global core.autocrlf input
+
+      - name: Check out release source
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Download release packages
+        uses: actions/download-artifact@v8
+        with:
+          pattern: '*.zip'
+          path: output
+          merge-multiple: true
+          skip-decompress: true
+
+      - name: Publish release packages
+        env:
+          RELEASE_MODS: ${{ needs.select.outputs.publish_mods }}
+          NEXUSMODS_API_KEY: ${{ secrets.NEXUSMODS_API_KEY }}
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $PSNativeCommandUseErrorActionPreference = $true
+          if ([string]::IsNullOrWhiteSpace($env:NEXUSMODS_API_KEY)) {
+              throw 'The NEXUSMODS_API_KEY repository secret is required for publishing.'
+          }
+          git fetch --no-tags origin main
+          $apiKey = ConvertTo-SecureString $env:NEXUSMODS_API_KEY -AsPlainText -Force
+          $env:NEXUSMODS_API_KEY = $null
+          ./scripts/publish-mods.ps1 -Mod @($env:RELEASE_MODS | ConvertFrom-Json) -ApiKey $apiKey -MainRef origin/main
