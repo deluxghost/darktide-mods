@@ -156,7 +156,7 @@ local function fill_items_extra(view, inv_items_layout)
 	end
 end
 
-mod.on_enabled = function ()
+mod.on_all_mods_loaded = function ()
 	if mod:get("custom_sort_category_group_by_name") then
 		mod:set("custom_sort_category_mark", true)
 		mod:set("custom_sort_category_group_by_name", nil)

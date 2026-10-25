@@ -1,0 +1,22 @@
+{
+  "name": "Item Sorting",
+  "description": "Add extra item sorting options and allow toggling vanilla sorting methods.",
+  "homepage": "https://www.nexusmods.com/warhammer40kdarktide/mods/99",
+  "source": "https://github.com/deluxghost/darktide-mods/tree/main/ItemSorting",
+  "funding": {
+    "kofi": "https://ko-fi.com/deluxghost",
+    "bilibili": "https://space.bilibili.com/4712698"
+  },
+  "version": "1.9.8",
+  "author": "deluxghost",
+  "localization": {
+    "zh-cn": {
+      "name": "物品排序",
+      "description": "添加额外的物品排序选项，并且允许开关原版的排序方式。"
+    },
+    "ru": {
+      "name": "Сортировка предметов",
+      "description": "Item Sorting - Добавляет дополнительные параметры сортировки предметов и позволяет переключать стандартные методы сортировки."
+    }
+  }
+}

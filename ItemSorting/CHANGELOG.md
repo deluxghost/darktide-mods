@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.9.8
+
+- Updated mod metadata for new DMF
+
 ## 1.9.7
 
 - Used origin hooks for sort option setup
