@@ -1,0 +1,23 @@
+{
+  "name": "M1 Galvanic Rifle",
+  "description": "Replaces the Galvanic Rifle firing and reload sounds with M1 Garand sounds.",
+  "homepage": "https://www.nexusmods.com/warhammer40kdarktide/mods/930",
+  "source": "https://github.com/deluxghost/darktide-mods/tree/main/M1GalvanicRifle",
+  "funding": {
+    "kofi": "https://ko-fi.com/deluxghost",
+    "bilibili": "https://space.bilibili.com/4712698"
+  },
+  "version": "1.2.2",
+  "author": "deluxghost",
+  "dependencies": {
+    "required": [
+      "SimpleAudio"
+    ]
+  },
+  "localization": {
+    "zh-cn": {
+      "name": "M1 流电步枪",
+      "description": "将流电步枪的射击和换弹音效替换为 M1 加兰德音效。"
+    }
+  }
+}

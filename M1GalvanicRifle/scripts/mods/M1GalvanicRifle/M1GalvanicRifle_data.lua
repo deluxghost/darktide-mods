@@ -10,39 +10,45 @@ return {
 				setting_id = "replace_firing_sound",
 				type = "checkbox",
 				default_value = true,
-			},
-			{
-				setting_id = "firing_sound_volume",
-				type = "numeric",
-				default_value = 100,
-				range = {1, 200},
+				sub_widgets = {
+					{
+						setting_id = "firing_sound_volume",
+						type = "numeric",
+						default_value = 100,
+						range = {1, 200},
+					},
+				},
 			},
 			{
 				setting_id = "replace_reload_sound",
 				type = "checkbox",
 				default_value = true,
-			},
-			{
-				setting_id = "enable_clip_drop_sound",
-				type = "checkbox",
-				default_value = true,
-			},
-			{
-				setting_id = "reload_sound_volume",
-				type = "numeric",
-				default_value = 100,
-				range = {1, 200},
+				sub_widgets = {
+					{
+						setting_id = "enable_clip_drop_sound",
+						type = "checkbox",
+						default_value = true,
+					},
+					{
+						setting_id = "reload_sound_volume",
+						type = "numeric",
+						default_value = 100,
+						range = {1, 200},
+					},
+				},
 			},
 			{
 				setting_id = "replace_teammate_sounds",
 				type = "checkbox",
 				default_value = true,
-			},
-			{
-				setting_id = "teammate_sound_volume",
-				type = "numeric",
-				default_value = 75,
-				range = {1, 200},
+				sub_widgets = {
+					{
+						setting_id = "teammate_sound_volume",
+						type = "numeric",
+						default_value = 75,
+						range = {1, 200},
+					},
+				},
 			},
 		}
 	}

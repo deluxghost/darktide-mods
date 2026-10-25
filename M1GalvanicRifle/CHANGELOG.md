@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.2.2
+
+- Updated mod metadata and options for new DMF
+
 ## 1.2.1
 
 - Better spatial audio handling
