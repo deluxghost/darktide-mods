@@ -38,8 +38,10 @@ mod:register_view({
 	},
 })
 
-mod:command("charmap", mod:localize("cmd_open_char_map"), function ()
+mod.open_private_char_map = function ()
 	if not Managers.ui:view_instance("private_char_map_view") then
 		Managers.ui:open_view("private_char_map_view", nil, nil, nil, nil, {})
 	end
-end)
+end
+
+mod:command("charmap", mod:localize("cmd_open_char_map"), mod.open_private_char_map)

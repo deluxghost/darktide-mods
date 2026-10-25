@@ -7,6 +7,14 @@ return {
 		en = "Execute the /charmap command to view the Unicode Private Use Areas characters in Darktide. Range is limited to U+E000 - U+E3FF.",
 		["zh-cn"] = "执行 /charmap 命令以在暗潮中查看 Unicode 私人使用区字符。范围限制为 U+E000 - U+E3FF。",
 	},
+	open_private_char_map = {
+		en = "Private Character Map Interface",
+		["zh-cn"] = "私有字符映射表界面",
+	},
+	open = {
+		en = "Open",
+		["zh-cn"] = "打开",
+	},
 	char_map_title = {
 		en = "Private Character Map",
 		["zh-cn"] = "私有字符映射表",
