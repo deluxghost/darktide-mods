@@ -1,0 +1,22 @@
+{
+  "name": "Equipped Icon+",
+  "description": "Show equipped icons for items in other loadouts and customize icons color.",
+  "homepage": "https://www.nexusmods.com/warhammer40kdarktide/mods/227",
+  "source": "https://github.com/deluxghost/darktide-mods/tree/main/EquippedIconPlus",
+  "funding": {
+    "kofi": "https://ko-fi.com/deluxghost",
+    "bilibili": "https://space.bilibili.com/4712698"
+  },
+  "version": "1.0.2",
+  "author": "deluxghost",
+  "localization": {
+    "zh-cn": {
+      "name": "已装备图标+",
+      "description": "显示其他配装内物品的已装备图标，并自定义图标颜色。"
+    },
+    "ru": {
+      "name": "Значок экипированного+",
+      "description": "Equipped Icon+ - Показывает значки для экипированных предметов в других наборах и позволяет настроить цвет значков."
+    }
+  }
+}

@@ -1,6 +1,27 @@
 local mod = get_mod("EquippedIconPlus")
 local ProfileUtils = require("scripts/utilities/profile_utils")
 
+local function migrate_color(setting_id, old_prefix)
+	local r_id = old_prefix .. "_r"
+	local g_id = old_prefix .. "_g"
+	local b_id = old_prefix .. "_b"
+	local r = mod:get(r_id)
+	local g = mod:get(g_id)
+	local b = mod:get(b_id)
+
+	if r ~= nil and g ~= nil and b ~= nil then
+		mod:set(setting_id, { 255, r, g, b })
+		mod:set(r_id, nil)
+		mod:set(g_id, nil)
+		mod:set(b_id, nil)
+	end
+end
+
+mod.on_all_mods_loaded = function ()
+	migrate_color("opt_active_color", "opt_active")
+	migrate_color("opt_inactive_color", "opt_inactive")
+end
+
 local function item_equipped_in_loadout(loadout, item)
 	if not loadout or not item.slots then
 		return false
@@ -30,7 +51,7 @@ mod:hook_require("scripts/ui/pass_templates/item_pass_templates", function (inst
 					return false
 				end
 				if content.equipped then
-					style.color = { 255, mod:get("opt_active_r"), mod:get("opt_active_g"), mod:get("opt_active_b") }
+					style.color = mod:get("opt_active_color")
 					return true
 				end
 				local item = content.element and content.element.item or nil
@@ -44,7 +65,7 @@ mod:hook_require("scripts/ui/pass_templates/item_pass_templates", function (inst
 					for _, preset in ipairs(presets) do
 						local current = preset.id and current_preset_id and preset.id == current_preset_id or false
 						if not current and item_equipped_in_loadout(preset.loadout, item) then
-							style.color = { 255, mod:get("opt_inactive_r"), mod:get("opt_inactive_g"), mod:get("opt_inactive_b") }
+							style.color = mod:get("opt_inactive_color")
 							return true
 						end
 					end

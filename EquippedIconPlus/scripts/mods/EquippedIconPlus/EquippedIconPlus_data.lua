@@ -8,51 +8,13 @@ return {
 		widgets = {
 			{
 				setting_id = "opt_active_color",
-				type = "group",
-				sub_widgets = {
-					{
-						setting_id = "opt_active_r",
-						type = "numeric",
-						default_value = 50,
-						range = {0, 255},
-					},
-					{
-						setting_id = "opt_active_g",
-						type = "numeric",
-						default_value = 245,
-						range = {0, 255},
-					},
-					{
-						setting_id = "opt_active_b",
-						type = "numeric",
-						default_value = 50,
-						range = {0, 255},
-					},
-				},
+				type = "color",
+				default_value = { 255, 50, 245, 50 },
 			},
 			{
 				setting_id = "opt_inactive_color",
-				type = "group",
-				sub_widgets = {
-					{
-						setting_id = "opt_inactive_r",
-						type = "numeric",
-						default_value = 230,
-						range = {0, 255},
-					},
-					{
-						setting_id = "opt_inactive_g",
-						type = "numeric",
-						default_value = 180,
-						range = {0, 255},
-					},
-					{
-						setting_id = "opt_inactive_b",
-						type = "numeric",
-						default_value = 20,
-						range = {0, 255},
-					},
-				},
+				type = "color",
+				default_value = { 255, 230, 180, 20 },
 			},
 		}
 	}
