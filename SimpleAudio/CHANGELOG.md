@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.4.2
+
+- Fixed an issue where audio file scans sometimes returned error 0
+
 ## 1.4.1
 
 - Updated mod metadata and options for new DMF

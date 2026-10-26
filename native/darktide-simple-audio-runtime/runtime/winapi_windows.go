@@ -1,9 +1,8 @@
 package main
 
 /*
-#define WIN32_LEAN_AND_MEAN
 #include <stdint.h>
-#include <windows.h>
+#include "winapi_windows.h"
 */
 import "C"
 
@@ -14,8 +13,8 @@ import (
 
 var simpleAudioRuntimeLastWindowsError atomic.Uint32
 
-func captureSimpleAudioRuntimeLastWindowsError() {
-	simpleAudioRuntimeLastWindowsError.Store(uint32(C.GetLastError()))
+func storeSimpleAudioRuntimeLastWindowsError(lastError C.DWORD) {
+	simpleAudioRuntimeLastWindowsError.Store(uint32(lastError))
 }
 
 //export SimpleAudioRuntime_GetLastError
@@ -32,15 +31,17 @@ func SimpleAudioRuntime_MultiByteToWideChar(
 	wideText unsafe.Pointer,
 	wideLength C.int,
 ) C.int {
-	result := C.MultiByteToWideChar(
+	var lastError C.DWORD
+	result := C.SimpleAudioRuntimeCall_MultiByteToWideChar(
 		C.UINT(codePage),
 		C.DWORD(flags),
 		multiByteText,
 		multiByteLength,
 		(*C.WCHAR)(wideText),
 		wideLength,
+		&lastError,
 	)
-	captureSimpleAudioRuntimeLastWindowsError()
+	storeSimpleAudioRuntimeLastWindowsError(lastError)
 
 	return result
 }
@@ -56,7 +57,8 @@ func SimpleAudioRuntime_WideCharToMultiByte(
 	defaultChar *C.char,
 	usedDefaultChar unsafe.Pointer,
 ) C.int {
-	result := C.WideCharToMultiByte(
+	var lastError C.DWORD
+	result := C.SimpleAudioRuntimeCall_WideCharToMultiByte(
 		C.UINT(codePage),
 		C.DWORD(flags),
 		(*C.WCHAR)(wideText),
@@ -65,32 +67,44 @@ func SimpleAudioRuntime_WideCharToMultiByte(
 		multiByteLength,
 		defaultChar,
 		(*C.BOOL)(usedDefaultChar),
+		&lastError,
 	)
-	captureSimpleAudioRuntimeLastWindowsError()
+	storeSimpleAudioRuntimeLastWindowsError(lastError)
 
 	return result
 }
 
 //export SimpleAudioRuntime_FindFirstFileW
 func SimpleAudioRuntime_FindFirstFileW(fileName unsafe.Pointer, findData unsafe.Pointer) unsafe.Pointer {
-	result := C.FindFirstFileW((*C.WCHAR)(fileName), (*C.WIN32_FIND_DATAW)(findData))
-	captureSimpleAudioRuntimeLastWindowsError()
+	var lastError C.DWORD
+	result := C.SimpleAudioRuntimeCall_FindFirstFileW(
+		(*C.WCHAR)(fileName),
+		(*C.WIN32_FIND_DATAW)(findData),
+		&lastError,
+	)
+	storeSimpleAudioRuntimeLastWindowsError(lastError)
 
 	return unsafe.Pointer(result)
 }
 
 //export SimpleAudioRuntime_FindNextFileW
 func SimpleAudioRuntime_FindNextFileW(findHandle unsafe.Pointer, findData unsafe.Pointer) C.int {
-	result := C.FindNextFileW(C.HANDLE(findHandle), (*C.WIN32_FIND_DATAW)(findData))
-	captureSimpleAudioRuntimeLastWindowsError()
+	var lastError C.DWORD
+	result := C.SimpleAudioRuntimeCall_FindNextFileW(
+		C.HANDLE(findHandle),
+		(*C.WIN32_FIND_DATAW)(findData),
+		&lastError,
+	)
+	storeSimpleAudioRuntimeLastWindowsError(lastError)
 
 	return C.int(result)
 }
 
 //export SimpleAudioRuntime_FindClose
 func SimpleAudioRuntime_FindClose(findHandle unsafe.Pointer) C.int {
-	result := C.FindClose(C.HANDLE(findHandle))
-	captureSimpleAudioRuntimeLastWindowsError()
+	var lastError C.DWORD
+	result := C.SimpleAudioRuntimeCall_FindClose(C.HANDLE(findHandle), &lastError)
+	storeSimpleAudioRuntimeLastWindowsError(lastError)
 
 	return C.int(result)
 }
