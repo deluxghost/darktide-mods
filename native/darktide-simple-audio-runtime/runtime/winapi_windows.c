@@ -6,6 +6,16 @@
     *last_error = GetLastError();                             \
     return result
 
+BOOL SimpleAudioRuntimeCall_PinModule(DWORD *last_error) {
+    HMODULE module;
+    // Go runtime callbacks outlive audio shutdown and must remain valid until process exit.
+    SIMPLE_AUDIO_CAPTURE_RESULT(
+        GetModuleHandleExW(
+            GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS | GET_MODULE_HANDLE_EX_FLAG_PIN,
+            (LPCWSTR)(void *)&SimpleAudioRuntimeCall_PinModule, &module),
+        BOOL);
+}
+
 int SimpleAudioRuntimeCall_MultiByteToWideChar(
     UINT code_page,
     DWORD flags,

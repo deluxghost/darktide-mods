@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.4.3
+
+- Fixed a crash when exiting the game
+
 ## 1.4.2
 
 - Fixed an issue where audio file scans sometimes returned error 0

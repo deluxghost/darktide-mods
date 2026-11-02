@@ -7,6 +7,8 @@
 
 #include <windows.h>
 
+BOOL SimpleAudioRuntimeCall_PinModule(DWORD *last_error);
+
 int SimpleAudioRuntimeCall_MultiByteToWideChar(
     UINT code_page,
     DWORD flags,

@@ -3,12 +3,14 @@ package main
 /*
 #include <stdint.h>
 #include <stdlib.h>
+#include "winapi_windows.h"
 */
 import "C"
 
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"math"
 	"sync"
 	"time"
@@ -193,6 +195,11 @@ func initializationError() string {
 
 //export SimpleAudioRuntime_StartInitialize
 func SimpleAudioRuntime_StartInitialize(errorBuffer *C.char, errorBufferSize C.int) C.int {
+	var lastError C.DWORD
+	if C.SimpleAudioRuntimeCall_PinModule(&lastError) == 0 {
+		return fail(errorBuffer, errorBufferSize, fmt.Errorf("failed to pin SimpleAudio runtime: Windows error %d", uint32(lastError)))
+	}
+
 	if !startInitialize() {
 		copyMessage(errorBuffer, errorBufferSize, "SimpleAudio runtime is shutting down")
 		return 0
