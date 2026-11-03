@@ -1,0 +1,18 @@
+{
+  "name": "Return of the Traitor",
+  "description": "Let the traitor return to the commissary, even if you have reached level 30.",
+  "homepage": "https://www.nexusmods.com/warhammer40kdarktide/mods/463",
+  "source": "https://github.com/deluxghost/darktide-mods/tree/main/ReturnOfTheTraitor",
+  "funding": {
+    "kofi": "https://ko-fi.com/deluxghost",
+    "bilibili": "https://space.bilibili.com/4712698"
+  },
+  "version": "1.0.2",
+  "author": "deluxghost",
+  "localization": {
+    "zh-cn": {
+      "name": "叛徒的回归",
+      "description": "让叛徒回归杂货店，即使你已经达到 30 级。"
+    }
+  }
+}

@@ -1,0 +1,22 @@
+{
+  "name": "Open Player Profile",
+  "description": "Let you open another player's Steam/Xbox profile in the social panel.",
+  "homepage": "https://www.nexusmods.com/warhammer40kdarktide/mods/190",
+  "source": "https://github.com/deluxghost/darktide-mods/tree/main/OpenPlayerProfile",
+  "funding": {
+    "kofi": "https://ko-fi.com/deluxghost",
+    "bilibili": "https://space.bilibili.com/4712698"
+  },
+  "version": "1.0.4",
+  "author": "deluxghost",
+  "localization": {
+    "zh-cn": {
+      "name": "打开玩家个人资料",
+      "description": "在社交面板打开其他玩家的 Steam/Xbox 个人资料。"
+    },
+    "ru": {
+      "name": "Открыть профиль игрока",
+      "description": "Open Player Profile - Позволяет открыть Steam/Xbox профиль другого игрока на социальной панели."
+    }
+  }
+}

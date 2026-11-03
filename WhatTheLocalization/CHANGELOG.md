@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.2.4
+
+- Updated mod metadata for new DMF
+
 ## 1.2.3
 
 - Added an internal condition check

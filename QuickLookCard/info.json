@@ -1,0 +1,29 @@
+{
+  "name": "Quick Look Card",
+  "description": "Check weapon stats in item list quickly.",
+  "homepage": "https://www.nexusmods.com/warhammer40kdarktide/mods/142",
+  "source": "https://github.com/deluxghost/darktide-mods/tree/main/QuickLookCard",
+  "funding": {
+    "kofi": "https://ko-fi.com/deluxghost",
+    "bilibili": "https://space.bilibili.com/4712698"
+  },
+  "version": "1.8.7",
+  "author": "deluxghost",
+  "localization": {
+    "zh-cn": {
+      "name": "快速信息卡",
+      "description": "在物品列表快速查看武器数据。"
+    },
+    "ru": {
+      "name": "Карточка быстрого просмотра",
+      "description": "Quick Look Card - Позволяет быстро узнать характеристики оружия в списке предметов."
+    },
+    "zh-tw": {
+      "name": "快速資訊卡",
+      "description": "可在物品列表中快速檢視武器屬性。"
+    },
+    "ja": {
+      "description": "アイテム一覧で素早く武器のステータスを確認できるようになります。"
+    }
+  }
+}

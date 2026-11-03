@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.5.2
+
+- Updated mod metadata for new DMF
+
 ## 1.5.1
 
 - Fixed compatibility with Recolor Stimms

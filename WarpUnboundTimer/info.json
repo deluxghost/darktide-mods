@@ -1,0 +1,22 @@
+{
+  "name": "Warp Unbound Timer",
+  "description": "Show a countdown timer of psyker's Warp Unbound talent.",
+  "homepage": "https://www.nexusmods.com/warhammer40kdarktide/mods/366",
+  "source": "https://github.com/deluxghost/darktide-mods/tree/main/WarpUnboundTimer",
+  "funding": {
+    "kofi": "https://ko-fi.com/deluxghost",
+    "bilibili": "https://space.bilibili.com/4712698"
+  },
+  "version": "1.1.2",
+  "author": "deluxghost",
+  "localization": {
+    "zh-cn": {
+      "name": "亚空间解放计时器",
+      "description": "显示灵能者亚空间解放天赋的倒计时。"
+    },
+    "ru": {
+      "name": "Таймер Искажения варпа",
+      "description": "Warp Unbound Timer - Показывает таймер обратного отсчёта таланта псайкера «Искажение варпа»."
+    }
+  }
+}

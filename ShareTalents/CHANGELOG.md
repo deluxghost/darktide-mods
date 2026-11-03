@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.2.3
+
+- Updated mod metadata for new DMF
+
 ## 1.2.2
 
 - Updated localization

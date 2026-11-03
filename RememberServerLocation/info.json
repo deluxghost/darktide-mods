@@ -1,0 +1,26 @@
+{
+  "name": "Remember Server Location",
+  "description": "Remember matchmaking server location option.",
+  "homepage": "https://www.nexusmods.com/warhammer40kdarktide/mods/308",
+  "source": "https://github.com/deluxghost/darktide-mods/tree/main/RememberServerLocation",
+  "funding": {
+    "kofi": "https://ko-fi.com/deluxghost",
+    "bilibili": "https://space.bilibili.com/4712698"
+  },
+  "version": "1.1.7",
+  "author": "deluxghost",
+  "localization": {
+    "zh-cn": {
+      "name": "记住服务器位置",
+      "description": "记住匹配服务器位置选项。"
+    },
+    "ru": {
+      "name": "Помни расположение сервера",
+      "description": "Remember Server Location - Запоминает расположение сервера подбора Миссии в опциях."
+    },
+    "zh-tw": {
+      "name": "記住伺服器位置",
+      "description": "記住配對伺服器位置選項。"
+    }
+  }
+}

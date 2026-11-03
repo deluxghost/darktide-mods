@@ -1,0 +1,26 @@
+{
+  "name": "Stimms Pickup Icon",
+  "description": "Set corresponding color for stimms icons.",
+  "homepage": "https://www.nexusmods.com/warhammer40kdarktide/mods/265",
+  "source": "https://github.com/deluxghost/darktide-mods/tree/main/StimmsPickupIcon",
+  "funding": {
+    "kofi": "https://ko-fi.com/deluxghost",
+    "bilibili": "https://space.bilibili.com/4712698"
+  },
+  "version": "1.5.2",
+  "author": "deluxghost",
+  "localization": {
+    "zh-cn": {
+      "name": "兴奋剂拾取图标",
+      "description": "给兴奋剂图标设置对应的颜色。"
+    },
+    "zh-tw": {
+      "name": "興奮劑拾取圖示",
+      "description": "為興奮劑圖示設定對應的顏色。"
+    },
+    "ru": {
+      "name": "Цвет значков стимуляторов",
+      "description": "Stimms Pickup Icon - Установливает соответствующие цвета для значков стимуляторов."
+    }
+  }
+}

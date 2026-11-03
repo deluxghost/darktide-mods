@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.0.6
+
+- Updated mod metadata for new DMF
+
 ## 1.0.5
 
 - Updated number matching patterns for text like "MkVIII"

@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.4.7
+
+- Updated mod metadata for new DMF
+
 ## 1.4.6
 
 - Supported "Unlocked and Loaded" update

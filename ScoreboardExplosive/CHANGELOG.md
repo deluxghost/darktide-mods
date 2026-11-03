@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.1.5
+
+- Updated mod metadata for new DMF
+
 ## 1.1.4
 
 - Updated localization

@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.2.1
+
+- Updated mod metadata for new DMF
+
 ## 1.2.0
 
 - IME Enable can support ImGui text inputs with ImGui Font Patch installed

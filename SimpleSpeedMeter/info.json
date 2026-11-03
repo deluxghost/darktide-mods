@@ -1,0 +1,22 @@
+{
+  "name": "Simple Speed Meter",
+  "description": "Adds a simple player speed meter widget.",
+  "homepage": "https://www.nexusmods.com/warhammer40kdarktide/mods/404",
+  "source": "https://github.com/deluxghost/darktide-mods/tree/main/SimpleSpeedMeter",
+  "funding": {
+    "kofi": "https://ko-fi.com/deluxghost",
+    "bilibili": "https://space.bilibili.com/4712698"
+  },
+  "version": "1.0.4",
+  "author": "deluxghost",
+  "localization": {
+    "zh-cn": {
+      "name": "简易速度计",
+      "description": "添加一个简易的玩家速度计组件。"
+    },
+    "zh-tw": {
+      "name": "簡易速度計",
+      "description": "添加一個簡易的玩家速度計組件。"
+    }
+  }
+}

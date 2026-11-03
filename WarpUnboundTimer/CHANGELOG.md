@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.1.2
+
+- Updated mod metadata for new DMF
+
 ## 1.1.1
 
 - Fixed for "Grim Protocols" update

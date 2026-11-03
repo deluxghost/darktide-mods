@@ -1,0 +1,22 @@
+{
+  "name": "Scoreboard Explosive",
+  "description": "Add explosive stats to scoreboard mod.",
+  "homepage": "https://www.nexusmods.com/warhammer40kdarktide/mods/113",
+  "source": "https://github.com/deluxghost/darktide-mods/tree/main/ScoreboardExplosive",
+  "funding": {
+    "kofi": "https://ko-fi.com/deluxghost",
+    "bilibili": "https://space.bilibili.com/4712698"
+  },
+  "version": "1.1.5",
+  "author": "deluxghost",
+  "localization": {
+    "zh-cn": {
+      "name": "记分板爆炸物统计",
+      "description": "为记分板模组添加爆炸物数据。"
+    },
+    "zh-tw": {
+      "name": "記分板爆炸物統計",
+      "description": "為記分板模組添加爆炸物數據。"
+    }
+  }
+}

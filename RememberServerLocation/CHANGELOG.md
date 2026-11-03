@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.1.7
+
+- Updated mod metadata for new DMF
+
 ## 1.1.6
 
 - Fixed for Hive Scum update

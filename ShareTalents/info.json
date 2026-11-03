@@ -1,0 +1,26 @@
+{
+  "name": "Share Talents",
+  "description": "Copy, paste and share talents builds.",
+  "homepage": "https://www.nexusmods.com/warhammer40kdarktide/mods/215",
+  "source": "https://github.com/deluxghost/darktide-mods/tree/main/ShareTalents",
+  "funding": {
+    "kofi": "https://ko-fi.com/deluxghost",
+    "bilibili": "https://space.bilibili.com/4712698"
+  },
+  "version": "1.2.3",
+  "author": "deluxghost",
+  "localization": {
+    "zh-cn": {
+      "name": "天赋加点分享",
+      "description": "复制、粘贴和分享天赋加点。"
+    },
+    "ru": {
+      "name": "Делитесь билдами",
+      "description": "Share Talents - Копируйте, вставляйте и делитесь текущим билдом талантов."
+    },
+    "zh-tw": {
+      "name": "天賦配點分享",
+      "description": "複製、貼上及分享天賦配點。"
+    }
+  }
+}

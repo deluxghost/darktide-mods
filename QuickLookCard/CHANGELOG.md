@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.8.7
+
+- Updated mod metadata for new DMF
+
 ## 1.8.6
 
 - Added new weapon stats

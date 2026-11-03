@@ -1,0 +1,26 @@
+{
+  "name": "What The Localization",
+  "description": "A community-driven localization fix framework and debug tool.",
+  "homepage": "https://www.nexusmods.com/warhammer40kdarktide/mods/163",
+  "source": "https://github.com/deluxghost/darktide-mods/tree/main/WhatTheLocalization",
+  "funding": {
+    "kofi": "https://ko-fi.com/deluxghost",
+    "bilibili": "https://space.bilibili.com/4712698"
+  },
+  "version": "1.2.4",
+  "author": "deluxghost",
+  "localization": {
+    "zh-cn": {
+      "name": "什么鬼翻译",
+      "description": "一个由社区驱动的翻译修复框架和调试工具。"
+    },
+    "ru": {
+      "name": "Что за локализация",
+      "description": "What The Localization - Созданная сообществом платформа для исправления локализации и инструмент отладки."
+    },
+    "zh-tw": {
+      "name": "什麼鬼翻譯",
+      "description": "由社群推動的本地化修正框架與除錯工具。"
+    }
+  }
+}

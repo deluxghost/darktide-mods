@@ -1,0 +1,22 @@
+{
+  "name": "Clean Force Blocking",
+  "description": "Remove blocking and pushing effect of force swords.",
+  "homepage": "https://www.nexusmods.com/warhammer40kdarktide/mods/104",
+  "source": "https://github.com/deluxghost/darktide-mods/tree/main/CleanForceBlocking",
+  "funding": {
+    "kofi": "https://ko-fi.com/deluxghost",
+    "bilibili": "https://space.bilibili.com/4712698"
+  },
+  "version": "1.4.7",
+  "author": "deluxghost",
+  "localization": {
+    "zh-cn": {
+      "name": "移除力场剑格挡特效",
+      "description": "移除力场剑的格挡和推动特效。"
+    },
+    "ru": {
+      "name": "Чистый силовой блок",
+      "description": "Удаляет эффекты при блоке и толчках силовыми мечами."
+    }
+  }
+}
