@@ -1,5 +1,11 @@
 # Changelog
 
+## 2.6.11
+
+- Fixed Spillway enemy replacements affecting later missions
+- Fixed incorrect Torment Daemonhost spawn chances and related errors across missions
+- Prevented Expedition enemies from using spawn positions from previous areas
+
 ## 2.6.10
 
 - Fixed a crash that could occur when suppressing notification messages

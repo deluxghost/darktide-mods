@@ -2,6 +2,15 @@ local mod = get_mod("SoloPlay")
 local ConstantElementNotificationFeed = require("scripts/ui/constant_elements/elements/notification_feed/constant_element_notification_feed")
 local ExpeditionLogicServer = require("scripts/managers/game_mode/game_modes/expedition/expedition_logic_server")
 
+mod:hook("RoamerPacing", "_get_weighted_position_from_origin", function (func, self, zone, sub_zone, sub_zone_index, zone_index)
+	if not mod.has_local_gameplay_authority() then
+		return func(self, zone, sub_zone, sub_zone_index, zone_index)
+	end
+
+	-- These arguments only identify the cache: use objects, since later nodes reuse numeric indices.
+	return func(self, zone, sub_zone, sub_zone, zone)
+end)
+
 -- remove debug message
 mod:hook(ConstantElementNotificationFeed, "event_add_notification_message", function (func, self, message_type, data, ...)
 	if mod.is_soloplay() and type(data) == "string" and string.starts_with(data, "[DEV]") then
