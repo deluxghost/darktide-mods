@@ -186,6 +186,9 @@ bool start_udp_relay(uint16_t listen_port, const sockaddr *game_address, int gam
 void adopt_udp_relay_peer(uint64_t peer_id);
 void release_udp_relay_peer(uint64_t peer_id);
 void stop_udp_relay();
+SOCKET create_relay_game_socket(const sockaddr *address, int address_size, uint64_t peer_id);
+bool get_local_udp_target(int *port, sockaddr_storage *target, int *target_size, char *error, int error_capacity);
+void release_steam_peer(uint64_t peer_id);
 bool ensure_initialized(char *error, int error_capacity);
 bool read_pointer(const uint8_t *location, void **value, const char *description, char *error, int error_capacity);
 bool current_network_manager(void **manager, char *error, int error_capacity);

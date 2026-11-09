@@ -61,6 +61,52 @@ typedef struct RealmsResolvedAddresses {
     char addresses[REALMS_RUNTIME_MAX_RESOLVED_ADDRESSES][REALMS_RUNTIME_ADDRESS_CAPACITY];
 } RealmsResolvedAddresses;
 
+typedef enum RealmsSteamEventType {
+    REALMS_STEAM_EVENT_JOIN_REQUESTED = 1,
+    REALMS_STEAM_EVENT_CLIENT_READY = 2,
+    REALMS_STEAM_EVENT_PASSWORD_REQUIRED = 3,
+    REALMS_STEAM_EVENT_CLIENT_ERROR = 4,
+    REALMS_STEAM_EVENT_HOST_ERROR = 5,
+    REALMS_STEAM_EVENT_PRESENCE_UPDATED = 6
+} RealmsSteamEventType;
+
+typedef struct RealmsSteamEvent {
+    uint32_t struct_size;
+    uint32_t type;
+    int32_t code;
+    uint32_t local_port;
+    char steam_id[21];
+    char message[256];
+} RealmsSteamEvent;
+
+typedef struct RealmsSteamStatus {
+    uint32_t struct_size;
+    int32_t authentication;
+    int32_t relay;
+    uint32_t listening;
+    uint32_t connections;
+    uint32_t client_port;
+    uint64_t sent_bytes;
+    uint64_t received_bytes;
+    int32_t client_state;
+    uint64_t dropped_datagrams;
+} RealmsSteamStatus;
+
+// Steam uses the game's existing SDK context. These calls never initialize or shut down Steam itself.
+REALMS_RUNTIME_API int RealmsRuntime_SteamInitialize(char *steam_id, int capacity, char *error, int error_capacity);
+REALMS_RUNTIME_API int RealmsRuntime_SteamStartHost(int password_required, char *error, int error_capacity);
+REALMS_RUNTIME_API void RealmsRuntime_SteamStopHost(void);
+REALMS_RUNTIME_API void RealmsRuntime_SteamSetPasswordRequired(int required);
+REALMS_RUNTIME_API int RealmsRuntime_SteamConnect(const char *steam_id, const char *game_peer_id, int password_supplied, char *error, int error_capacity);
+REALMS_RUNTIME_API void RealmsRuntime_SteamDisconnect(void);
+REALMS_RUNTIME_API int RealmsRuntime_SteamPollEvent(RealmsSteamEvent *event, char *error, int error_capacity);
+REALMS_RUNTIME_API int RealmsRuntime_SteamStatus(RealmsSteamStatus *status, char *error, int error_capacity);
+REALMS_RUNTIME_API void RealmsRuntime_SteamUpdate(void);
+REALMS_RUNTIME_API int RealmsRuntime_SteamPublishTarget(const char *host_steam_id, char *error, int error_capacity);
+REALMS_RUNTIME_API int RealmsRuntime_SteamFriendTarget(const char *steam_id, char *host_steam_id, int capacity, char *error, int error_capacity);
+REALMS_RUNTIME_API int RealmsRuntime_SteamInvite(const char *steam_id, const char *host_steam_id, char *error, int error_capacity);
+REALMS_RUNTIME_API void RealmsRuntime_SteamShutdown(void);
+
 typedef struct RealmsBinaryMessage {
     uint32_t struct_size;
     uint32_t channel_id;

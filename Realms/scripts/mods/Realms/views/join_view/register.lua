@@ -41,8 +41,8 @@ mod:register_view({
 	},
 })
 
-mod.open_join_view = function ()
+mod.open_join_view = function (context)
 	if not Managers.ui:view_instance(VIEW_NAME) then
-		Managers.ui:open_view(VIEW_NAME, nil, nil, nil, nil, {})
+		Managers.ui:open_view(VIEW_NAME, nil, nil, nil, nil, context or {})
 	end
 end

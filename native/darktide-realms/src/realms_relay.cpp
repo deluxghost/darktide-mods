@@ -423,6 +423,10 @@ void relay_main(SOCKET public_socket, sockaddr_storage game_address, int game_ad
 
 } // namespace
 
+SOCKET create_relay_game_socket(const sockaddr *address, int address_size, uint64_t peer_id) {
+    return create_game_socket(address, address_size, peer_id);
+}
+
 bool start_udp_relay(uint16_t listen_port, const sockaddr *game_address, int game_address_size,
                      RealmsRuntimeStartError *start_error, char *error, int error_capacity) {
     if (start_error != nullptr) {

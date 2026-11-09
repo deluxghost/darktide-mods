@@ -161,6 +161,7 @@ local function begin_client_boot(options)
 		password = options.password,
 		server_addresses = options.server_addresses,
 		server_port = options.server_port,
+		steam_id = options.steam_id,
 		on_failed = function ()
 			clear_client_join()
 		end,
@@ -845,19 +846,10 @@ local function host_preparation_loading_transition()
 	}
 end
 
-function Session.start_client(server_address, server_port_text, password)
+local function start_client(options)
+	local password = options.password
 	if pending_client_boot_options or client_boot_in_progress() then
 		return false, mod:localize("error_join_already_pending")
-	end
-
-	if type(server_address) ~= "string" or server_address == "" then
-		return false, mod:localize("error_server_address_required")
-	end
-
-	local server_port = tonumber(server_port_text)
-
-	if not server_port or server_port % 1 ~= 0 or server_port < 1 or server_port > 65535 then
-		return false, mod:localize("error_server_port_invalid")
 	end
 
 	local valid_password, password_error = SessionTicket.validate_password(password)
@@ -879,22 +871,21 @@ function Session.start_client(server_address, server_port_text, password)
 		return false, mod:localize("error_join_already_pending")
 	end
 
-	local resolved_addresses, resolve_error = Native.resolve_addresses(server_address)
+	if not options.steam_id then
+		local resolved, resolve_error = Native.resolve_addresses(options.server_address)
 
-	if not resolved_addresses then
-		mod:info("Failed resolving server address %q: %s", server_address, resolve_error)
+		if not resolved then
+			mod:info("Failed resolving server address %q: %s", options.server_address, resolve_error)
 
-		return false, mod:localize("error_server_address_unresolved")
+			return false, mod:localize("error_server_address_unresolved")
+		end
+
+		options.server_addresses = resolved
 	end
 
 	local game_session_active = Managers.state and Managers.state.game_session ~= nil
 
-	local options = {
-		password = password,
-		server_addresses = resolved_addresses,
-		server_port = server_port,
-		transition_to_loading = not game_session_active,
-	}
+	options.transition_to_loading = not game_session_active
 	state.remote_max_members = nil
 	state.remote_loadout_changes_allowed = nil
 	local native_ready, native_error = set_client_native_support(true)
@@ -912,7 +903,7 @@ function Session.start_client(server_address, server_port_text, password)
 			Managers.mechanism:trigger_event("client_exit_gameplay")
 		end
 
-		return true, nil, resolved_addresses[1]
+		return true
 	end
 
 	local started, start_error = begin_client_boot(options)
@@ -923,7 +914,32 @@ function Session.start_client(server_address, server_port_text, password)
 		return false, start_error
 	end
 
-	return true, nil, resolved_addresses[1]
+	return true
+end
+
+function Session.start_client(server_address, server_port_text, password)
+	if type(server_address) ~= "string" or server_address == "" then
+		return false, mod:localize("error_server_address_required")
+	end
+
+	local server_port = tonumber(server_port_text)
+
+	if not server_port or server_port % 1 ~= 0 or server_port < 1 or server_port > 65535 then
+		return false, mod:localize("error_server_port_invalid")
+	end
+
+	local options = {password = password, server_address = server_address, server_port = server_port}
+	local started, start_error = start_client(options)
+
+	return started, start_error, started and options.server_addresses[1] or nil
+end
+
+function Session.start_steam_client(steam_id)
+	return start_client({steam_id = steam_id, password = ""})
+end
+
+function Session.is_joining()
+	return pending_client_boot_options ~= nil or client_boot_in_progress()
 end
 
 function Session.update()
@@ -1292,6 +1308,11 @@ function Session.status_lines(latency)
 		"  role=" .. (Session.is_active_host() and "host" or Session.is_active_client() and "client" or "none"),
 	}
 	local connection = current_connection()
+	local steam_lines = mod._steam.status_lines()
+
+	for i = 1, #steam_lines do
+		lines[#lines + 1] = steam_lines[i]
+	end
 
 	if connection and connection._realms_protocol == SessionTicket.PROTOCOL_VERSION then
 		local remote_lines

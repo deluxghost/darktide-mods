@@ -46,6 +46,8 @@ end
 
 local Session = mod:io_dofile("Realms/scripts/mods/Realms/core/session")
 mod._session = Session
+local Steam = mod:io_dofile("Realms/scripts/mods/Realms/core/steam")
+mod._steam = Steam
 mod.queue_mission_transition = function (owner_mod, mission_context)
 	return Session.queue_mission_transition(owner_mod, mission_context)
 end
@@ -77,6 +79,7 @@ DisconnectErrors.install()
 GameplayControl.install(Session, Preparation, SessionControl)
 ProfileUpdates.install(Session, Preparation, GameplayControl)
 Presence.install(Session)
+Steam.install(Session)
 ModNetwork.install(SessionControl)
 Chat.install(Session, SessionControl)
 Voice.install(Session, SessionControl, BinaryNetwork)
@@ -96,6 +99,7 @@ mod.load_package = function (package_name)
 end
 
 mod.on_all_mods_loaded = function ()
+	Steam.initialize()
 	LoadoutChanges.install(Session, Preparation)
 
 	local packages = ViewPackages.all()
@@ -279,6 +283,7 @@ mod.update = function ()
 	SessionControl.update()
 	BinaryNetwork.update()
 	Session.update()
+	Steam.update()
 	Latency.update()
 	GameplayControl.update()
 	Chat.update()
@@ -288,7 +293,7 @@ mod.update = function ()
 	Voice.update()
 end
 
-mod.on_unload = function ()
+mod.on_unload = function (is_exiting)
 	local stopped, stop_error = Voice.stop()
 
 	if not stopped then
@@ -296,6 +301,7 @@ mod.on_unload = function ()
 	end
 
 	SessionControl.shutdown()
+	Steam.shutdown(is_exiting)
 end
 
 mod:command("realms_status", mod:localize("command_status_description"), function ()
@@ -328,5 +334,7 @@ mod.on_setting_changed = function (setting_id)
 
 	if not applied then
 		mod:error("%s %s", mod:localize("settings_apply_failed"), apply_error)
+	elseif setting_id == "server_password" then
+		Steam.settings_changed()
 	end
 end

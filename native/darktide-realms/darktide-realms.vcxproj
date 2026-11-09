@@ -99,6 +99,9 @@
     <ClCompile Include="src\realms_protocol.cpp" />
     <ClCompile Include="src\realms_relay.cpp" />
     <ClCompile Include="src\realms_state.cpp" />
+    <ClCompile Include="src\realms_steam.cpp">
+      <AdditionalOptions>/utf-8 %(AdditionalOptions)</AdditionalOptions>
+    </ClCompile>
     <ClCompile Include="src\realms_voice.cpp" />
   </ItemGroup>
   <ItemGroup>

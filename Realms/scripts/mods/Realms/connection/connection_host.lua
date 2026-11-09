@@ -144,6 +144,10 @@ ConnectionHost.validate_session_ticket = function (self, ticket)
 	return SessionTicket.validate(payload, self._peer_id, self._password)
 end
 
+ConnectionHost.password_required = function (self)
+	return self._password ~= ""
+end
+
 ConnectionHost.can_accept_peer = function (self, peer_id)
 	if self._relay_failed then
 		return false, DisconnectReason.SERVER_ERROR

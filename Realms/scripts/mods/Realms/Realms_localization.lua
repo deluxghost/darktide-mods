@@ -13,6 +13,26 @@ local localization = {
 		en = "Join server",
 		["zh-cn"] = "加入服务器",
 	},
+	join_steam_password_title = {
+		en = "Server password",
+		["zh-cn"] = "服务器密码",
+	},
+	join_steam_host = {
+		en = "Host: %s",
+		["zh-cn"] = "房主：%s",
+	},
+	join_password_required = {
+		en = "Enter the server password",
+		["zh-cn"] = "请输入服务器密码",
+	},
+	steam_unavailable = {
+		en = "Steam connection is unavailable",
+		["zh-cn"] = "Steam 连接不可用",
+	},
+	steam_join_self = {
+		en = "You cannot join your own server",
+		["zh-cn"] = "无法加入自己主持的服务器",
+	},
 	join_server_description = {
 		en = "Open the Realms server connection view.",
 		["zh-cn"] = "打开领域服务器连接界面。",
@@ -311,6 +331,10 @@ local native_localization = {
 	loc_realms_connection_error_title = {
 		en = "Realms connection error",
 		["zh-cn"] = "领域连接错误",
+	},
+	loc_realms_steam_connection_failed = {
+		en = "Could not connect to this Realm through Steam.",
+		["zh-cn"] = "无法通过 Steam 连接到此领域。",
 	},
 	loc_realms_connection_failed = {
 		en = "Failed to connect to the Realms server. Check that the server address is correct.",

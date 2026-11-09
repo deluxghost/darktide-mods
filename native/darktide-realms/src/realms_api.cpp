@@ -110,7 +110,7 @@ int RealmsRuntime_ResolveAddresses(const char *address, RealmsResolvedAddresses 
     return resolved->count > 0 ? 1 : 0;
 }
 
-bool get_local_udp_target(int *port, sockaddr_storage *target, int *target_size, char *error, int error_capacity) {
+bool realms::get_local_udp_target(int *port, sockaddr_storage *target, int *target_size, char *error, int error_capacity) {
     if (port == nullptr || target == nullptr || target_size == nullptr) {
         write_error(error, error_capacity, "Local UDP target output is null");
         return 0;
@@ -643,6 +643,7 @@ int RealmsRuntime_ReapAbandonedPeerTransportState(uint32_t idle_timeout_ms, int 
         }
 
         release_udp_relay_peer(peer_id);
+        release_steam_peer(peer_id);
         ++*reaped_count;
     }
 
@@ -690,6 +691,7 @@ int RealmsRuntime_CloseLocalSession(char *error, int error_capacity) {
         }
     }
 
+    RealmsRuntime_SteamStopHost();
     stop_udp_relay();
 
     for (HostPeerSlot &slot : g_host_peer_slots) {

@@ -8,6 +8,7 @@ local definitions = mod:io_dofile("Realms/scripts/mods/Realms/views/join_view/jo
 
 local SERVER_ADDRESS_SETTING_ID = "join_server_address"
 local HIDE_SERVER_ADDRESS_SETTING_ID = "hide_join_server_address"
+local PASSWORD_MODE_HEIGHT_REDUCTION = 64
 local ADDRESS_CHARACTER_MAP = {
 	["。"] = ".",
 	["．"] = ".",
@@ -55,26 +56,53 @@ local function set_input_value(content, value)
 end
 
 
-RealmsJoinView.init = function (self, settings)
-	RealmsJoinView.super.init(self, definitions, settings)
+RealmsJoinView.init = function (self, settings, context)
+	self._join_context = context and context.steam_id and context or nil
+	self._focus_names = self._join_context and {"password_input", "connect_button"} or FOCUS_WIDGET_NAMES
+	self._input_names = self._join_context and {"password_input"} or {"server_address_input", "password_input"}
+	local view_definitions = definitions
+
+	if self._join_context then
+		view_definitions = table.clone(definitions)
+		local graph = view_definitions.scenegraph_definition
+		local widgets = view_definitions.widget_definitions
+
+		graph.panel.size[2] = graph.panel.size[2] - PASSWORD_MODE_HEIGHT_REDUCTION
+		graph.password_label.position[2] = graph.password_label.position[2] - PASSWORD_MODE_HEIGHT_REDUCTION
+		graph.password_input.position[2] = graph.password_input.position[2] - PASSWORD_MODE_HEIGHT_REDUCTION
+		graph.error_text.position[2] = graph.error_text.position[2] - PASSWORD_MODE_HEIGHT_REDUCTION
+		widgets.server_address_input = nil
+		widgets.title.content[widgets.title.passes[1].value_id] = mod:localize("join_steam_password_title")
+		local host_name = Steam.user_name(Steam.id_dec_to_hex(context.steam_id))
+
+		widgets.server_address_label.content[widgets.server_address_label.passes[1].value_id] = host_name and host_name ~= ""
+			and mod:localize("join_steam_host", host_name) or mod:localize("join_password_required")
+	end
+
+	RealmsJoinView.super.init(self, view_definitions, settings, context)
 end
 
 RealmsJoinView.on_enter = function (self)
 	RealmsJoinView.super.on_enter(self)
 
 	local server_address = mod:get(SERVER_ADDRESS_SETTING_ID) or ""
-	local address_content = self._widgets_by_name.server_address_input.content
+	if not self._join_context then
+		local address_content = self._widgets_by_name.server_address_input.content
 
-	set_input_value(address_content, server_address)
-	address_content.mask_input = mod:get(HIDE_SERVER_ADDRESS_SETTING_ID)
+		set_input_value(address_content, server_address)
+		address_content.mask_input = mod:get(HIDE_SERVER_ADDRESS_SETTING_ID)
+	elseif self._join_context.incorrect then
+		self:_set_error(Managers.localization:localize("loc_realms_password_incorrect"))
+	end
 
 	self._focus_index = 1
 	self._server_address = server_address
 	self._input_signature = server_address .. "\31"
+	self._last_password = ""
 	self._widgets_by_name.connect_button.content.hotspot.pressed_callback = callback(self, "cb_on_connect_pressed")
 
-	for i = 1, 2 do
-		self._widgets_by_name[FOCUS_WIDGET_NAMES[i]].content.hotspot.use_is_focused = true
+	for i = 1, #self._input_names do
+		self._widgets_by_name[self._input_names[i]].content.hotspot.use_is_focused = true
 	end
 
 	self:_setup_input_legend()
@@ -93,8 +121,8 @@ RealmsJoinView._setup_input_legend = function (self)
 end
 
 RealmsJoinView._update_focus = function (self)
-	for i = 1, #FOCUS_WIDGET_NAMES do
-		local hotspot = self._widgets_by_name[FOCUS_WIDGET_NAMES[i]].content.hotspot
+	for i = 1, #self._focus_names do
+		local hotspot = self._widgets_by_name[self._focus_names[i]].content.hotspot
 		local focused = not self._using_cursor_navigation and i == self._focus_index
 
 		hotspot.is_focused = focused
@@ -103,8 +131,8 @@ RealmsJoinView._update_focus = function (self)
 end
 
 RealmsJoinView._active_input_content = function (self)
-	for i = 1, 2 do
-		local content = self._widgets_by_name[FOCUS_WIDGET_NAMES[i]].content
+	for i = 1, #self._input_names do
+		local content = self._widgets_by_name[self._input_names[i]].content
 
 		if content.is_writing then
 			return content, i
@@ -135,7 +163,7 @@ RealmsJoinView._handle_input = function (self, input_service, dt, t)
 		self._focus_index = math.max(self._focus_index - 1, 1)
 		self:_update_focus()
 	elseif input_service:get("navigate_down_continuous") then
-		self._focus_index = math.min(self._focus_index + 1, #FOCUS_WIDGET_NAMES)
+		self._focus_index = math.min(self._focus_index + 1, #self._focus_names)
 		self:_update_focus()
 	end
 end
@@ -144,10 +172,10 @@ RealmsJoinView.update = function (self, dt, t, input_service)
 	local pass_input, pass_draw = RealmsJoinView.super.update(self, dt, t, input_service)
 
 	if input_service then
-		for i = 1, 2 do
+		for i = 1, #self._input_names do
 			local focused = not self._using_cursor_navigation and i == self._focus_index
 
-			update_text_input(self._widgets_by_name[FOCUS_WIDGET_NAMES[i]].content, input_service, focused)
+			update_text_input(self._widgets_by_name[self._input_names[i]].content, input_service, focused)
 		end
 	end
 
@@ -157,6 +185,17 @@ RealmsJoinView.update = function (self, dt, t, input_service)
 end
 
 RealmsJoinView._update_input_values = function (self)
+	if self._join_context then
+		local password = self._widgets_by_name.password_input.content.input_text
+
+		if self._last_password and self._last_password ~= password then
+			self:_set_error()
+		end
+
+		self._last_password = password
+
+		return
+	end
 	local content = self._widgets_by_name.server_address_input.content
 	local server_address = content.input_text or ""
 
@@ -197,6 +236,22 @@ RealmsJoinView._set_error = function (self, message)
 end
 
 RealmsJoinView.cb_on_connect_pressed = function (self)
+	if self._join_context then
+		finish_editing(self._widgets_by_name.password_input.content)
+
+		local accepted, submit_error = self._join_context.submit(self._widgets_by_name.password_input.content.input_text or "")
+
+		if not accepted then
+			self:_set_error(submit_error)
+
+			return
+		end
+
+		self._submitted = true
+		Managers.ui:close_view(self.view_name)
+
+		return
+	end
 	finish_editing(self._widgets_by_name.server_address_input.content)
 	self:_update_input_values()
 
@@ -236,8 +291,15 @@ RealmsJoinView._on_back_pressed = function (self)
 end
 
 RealmsJoinView.on_exit = function (self)
-	finish_editing(self._widgets_by_name.server_address_input.content)
+	for i = 1, #self._input_names do
+		finish_editing(self._widgets_by_name[self._input_names[i]].content)
+	end
+
 	self:_update_input_values()
+	if self._join_context and not self._submitted then
+		self._join_context.cancel()
+	end
+
 	RealmsJoinView.super.on_exit(self)
 end
 

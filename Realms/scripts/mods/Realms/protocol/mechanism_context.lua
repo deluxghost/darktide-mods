@@ -33,6 +33,7 @@ function MechanismContext.host_payload()
 		PREFIX .. mechanism_name,
 		mission_name,
 		preparation_phase,
+		mod._steam.host_id() or "",
 	}, ":")
 end
 
@@ -41,17 +42,21 @@ function MechanismContext.decode_reply(mechanism_matched, reply_data)
 		return false, "Realms host did not provide a valid session context"
 	end
 
-	local mechanism_name, mission_name, preparation_phase = string.match(string.sub(reply_data, #PREFIX + 1), "^([^:]+):([^:]+):([^:]+)$")
+	local mechanism_name, mission_name, preparation_phase, steam_host_id = string.match(string.sub(reply_data, #PREFIX + 1), "^([^:]+):([^:]+):([^:]+):(%d*)$")
 	local mission_settings = mission_name and MissionTemplates[mission_name]
 
 	if not mission_settings or mission_settings.mechanism_name ~= mechanism_name or not PHASES[preparation_phase] then
 		return false, "Realms host mechanism context is invalid"
+	end
+	if steam_host_id ~= "" and (#steam_host_id < 17 or #steam_host_id > 20) then
+		return false, "Realms host Steam identity is invalid"
 	end
 
 	return {
 		mechanism_name = mechanism_name,
 		mission_name = mission_name,
 		preparation_phase = preparation_phase,
+		steam_host_id = steam_host_id ~= "" and steam_host_id or nil,
 	}
 end
 

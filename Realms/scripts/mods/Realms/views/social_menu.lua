@@ -7,6 +7,7 @@ local Preparation
 
 local DEFINITIONS_PATH = "scripts/ui/views/social_menu_roster_view/social_menu_roster_view_definitions"
 local PLAYER_POPUP_CONTENT_PATH = "scripts/ui/view_elements/view_element_player_social_popup/view_element_player_social_popup_content_list"
+local PLAYER_POPUP_PATH = "scripts/ui/view_elements/view_element_player_social_popup/view_element_player_social_popup"
 local ROSTER_VIEW_PATH = "scripts/ui/views/social_menu_roster_view/social_menu_roster_view"
 local ROSTER_VIEW_SETTINGS_PATH = "scripts/ui/views/social_menu_roster_view/social_menu_roster_view_settings"
 local SCROLLBAR_PASS_TEMPLATES_PATH = "scripts/ui/pass_templates/scrollbar_pass_templates"
@@ -21,7 +22,64 @@ local PARTY_GRID_MASK_ID = "realms_party_grid_mask"
 local PARTY_SCROLLBAR_ID = "realms_party_scrollbar"
 local PARTY_GRID_MASK_EXPANSION = 40
 local installed_player_popup_contents = setmetatable({}, { __mode = "k" })
+local installed_player_popups = setmetatable({}, { __mode = "k" })
 local installed_roster_views = setmetatable({}, { __mode = "k" })
+
+local function install_player_popup_hooks(PlayerPopup)
+	if installed_player_popups[PlayerPopup] then
+		return
+	end
+
+	local Definitions = require(PLAYER_POPUP_PATH .. "_definitions")
+	local refresh_animation = {}
+
+	for _, animation in ipairs(Definitions.animations.open) do
+		if animation.name ~= "fade_in_background" then
+			refresh_animation[#refresh_animation + 1] = animation
+		end
+	end
+
+	Definitions.animations.realms_refresh = refresh_animation
+
+	mod:hook_safe(PlayerPopup, "init", function (self)
+		self:_register_event("realms_steam_presence_updated", "event_realms_steam_presence_updated")
+	end)
+
+	mod:hook(PlayerPopup, "set_player_info", function (func, self, parent, player_info)
+		self._realms_steam_player_info = player_info
+		self._realms_steam_target = mod._steam.friend_target(player_info)
+
+		return func(self, parent, player_info)
+	end)
+
+	mod:hook_safe(PlayerPopup, "_set_player_info", function (self)
+		self:event_realms_steam_presence_updated()
+	end)
+
+	PlayerPopup.event_realms_steam_presence_updated = function (self)
+		local player_info = self._realms_steam_player_info
+
+		if self._is_closing or not player_info or self._player_info ~= player_info then
+			return
+		end
+
+		local steam_target = mod._steam.friend_target(player_info)
+
+		if steam_target == self._realms_steam_target then
+			return
+		end
+
+		self._realms_steam_target = steam_target
+
+		local ContentList = require(PLAYER_POPUP_CONTENT_PATH)
+		local items, count = ContentList.from_player_info(self._parent, player_info)
+
+		self:_setup_menu_items(items, count)
+		self:_start_fade_animation("realms_refresh")
+	end
+
+	installed_player_popups[PlayerPopup] = true
+end
 
 local function kickable_peer_id(player_info)
 	if not Session.is_active_host() or not player_info or player_info:is_own_player() then
@@ -63,6 +121,26 @@ local function prepend_kick_item(menu_items, num_menu_items, parent, player_info
 	return num_menu_items + added_items
 end
 
+local function configure_steam_item(item, parent, player_info, target)
+	item.blueprint = "button"
+	item.is_disabled = false
+	item.reason_for_disabled = nil
+	item.callback = function ()
+		local accepted, action_error
+
+		if target then
+			accepted, action_error = mod._steam.join(target)
+		else
+			accepted, action_error = mod._steam.invite(player_info)
+		end
+		if not accepted then
+			mod:notify("%s", action_error)
+		end
+
+		parent:_close_popup_menu()
+	end
+end
+
 local function install_player_popup_hook(PlayerPopupContent)
 	if installed_player_popup_contents[PlayerPopupContent] then
 		return
@@ -70,6 +148,33 @@ local function install_player_popup_hook(PlayerPopupContent)
 
 	mod:hook(PlayerPopupContent, "from_player_info", function (func, parent, player_info)
 		local menu_items, num_menu_items = func(parent, player_info)
+		local steam = mod._steam
+		local steam_target = player_info and steam.friend_target(player_info)
+		local can_invite = player_info and steam.can_invite(player_info)
+
+		if steam_target or can_invite then
+			local join_label = Localize("loc_social_menu_join_party")
+			local invite_label = Localize("loc_social_menu_invite_to_party")
+			local join_added = false
+
+			for i = 1, num_menu_items do
+				local item = menu_items[i]
+				local is_join = steam_target and item.label == join_label
+				local is_invite = can_invite and item.label == invite_label
+
+				if is_join or is_invite then
+					configure_steam_item(item, parent, player_info, is_join and steam_target or nil)
+					join_added = join_added or is_join
+				end
+			end
+			if steam_target and not join_added then
+				num_menu_items = num_menu_items + 1
+				local item = {label = join_label}
+
+				configure_steam_item(item, parent, player_info, steam_target)
+				menu_items[num_menu_items] = item
+			end
+		end
 
 		if not kickable_peer_id(player_info) then
 			return menu_items, num_menu_items
@@ -631,6 +736,7 @@ function SocialMenu.install(session, preparation)
 	end)
 
 	mod:hook_require(PLAYER_POPUP_CONTENT_PATH, install_player_popup_hook)
+	mod:hook_require(PLAYER_POPUP_PATH, install_player_popup_hooks)
 
 	mod:hook_require(DEFINITIONS_PATH, function (Definitions)
 		local RosterViewStyles = require(STYLES_PATH)
