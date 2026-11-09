@@ -6,10 +6,10 @@ return {
 		["zh-tw"] = "單人遊戲",
 	},
 	mod_description = {
-		en = "Play local single-player missions. You can't get any rewards or progression in local games.",
-		["zh-cn"] = "玩本地单人任务。你无法从本地游戏中获得任何奖励或进度。",
-		ru = "Играйте в одиночные миссии локально. В локальной игре вы не получаете никаких наград или прогресса.",
-		["zh-tw"] = "遊玩本機單人任務。你無法從本機遊戲中獲得任何獎勵或進度。",
+		en = "Play local single-player missions. You can't get any official rewards or progression in local games.",
+		["zh-cn"] = "玩本地单人任务。你无法从本地游戏中获得任何官方奖励或进度。",
+		ru = "Играйте в одиночные миссии локально. В локальной игре вы не получаете никаких официальных наград или прогресса.",
+		["zh-tw"] = "遊玩本機單人任務。你無法從本機遊戲中獲得任何官方獎勵或進度。",
 	},
 	open_solo_play = {
 		en = "Local Game Interface",
