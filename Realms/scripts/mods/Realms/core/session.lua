@@ -421,6 +421,9 @@ local function should_host_local_mission(mission_name)
 	local mission_template = MissionTemplates[mission_name]
 	local game_mode_name = mission_template and mission_template.game_mode_name
 
+	if game_mode_name == "training_grounds" then
+		return false
+	end
 	if game_mode_name == "shooting_range" then
 		return mod:get("enable_shooting_range_server")
 	end
@@ -468,8 +471,6 @@ function Session.replace_singleplayer_boot(manager, original_boot)
 
 	local game_session_active = Managers.state and Managers.state.game_session ~= nil
 	local defer_takeover = not mission_name
-		and ((not reuse_host and not game_session_active)
-			or not mod:get("enable_hub_server") or not mod:get("enable_shooting_range_server"))
 
 	if reuse_host then
 		pending_host_reset = nil
@@ -586,13 +587,16 @@ function Session.local_loading_started(params)
 
 	local manager = Managers.multiplayer_session
 
-	if not mission_name or not should_host_local_mission(mission_name) or not manager then
+	if not mission_name or not manager then
 		return
 	end
 
 	if pending_local_boot and manager._session_boot == pending_local_boot.session_boot then
 		configure_local_mission({ mission_name = mission_name })
 
+		return
+	end
+	if not should_host_local_mission(mission_name) then
 		return
 	end
 

@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.2.0
+
+- Supported experimental Steam P2P
+- Fixed basic and advanced training failing to start
+
 ## 1.1.4
 
 - Fixed multiplayer stuttering caused by frequent network activity
