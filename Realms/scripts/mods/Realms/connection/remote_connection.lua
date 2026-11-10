@@ -204,7 +204,7 @@ RemoteConnection.update_profile_source = function (self, local_player_id, profil
 end
 
 RemoteConnection.status_line = function (self)
-	return string.format("  remote=peer:%s channel:%s stage:%d connected:%s failed:%s", self._peer_id, tostring(self._channel_id), self._stage, tostring(self._connected), tostring(self._failed))
+	return string.format("remote=peer:%s channel:%s stage:%d connected:%s failed:%s", self._peer_id, tostring(self._channel_id), self._stage, tostring(self._connected), tostring(self._failed))
 end
 
 RemoteConnection._record_failure = function (self, reason)

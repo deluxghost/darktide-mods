@@ -6,8 +6,8 @@ local localization = {
 		["zh-cn"] = "领域服务器",
 	},
 	mod_description = {
-		en = "Adds LAN/P2P multiplayer support to Darktide. Host your own local server with mod supported.",
-		["zh-cn"] = "为暗潮提供局域网/P2P联机功能。主办你自己的本地模组服务器。",
+		en = "Adds LAN and P2P multiplayer to Darktide. Host your own modded local server.",
+		["zh-cn"] = "为暗潮添加局域网和 P2P 联机。主持你自己的本地模组服务器。",
 	},
 	join_server = {
 		en = "Join server",
@@ -26,12 +26,32 @@ local localization = {
 		["zh-cn"] = "请输入服务器密码",
 	},
 	steam_unavailable = {
-		en = "Steam connection is unavailable",
-		["zh-cn"] = "Steam 连接不可用",
+		en = "Steam connection is unavailable.",
+		["zh-cn"] = "Steam 连接不可用。",
+	},
+	eos_disabled = {
+		en = "Cross-platform play is not enabled.",
+		["zh-cn"] = "未启用跨平台联机。",
+	},
+	eos_not_ready = {
+		en = "Cross-platform play is still signing in.",
+		["zh-cn"] = "跨平台联机正在登录。",
+	},
+	eos_code_invalid = {
+		en = "The invite code is invalid.",
+		["zh-cn"] = "邀请码无效。",
+	},
+	eos_code_lookup_failed = {
+		en = "The invite code lookup failed.",
+		["zh-cn"] = "邀请码查询失败。",
+	},
+	eos_code_not_found = {
+		en = "The invite code does not exist.",
+		["zh-cn"] = "邀请码不存在。",
 	},
 	steam_join_self = {
-		en = "You cannot join your own server",
-		["zh-cn"] = "无法加入自己主持的服务器",
+		en = "You cannot join your own server.",
+		["zh-cn"] = "无法加入自己主持的服务器。",
 	},
 	join_server_description = {
 		en = "Open the Realms server connection view.",
@@ -182,12 +202,40 @@ local localization = {
 		["zh-cn"] = "减少领域语音中麦克风的背景噪声。只影响自己的麦克风。",
 	},
 	join_server_address = {
-		en = "Server address",
-		["zh-cn"] = "服务器地址",
+		en = "Server address or invite code",
+		["zh-cn"] = "服务器地址或邀请码",
 	},
 	join_server_address_placeholder = {
-		en = "address:port or [IPv6]:port",
-		["zh-cn"] = "地址:端口 或 [IPv6]:端口",
+		en = "address:port, [IPv6]:port or invite code",
+		["zh-cn"] = "地址:端口、[IPv6]:端口 或邀请码",
+	},
+	enable_crossplay = {
+		en = "Enable PC cross-platform play",
+		["zh-cn"] = "启用 PC 跨平台联机",
+	},
+	enable_crossplay_description = {
+		en = "Play across platforms through Epic Online Services. Supports Steam and the Xbox app for PC, joining with invite codes.",
+		["zh-cn"] = "通过 Epic Online Services 进行跨平台联机。支持 Steam 版和 Xbox PC 版，使用邀请码加入。",
+	},
+	invite_code = {
+		en = "Invite code",
+		["zh-cn"] = "邀请码",
+	},
+	invite_code_copied = {
+		en = "Invite code copied",
+		["zh-cn"] = "邀请码已复制",
+	},
+	invite_code_show = {
+		en = "Show",
+		["zh-cn"] = "显示",
+	},
+	invite_code_hide = {
+		en = "Hide",
+		["zh-cn"] = "隐藏",
+	},
+	invite_code_copy = {
+		en = "Copy",
+		["zh-cn"] = "复制",
 	},
 	join_server_password = {
 		en = "Password",
@@ -250,12 +298,12 @@ local localization = {
 		["zh-cn"] = "加入官方游戏会话失败，当前领域会话仍然有效。",
 	},
 	error_server_address_required = {
-		en = "Enter a server address.",
-		["zh-cn"] = "请输入服务器地址。",
+		en = "No server address was entered.",
+		["zh-cn"] = "未填写服务器地址。",
 	},
 	error_join_target_format = {
-		en = "Enter the server as address:port or [IPv6]:port.",
-		["zh-cn"] = "服务器地址格式应为 地址:端口 或 [IPv6]:端口。",
+		en = "The server address or invite code is invalid.",
+		["zh-cn"] = "服务器地址或邀请码无效。",
 	},
 	error_server_address_unresolved = {
 		en = "The server address could not be resolved.",
@@ -335,6 +383,10 @@ local native_localization = {
 	loc_realms_steam_connection_failed = {
 		en = "Could not connect to this Realm through Steam.",
 		["zh-cn"] = "无法通过 Steam 连接到此领域。",
+	},
+	loc_realms_eos_connection_failed = {
+		en = "Could not connect to this Realm through cross-platform play.",
+		["zh-cn"] = "无法通过跨平台联机连接到此领域。",
 	},
 	loc_realms_connection_failed = {
 		en = "Failed to connect to the Realms server. Check that the server address is correct.",

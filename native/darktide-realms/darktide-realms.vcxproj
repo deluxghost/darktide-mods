@@ -35,6 +35,8 @@
   <PropertyGroup>
     <DtIntUtilsRoot Condition="'$(DtIntUtilsRoot)'==''">$(ProjectDir)..\darktide-internal-utils</DtIntUtilsRoot>
     <TargetName>darktide-realms</TargetName>
+    <!-- Optional official EOS SDK include directory; only used to verify src\eos\eos_api.h. -->
+    <EosSdkInclude Condition="'$(EosSdkInclude)'==''"></EosSdkInclude>
     <OutDir>$(ProjectDir)bin\$(Platform)\$(Configuration)\</OutDir>
     <IntDir>$(ProjectDir)obj\$(Platform)\$(Configuration)\</IntDir>
   </PropertyGroup>
@@ -47,11 +49,11 @@
       <LanguageStandard>stdcpp17</LanguageStandard>
       <ExceptionHandling>Sync</ExceptionHandling>
       <PreprocessorDefinitions>WIN32_LEAN_AND_MEAN;NOMINMAX;UNICODE;_UNICODE;_CRT_SECURE_NO_WARNINGS;DARKTIDE_REALMS_BUILD;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>$(ProjectDir)include;$(DtIntUtilsRoot)\include;$(ProjectDir)obj\audio\_deps\opus-src\include;$(ProjectDir)obj\audio\include;$(ProjectDir)obj\audio\_deps\webrtc-src\webrtc;$(ProjectDir)obj\audio\_deps\webrtc-src\subprojects\abseil-cpp-20240722.0;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)include;$(ProjectDir)obj\generated;$(DtIntUtilsRoot)\include;$(ProjectDir)obj\audio\_deps\opus-src\include;$(ProjectDir)obj\audio\include;$(ProjectDir)obj\audio\_deps\webrtc-src\webrtc;$(ProjectDir)obj\audio\_deps\webrtc-src\subprojects\abseil-cpp-20240722.0;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
-      <AdditionalDependencies>ws2_32.lib;rpcrt4.lib;ole32.lib;winmm.lib;dbghelp.lib;opus.lib;webrtc.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>ws2_32.lib;rpcrt4.lib;ole32.lib;shell32.lib;winmm.lib;dbghelp.lib;opus.lib;webrtc.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalLibraryDirectories>$(ProjectDir)obj\audio\_deps\opus-build\$(Configuration);$(ProjectDir)obj\webrtc\$(Configuration);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
   </ItemDefinitionGroup>
@@ -76,6 +78,8 @@
   <ItemGroup>
     <ClInclude Include="include\darktide_realms.h" />
     <ClInclude Include="src\realms_internal.h" />
+    <ClInclude Include="src\realms_bridge.h" />
+    <ClInclude Include="src\eos\eos_api.h" />
     <ClInclude Include="src\realms_datagram.h" />
     <ClInclude Include="src\realms_audio.h" />
     <ClInclude Include="src\realms_audio_devices.h" />
@@ -92,8 +96,13 @@
       <LanguageStandard>stdcpp20</LanguageStandard>
     </ClCompile>
     <ClCompile Include="src\realms_binary.cpp" />
+    <ClCompile Include="src\realms_bridge.cpp" />
     <ClCompile Include="src\realms_datagram.cpp" />
     <ClCompile Include="src\realms_engine.cpp" />
+    <ClCompile Include="src\realms_eos.cpp" />
+    <ClCompile Include="src\eos\eos_layout_check.cpp" Condition="'$(EosSdkInclude)'!=''">
+      <AdditionalIncludeDirectories>$(EosSdkInclude);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+    </ClCompile>
     <ClCompile Include="src\realms_events.cpp" />
     <ClCompile Include="src\realms_ipv6.cpp" />
     <ClCompile Include="src\realms_protocol.cpp" />

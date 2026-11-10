@@ -10,3 +10,6 @@ obj/
 *.sln.docstates
 *.VC.db
 *.VC.VC.opendb
+
+# Local EOS credentials (see eos.example.json)
+eos.local.json

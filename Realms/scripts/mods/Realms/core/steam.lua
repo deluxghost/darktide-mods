@@ -1,5 +1,6 @@
 local mod = get_mod("Realms")
 local NativeSteam = mod:io_dofile("Realms/scripts/mods/Realms/runtime/steam")
+local StatusFormat = mod:io_dofile("Realms/scripts/mods/Realms/core/status_format")
 local EVENT_TYPES = NativeSteam.EVENT_TYPES
 local SteamPlatform = Steam
 
@@ -184,7 +185,7 @@ function Steam.update()
 			local boot = client_boot()
 
 			if boot then
-				boot:steam_event(event)
+				boot:transport_event("steam", event)
 			elseif event.type == EVENT_TYPES.client_error then
 				mod:info("Steam client transport closed code=%d: %s", event.code, event.message)
 			end
@@ -257,19 +258,35 @@ function Steam.install(session)
 	end)
 end
 
+-- ESteamNetworkingAvailability values.
+local AVAILABILITY = {
+	[-102] = "unavailable",
+	[-101] = "failed",
+	[-100] = "lost",
+	[-10] = "retrying",
+	[1] = "idle",
+	[2] = "waiting",
+	[3] = "connecting",
+	[100] = "ready",
+}
+
+local function availability(value)
+	return AVAILABILITY[value] or tostring(value)
+end
+
 function Steam.status_lines()
 	if not local_id then
-		return {"  steam=unavailable"}
+		return {"steam=unavailable"}
 	end
 
 	local status, status_error = NativeSteam.status()
 
 	if not status then
-		return {"  steam_error=" .. status_error}
+		return {"steam_error=" .. status_error}
 	end
 
 	return {
-		string.format("  steam_auth=%d relay=%d listening=%s connections=%d drops=%d", status.authentication, status.relay, tostring(status.listening), status.connections, status.dropped_datagrams),
+		string.format("steam=%s relay=%s listening=%s connections=%d sent=%s received=%s drops=%d", availability(status.authentication), availability(status.relay), tostring(status.listening), status.connections, StatusFormat.bytes(status.sent_bytes), StatusFormat.bytes(status.received_bytes), status.dropped_datagrams),
 	}
 end
 

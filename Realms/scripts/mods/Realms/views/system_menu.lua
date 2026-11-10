@@ -1,5 +1,7 @@
 local mod = get_mod("Realms")
 local SystemView = require("scripts/ui/views/system_view/system_view")
+local SystemViewDefinitions = require("scripts/ui/views/system_view/system_view_definitions")
+local InviteCodePanel = mod:io_dofile("Realms/scripts/mods/Realms/views/invite_code_panel")
 
 local REALMS_OWNER = "_realms_system_menu_owner"
 local SOCIAL_TEXT = "loc_social_view_display_name"
@@ -209,6 +211,15 @@ local function transform_list(source, canonical_default, Preparation, Session)
 end
 
 function SystemMenu.install(Preparation, Session)
+	-- The view copies widgets from this shared table on every open, so extending it once is enough.
+	InviteCodePanel.extend_definitions(SystemViewDefinitions, "screen", 60, 50, 20)
+
+	mod:hook_safe(SystemView, "on_enter", function (self)
+		InviteCodePanel.attach(self)
+	end)
+	mod:hook_safe(SystemView, "update", function (self, dt, t, input_service)
+		InviteCodePanel.update(self, input_service)
+	end)
 	mod:hook(SystemView, "_setup_content_widgets", function (func, self, content, scenegraph_id, callback_name)
 		if not Session.is_active() or scenegraph_id ~= SYSTEM_MENU_SCENEGRAPH_ID or callback_name ~= SYSTEM_MENU_CALLBACK or not content or not content.default then
 			return func(self, content, scenegraph_id, callback_name)

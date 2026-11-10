@@ -107,6 +107,84 @@ REALMS_RUNTIME_API int RealmsRuntime_SteamFriendTarget(const char *steam_id, cha
 REALMS_RUNTIME_API int RealmsRuntime_SteamInvite(const char *steam_id, const char *host_steam_id, char *error, int error_capacity);
 REALMS_RUNTIME_API void RealmsRuntime_SteamShutdown(void);
 
+#define REALMS_EOS_ID_CAPACITY 33
+#define REALMS_EOS_TEXT_CAPACITY 64
+#define REALMS_EOS_CODE_LENGTH 6
+
+typedef enum RealmsEosState {
+    REALMS_EOS_STATE_STOPPED = 0,
+    REALMS_EOS_STATE_STARTING = 1,
+    REALMS_EOS_STATE_LOGGING_IN = 2,
+    REALMS_EOS_STATE_READY = 3,
+    REALMS_EOS_STATE_FAILED = 4
+} RealmsEosState;
+
+// Values 2 to 5 match RealmsSteamEventType because both come from the shared transport bridge.
+typedef enum RealmsEosEventType {
+    REALMS_EOS_EVENT_CLIENT_READY = 2,
+    REALMS_EOS_EVENT_PASSWORD_REQUIRED = 3,
+    REALMS_EOS_EVENT_CLIENT_ERROR = 4,
+    REALMS_EOS_EVENT_HOST_ERROR = 5,
+    REALMS_EOS_EVENT_LOGIN_SUCCEEDED = 16,
+    REALMS_EOS_EVENT_LOGIN_FAILED = 17,
+    REALMS_EOS_EVENT_HOST_CODE = 18,
+    REALMS_EOS_EVENT_HOST_CODE_FAILED = 19,
+    REALMS_EOS_EVENT_CODE_RESOLVED = 20,
+    REALMS_EOS_EVENT_CODE_FAILED = 21,
+    REALMS_EOS_EVENT_LOG = 22
+} RealmsEosEventType;
+
+typedef enum RealmsEosCodeError {
+    REALMS_EOS_CODE_ERROR_NONE = 0,
+    REALMS_EOS_CODE_ERROR_NOT_FOUND = 1,
+    REALMS_EOS_CODE_ERROR_SERVICE = 2
+} RealmsEosCodeError;
+
+// remote: product user id of the peer (or the local user for LOGIN_SUCCEEDED).
+// The text field holds the invite code for HOST_CODE, CODE_RESOLVED and CODE_FAILED, and the log
+// category for LOG. CODE_FAILED reports a RealmsEosCodeError in code.
+typedef struct RealmsEosEvent {
+    uint32_t struct_size;
+    uint32_t type;
+    int32_t code;
+    uint32_t local_port;
+    char remote[REALMS_EOS_ID_CAPACITY];
+    char text[REALMS_EOS_TEXT_CAPACITY];
+    char message[256];
+} RealmsEosEvent;
+
+typedef struct RealmsEosStatus {
+    uint32_t struct_size;
+    uint32_t state;
+    int32_t last_result;
+    int32_t nat_type;
+    uint32_t hosting;
+    uint32_t connections;
+    uint32_t client_port;
+    int32_t client_network_type;
+    uint64_t sent_bytes;
+    uint64_t received_bytes;
+    uint64_t dropped_datagrams;
+    uint64_t fragmented_datagrams;
+} RealmsEosStatus;
+
+// EOS runs entirely on a runtime-owned thread. Every call below only queues work or reads a snapshot.
+// Returns 0 when the build has no EOS configuration or the SDK DLL is missing next to the runtime.
+REALMS_RUNTIME_API int RealmsRuntime_EosAvailable(char *error, int error_capacity);
+REALMS_RUNTIME_API int RealmsRuntime_EosStart(const char *display_name, char *error, int error_capacity);
+// exiting=1 also shuts the SDK down, after which EOS cannot be initialized again in this process.
+REALMS_RUNTIME_API void RealmsRuntime_EosStop(int exiting);
+REALMS_RUNTIME_API int RealmsRuntime_EosStartHost(int password_required, char *error, int error_capacity);
+REALMS_RUNTIME_API void RealmsRuntime_EosStopHost(void);
+// Opens or closes the invite code of the running host without touching connected peers.
+REALMS_RUNTIME_API void RealmsRuntime_EosSetInvitesOpen(int open);
+REALMS_RUNTIME_API void RealmsRuntime_EosSetPasswordRequired(int required);
+REALMS_RUNTIME_API int RealmsRuntime_EosResolveCode(const char *code, char *error, int error_capacity);
+REALMS_RUNTIME_API int RealmsRuntime_EosConnect(const char *remote_id, const char *game_peer_id, int password_supplied, char *error, int error_capacity);
+REALMS_RUNTIME_API void RealmsRuntime_EosDisconnect(void);
+REALMS_RUNTIME_API int RealmsRuntime_EosPollEvent(RealmsEosEvent *event, char *error, int error_capacity);
+REALMS_RUNTIME_API int RealmsRuntime_EosStatus(RealmsEosStatus *status, char *error, int error_capacity);
+
 typedef struct RealmsBinaryMessage {
     uint32_t struct_size;
     uint32_t channel_id;
@@ -218,7 +296,7 @@ REALMS_RUNTIME_API int RealmsRuntime_ReapAbandonedPeerTransportState(uint32_t id
 
 // Returns 1 when an event was written, 0 when the queue is empty, and -1 on API failure.
 // The caller must initialize event->struct_size to sizeof(RealmsRuntimeEvent).
-// Non-null output buffers are inspected only when an event is available; API failure does not consume the event.
+// Non-null output buffers are inspected only when an event is available. API failure does not consume the event.
 REALMS_RUNTIME_API int RealmsRuntime_PollEvent(RealmsRuntimeEvent *event, char *error, int error_capacity);
 
 // Private Realms transport. Attach only channels admitted by the Realms session handshake.
@@ -227,9 +305,9 @@ REALMS_RUNTIME_API int RealmsRuntime_AttachBinaryChannel(uint32_t channel_id, co
 REALMS_RUNTIME_API int RealmsRuntime_DetachBinaryChannel(uint32_t channel_id, char *error, int error_capacity);
 
 // Copies payload before returning. Success means accepted locally, not acknowledged by the recipient.
-// Type 0 is reserved for reliable JSON control. Recipient 0 means host; UINT64_MAX means others.
-// Control enters the engine reliable queue synchronously; other types use the rate-limited local queue.
-// lifetime_ms applies only to the local unreliable send queue; reliable messages use 0.
+// Type 0 is reserved for reliable JSON control. Recipient 0 means the host and UINT64_MAX means others.
+// Control enters the engine reliable queue synchronously. Other types use the rate-limited local queue.
+// lifetime_ms applies only to the local unreliable send queue. Reliable messages use 0.
 REALMS_RUNTIME_API int RealmsRuntime_SendBinary(uint32_t channel_id, const char *sender_peer_id,
                                                const char *recipient_peer_id, uint32_t message_type, int reliable,
                                                const void *payload, uint32_t payload_size, uint32_t lifetime_ms,
@@ -238,27 +316,27 @@ REALMS_RUNTIME_API int RealmsRuntime_SendBinary(uint32_t channel_id, const char 
 // Advances all attached channels. On failure, identifies the channel that must be closed.
 REALMS_RUNTIME_API int RealmsRuntime_UpdateBinary(uint32_t *failed_channel, char *error, int error_capacity);
 
-// Returns 1 for a message, 0 when empty, -1 on failure, -2 for an undersized buffer, without consuming it;
-// message->payload_size reports the required size. The caller owns the output buffer.
-// Pass 0/0 for ordinary data; control requires the channel and ID from its ordered Lua RPC wakeup.
+// Returns 1 for a message, 0 when empty, -1 on failure and -2 for an undersized buffer without consuming it.
+// In that case message->payload_size reports the required size. The caller owns the output buffer.
+// Pass 0 and 0 for ordinary data. Control requires the channel and ID from its ordered Lua RPC wakeup.
 REALMS_RUNTIME_API int RealmsRuntime_PollBinary(uint32_t control_channel, uint32_t message_id, RealmsBinaryMessage *message, void *payload, uint32_t capacity,
                                                char *error, int error_capacity);
 REALMS_RUNTIME_API int RealmsRuntime_BinaryStats(uint32_t channel_id, RealmsBinaryStats *stats,
                                                 char *error, int error_capacity);
 
 // Private audio module, independent of engine initialization and networking.
-// 48 kHz mono float PCM internally; frame_ms is 10 or 20, device_period_ms is 5..20.
+// Audio is 48 kHz mono float PCM internally. frame_ms is 10 or 20 and device_period_ms is 5 to 20.
 // Start opens playback only. Capture must be explicitly enabled and disabling it closes the microphone.
 // Playback uses the game's Wwise device ID (0 = system default).
 // Capture uses a UTF-8 Windows endpoint ID borrowed during the call (null = system default).
 REALMS_RUNTIME_API int RealmsRuntime_StartVoice(const RealmsVoiceConfig *config, char *error, int error_capacity);
 REALMS_RUNTIME_API int RealmsRuntime_StopVoice(char *error, int error_capacity);
-// Polls default-device changes and rebuilds affected devices on the game thread; failure stops voice.
+// Polls default-device changes and rebuilds affected devices on the game thread. Failure stops voice.
 REALMS_RUNTIME_API int RealmsRuntime_UpdateVoice(char *error, int error_capacity);
 // Linear playback gain: 0 = muted, 1 = normal, 2 = 200%. Preserved across device changes.
 REALMS_RUNTIME_API int RealmsRuntime_SetVoiceVolume(float volume, char *error, int error_capacity);
 REALMS_RUNTIME_API int RealmsRuntime_SetVoiceCapture(int enabled, const char *device_id, char *error, int error_capacity);
-// Gates capture-to-packet transmission without reopening the microphone; disabling clears pending speech.
+// Gates capture-to-packet transmission without reopening the microphone. Disabling clears pending speech.
 REALMS_RUNTIME_API int RealmsRuntime_SetVoiceTransmission(int enabled, char *error, int error_capacity);
 REALMS_RUNTIME_API int RealmsRuntime_SetVoiceProcessing(int echo_cancellation, int noise_suppression, char *error, int error_capacity);
 // Reopens playback without resetting codec streams. A failed switch stops voice and closes capture.
@@ -268,7 +346,7 @@ REALMS_RUNTIME_API int RealmsRuntime_SetVoicePlaybackDevice(uint32_t device_id, 
 REALMS_RUNTIME_API int RealmsRuntime_PollVoicePacket(RealmsVoicePacket *packet, void *payload, uint32_t capacity,
                                                     char *error, int error_capacity);
 // Copies an ordered Opus packet for a nonzero local speaker ID. Zero bytes requests loss concealment.
-// Congestion drops audio and increments dropped_packets; speaker removals remain ordered.
+// Congestion drops audio and increments dropped_packets, while speaker removals remain ordered.
 // Does not create connections, write recordings, or call Lua.
 REALMS_RUNTIME_API int RealmsRuntime_SubmitVoicePacket(uint32_t speaker_id, const void *payload, uint32_t size,
                                                       char *error, int error_capacity);

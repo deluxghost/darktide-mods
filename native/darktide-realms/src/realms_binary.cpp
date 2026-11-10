@@ -101,7 +101,7 @@ bool validate_connection(char *error, int capacity) {
     void *current = nullptr;
     void *vtable = nullptr;
 
-    // Channel operations run on the game thread; attachment validates this engine-owned pointer chain.
+    // Channel operations run on the game thread. Attachment validates this engine-owned pointer chain.
     std::memcpy(&manager, g_network_manager_slot, sizeof(manager));
     if (manager == nullptr) {
         return write_error(error, capacity, "Darktide network manager is not initialized");

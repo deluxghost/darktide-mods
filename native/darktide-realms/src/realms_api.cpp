@@ -10,6 +10,7 @@
 
 #include "darktide_realms.h"
 #include "realms_internal.h"
+#include "realms_bridge.h"
 
 using namespace realms;
 
@@ -643,7 +644,7 @@ int RealmsRuntime_ReapAbandonedPeerTransportState(uint32_t idle_timeout_ms, int 
         }
 
         release_udp_relay_peer(peer_id);
-        release_steam_peer(peer_id);
+        release_bridge_peer(peer_id);
         ++*reaped_count;
     }
 
@@ -691,7 +692,7 @@ int RealmsRuntime_CloseLocalSession(char *error, int error_capacity) {
         }
     }
 
-    RealmsRuntime_SteamStopHost();
+    stop_bridge_hosts();
     stop_udp_relay();
 
     for (HostPeerSlot &slot : g_host_peer_slots) {

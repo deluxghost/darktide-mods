@@ -2,6 +2,7 @@ local DisconnectReason = {}
 
 DisconnectReason.CONNECTION_FAILED = "realms_connection_failed"
 DisconnectReason.STEAM_CONNECTION_FAILED = "realms_steam_connection_failed"
+DisconnectReason.EOS_CONNECTION_FAILED = "realms_eos_connection_failed"
 DisconnectReason.CONNECTION_LOST = "realms_connection_lost"
 DisconnectReason.SERVER_CLOSED = "realms_server_closed"
 DisconnectReason.SERVER_PRIVATE = "realms_server_private"
@@ -20,6 +21,7 @@ DisconnectReason.KICKED_BY_HOST = "realms_kicked_by_host"
 local LOCALIZATION_KEYS = {
 	[DisconnectReason.CONNECTION_FAILED] = "loc_realms_connection_failed",
 	[DisconnectReason.STEAM_CONNECTION_FAILED] = "loc_realms_steam_connection_failed",
+	[DisconnectReason.EOS_CONNECTION_FAILED] = "loc_realms_eos_connection_failed",
 	[DisconnectReason.CONNECTION_LOST] = "loc_realms_connection_lost",
 	[DisconnectReason.SERVER_CLOSED] = "loc_realms_server_closed",
 	[DisconnectReason.SERVER_PRIVATE] = "loc_realms_server_private",

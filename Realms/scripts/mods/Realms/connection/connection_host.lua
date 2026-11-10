@@ -710,8 +710,13 @@ ConnectionHost.status_lines = function (self)
 
 	table.sort(channel_ids)
 
+	-- Connected remotes already appear in the player list, so only unfinished ones are listed.
 	for i = 1, #channel_ids do
-		lines[#lines + 1] = self._remote_connections[channel_ids[i]]:status_line()
+		local remote = self._remote_connections[channel_ids[i]]
+
+		if not remote:is_connected() then
+			lines[#lines + 1] = remote:status_line()
+		end
 	end
 
 	return lines

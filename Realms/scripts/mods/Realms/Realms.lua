@@ -48,6 +48,8 @@ local Session = mod:io_dofile("Realms/scripts/mods/Realms/core/session")
 mod._session = Session
 local Steam = mod:io_dofile("Realms/scripts/mods/Realms/core/steam")
 mod._steam = Steam
+local Eos = mod:io_dofile("Realms/scripts/mods/Realms/core/eos")
+mod._eos = Eos
 mod.queue_mission_transition = function (owner_mod, mission_context)
 	return Session.queue_mission_transition(owner_mod, mission_context)
 end
@@ -80,6 +82,7 @@ GameplayControl.install(Session, Preparation, SessionControl)
 ProfileUpdates.install(Session, Preparation, GameplayControl)
 Presence.install(Session)
 Steam.install(Session)
+Eos.install(Session)
 ModNetwork.install(SessionControl)
 Chat.install(Session, SessionControl)
 Voice.install(Session, SessionControl, BinaryNetwork)
@@ -284,6 +287,7 @@ mod.update = function ()
 	BinaryNetwork.update()
 	Session.update()
 	Steam.update()
+	Eos.update()
 	Latency.update()
 	GameplayControl.update()
 	Chat.update()
@@ -302,6 +306,7 @@ mod.on_unload = function (is_exiting)
 
 	SessionControl.shutdown()
 	Steam.shutdown(is_exiting)
+	Eos.shutdown(is_exiting)
 end
 
 mod:command("realms_status", mod:localize("command_status_description"), function ()
@@ -336,5 +341,6 @@ mod.on_setting_changed = function (setting_id)
 		mod:error("%s %s", mod:localize("settings_apply_failed"), apply_error)
 	elseif setting_id == "server_password" then
 		Steam.settings_changed()
+		Eos.settings_changed()
 	end
 end

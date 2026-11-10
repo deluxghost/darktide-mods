@@ -161,7 +161,8 @@ local function begin_client_boot(options)
 		password = options.password,
 		server_addresses = options.server_addresses,
 		server_port = options.server_port,
-		steam_id = options.steam_id,
+		transport = options.transport,
+		remote = options.remote,
 		on_failed = function ()
 			clear_client_join()
 		end,
@@ -875,7 +876,7 @@ local function start_client(options)
 		return false, mod:localize("error_join_already_pending")
 	end
 
-	if not options.steam_id then
+	if not options.transport then
 		local resolved, resolve_error = Native.resolve_addresses(options.server_address)
 
 		if not resolved then
@@ -939,7 +940,11 @@ function Session.start_client(server_address, server_port_text, password)
 end
 
 function Session.start_steam_client(steam_id)
-	return start_client({steam_id = steam_id, password = ""})
+	return start_client({transport = "steam", remote = steam_id, password = ""})
+end
+
+function Session.start_eos_client(remote_id, password)
+	return start_client({transport = "eos", remote = remote_id, password = password or ""})
 end
 
 function Session.is_joining()
@@ -1305,41 +1310,32 @@ function Session.leave()
 	return true
 end
 
-function Session.status_lines(latency)
-	local lines = {
-		"Session status",
-		"  active=" .. tostring(Session.is_active()),
-		"  role=" .. (Session.is_active_host() and "host" or Session.is_active_client() and "client" or "none"),
-	}
-	local connection = current_connection()
-	local steam_lines = mod._steam.status_lines()
+local function append_lines(lines, extra)
+	for i = 1, #extra do
+		lines[#lines + 1] = extra[i]
+	end
+end
 
-	for i = 1, #steam_lines do
-		lines[#lines + 1] = steam_lines[i]
+function Session.status_lines(latency)
+	local lines = {"Realms status"}
+	local connection = current_connection()
+
+	if Session.is_active_host() then
+		lines[2] = string.format("role=host mission=%s udp=%d max_players=%d private=%s", connection:mission_name() or "none", connection:local_port(), connection:max_members(), tostring(mod:get("private_mode")))
+	elseif Session.is_active_client() then
+		lines[2] = string.format("role=client transport=%s host_channel=%s", connection._realms_transport or "ip", tostring(connection:host_channel()))
+	else
+		lines[2] = "role=none"
 	end
 
-	if connection and connection._realms_protocol == SessionTicket.PROTOCOL_VERSION then
-		local remote_lines
+	append_lines(lines, mod._steam.status_lines())
+	append_lines(lines, mod._eos.status_lines())
 
-		lines[#lines + 1] = "  protocol=" .. tostring(connection._realms_protocol)
-		lines[#lines + 1] = "  lobby=" .. tostring(connection:engine_lobby_id())
-
-		if Session.is_active_host() then
-			lines[#lines + 1] = string.format("  endpoint=udp:%d players:%d/%d private:%s mission:%s", connection:local_port(), connection:num_connections() + 1, connection:max_members(), tostring(mod:get("private_mode")), connection:mission_name() or "none")
-			remote_lines = connection:status_lines()
-		else
-			lines[#lines + 1] = "  host_channel=" .. tostring(connection:host_channel())
-		end
-
-		local player_lines = latency.status_lines(connection)
-
-		for i = 1, #player_lines do
-			lines[#lines + 1] = player_lines[i]
-		end
-
-		for i = 1, remote_lines and #remote_lines or 0 do
-			lines[#lines + 1] = remote_lines[i]
-		end
+	if Session.is_active() then
+		append_lines(lines, latency.status_lines(connection))
+	end
+	if Session.is_active_host() then
+		append_lines(lines, connection:status_lines())
 	end
 
 	return lines

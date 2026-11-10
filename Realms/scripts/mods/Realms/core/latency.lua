@@ -192,13 +192,13 @@ function Latency.status_lines(connection)
 	end)
 
 	local lines = {
-		"  players=" .. tostring(#rows),
+		"players=" .. tostring(#rows),
 	}
 
 	for i = 1, #rows do
 		local row = rows[i]
 
-		lines[#lines + 1] = string.format("    %s name:%s peer:%s ping:%s", row.role, row.name, row.peer_id, format_latency(state.samples[row.peer_id]))
+		lines[#lines + 1] = string.format("%s name:%s peer:%s ping:%s", row.role, row.name, row.peer_id, format_latency(state.samples[row.peer_id]))
 	end
 
 	return lines

@@ -6,10 +6,24 @@ local ClientSnapshot = mod:io_dofile("Realms/scripts/mods/Realms/protocol/client
 local DisconnectReason = mod:io_dofile("Realms/scripts/mods/Realms/protocol/disconnect_reason")
 local SessionTicket = mod:io_dofile("Realms/scripts/mods/Realms/protocol/session_ticket")
 local Steam = mod:io_dofile("Realms/scripts/mods/Realms/runtime/steam")
-local STEAM_EVENTS = Steam.EVENT_TYPES
+local Eos = mod:io_dofile("Realms/scripts/mods/Realms/runtime/eos")
+
+-- Message transports bridge the engine's UDP traffic to a loopback port.
+local TRANSPORTS = {
+	steam = {
+		runtime = Steam,
+		disconnect_reason = DisconnectReason.STEAM_CONNECTION_FAILED,
+		label = "Steam",
+	},
+	eos = {
+		runtime = Eos,
+		disconnect_reason = DisconnectReason.EOS_CONNECTION_FAILED,
+		label = "EOS",
+	},
+}
 
 local HOST_TYPES = MatchmakingConstants.HOST_TYPES
-local STATES = table.enum("steam", "password", "handshake", "searching", "joining", "validating", "ready", "failed")
+local STATES = table.enum("transport", "password", "handshake", "searching", "joining", "validating", "ready", "failed")
 local ADDRESS_TIMEOUT_SECONDS = 8
 local JOIN_TIMEOUT_SECONDS = 20
 local VALIDATION_TIMEOUT_SECONDS = 20
@@ -19,9 +33,12 @@ ClientSessionBoot.init = function (self, event_object, options)
 	ClientSessionBoot.super.init(self, STATES, event_object)
 
 	self._options = options
+	self._transport = options.transport and TRANSPORTS[options.transport]
+	self._password_submitted = options.password ~= nil and options.password ~= ""
 	if HAS_STEAM then
 		Steam.disconnect()
 	end
+	Eos.disconnect()
 	self._address_index = 1
 	self._address_failures = {}
 	self._buffered_connection_events = {}
@@ -37,16 +54,16 @@ ClientSessionBoot.init = function (self, event_object, options)
 		return
 	end
 
-	if options.steam_id then
-		self:_connect_steam()
+	if self._transport then
+		self:_connect_transport()
 	else
 		self._browser = LanClient.create_lobby_browser(self._wan_client)
 		self:_set_state(STATES.handshake)
 	end
 end
 
-ClientSessionBoot._connect_steam = function (self)
-	local started, start_error = Steam.connect(self._options.steam_id, self._password_submitted)
+ClientSessionBoot._connect_transport = function (self)
+	local started, start_error = self._transport.runtime.connect(self._options.remote, self._password_submitted)
 
 	if not started then
 		self:_fail(start_error)
@@ -55,12 +72,12 @@ ClientSessionBoot._connect_steam = function (self)
 	end
 
 	self._elapsed = 0
-	self:_set_state(STATES.steam)
+	self:_set_state(STATES.transport)
 end
 
 ClientSessionBoot._request_password = function (self, incorrect)
 	self:_clear()
-	Steam.disconnect()
+	self._transport.runtime.disconnect()
 	table.clear(self._buffered_connection_events)
 	self._admission_accepted = false
 	self._mechanism_context = nil
@@ -80,7 +97,7 @@ ClientSessionBoot.submit_password = function (self, password)
 	end
 	self._options.password = password
 	self._password_submitted = true
-	self:_connect_steam()
+	self:_connect_transport()
 
 	return true
 end
@@ -90,30 +107,32 @@ ClientSessionBoot.cancel_password = function (self)
 		return
 	end
 
-	Steam.disconnect()
+	self._transport.runtime.disconnect()
 	self:event_object():failed_to_boot(false, "game", "leave_to_hub")
 	self:_set_state(STATES.failed)
 	self._options.on_cancelled()
 end
 
-ClientSessionBoot.steam_event = function (self, event)
-	if not self._options.steam_id or self._options.steam_id ~= event.steam_id then
+ClientSessionBoot.transport_event = function (self, transport, event)
+	if self._options.transport ~= transport or self._options.remote ~= event.remote then
 		return
 	end
-	if self:state() == STATES.steam then
-		if event.type == STEAM_EVENTS.client_ready then
+	local events = self._transport.runtime.EVENT_TYPES
+
+	if self:state() == STATES.transport then
+		if event.type == events.client_ready then
 			self._options.server_addresses = {"127.0.0.1"}
 			self._options.server_port = event.port
 			self._address_index = 1
 			self:_reset_browser()
 			self._elapsed = 0
 			self:_set_state(STATES.handshake)
-		elseif event.type == STEAM_EVENTS.password_required then
+		elseif event.type == events.password_required then
 			self:_request_password(false)
-		elseif event.type == STEAM_EVENTS.client_error then
+		elseif event.type == events.client_error then
 			self:_fail(event.message)
 		end
-	elseif event.type == STEAM_EVENTS.client_error and self:state() == STATES.handshake then
+	elseif event.type == events.client_error and self:state() == STATES.handshake then
 		self:_fail(event.message)
 	end
 end
@@ -167,13 +186,13 @@ ClientSessionBoot._fail = function (self, reason, disconnect_reason)
 	if self:state() == STATES.failed then
 		return
 	end
-	if self._options.steam_id and disconnect_reason == DisconnectReason.PASSWORD_INCORRECT then
+	if self._transport and disconnect_reason == DisconnectReason.PASSWORD_INCORRECT then
 		self:_request_password(true)
 
 		return
 	end
 
-	disconnect_reason = disconnect_reason or (self._options.steam_id and DisconnectReason.STEAM_CONNECTION_FAILED or DisconnectReason.CONNECTION_FAILED)
+	disconnect_reason = disconnect_reason or (self._transport and self._transport.disconnect_reason or DisconnectReason.CONNECTION_FAILED)
 
 	mod:info("Client boot failed: %s", tostring(reason))
 	self:event_object():failed_to_boot(true, "game", disconnect_reason, tostring(reason))
@@ -288,7 +307,7 @@ ClientSessionBoot.update = function (self, dt)
 	if state == STATES.password then
 		if not Managers.ui:view_instance("realms_join_view") then
 			self._password_view_context = {
-				steam_id = self._options.steam_id,
+				steam_id = self._options.transport == "steam" and self._options.remote or nil,
 				incorrect = self._password_incorrect,
 				submit = callback(self, "submit_password"),
 				cancel = callback(self, "cancel_password"),
@@ -302,14 +321,14 @@ ClientSessionBoot.update = function (self, dt)
 	if state ~= STATES.ready and state ~= STATES.failed then
 		self._elapsed = self._elapsed + dt
 
-		local timeout = state == STATES.steam and JOIN_TIMEOUT_SECONDS
+		local timeout = state == STATES.transport and JOIN_TIMEOUT_SECONDS
 			or state == STATES.joining and JOIN_TIMEOUT_SECONDS
 			or state == STATES.validating and VALIDATION_TIMEOUT_SECONDS
 			or ADDRESS_TIMEOUT_SECONDS
 
 		if self._elapsed > timeout then
-			if state == STATES.steam then
-				self:_fail("Steam connection timed out")
+			if state == STATES.transport then
+				self:_fail(self._transport.label .. " connection timed out")
 
 				return
 			end
@@ -373,8 +392,10 @@ ClientSessionBoot.result = function (self)
 	local connection_client = self._connection_client
 
 	connection_client._realms_mechanism_context = self._mechanism_context
-	connection_client._realms_steam_host = self._options.steam_id or self._mechanism_context.steam_host_id
-	connection_client._realms_transport = self._options.steam_id and "steam" or "ip"
+	local steam_remote = self._options.transport == "steam" and self._options.remote or nil
+
+	connection_client._realms_steam_host = steam_remote or self._mechanism_context.steam_host_id
+	connection_client._realms_transport = self._options.transport or "ip"
 
 	for i = #self._buffered_connection_events, 1, -1 do
 		table.insert(connection_client._events, 1, self._buffered_connection_events[i])
@@ -401,8 +422,8 @@ ClientSessionBoot._clear = function (self)
 end
 
 ClientSessionBoot.destroy = function (self)
-	if self._options.steam_id and self:state() ~= STATES.ready then
-		Steam.disconnect()
+	if self._transport and self:state() ~= STATES.ready then
+		self._transport.runtime.disconnect()
 	end
 	if self:state() ~= STATES.ready and self:state() ~= STATES.failed and self._options.on_cancelled then
 		self._options.on_cancelled()

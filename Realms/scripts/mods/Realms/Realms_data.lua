@@ -29,6 +29,11 @@ return {
 				default_value = false,
 			},
 			{
+				setting_id = "enable_crossplay",
+				type = "checkbox",
+				default_value = false,
+			},
+			{
 				setting_id = "server_settings",
 				type = "group",
 				sub_widgets = {

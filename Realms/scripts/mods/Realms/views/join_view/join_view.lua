@@ -3,6 +3,7 @@ local dmf = get_mod("DMF")
 local ViewElementInputLegend = require("scripts/ui/view_elements/view_element_input_legend/view_element_input_legend")
 local TextInputUtils = dmf:io_dofile("dmf/scripts/mods/dmf/modules/ui/options/text_input_utils")
 local JoinTarget = mod:io_dofile("Realms/scripts/mods/Realms/core/join_target")
+local NativeEos = mod:io_dofile("Realms/scripts/mods/Realms/runtime/eos")
 local Session = mod._session
 local definitions = mod:io_dofile("Realms/scripts/mods/Realms/views/join_view/join_view_definitions")
 
@@ -57,7 +58,7 @@ end
 
 
 RealmsJoinView.init = function (self, settings, context)
-	self._join_context = context and context.steam_id and context or nil
+	self._join_context = context and context.submit and context or nil
 	self._focus_names = self._join_context and {"password_input", "connect_button"} or FOCUS_WIDGET_NAMES
 	self._input_names = self._join_context and {"password_input"} or {"server_address_input", "password_input"}
 	local view_definitions = definitions
@@ -73,7 +74,7 @@ RealmsJoinView.init = function (self, settings, context)
 		graph.error_text.position[2] = graph.error_text.position[2] - PASSWORD_MODE_HEIGHT_REDUCTION
 		widgets.server_address_input = nil
 		widgets.title.content[widgets.title.passes[1].value_id] = mod:localize("join_steam_password_title")
-		local host_name = Steam.user_name(Steam.id_dec_to_hex(context.steam_id))
+		local host_name = context.steam_id and Steam.user_name(Steam.id_dec_to_hex(context.steam_id))
 
 		widgets.server_address_label.content[widgets.server_address_label.passes[1].value_id] = host_name and host_name ~= ""
 			and mod:localize("join_steam_host", host_name) or mod:localize("join_password_required")
@@ -181,7 +182,28 @@ RealmsJoinView.update = function (self, dt, t, input_service)
 
 	self:_update_input_values()
 
+	if not self._join_context then
+		-- Without a target there is nothing to connect to. An empty password is still a valid attempt.
+		self._widgets_by_name.connect_button.content.hotspot.disabled = (self._widgets_by_name.server_address_input.content.input_text or "") == ""
+	end
+
+	if self._resolving_code and not mod._eos.is_resolving() then
+		self._resolving_code = false
+		Managers.ui:close_view(self.view_name)
+	end
+
 	return pass_input, pass_draw
+end
+
+RealmsJoinView._report_code_failure = function (self, message)
+	if not self._resolving_code then
+		return false
+	end
+
+	self._resolving_code = false
+	self:_set_error(message)
+
+	return true
 end
 
 RealmsJoinView._update_input_values = function (self)
@@ -257,6 +279,25 @@ RealmsJoinView.cb_on_connect_pressed = function (self)
 
 	local address_value = self._widgets_by_name.server_address_input.content.input_text or ""
 	local password = self._widgets_by_name.password_input.content.input_text or ""
+	local invite_code = NativeEos.normalize_code(address_value)
+
+	if invite_code then
+		-- Addresses always carry a port, so a bare six-character value can only be an invite code.
+		local accepted, join_error = mod._eos.join(invite_code, password, callback(self, "_report_code_failure"))
+
+		if not accepted then
+			self:_set_error(join_error)
+
+			return
+		end
+
+		-- Stay open until the code resolves so a lookup failure is reported here.
+		self._resolving_code = true
+		self:_set_error()
+
+		return
+	end
+
 	local server_address, server_port, parse_error = JoinTarget.parse(address_value)
 
 	if not server_address then
@@ -291,6 +332,8 @@ RealmsJoinView._on_back_pressed = function (self)
 end
 
 RealmsJoinView.on_exit = function (self)
+	-- Failures that arrive after the view closes become notifications.
+	self._resolving_code = false
 	for i = 1, #self._input_names do
 		finish_editing(self._widgets_by_name[self._input_names[i]].content)
 	end

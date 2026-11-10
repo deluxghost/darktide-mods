@@ -166,9 +166,45 @@ jobs:
           tenant-id: ${{ secrets.AZURE_TENANT_ID }}
           allow-no-subscriptions: true
 
+      - name: Set up EOS SDK
+        if: matrix.mod == 'Realms'
+        env:
+          GH_TOKEN: ${{ secrets.BUILD_DEPS_TOKEN }}
+          EOS_SDK_REPOSITORY: deluxghost/darktide-build-deps
+          EOS_SDK_TAG: eos-sdk-1.19.2.1
+          REALMS_EOS_PRODUCT_ID: ${{ secrets.REALMS_EOS_PRODUCT_ID }}
+          REALMS_EOS_SANDBOX_ID: ${{ secrets.REALMS_EOS_SANDBOX_ID }}
+          REALMS_EOS_DEPLOYMENT_ID: ${{ secrets.REALMS_EOS_DEPLOYMENT_ID }}
+          REALMS_EOS_CLIENT_ID: ${{ secrets.REALMS_EOS_CLIENT_ID }}
+          REALMS_EOS_CLIENT_SECRET: ${{ secrets.REALMS_EOS_CLIENT_SECRET }}
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $PSNativeCommandUseErrorActionPreference = $true
+          # Release builds must ship cross-platform play and never fall back to a build without it.
+          foreach ($name in 'BUILD_DEPS_TOKEN', 'REALMS_EOS_PRODUCT_ID', 'REALMS_EOS_SANDBOX_ID', 'REALMS_EOS_DEPLOYMENT_ID', 'REALMS_EOS_CLIENT_ID', 'REALMS_EOS_CLIENT_SECRET') {
+              $value = if ($name -eq 'BUILD_DEPS_TOKEN') { $env:GH_TOKEN } else { [Environment]::GetEnvironmentVariable($name) }
+              if ([string]::IsNullOrWhiteSpace($value)) {
+                  throw "Required EOS configuration is missing: $name"
+              }
+          }
+          $download = Join-Path $env:RUNNER_TEMP 'eos-sdk-download'
+          $root = Join-Path $env:RUNNER_TEMP 'eos-sdk'
+          gh release download $env:EOS_SDK_TAG --repo $env:EOS_SDK_REPOSITORY --pattern '*.zip' --dir $download
+          $archive = @(Get-ChildItem -LiteralPath $download -Filter '*.zip')
+          if ($archive.Count -ne 1) {
+              throw "Expected one EOS SDK archive in $env:EOS_SDK_TAG, found $($archive.Count)."
+          }
+          Expand-Archive -LiteralPath $archive[0].FullName -DestinationPath $root
+          "REALMS_EOS_SDK_ROOT=$root" | Add-Content -LiteralPath $env:GITHUB_ENV -Encoding utf8
+
       - name: Build and package
         env:
           MOD_NAME: ${{ matrix.mod }}
+          REALMS_EOS_PRODUCT_ID: ${{ matrix.mod == 'Realms' && secrets.REALMS_EOS_PRODUCT_ID || '' }}
+          REALMS_EOS_SANDBOX_ID: ${{ matrix.mod == 'Realms' && secrets.REALMS_EOS_SANDBOX_ID || '' }}
+          REALMS_EOS_DEPLOYMENT_ID: ${{ matrix.mod == 'Realms' && secrets.REALMS_EOS_DEPLOYMENT_ID || '' }}
+          REALMS_EOS_CLIENT_ID: ${{ matrix.mod == 'Realms' && secrets.REALMS_EOS_CLIENT_ID || '' }}
+          REALMS_EOS_CLIENT_SECRET: ${{ matrix.mod == 'Realms' && secrets.REALMS_EOS_CLIENT_SECRET || '' }}
           MSYS2_LOCATION: ${{ steps.msys2.outputs.msys2-location }}
           NEEDS_CMAKE: ${{ matrix.needs_cmake }}
         run: |

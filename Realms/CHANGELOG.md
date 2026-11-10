@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.3.0
+
+- Added experimental PC cross-platform play through Epic Online Services, joined with invite codes
+
 ## 1.2.0
 
 - Supported experimental Steam P2P

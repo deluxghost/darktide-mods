@@ -14,6 +14,7 @@ local Preparation = mod._preparation
 local definitions = mod:io_dofile("Realms/scripts/mods/Realms/views/preparation_view/preparation_view_definitions")
 local Layout = mod:io_dofile("Realms/scripts/mods/Realms/views/preparation_view/preparation_view_layout")
 local ViewElementTalentTooltip = mod:io_dofile("Realms/scripts/mods/Realms/views/preparation_view/view_element_talent_tooltip")
+local InviteCodePanel = mod:io_dofile("Realms/scripts/mods/Realms/views/invite_code_panel")
 
 local SYSTEM_VIEW_NAME = "system_view"
 local REFRESH_INTERVAL = 0.25
@@ -174,7 +175,7 @@ end
 RealmsPreparationView._set_element_world_layer = function (self, element, layer)
 	local world_name = Managers.world:world_name(element._world)
 
-	-- Keep separate grid render passes; only change their offsets within this view.
+	-- Keep separate grid render passes and only change their offsets within this view.
 	Managers.ui._view_handler:register_view_world(self.view_name, world_name, layer)
 end
 
@@ -198,6 +199,7 @@ RealmsPreparationView.on_enter = function (self)
 	self:_setup_grids()
 	self:_setup_weapon_stats()
 	self:_setup_input_legend()
+	InviteCodePanel.attach(self)
 	self:_refresh(true)
 end
 
@@ -752,6 +754,7 @@ RealmsPreparationView.update = function (self, dt, t, input_service)
 
 	local pass_input, pass_draw = RealmsPreparationView.super.update(self, dt, t, input_service)
 
+	InviteCodePanel.update(self, not self._is_main_menu_open and input_service or nil)
 	self:_update_hover()
 
 	return pass_input, pass_draw

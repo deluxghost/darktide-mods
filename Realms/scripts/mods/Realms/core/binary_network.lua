@@ -218,7 +218,7 @@ function BinaryNetwork.send_control(channel_id, peer_id, payload, role)
 		return false, result
 	end
 
-	-- The ordered RPC carries only an ID; its payload is already in the binary receive queue.
+	-- The ordered RPC carries only an ID. Its payload is already in the binary receive queue.
 	if role == "host" then
 		RPC.rpc_check_mechanism_reply(channel_id, true, tostring(result))
 	else

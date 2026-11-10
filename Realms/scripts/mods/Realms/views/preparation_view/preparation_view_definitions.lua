@@ -7,6 +7,7 @@ local UIWidget = require("scripts/managers/ui/ui_widget")
 local Blueprints = mod:io_dofile("Realms/scripts/mods/Realms/views/preparation_view/preparation_view_blueprints")
 local Layout = mod:io_dofile("Realms/scripts/mods/Realms/views/preparation_view/preparation_view_layout")
 local Style = mod:io_dofile("Realms/scripts/mods/Realms/views/realms_view_style")
+local InviteCodePanel = mod:io_dofile("Realms/scripts/mods/Realms/views/invite_code_panel")
 
 local PLAYER_PANEL_SIZE = Layout.player_panel_size
 local INFO_PANEL_SIZE = Layout.info_panel_size
@@ -288,7 +289,7 @@ local item_stats_grid_settings = table.clone(LobbyViewDefinitions.item_stats_gri
 
 item_stats_grid_settings.resource_renderer_background = true
 
-return {
+local definitions = {
 	blueprints = Blueprints.blueprints,
 	info_grid_size = INFO_GRID_SIZE,
 	item_stats_grid_settings = item_stats_grid_settings,
@@ -298,3 +299,8 @@ return {
 	update_player_latency = Blueprints.update_player_latency,
 	widget_definitions = widget_definitions,
 }
+
+-- Left of the countdown, vertically centred on it.
+InviteCodePanel.extend_definitions(definitions, "screen", 200, 63, 70)
+
+return definitions

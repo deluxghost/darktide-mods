@@ -51,7 +51,7 @@ end
 local function grow_panel_capacity(self, ui_renderer, capacity)
 	local definitions = table.clone(self._definitions)
 
-	-- Rebuild only the handler's position graph; retain existing panel instances and live layout.
+	-- Rebuild only the handler's position graph and retain existing panel instances and live layout.
 	for id, definition in pairs(definitions.scenegraph_definition) do
 		local current = self._ui_scenegraph[id]
 

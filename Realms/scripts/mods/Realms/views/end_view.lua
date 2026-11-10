@@ -24,7 +24,7 @@ function EndViewPatch.install(Session)
 
 		if end_time and Session.is_active() then
 			-- Both StateGameScore and EndView read this deadline. EndView also needs
-			-- a truthy value to finish waiting; keep the stored/networked timestamp unchanged.
+			-- a truthy value to finish waiting, so the stored and networked timestamp stays unchanged.
 			return UNLIMITED_END_TIME
 		end
 

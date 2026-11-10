@@ -144,6 +144,7 @@ function Steam.poll_event()
 		code = tonumber(event_buffer.code),
 		port = tonumber(event_buffer.local_port),
 		steam_id = ffi.string(event_buffer.steam_id),
+		remote = ffi.string(event_buffer.steam_id),
 		message = ffi.string(event_buffer.message),
 	}
 end
