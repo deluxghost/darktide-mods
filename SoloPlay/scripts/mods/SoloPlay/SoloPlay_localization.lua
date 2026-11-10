@@ -206,13 +206,13 @@ return {
 
 	tip_solo_offline = {
 		en = "Local games are mainly for testing; the experience may differ from official games.\n"
-			.. "You can't get any rewards or progression in local games.",
+			.. "You can't get any official rewards or progression in local games.",
 		["zh-cn"] = "本地游戏主要用于测试，其体验可能与官方游戏不同。\n"
-			.. "你无法从本地游戏中获得任何奖励或进度。",
+			.. "你无法从本地游戏中获得任何官方奖励或进度。",
 		ru = "Локальная игра предназначена в основном для тестирования, впечатления от неё могут отличаться от официальной игры.\n"
-			.. "В локальной игре вы не сможете получить никаких наград или прогресса.",
+			.. "В локальной игре вы не сможете получить никаких официальных наград или прогресса.",
 		["zh-tw"] = "本機遊戲主要用於測試，其體驗可能與官方遊戲有所不同。\n"
-			.. "你無法從本機遊戲中獲得任何獎勵或進度。",
+			.. "你無法從本機遊戲中獲得任何官方獎勵或進度。",
 	},
 	tip_invalid_combination = {
 		en = "Note: some options may not be supported, have no effect, or cause crashes.",
