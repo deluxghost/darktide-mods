@@ -1,5 +1,7 @@
 #include "runtime.h"
 #include "good_old_outlines.h"
+#include "layer_buffer.h"
+#include "gpu_readback.h"
 #include <cstdio>
 #include <string>
 
@@ -39,7 +41,7 @@ bool load_shaders(const char *directory, char *error, int capacity) {
             return false;
         }
     }
-    return true;
+    return load_shader(prefix + "composite_layers.dxil", state.layered_composite, error, capacity);
 }
 } // namespace
 
@@ -108,15 +110,29 @@ int GoodOldOutlines_SetEnabled(int enabled) {
     auto &state = goo::runtime();
     std::lock_guard<std::mutex> lock(state.pipeline_mutex);
     if (!state.hook.active || (enabled != 0 && enabled != 1) ||
-        (enabled && state.failure.load(std::memory_order_acquire))) {
+        (enabled && (state.failure.load(std::memory_order_acquire) || goo::gpu_readback::error()))) {
         return 0;
     }
     state.enabled.store(enabled != 0, std::memory_order_release);
     return 1;
 }
 
+int GoodOldOutlines_ConfigureLayers(int enabled, uint32_t *binding, char *error, int capacity) {
+    auto &state = goo::runtime();
+    if (!binding || state.enabled.load(std::memory_order_acquire) || (enabled != 0 && enabled != 1)) {
+        std::snprintf(error, capacity, "Invalid layered outline configuration state");
+        return 0;
+    }
+    *binding = 0;
+    if (enabled && !goo::configure_layer_buffer(state.config.graph, *binding, error, capacity))
+        return 0;
+    state.layered.store(enabled != 0, std::memory_order_release);
+    return 1;
+}
+
 const char *GoodOldOutlines_GetError(void) {
-    return goo::runtime().failure.load(std::memory_order_acquire);
+    const auto *failure = goo::runtime().failure.load(std::memory_order_acquire);
+    return failure ? failure : goo::gpu_readback::error();
 }
 
 int GoodOldOutlines_PollWarning(char *message, int capacity) {
@@ -139,5 +155,6 @@ int GoodOldOutlines_Remove(char *error, int capacity) {
         std::snprintf(error, capacity, "Runtime callbacks active");
         return 0;
     }
-    return !state.hook.active || dtintutils_hook_remove(&state.hook, error, capacity);
+    if (state.hook.active && !dtintutils_hook_remove(&state.hook, error, capacity)) return 0;
+    return goo::gpu_readback::stop(error, capacity);
 }

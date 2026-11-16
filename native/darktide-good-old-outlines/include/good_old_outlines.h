@@ -22,8 +22,12 @@ GOOD_OLD_OUTLINES_API int GoodOldOutlines_RestoreConfig(char *error, int capacit
 GOOD_OLD_OUTLINES_API int GoodOldOutlines_Start(const char *shader_directory, char *error,
                                                 int capacity);
 GOOD_OLD_OUTLINES_API int GoodOldOutlines_SetEnabled(int enabled);
+// Called with drawing disabled and the renderer synchronized after ApplyConfig.
+// The returned bindless UAV index is passed through each outline material's unused parameter.
+GOOD_OLD_OUTLINES_API int GoodOldOutlines_ConfigureLayers(int enabled, uint32_t *binding,
+                                                        char *error, int capacity);
 // GetError returns null until a render-thread failure occurs. The first error is retained;
-// its native-owned text is immutable and valid until process exit. Reading it never blocks.
+// its native-owned text is immutable and valid until process exit.
 GOOD_OLD_OUTLINES_API const char *GoodOldOutlines_GetError(void);
 // PollWarning copies and removes one nonfatal program failure: 1 message, 0 empty,
 // -1 insufficient capacity (message retained). No render-thread callback enters Lua.

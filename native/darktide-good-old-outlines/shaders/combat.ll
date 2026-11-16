@@ -386,8 +386,81 @@ define void @ps_main() {
   call void @dx.op.storeOutput.f32(i32 5, i32 1, i32 0, i8 1, float %goo_g_encoded)
   call void @dx.op.storeOutput.f32(i32 5, i32 1, i32 0, i8 2, float %goo_b_encoded)
   call void @dx.op.storeOutput.f32(i32 5, i32 1, i32 0, i8 3, float %goo_a_encoded)
+  %goo_pool_float = extractvalue %dx.types.CBufRet.f32 %goo_identity_cb, 0
+  %goo_capacity_float = extractvalue %dx.types.CBufRet.f32 %goo_identity_cb, 1
+  %goo_pool_enabled = fcmp ogt float %goo_pool_float, 0.000000e+00
+  %goo_append_enabled = and i1 %goo_pool_enabled, %goo_in_range
+  br i1 %goo_append_enabled, label %goo_append, label %goo_finished
+
+goo_append:
+  %goo_pool_index = fptoui float %goo_pool_float to i32
+  %goo_buffer_words = fptoui float %goo_capacity_float to i32
+  %goo_pool = call %dx.types.Handle @dx.op.createHandle(i32 57, i8 1, i32 0, i32 %goo_pool_index, i1 false)
+  %goo_dimensions = call %dx.types.CBufRet.f32 @dx.op.cbufferLoadLegacy.f32(i32 59, %dx.types.Handle %7, i32 92)
+  %goo_width_float = extractvalue %dx.types.CBufRet.f32 %goo_dimensions, 2
+  %goo_height_float = extractvalue %dx.types.CBufRet.f32 %goo_dimensions, 3
+  %goo_width = fptoui float %goo_width_float to i32
+  %goo_height = fptoui float %goo_height_float to i32
+  %goo_pixel_count = mul i32 %goo_width, %goo_height
+  %goo_nodes_unaligned = add i32 %goo_pixel_count, 7
+  %goo_nodes_start = and i32 %goo_nodes_unaligned, -4
+  %goo_has_space = icmp ugt i32 %goo_buffer_words, %goo_nodes_start
+  %goo_node_words = sub i32 %goo_buffer_words, %goo_nodes_start
+  %goo_capacity = lshr i32 %goo_node_words, 2
+  %goo_allocation = call i32 @dx.op.atomicBinOp.i32(i32 78, %dx.types.Handle %goo_pool, i32 0, i32 0, i32 undef, i32 undef, i32 1)
+  %goo_first = icmp eq i32 %goo_allocation, 0
+  br i1 %goo_first, label %goo_header, label %goo_check_capacity
+
+goo_header:
+  call void @dx.op.bufferStore.i32(i32 69, %dx.types.Handle %goo_pool, i32 2, i32 undef, i32 %goo_width, i32 0, i32 0, i32 0, i8 15)
+  call void @dx.op.bufferStore.i32(i32 69, %dx.types.Handle %goo_pool, i32 3, i32 undef, i32 %goo_height, i32 0, i32 0, i32 0, i8 15)
+  br label %goo_check_capacity
+
+goo_check_capacity:
+  %goo_in_capacity = icmp ult i32 %goo_allocation, %goo_capacity
+  %goo_fits = and i1 %goo_in_capacity, %goo_has_space
+  br i1 %goo_fits, label %goo_append_record, label %goo_overflow
+
+goo_overflow:
+  %goo_overflow_flag = call i32 @dx.op.atomicBinOp.i32(i32 78, %dx.types.Handle %goo_pool, i32 2, i32 1, i32 undef, i32 undef, i32 1)
+  br label %goo_finished
+
+goo_append_record:
+  %goo_x_float = call float @dx.op.loadInput.f32(i32 4, i32 0, i32 0, i8 0, i32 undef)
+  %goo_y_float = call float @dx.op.loadInput.f32(i32 4, i32 0, i32 0, i8 1, i32 undef)
+  %goo_x = fptoui float %goo_x_float to i32
+  %goo_y = fptoui float %goo_y_float to i32
+  %goo_row = mul i32 %goo_y, %goo_width
+  %goo_pixel = add i32 %goo_row, %goo_x
+  %goo_head = add i32 %goo_pixel, 4
+  %goo_node = add i32 %goo_allocation, 1
+  %goo_previous = call i32 @dx.op.atomicBinOp.i32(i32 78, %dx.types.Handle %goo_pool, i32 8, i32 %goo_head, i32 undef, i32 undef, i32 %goo_node)
+  %goo_id_low = and i32 %goo_identity, 4095
+  %goo_node_depth = or i32 %goo_depth_prefix, %goo_id_low
+  %goo_green_bits = shl i32 %goo_g_byte, 8
+  %goo_blue_bits = shl i32 %goo_b_byte, 16
+  %goo_rg = or i32 %goo_r_byte, %goo_green_bits
+  %goo_rgb = or i32 %goo_rg, %goo_blue_bits
+  %goo_id_high = lshr i32 %goo_identity, 12
+  %goo_id_high_bits = shl i32 %goo_id_high, 2
+  %goo_flags = or i32 %goo_id_high_bits, %goo_occlusion_bit
+  %goo_node_flags = or i32 %goo_flags, 0
+  %goo_node_offset = mul i32 %goo_allocation, 4
+  %goo_word0 = add i32 %goo_node_offset, %goo_nodes_start
+  %goo_word1 = add i32 %goo_word0, 1
+  %goo_word2 = add i32 %goo_word0, 2
+  %goo_word3 = add i32 %goo_word0, 3
+  call void @dx.op.bufferStore.i32(i32 69, %dx.types.Handle %goo_pool, i32 %goo_word0, i32 undef, i32 %goo_previous, i32 0, i32 0, i32 0, i8 15)
+  call void @dx.op.bufferStore.i32(i32 69, %dx.types.Handle %goo_pool, i32 %goo_word1, i32 undef, i32 %goo_node_depth, i32 0, i32 0, i32 0, i8 15)
+  call void @dx.op.bufferStore.i32(i32 69, %dx.types.Handle %goo_pool, i32 %goo_word2, i32 undef, i32 %goo_rgb, i32 0, i32 0, i32 0, i8 15)
+  call void @dx.op.bufferStore.i32(i32 69, %dx.types.Handle %goo_pool, i32 %goo_word3, i32 undef, i32 %goo_node_flags, i32 0, i32 0, i32 0, i8 15)
+  br label %goo_finished
+
+goo_finished:
   ret void
 }
+
+declare void @dx.op.bufferStore.i32(i32, %dx.types.Handle, i32, i32, i32, i32, i32, i32, i8)
 
 ; Function Attrs: nounwind readnone
 declare float @dx.op.loadInput.f32(i32, i32, i32, i8, i32) #0

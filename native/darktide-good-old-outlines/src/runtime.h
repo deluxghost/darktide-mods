@@ -17,6 +17,8 @@ struct Runtime {
     RenderConfig config;
     ShaderMatcher matcher;
     std::array<std::vector<uint8_t>, ProgramCount> shaders;
+    std::vector<uint8_t> layered_composite;
+    std::atomic<bool> layered{false};
     std::atomic<bool> enabled{false};
     std::atomic<unsigned> callbacks{0};
     std::mutex pipeline_mutex;

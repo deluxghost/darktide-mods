@@ -1,4 +1,5 @@
 #include "runtime.h"
+#include "gpu_readback.h"
 #include <cstdio>
 
 namespace goo {
@@ -47,7 +48,12 @@ bool build_descriptor(engine::PipelineArguments &arguments, void *root,
     return true;
 }
 
-bool configure_mask(D3D12_GRAPHICS_PIPELINE_STATE_DESC &descriptor, std::string &error) {
+bool configure_mask(D3D12_GRAPHICS_PIPELINE_STATE_DESC &descriptor, bool layered, std::string &error) {
+    if (layered) {
+        if (descriptor.NumRenderTargets == 1) return true;
+        error = "Layered outline target layout changed";
+        return false;
+    }
     if (descriptor.NumRenderTargets != 2 ||
         descriptor.RTVFormats[1] != DXGI_FORMAT_R32G32B32A32_FLOAT) {
         error = "Outline mask target is not bound";
@@ -104,15 +110,17 @@ ComPtr<ID3D12PipelineState> create_pipeline(ID3D12PipelineState *original,
         !load_vertex(arguments, vertex, error)) {
         return {};
     }
-    const auto &replacement = state.shaders[static_cast<size_t>(program)];
+    const bool layered = state.layered.load(std::memory_order_acquire);
+    const auto &replacement = program == Program::Composite && layered
+        ? state.layered_composite : state.shaders[static_cast<size_t>(program)];
     descriptor.VS = {vertex.data(), vertex.size()};
     descriptor.PS = {replacement.data(), replacement.size()};
     const bool configured = program == Program::Composite ? configure_composite(descriptor, error)
-                                                          : configure_mask(descriptor, error);
+                                                          : configure_mask(descriptor, layered, error);
     if (!configured) {
         return {};
     }
-    if (program == Program::PropOutline) {
+    if (program == Program::PropOutline || (layered && program != Program::Composite)) {
         // Scene depth would cut holes in this mask; MIN and the composite handle occlusion.
         descriptor.DepthStencilState.DepthEnable = FALSE;
     }
@@ -131,6 +139,8 @@ ComPtr<ID3D12PipelineState> create_pipeline(ID3D12PipelineState *original,
         error = message;
         return {};
     }
+    if (program == Program::Composite && layered)
+        gpu_readback::add_composite(replacement_pipeline.Get());
     return replacement_pipeline;
 }
 } // namespace goo

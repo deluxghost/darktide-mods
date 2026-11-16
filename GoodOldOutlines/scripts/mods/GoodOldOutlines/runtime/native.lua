@@ -10,6 +10,7 @@ if not declared then
 		int GoodOldOutlines_RestoreConfig(char* error, int capacity);
 		int GoodOldOutlines_Start(const char* shader_directory, char* error, int capacity);
 		int GoodOldOutlines_SetEnabled(int enabled);
+		int GoodOldOutlines_ConfigureLayers(int enabled, uint32_t* binding, char* error, int capacity);
 		const char* GoodOldOutlines_GetError(void);
 		int GoodOldOutlines_PollWarning(char* message, int capacity);
 		int GoodOldOutlines_Remove(char* error, int capacity);
@@ -60,6 +61,12 @@ local function new(state)
 
 	function api.set_enabled(enabled)
 		assert(library().GoodOldOutlines_SetEnabled(enabled and 1 or 0) == 1, "Cannot change outline runtime state")
+	end
+
+	function api.configure_layers(enabled)
+		local binding = ffi.new("uint32_t[1]")
+		local ok, message = result(library().GoodOldOutlines_ConfigureLayers(enabled and 1 or 0, binding, error_buffer, ERROR_CAPACITY))
+		return ok, tonumber(binding[0]), message
 	end
 
 	function api.remove()

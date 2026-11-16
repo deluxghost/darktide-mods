@@ -10,6 +10,8 @@ class RenderGraph {
                     int capacity);
     // Failure is reported before any engine graph builder runs, allowing config rollback.
     bool rebuild(char *error, int capacity) const;
+    const void *layer_buffer(char *error, int capacity) const;
+    void *backend() const;
 
   private:
     using BuildLayers = void (*)(void *, const ConfigValue *, const ConfigValue *);

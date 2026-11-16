@@ -11,8 +11,8 @@ struct CachedPipeline {
     ComPtr<ID3D12PipelineState> replacement;
     std::once_flag initialized;
 };
-thread_local std::unordered_map<ID3D12PipelineState *, ID3D12PipelineState *> thread_pipelines;
-std::unordered_map<ID3D12PipelineState *, CachedPipeline> shared_pipelines;
+thread_local std::array<std::unordered_map<ID3D12PipelineState *, ID3D12PipelineState *>, 2> thread_pipelines;
+std::array<std::unordered_map<ID3D12PipelineState *, CachedPipeline>, 2> shared_pipelines;
 std::mutex shared_pipeline_mutex;
 
 void report_failure(Program program, const std::string &error) {
@@ -50,7 +50,7 @@ ID3D12PipelineState *resolve_pipeline(ID3D12PipelineState *original,
     CachedPipeline *pipeline;
     {
         std::lock_guard<std::mutex> lock(shared_pipeline_mutex);
-        const auto entry = shared_pipelines.try_emplace(original, original).first;
+        const auto entry = shared_pipelines[runtime().layered.load()].try_emplace(original, original).first;
         pipeline = &entry->second;
     }
     // Shader compilation must not hold the shared cache lock.
@@ -71,8 +71,9 @@ void *pipeline_hook(void *context, uint64_t hash, void *cache, void *pass, void 
         depth_format, compute, flags, reserved_a, reserved_b);
     if (state.enabled.load(std::memory_order_acquire) && !compute) {
         auto *original = static_cast<ID3D12PipelineState *>(result);
-        const auto found = thread_pipelines.find(original);
-        if (found != thread_pipelines.end()) {
+        auto &pipelines = thread_pipelines[state.layered.load(std::memory_order_acquire)];
+        const auto found = pipelines.find(original);
+        if (found != pipelines.end()) {
             result = found->second;
         } else {
             engine::PipelineArguments arguments{};
@@ -96,7 +97,7 @@ void *pipeline_hook(void *context, uint64_t hash, void *cache, void *pass, void 
                                 size_t(target_count) * sizeof(uint32_t));
                 }
                 result = resolve_pipeline(original, arguments, root);
-                thread_pipelines.emplace(original, static_cast<ID3D12PipelineState *>(result));
+                pipelines.emplace(original, static_cast<ID3D12PipelineState *>(result));
             }
         }
     }

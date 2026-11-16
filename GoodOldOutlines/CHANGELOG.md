@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.3.0
+
+- Added an outline opacity multiplier
+- Added an option to show full outlines through other highlighted targets
+
 ## 1.2.1
 
 - Updated the mesh highlight option’s name to clarify that it only affects enemies

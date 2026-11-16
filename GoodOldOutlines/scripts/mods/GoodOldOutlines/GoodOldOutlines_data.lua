@@ -7,12 +7,6 @@ return {
 	options = {
 		widgets = {
 			{
-				setting_id = "hide_mesh",
-				type = "checkbox",
-				default_value = true,
-				tooltip = "hide_mesh_description",
-			},
-			{
 				setting_id = "highlight_tagged_items",
 				type = "checkbox",
 				default_value = true,
@@ -27,19 +21,52 @@ return {
 				},
 			},
 			{
-				setting_id = "opaque_outlines",
-				type = "checkbox",
-				default_value = true,
-				tooltip = "opaque_outlines_description",
+				setting_id = "group_appearance",
+				type = "group",
+				sub_widgets = {
+					{
+						setting_id = "opaque_outlines",
+						type = "checkbox",
+						default_value = true,
+						tooltip = "opaque_outlines_description",
+					},
+					{
+						setting_id = "outline_opacity",
+						type = "numeric",
+						unit_text = "percent",
+						default_value = 100,
+						range = { 0, 100 },
+						decimals_number = 0,
+						tooltip = "outline_opacity_description",
+					},
+				},
 			},
 			{
-				setting_id = "occluded_outline_visibility",
-				type = "numeric",
-				unit_text = "percent",
-				default_value = 50,
-				range = { 0, 100 },
-				decimals_number = 0,
-				tooltip = "occluded_outline_visibility_description",
+				setting_id = "group_visibility",
+				type = "group",
+				sub_widgets = {
+					{
+						setting_id = "hide_mesh",
+						type = "checkbox",
+						default_value = true,
+						tooltip = "hide_mesh_description",
+					},
+					{
+						setting_id = "occluded_outline_visibility",
+						type = "numeric",
+						unit_text = "percent",
+						default_value = 50,
+						range = { 0, 100 },
+						decimals_number = 0,
+						tooltip = "occluded_outline_visibility_description",
+					},
+					{
+						setting_id = "show_rear_outlines",
+						type = "checkbox",
+						default_value = false,
+						tooltip = "show_rear_outlines_description",
+					},
+				},
 			},
 		},
 	},

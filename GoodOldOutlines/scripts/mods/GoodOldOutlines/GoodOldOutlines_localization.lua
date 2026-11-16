@@ -5,15 +5,7 @@ return {
 	},
 	mod_description = {
 		en = "Brings back the classic tagging outline style from Vermintide 2.",
-		["zh-cn"] = "带回类似《鼠疫 2》中经典的标记轮廓样式。",
-	},
-	hide_mesh = {
-		en = "Hide Highlighted Enemy Mesh",
-		["zh-cn"] = "隐藏敌人高亮模型",
-	},
-	hide_mesh_description = {
-		en = "Hides enemy mesh highlights behind obstacles.",
-		["zh-cn"] = "隐藏敌人在障碍物后的高亮模型。",
+		["zh-cn"] = "恢复《战锤：末世鼠疫 2》的经典标记轮廓样式。",
 	},
 	highlight_tagged_items = {
 		en = "Highlight Tagged Items",
@@ -27,23 +19,55 @@ return {
 		en = "Item Outline Color",
 		["zh-cn"] = "物品轮廓颜色",
 	},
-	percent = {
-		en = "%%",
+	group_appearance = {
+		en = "Appearance",
+		["zh-cn"] = "外观",
 	},
 	opaque_outlines = {
-		en = "Always Opaque Outlines",
-		["zh-cn"] = "轮廓始终不透明",
+		en = "Opaque Outlines",
+		["zh-cn"] = "不透明轮廓",
 	},
 	opaque_outlines_description = {
-		en = "Always displays outlines in opaque colors.",
-		["zh-cn"] = "始终以不透明颜色显示轮廓。",
+		en = "Displays outlines in opaque base colors.",
+		["zh-cn"] = "以不透明基础颜色显示轮廓。",
+	},
+	outline_opacity = {
+		en = "Outline Opacity Multiplier",
+		["zh-cn"] = "轮廓不透明度倍率",
+	},
+	outline_opacity_description = {
+		en = "Scales down outline opacity. 100%% leaves it unchanged. 0%% hides outlines.",
+		["zh-cn"] = "按比例降低轮廓的不透明度。100%% 不改变，0%% 隐藏轮廓。",
+	},
+	group_visibility = {
+		en = "Visibility",
+		["zh-cn"] = "可见性",
+	},
+	hide_mesh = {
+		en = "Hide Enemy Interior Highlights",
+		["zh-cn"] = "隐藏敌人内部高亮",
+	},
+	hide_mesh_description = {
+		en = "Hides the highlight inside enemy outlines when enemies are behind obstacles.",
+		["zh-cn"] = "敌人被障碍物挡住时，隐藏轮廓内的高亮。",
 	},
 	occluded_outline_visibility = {
-		en = "Outline Visibility Behind Obstacles",
-		["zh-cn"] = "遮挡时的轮廓可见度",
+		en = "Occluded Outline Visibility",
+		["zh-cn"] = "被遮挡部分的可见度",
 	},
 	occluded_outline_visibility_description = {
-		en = "Sets outline strength when targets are behind obstacles. 0%% hides them; 100%% keeps their original strength.",
-		["zh-cn"] = "控制目标被障碍物遮挡时的轮廓强度。0%% 隐藏，100%% 保持原有强度。",
+		en = "Sets the opacity of hidden parts of outlines. 0%% hides them. 100%% leaves them unchanged.",
+		["zh-cn"] = "调整轮廓被挡住部分的不透明度。0%% 隐藏，100%% 不改变。",
+	},
+	show_rear_outlines = {
+		en = "Show Outlines Through Other Targets",
+		["zh-cn"] = "透过其他目标显示轮廓",
+	},
+	show_rear_outlines_description = {
+		en = "Shows full outlines of targets hidden behind other highlighted targets.",
+		["zh-cn"] = "目标被其他高亮目标挡住时，也显示其完整轮廓。",
+	},
+	percent = {
+		en = "%%",
 	},
 }

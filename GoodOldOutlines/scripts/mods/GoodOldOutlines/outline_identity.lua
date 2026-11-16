@@ -5,6 +5,7 @@ local layers = { goo_tagged_item_outline = true }
 local records, owners = {}, {}
 local next_id = 0
 local enabled = false
+local buffer_index, buffer_words = 0, 0
 
 for _, settings in pairs(OutlineSettings) do
 	for _, outline in pairs(settings) do
@@ -21,7 +22,7 @@ end
 local function write_tree(unit, owner, layer, id)
 	owners[unit] = owner
 	-- This existing parameter is unused by the original outline pixel shaders.
-	Unit.set_vector4_for_material(unit, layer, "dev_wireframe_color", Color(0, 0, 0, id))
+	Unit.set_vector4_for_material(unit, layer, "dev_wireframe_color", Color(buffer_index, buffer_words, 0, id))
 	for _, child in ipairs(Unit.get_child_units(unit)) do
 		write_tree(child, owner, layer, id)
 	end
@@ -104,4 +105,13 @@ local function set_enabled(value)
 	end
 end
 
-return { set_enabled = set_enabled }
+local function set_buffer(index, capacity)
+	buffer_index, buffer_words = index, capacity
+	for unit, record in pairs(records) do
+		for layer in pairs(record.layers) do
+			write_tree(unit, unit, layer, record.id)
+		end
+	end
+end
+
+return { set_enabled = set_enabled, set_buffer = set_buffer }

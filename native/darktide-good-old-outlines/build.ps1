@@ -135,6 +135,11 @@ Invoke-BuildTool $dxc @(
     '-Fo', (Join-Path $outputDirectory 'composite.dxil'),
     (Join-Path $PSScriptRoot 'shaders/composite.hlsl')
 )
+Invoke-BuildTool $dxc @(
+    '-T', 'ps_6_0', '-E', 'ps_main', '-O3', '-D', 'GOO_LAYERS=1',
+    '-Fo', (Join-Path $outputDirectory 'composite_layers.dxil'),
+    (Join-Path $PSScriptRoot 'shaders/composite.hlsl')
+)
 Invoke-BuildTool (Join-Path $toolDirectory 'contracts.exe') @(
     (Join-Path $PSScriptRoot 'shaders/reference'),
     (Join-Path $PSScriptRoot 'obj/shader_contracts.generated.h')
@@ -142,7 +147,7 @@ Invoke-BuildTool (Join-Path $toolDirectory 'contracts.exe') @(
 Copy-Item -LiteralPath (Join-Path $sdkDirectory 'dxcompiler.dll') -Destination $outputDirectory
 Build-Project 'GoodOldOutlines.vcxproj'
 & $SignArtifact -Path (Join-Path $outputDirectory 'GoodOldOutlines.dll') -SigningConfig $SigningConfig -SigningAuthentication $SigningAuthentication
-foreach ($name in 'GoodOldOutlines.dll', 'outline.dxil', 'combat.dxil', 'prop_outline.dxil', 'composite.dxil', 'dxcompiler.dll') {
+foreach ($name in 'GoodOldOutlines.dll', 'outline.dxil', 'combat.dxil', 'prop_outline.dxil', 'composite.dxil', 'composite_layers.dxil', 'dxcompiler.dll') {
     $file = Join-Path $outputDirectory $name
     if (-not (Test-Path -LiteralPath $file -PathType Leaf) -or
         (Get-Item -LiteralPath $file).Length -eq 0) {
@@ -153,6 +158,6 @@ foreach ($name in 'GoodOldOutlines.dll', 'outline.dxil', 'combat.dxil', 'prop_ou
 
 $PackageBin = Join-Path $PackageDirectory 'bin'
 New-Item -ItemType Directory -Force -Path $PackageBin | Out-Null
-foreach ($name in 'GoodOldOutlines.dll', 'outline.dxil', 'combat.dxil', 'prop_outline.dxil', 'composite.dxil', 'dxcompiler.dll') {
+foreach ($name in 'GoodOldOutlines.dll', 'outline.dxil', 'combat.dxil', 'prop_outline.dxil', 'composite.dxil', 'composite_layers.dxil', 'dxcompiler.dll') {
     Copy-Item -LiteralPath (Join-Path $outputDirectory $name) -Destination $PackageBin -Force
 }
