@@ -1,5 +1,3 @@
-local mod = get_mod("Realms")
-
 local localization = {
 	mod_name = {
 		en = "Realms Server",
@@ -408,6 +406,18 @@ local native_localization = {
 		en = "The Realms protocol versions do not match.",
 		["zh-cn"] = "双方的领域协议版本不一致。",
 	},
+	loc_realms_compat_tags_missing = {
+		en = "Missing compatibility tags required by the host:\n{missing_compat_tags}",
+		["zh-cn"] = "缺少房主要求的兼容标签：\n{missing_compat_tags}",
+	},
+	loc_realms_compat_tags_missing_no_details = {
+		en = "Missing compatibility tags required by the host.",
+		["zh-cn"] = "缺少房主要求的兼容标签。",
+	},
+	loc_realms_compat_tags_omitted = {
+		en = "... and {count} more",
+		["zh-cn"] = "……另有 {count} 项",
+	},
 	loc_realms_game_version_mismatch = {
 		en = "The game versions do not match.",
 		["zh-cn"] = "双方的游戏版本不一致。",
@@ -438,6 +448,15 @@ local native_localization = {
 	},
 }
 
-mod:add_global_localize_strings(native_localization)
+local localization_manager = Managers.localization
+local language = localization_manager:language()
+local backend_localizations = {}
+
+for key, translations in pairs(native_localization) do
+	backend_localizations[key] = translations[language] or translations.en
+end
+
+localization_manager:append_backend_localizations(backend_localizations)
+localization_manager:reset_cache()
 
 return localization

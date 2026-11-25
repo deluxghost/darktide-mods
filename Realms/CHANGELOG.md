@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.4.0
+
+- Added a compatibility tag API for other mods to prevent incompatible players from joining
+
 ## 1.3.0
 
 - Added experimental PC cross-platform play through Epic Online Services, joined with invite codes

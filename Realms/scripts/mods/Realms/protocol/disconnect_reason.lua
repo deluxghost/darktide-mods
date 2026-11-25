@@ -9,6 +9,7 @@ DisconnectReason.SERVER_PRIVATE = "realms_server_private"
 DisconnectReason.SERVER_FULL = "realms_server_full"
 DisconnectReason.PASSWORD_INCORRECT = "realms_password_incorrect"
 DisconnectReason.PROTOCOL_MISMATCH = "realms_protocol_mismatch"
+DisconnectReason.COMPAT_TAGS_MISSING = "realms_compat_tags_missing"
 DisconnectReason.GAME_VERSION_MISMATCH = "realms_game_version_mismatch"
 DisconnectReason.SERVER_CONTEXT_INVALID = "realms_server_context_invalid"
 DisconnectReason.CLIENT_DATA_REJECTED = "realms_client_data_rejected"
@@ -28,6 +29,7 @@ local LOCALIZATION_KEYS = {
 	[DisconnectReason.SERVER_FULL] = "loc_realms_server_full",
 	[DisconnectReason.PASSWORD_INCORRECT] = "loc_realms_password_incorrect",
 	[DisconnectReason.PROTOCOL_MISMATCH] = "loc_realms_protocol_mismatch",
+	[DisconnectReason.COMPAT_TAGS_MISSING] = "loc_realms_compat_tags_missing",
 	[DisconnectReason.GAME_VERSION_MISMATCH] = "loc_realms_game_version_mismatch",
 	[DisconnectReason.SERVER_CONTEXT_INVALID] = "loc_realms_server_context_invalid",
 	[DisconnectReason.CLIENT_DATA_REJECTED] = "loc_realms_client_data_rejected",
@@ -42,7 +44,11 @@ function DisconnectReason.is_known(reason)
 	return LOCALIZATION_KEYS[reason] ~= nil
 end
 
-function DisconnectReason.localization_key(reason)
+function DisconnectReason.localization_key(reason, has_description_params)
+	if reason == DisconnectReason.COMPAT_TAGS_MISSING and not has_description_params then
+		return "loc_realms_compat_tags_missing_no_details"
+	end
+
 	return LOCALIZATION_KEYS[reason]
 end
 

@@ -1,4 +1,5 @@
 local mod = get_mod("Realms")
+local ConnectionClient = require("scripts/multiplayer/connection/connection_client")
 local MultiplayerSession = require("scripts/managers/multiplayer/multiplayer_session")
 local MultiplayerSessionManager = require("scripts/managers/multiplayer/multiplayer_session_manager")
 local DisconnectReason = mod:io_dofile("Realms/scripts/mods/Realms/protocol/disconnect_reason")
@@ -25,6 +26,13 @@ function DisconnectErrors.normalize_left_session_reason(mechanism_name, context)
 end
 
 function DisconnectErrors.install()
+	mod:hook_safe(ConnectionClient, "rpc_kicked", function (self, channel_id, reason, optional_details)
+		-- ConnectionLocalStateMachine.disconnect only retains the reason.
+		if self._realms_protocol and reason == DisconnectReason.COMPAT_TAGS_MISSING then
+			self._realms_kick_details = optional_details
+		end
+	end)
+
 	mod:hook(MultiplayerSession, "disconnected_from_host", function (func, self, is_error, source, reason, details)
 		local session_manager = Managers.multiplayer_session
 		local expected_leave = reason == "realms_disconnect" or reason == "realms_switch_session" or session_manager and session_manager:is_leaving()
@@ -45,7 +53,20 @@ function DisconnectErrors.install()
 			return func(self, disconnection_info)
 		end
 
-		Managers.error:report_error(RealmsConnectionError:new(disconnection_info.source, reason, disconnection_info.error_details))
+		local details = disconnection_info.error_details
+		local description_params
+
+		if reason == DisconnectReason.COMPAT_TAGS_MISSING and type(details) == "table" then
+			local tags = table.concat(details.tags, "\n")
+
+			if details.omitted > 0 then
+				tags = tags .. "\n" .. Localize("loc_realms_compat_tags_omitted", true, { count = details.omitted })
+			end
+
+			description_params = { missing_compat_tags = tags }
+		end
+
+		Managers.error:report_error(RealmsConnectionError:new(disconnection_info.source, reason, details, description_params))
 	end)
 end
 

@@ -105,6 +105,28 @@ local registered, register_error = realms.network_on_peer_left(mod, callback)
 
 Registers a callback for remote peers leaving. Every remaining node receives the departed peer ID, which is no longer a valid `network_send` recipient.
 
+## Compatibility Tag API
+
+Compatibility tags let other mods block clients that cannot take part in the host's session.
+
+### `set_compat_tag`
+
+```lua
+local set, set_error = realms.set_compat_tag(mod, tag)
+```
+
+Sets the calling mod's compatibility tag. Each calling mod can register one tag, and setting a new tag replaces its previous one. Pass `nil` or an empty string to remove it. Tags can be set at any time, including outside a Realms session. Tags are not saved, so set them again after mods are reloaded, for example in `on_all_mods_loaded`.
+
+Returns `true` on success or `false, error_message` when the arguments are invalid. A tag can be up to 64 bytes long and cannot contain line breaks.
+
+When a client joins, it sends the compatibility tags registered by mods on that client. The host collects the compatibility tags registered by mods on the host and admits the client only if every host tag is among the client's tags. Otherwise, the join fails and the error reports missing compatibility tags. On a client, a tag therefore means support, while the same tag on the host becomes a requirement for every joining client.
+
+Tags are compared as exact strings. Realms does not interpret them or match them by mod, so the same tag from any mod on the client satisfies the host's tag.
+
+The tag decides which clients are compatible, so choose its contents based on what must match, such as `"ExampleMod 1.2.0"` to require the same version. Start tags with the calling mod's name or another unique prefix so that unrelated mods do not use the same tag by accident.
+
+The check runs once for each join attempt, before the client receives a player slot. Changing a tag only affects later join attempts, and peers already in the session are not checked again. Realms also does not track whether a mod is enabled or still able to work after setting its tag. Any compatibility handling after a client has joined is the responsibility of the calling mod.
+
 ## Mission Transition API
 
 ### `queue_mission_transition`

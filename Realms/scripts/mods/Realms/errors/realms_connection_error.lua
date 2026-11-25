@@ -4,8 +4,9 @@ local DisconnectReason = mod:io_dofile("Realms/scripts/mods/Realms/protocol/disc
 
 local RealmsConnectionError = class("RealmsConnectionError")
 
-RealmsConnectionError.init = function (self, source, reason, details)
+RealmsConnectionError.init = function (self, source, reason, details, description_params)
 	self._reason = reason
+	self._description_params = description_params
 	self._log_message = string.format("source=%s reason=%s details=%s", tostring(source), tostring(reason), type(details) == "table" and table.tostring(details, 3) or tostring(details or "n/a"))
 end
 
@@ -22,7 +23,14 @@ RealmsConnectionError.loc_title = function ()
 end
 
 RealmsConnectionError.loc_description = function (self)
-	return DisconnectReason.localization_key(self._reason)
+	local params = self._description_params
+	local key = DisconnectReason.localization_key(self._reason, params ~= nil)
+
+	if params then
+		return key, params
+	end
+
+	return key
 end
 
 RealmsConnectionError.options = function ()

@@ -182,7 +182,7 @@ ClientSessionBoot._try_next_address = function (self, reason)
 	return true
 end
 
-ClientSessionBoot._fail = function (self, reason, disconnect_reason)
+ClientSessionBoot._fail = function (self, reason, disconnect_reason, details)
 	if self:state() == STATES.failed then
 		return
 	end
@@ -195,7 +195,7 @@ ClientSessionBoot._fail = function (self, reason, disconnect_reason)
 	disconnect_reason = disconnect_reason or (self._transport and self._transport.disconnect_reason or DisconnectReason.CONNECTION_FAILED)
 
 	mod:info("Client boot failed: %s", tostring(reason))
-	self:event_object():failed_to_boot(true, "game", disconnect_reason, tostring(reason))
+	self:event_object():failed_to_boot(true, "game", disconnect_reason, details or tostring(reason))
 
 	if self._options.on_failed then
 		self._options.on_failed()
@@ -298,7 +298,14 @@ ClientSessionBoot._update_validation = function (self, dt)
 		disconnect_reason = DisconnectReason.CONNECTION_FAILED
 	end
 
-	self:_fail(game_reason or disconnection.engine_reason or "Connection closed during admission", disconnect_reason)
+	local details
+
+	if disconnect_reason == DisconnectReason.COMPAT_TAGS_MISSING then
+		details = mod._compat_tags.decode_kick_details(self._connection_client._realms_kick_details)
+		self._connection_client._realms_kick_details = nil
+	end
+
+	self:_fail(game_reason or disconnection.engine_reason or "Connection closed during admission", disconnect_reason, details)
 end
 
 ClientSessionBoot.update = function (self, dt)

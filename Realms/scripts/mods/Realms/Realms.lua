@@ -6,6 +6,8 @@ local ConnectionManager = require("scripts/managers/multiplayer/connection_manag
 local MultiplayerSessionManager = require("scripts/managers/multiplayer/multiplayer_session_manager")
 local PartyImmateriumManager = require("scripts/managers/party_immaterium/party_immaterium_manager")
 local ProfileSynchronizerHost = require("scripts/loading/profile_synchronizer_host")
+local CompatTags = mod:io_dofile("Realms/scripts/mods/Realms/core/compat_tags")
+mod._compat_tags = CompatTags
 local BotBackfill = mod:io_dofile("Realms/scripts/mods/Realms/core/bot_backfill")
 local DisconnectErrors = mod:io_dofile("Realms/scripts/mods/Realms/core/disconnect_errors")
 local LoadingClients = mod:io_dofile("Realms/scripts/mods/Realms/core/loading_clients")
@@ -42,6 +44,10 @@ end
 
 mod.network_send = function (owner_mod, rpc_name, recipient, ...)
 	return ModNetwork.send(owner_mod, rpc_name, recipient, ...)
+end
+
+mod.set_compat_tag = function (owner_mod, tag)
+	return CompatTags.set(owner_mod, tag)
 end
 
 local Session = mod:io_dofile("Realms/scripts/mods/Realms/core/session")

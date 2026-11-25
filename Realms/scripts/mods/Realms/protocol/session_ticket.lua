@@ -1,10 +1,11 @@
 local mod = get_mod("Realms")
 local JwtTicketUtils = require("scripts/multiplayer/utilities/jwt_ticket_utils")
 local DisconnectReason = mod:io_dofile("Realms/scripts/mods/Realms/protocol/disconnect_reason")
+local CompatTags = mod._compat_tags
 
 local SessionTicket = {}
 
-local PROTOCOL_VERSION = 15
+local PROTOCOL_VERSION = 16
 local MAX_TICKET_SIZE = 196608
 local MAX_PASSWORD_SIZE = 1024
 local HEADER_FIELDS = {
@@ -76,6 +77,14 @@ function SessionTicket.create(host_peer_id, password, client_snapshot)
 	if password ~= "" then
 		payload.password = password
 	end
+
+	local tags = CompatTags.current()
+
+	if #tags > 0 then
+		payload.clientSnapshot = table.shallow_copy(client_snapshot)
+		payload.clientSnapshot.compatTags = CompatTags.encode(tags)
+	end
+
 	local ticket = string.encode_base64(cjson.encode(header)) .. "." .. string.encode_base64(cjson.encode(payload)) .. "."
 
 	if #ticket > MAX_TICKET_SIZE then
@@ -135,7 +144,25 @@ function SessionTicket.validate(payload, expected_host_peer_id, expected_passwor
 		return nil, "Realms client snapshot is missing", DisconnectReason.CLIENT_DATA_REJECTED
 	end
 
-	return payload.clientSnapshot
+	local snapshot = payload.clientSnapshot
+	local supported_tags = {}
+
+	if snapshot.compatTags ~= nil then
+		local tags = CompatTags.decode(snapshot.compatTags)
+
+		if not tags then
+			return nil, "Realms client compatibility tags are invalid", DisconnectReason.CLIENT_DATA_REJECTED
+		end
+
+		for i = 1, #tags do
+			supported_tags[tags[i]] = true
+		end
+
+		snapshot = table.shallow_copy(snapshot)
+		snapshot.compatTags = nil
+	end
+
+	return snapshot, nil, nil, supported_tags
 end
 
 SessionTicket.MAX_TICKET_SIZE = MAX_TICKET_SIZE

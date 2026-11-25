@@ -4,6 +4,7 @@ local ClientSnapshot = mod:io_dofile("Realms/scripts/mods/Realms/protocol/client
 local DisconnectReason = mod:io_dofile("Realms/scripts/mods/Realms/protocol/disconnect_reason")
 local MechanismContext = mod:io_dofile("Realms/scripts/mods/Realms/protocol/mechanism_context")
 local SessionTicket = mod:io_dofile("Realms/scripts/mods/Realms/protocol/session_ticket")
+local CompatTags = mod._compat_tags
 
 local READY_RPCS = {
 	"rpc_package_synchronizer_ready_peer",
@@ -218,9 +219,9 @@ RemoteConnection._record_failure = function (self, reason)
 	return true
 end
 
-RemoteConnection.fail = function (self, reason, disconnect_reason)
+RemoteConnection.fail = function (self, reason, disconnect_reason, details)
 	if self:_record_failure(reason) then
-		self._owner:kick(self._channel_id, disconnect_reason or DisconnectReason.SERVER_ERROR)
+		self._owner:kick(self._channel_id, disconnect_reason or DisconnectReason.SERVER_ERROR, details)
 	end
 end
 
@@ -382,12 +383,20 @@ RemoteConnection.rpc_check_mechanism = function (self, channel_id, ticket_part, 
 		return
 	end
 
-	local snapshot, ticket_error, disconnect_reason = self._owner:validate_session_ticket(table.concat(self._ticket_parts))
+	local snapshot, ticket_error, disconnect_reason, supported_tags = self._owner:validate_session_ticket(table.concat(self._ticket_parts))
 
 	self._ticket_parts = nil
 
 	if not snapshot then
 		self:fail(ticket_error, disconnect_reason)
+
+		return
+	end
+
+	local missing_tags = CompatTags.missing(supported_tags)
+
+	if #missing_tags > 0 then
+		self:fail("Client is missing required compatibility tags", DisconnectReason.COMPAT_TAGS_MISSING, CompatTags.encode_kick_details(missing_tags))
 
 		return
 	end
